@@ -3,144 +3,212 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pong Game — Edición Arcade</title>
+    <meta name="description" content="Un clásico juego de Pong con estética retro CRT, temas de color personalizables, teclas reasignables y modo VS CPU o Local a 2 jugadores.">
+    <meta name="theme-color" content="#05070a">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
 
-    <!-- Audio Synthesizer implementation in JS, no external assets needed -->
+    <!-- El audio se genera 100% en JavaScript (js/audio.js), no requiere archivos externos -->
 
-    <!-- MAIN MENU -->
-    <div id="main-menu" class="screen active-screen bg-slate-900/90 z-20">
-        <h1
-            class="text-6xl md:text-8xl font-bold mb-16 text-center tracking-widest text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.8)]">
-            PONG GAME</h1>
+    <!-- ============================== MENÚ PRINCIPAL ============================== -->
+    <div id="main-menu" class="screen active-screen z-20">
+        <h1 class="title-glow text-5xl md:text-8xl font-bold mb-4 text-center tracking-widest">PONG</h1>
+        <p class="mb-14 text-[10px] md:text-xs tracking-[6px] text-white/50">EDICIÓN ARCADE</p>
 
         <div class="flex flex-col gap-6 w-64 md:w-80 text-sm md:text-base text-center">
             <button class="retro-button" onclick="showScreen('mode-select-menu')">JUGAR</button>
             <button class="retro-button" onclick="showScreen('controls-menu')">CONTROLES</button>
             <button class="retro-button" onclick="showScreen('settings-menu')">CONFIGURACIÓN</button>
-            <button class="retro-button" onclick="closeGame()">SALIR</button>
+            <button class="retro-button retro-button--danger" onclick="closeGame()">SALIR</button>
         </div>
-        <div class="watermark">&copy; 2026 Pong Game</div>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
-    <!-- GAME MODE MENU -->
-    <div id="mode-select-menu" class="screen bg-slate-900/90 z-20">
-        <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-green-500">MODO DE JUEGO</h2>
+    <!-- ============================== SELECCIÓN DE MODO ============================== -->
+    <div id="mode-select-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-12 text-center">MODO DE JUEGO</h2>
 
         <div class="flex flex-col gap-6 w-64 md:w-96 text-center text-sm md:text-base">
             <button class="retro-button" onclick="startGame('cpu')">VS CPU</button>
             <button class="retro-button" onclick="startGame('local')">LOCAL (2 JUGADORES)</button>
-            <button class="retro-button mt-8 border-dashed" onclick="showScreen('main-menu')">VOLVER</button>
+            <button class="retro-button mt-8" style="border-style: dashed;" onclick="showScreen('main-menu')">VOLVER</button>
         </div>
-        <div class="watermark">&copy; 2026 Pong Game</div>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
-    <!-- CONTROLS MENU -->
-    <div id="controls-menu" class="screen bg-slate-900/90 z-20">
-        <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-green-500">CONTROLES</h2>
+    <!-- ============================== CONTROLES ============================== -->
+    <div id="controls-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-10 text-center">CONTROLES</h2>
 
-        <div
-            class="flex flex-col gap-8 md:flex-row text-xs md:text-sm leading-8 tracking-wider w-full max-w-4xl px-8 justify-center items-start">
-
-            <div class="flex-1 border-2 border-green-500 p-6 bg-slate-800">
-                <h3 class="text-xl mb-4 text-center border-b-2 border-green-500 pb-2">JUGADOR 1 (IZQ)</h3>
-                <p class="mb-2"><span class="text-white">W</span> : MOVER ARRIBA</p>
-                <p><span class="text-white">S</span> : MOVER ABAJO</p>
+        <div class="grid gap-6 md:grid-cols-2 w-full max-w-3xl px-4 text-xs md:text-sm">
+            <div class="panel">
+                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">JUGADOR 1 (IZQ)</h3>
+                <div class="binding-row">
+                    <span>MOVER ARRIBA</span>
+                    <button class="key-btn" data-binding-action="p1Up">W</button>
+                </div>
+                <div class="binding-row">
+                    <span>MOVER ABAJO</span>
+                    <button class="key-btn" data-binding-action="p1Down">S</button>
+                </div>
             </div>
 
-            <div class="flex-1 border-2 border-green-500 p-6 bg-slate-800">
-                <h3 class="text-xl mb-4 text-center border-b-2 border-green-500 pb-2">JUGADOR 2 (DER)</h3>
-                <p class="mb-2"><span class="text-white">FLECHA ARRIBA</span> : ARRIBA</p>
-                <p><span class="text-white">FLECHA ABAJO</span> : ABAJO</p>
-                <p class="mt-4 text-[10px] text-green-400 opacity-80">(Solo en modo Local)</p>
+            <div class="panel">
+                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">JUGADOR 2 (DER)</h3>
+                <div class="binding-row">
+                    <span>MOVER ARRIBA</span>
+                    <button class="key-btn" data-binding-action="p2Up">↑</button>
+                </div>
+                <div class="binding-row">
+                    <span>MOVER ABAJO</span>
+                    <button class="key-btn" data-binding-action="p2Down">↓</button>
+                </div>
+                <p class="mt-4 text-[10px] opacity-70">(Solo se usa en modo Local)</p>
             </div>
 
-            <div
-                class="flex-1 border-2 border-green-500 p-6 bg-slate-800 text-center flex flex-col justify-center h-full">
-                <h3 class="text-xl mb-4 text-center border-b-2 border-green-500 pb-2">SISTEMA</h3>
-                <p><span class="text-white">ESC</span> : PAUSAR / VOLVER</p>
+            <div class="panel md:col-span-2">
+                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">SISTEMA</h3>
+                <div class="binding-row">
+                    <span>PAUSAR / VOLVER</span>
+                    <button class="key-btn" data-binding-action="pause">ESC</button>
+                </div>
+                <p class="mt-3 text-[10px] opacity-70">Haz clic en un botón y presiona la tecla que quieras asignar. Dos acciones no pueden compartir la misma tecla.</p>
             </div>
         </div>
 
-        <button class="retro-button mt-12 w-64 text-sm" onclick="showScreen('main-menu')">VOLVER</button>
-        <div class="watermark">&copy; 2026 Pong Game</div>
+        <div class="flex flex-col md:flex-row gap-4 mt-10">
+            <button class="key-btn" style="min-width: 220px; padding: 12px 20px;" onclick="resetBindings()">RESTAURAR TECLAS POR DEFECTO</button>
+            <button class="retro-button text-sm" onclick="showScreen('main-menu')">VOLVER</button>
+        </div>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
-    <!-- SETTINGS MENU -->
-    <div id="settings-menu" class="screen bg-slate-900/90 z-20">
-        <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-green-500">CONFIGURACIÓN</h2>
+    <!-- ============================== CONFIGURACIÓN ============================== -->
+    <div id="settings-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-8 text-center">CONFIGURACIÓN</h2>
 
-        <div class="flex flex-col gap-10 w-full max-w-lg px-8 text-sm md:text-base">
+        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm pb-6">
 
-            <div class="border-2 border-green-500 p-6 bg-slate-800">
-                <label class="block mb-4 text-center">DIFICULTAD CPU</label>
-                <div class="flex justify-between mb-2 text-xs">
+            <div class="panel">
+                <label class="block mb-4 text-center">COLOR DEL JUEGO</label>
+                <div id="theme-swatches"></div>
+            </div>
+
+            <div class="panel">
+                <label class="block mb-4 text-center">DIFICULTAD DE LA CPU</label>
+                <div class="flex justify-between mb-2 text-[10px] font-body opacity-80" style="font-family: var(--font-body)">
                     <span>FÁCIL</span>
                     <span>NORMAL</span>
                     <span>IMPOSIBLE</span>
                 </div>
-                <input type="range" id="difficulty-slider" min="1" max="3" value="2"
-                    onchange="updateDifficulty(this.value)">
+                <input type="range" id="difficulty-slider" min="1" max="3" value="2" onchange="updateDifficulty(this.value)">
             </div>
 
-            <div class="border-2 border-green-500 p-6 bg-slate-800">
+            <div class="panel">
                 <label class="block mb-4 text-center">VOLUMEN <span id="vol-display">50%</span></label>
                 <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
             </div>
 
+            <div class="panel">
+                <label class="block mb-4 text-center">PUNTOS PARA GANAR</label>
+                <div class="option-pill-group">
+                    <button class="option-pill" data-winning-score="3" onclick="updateWinningScore(3)">3</button>
+                    <button class="option-pill" data-winning-score="5" onclick="updateWinningScore(5)">5</button>
+                    <button class="option-pill" data-winning-score="7" onclick="updateWinningScore(7)">7</button>
+                    <button class="option-pill" data-winning-score="11" onclick="updateWinningScore(11)">11</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <label class="block mb-4 text-center">VELOCIDAD DE LA BOLA</label>
+                <div class="option-pill-group">
+                    <button class="option-pill" data-ball-speed="1" onclick="updateBallSpeed(1)">LENTA</button>
+                    <button class="option-pill" data-ball-speed="2" onclick="updateBallSpeed(2)">NORMAL</button>
+                    <button class="option-pill" data-ball-speed="3" onclick="updateBallSpeed(3)">RÁPIDA</button>
+                </div>
+            </div>
+
+            <div class="panel flex flex-col gap-4">
+                <div class="setting-row">
+                    <span>EFECTOS DE SONIDO</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sfx-toggle" checked onchange="toggleSfx(this.checked)">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <span>EFECTO DE MONITOR CRT</span>
+                    <label class="switch">
+                        <input type="checkbox" id="crt-toggle" checked onchange="toggleCrtEffect(this.checked)">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <span>VIBRACIÓN DE PANTALLA</span>
+                    <label class="switch">
+                        <input type="checkbox" id="shake-toggle" checked onchange="toggleScreenShake(this.checked)">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="key-btn self-center" style="padding: 10px 24px;" onclick="resetAllSettings()">RESTABLECER TODO</button>
         </div>
 
-        <button class="retro-button mt-12 w-64" onclick="showScreen('main-menu')">VOLVER</button>
-        <div class="watermark">&copy; 2026 Pong Game</div>
+        <button class="retro-button w-64" onclick="showScreen('main-menu')">VOLVER</button>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
-    <!-- PAUSE MENU -->
-    <div id="pause-menu" class="screen bg-slate-900/80 z-30 backdrop-blur-sm">
-        <h2 class="text-4xl md:text-6xl font-bold mb-12 text-center text-white animate-pulse">PAUSA</h2>
-
+    <!-- ============================== PAUSA ============================== -->
+    <div id="pause-menu" class="screen z-30" style="background: rgba(5,7,10,0.85); backdrop-filter: blur(4px);">
+        <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-white animate-pulse">PAUSA</h2>
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm md:text-base">
             <button class="retro-button" onclick="togglePause()">CONTINUAR</button>
-            <button
-                class="retro-button border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:shadow-[0_0_15px_red]"
-                onclick="quitGame()">RENDIRSE</button>
+            <button class="retro-button retro-button--danger" onclick="quitGame()">RENDIRSE</button>
         </div>
     </div>
 
-    <!-- EXIT CONFIRMATION (Custom Message Box instead of confirm()) -->
-    <div id="exit-menu" class="screen bg-slate-900/95 z-50">
-        <div class="border-4 border-green-500 p-10 bg-black text-center max-w-lg">
-            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-green-500 leading-relaxed">¿SEGURO QUE QUIERES<br>SALIR
-                DEL JUEGO?</h2>
+    <!-- ============================== CONFIRMAR SALIDA ============================== -->
+    <div id="exit-menu" class="screen z-50" style="background: rgba(5,7,10,0.95);">
+        <div class="panel text-center max-w-lg mx-4" style="border-width: 3px;">
+            <h2 class="text-xl md:text-2xl font-bold mb-8 leading-relaxed">¿SEGURO QUE QUIERES<br>SALIR DEL JUEGO?</h2>
             <div class="flex flex-col md:flex-row gap-6 justify-center">
-                <button class="retro-button border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                    onclick="forceClose()">SÍ, SALIR</button>
+                <button class="retro-button retro-button--danger" onclick="forceClose()">SÍ, SALIR</button>
                 <button class="retro-button" onclick="showScreen('main-menu')">NO, VOLVER</button>
             </div>
         </div>
     </div>
 
-    <!-- GAME OVER SCREEN -->
-    <div id="game-over-screen" class="screen bg-slate-900/90 z-30">
-        <h2 id="winner-text" class="text-4xl md:text-6xl font-bold mb-4 text-center text-green-500">¡GANASTE!</h2>
-        <p id="final-score" class="text-xl md:text-2xl mb-12 text-white">0 - 0</p>
+    <!-- ============================== FIN DE PARTIDA ============================== -->
+    <div id="game-over-screen" class="screen z-30">
+        <h2 id="winner-text" class="text-3xl md:text-5xl font-bold mb-4 text-center title-glow">¡GANASTE!</h2>
+        <p id="final-score" class="text-lg md:text-2xl mb-12 text-white" style="font-family: var(--font-body)">0 - 0</p>
 
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm">
             <button class="retro-button" onclick="restartCurrentGame()">JUGAR DE NUEVO</button>
-            <button class="retro-button" onclick="quitGame()">MENU PRINCIPAL</button>
+            <button class="retro-button" onclick="quitGame()">MENÚ PRINCIPAL</button>
         </div>
     </div>
 
-    <!-- GAME CANVAS -->
-    <div id="game-container" class="hidden w-full h-full justify-center items-center p-4 bg-black">
+    <!-- ============================== CANVAS DEL JUEGO ============================== -->
+    <div id="game-container" class="hidden w-full h-full flex-col justify-center items-center p-4 gap-3">
+        <span id="mode-badge" class="mode-badge">VS CPU</span>
         <canvas id="pongCanvas"></canvas>
     </div>
 
-    <script src="script.js"></script>
+    <!-- El orden de carga importa: config primero, ui al final -->
+    <script src="js/config.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
 </body>
 
 </html>
