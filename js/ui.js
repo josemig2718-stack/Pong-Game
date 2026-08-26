@@ -14,6 +14,9 @@ function showScreen(screenId) {
     if (screenId === 'main-menu') {
         document.getElementById('game-container').classList.add('hidden');
         document.getElementById('game-container').classList.remove('flex');
+
+        // Música del menú principal
+        playMenuMusic();
     }
     soundEffects.uiClick();
 }
@@ -23,6 +26,7 @@ function closeGame() {
 }
 
 function forceClose() {
+    stopAllMusic();
     document.body.innerHTML = `<div class="flex w-full h-full items-center justify-center text-center text-lg md:text-2xl px-8" style="color: var(--primary)">EL JUEGO SE HA CERRADO.<br>PUEDES CERRAR ESTA PESTAÑA.</div>`;
 }
 
@@ -37,6 +41,23 @@ function updateVolume(val) {
     document.getElementById('vol-display').textContent = `${val}%`;
     getAudioContext();
     if (val > 0) playTone(400, 'square', 0.05);
+}
+
+function updateMusicVolume(val) {
+    setMusicVolume(parseInt(val, 10));
+    document.getElementById('music-vol-display').textContent = `${val}%`;
+}
+
+function toggleMusic(enabled) {
+    setMusicEnabled(enabled);
+    if (enabled) {
+        // Reanudar la música que corresponda según el estado actual
+        if (isPlaying) {
+            playGameplayMusic();
+        } else {
+            playMenuMusic();
+        }
+    }
 }
 
 function updateWinningScore(val) {
@@ -71,21 +92,35 @@ function toggleScreenShake(enabled) {
     saveSettings(settings);
 }
 
+function toggleMouseControl(enabled) {
+    settings.mouseControl = enabled;
+    saveSettings(settings);
+    if (!enabled && typeof clearMouseControl === 'function') {
+        clearMouseControl();
+    }
+}
+
 function resetAllSettings() {
     Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
     saveSettings(settings);
     populateSettingsUI();
     applyTheme(settings.theme);
+    stopAllMusic();
+    playMenuMusic();
 }
 
 /** Sincroniza todos los controles del menú de configuración con `settings` al iniciar */
 function populateSettingsUI() {
-    document.getElementById('difficulty-slider').value = settings.difficulty;
-    document.getElementById('volume-slider').value = settings.volume;
-    document.getElementById('vol-display').textContent = `${settings.volume}%`;
-    document.getElementById('sfx-toggle').checked = settings.sfxEnabled;
-    document.getElementById('crt-toggle').checked = settings.crtEffect;
-    document.getElementById('shake-toggle').checked = settings.screenShake;
+    document.getElementById('difficulty-slider').value      = settings.difficulty;
+    document.getElementById('volume-slider').value          = settings.volume;
+    document.getElementById('vol-display').textContent      = `${settings.volume}%`;
+    document.getElementById('sfx-toggle').checked           = settings.sfxEnabled;
+    document.getElementById('crt-toggle').checked           = settings.crtEffect;
+    document.getElementById('shake-toggle').checked         = settings.screenShake;
+    document.getElementById('music-toggle').checked         = settings.musicEnabled;
+    document.getElementById('music-volume-slider').value    = settings.musicVolume;
+    document.getElementById('music-vol-display').textContent = `${settings.musicVolume}%`;
+    document.getElementById('mouse-toggle').checked         = settings.mouseControl;
     document.body.classList.toggle('crt-effect', settings.crtEffect);
 
     updateWinningScore(settings.winningScore);

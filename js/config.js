@@ -17,23 +17,23 @@ const GAME_HEIGHT = 600;
 // CSS (--primary / --primary-rgb) y también se usan directamente al
 // dibujar en el <canvas>.
 const THEMES = {
-    green: { label: 'Verde',    hex: '#22c55e', rgb: '34, 197, 94' },
+    green:  { label: 'Verde',    hex: '#22c55e', rgb: '34, 197, 94' },
     purple: { label: 'Morado',   hex: '#a855f7', rgb: '168, 85, 247' },
-    blue: { label: 'Azul',     hex: '#3b82f6', rgb: '59, 130, 246' },
-    red: { label: 'Rojo',     hex: '#ef4444', rgb: '239, 68, 68' },
+    blue:   { label: 'Azul',     hex: '#3b82f6', rgb: '59, 130, 246' },
+    red:    { label: 'Rojo',     hex: '#ef4444', rgb: '239, 68, 68' },
     orange: { label: 'Naranja',  hex: '#f97316', rgb: '249, 115, 22' },
-    cyan: { label: 'Cian',     hex: '#06b6d4', rgb: '6, 182, 212' },
+    cyan:   { label: 'Cian',     hex: '#06b6d4', rgb: '6, 182, 212' },
     yellow: { label: 'Amarillo', hex: '#eab308', rgb: '234, 179, 8' },
-    pink: { label: 'Rosa',     hex: '#ec4899', rgb: '236, 72, 153' }
+    pink:   { label: 'Rosa',     hex: '#ec4899', rgb: '236, 72, 153' }
 };
 
 // --- Combinaciones de teclas por defecto ---------------------------
 const DEFAULT_BINDINGS = {
-    p1Up: 'KeyW',
+    p1Up:   'KeyW',
     p1Down: 'KeyS',
-    p2Up: 'ArrowUp',
+    p2Up:   'ArrowUp',
     p2Down: 'ArrowDown',
-    pause: 'Escape'
+    pause:  'Escape'
 };
 
 // Nombres legibles para mostrar en pantalla en vez del código crudo (event.code)
@@ -54,14 +54,17 @@ function keyLabel(code) {
 
 // --- Configuración por defecto (se combina con lo guardado en localStorage) ---
 const DEFAULT_SETTINGS = {
-    theme: 'green',
-    difficulty: 2,       // 1 Fácil, 2 Normal, 3 Imposible
-    volume: 50,          // 0-100
-    sfxEnabled: true,
-    winningScore: 5,      // 3, 5, 7, 11
-    ballSpeed: 2,         // 1 Lenta, 2 Normal, 3 Rápida
-    crtEffect: true,      // efecto de escaneo estilo monitor CRT
-    screenShake: true,
+    theme:        'green',
+    difficulty:   2,       // 1 Fácil, 2 Normal, 3 Imposible
+    volume:       50,      // 0-100 (SFX)
+    sfxEnabled:   true,
+    musicEnabled: true,
+    musicVolume:  50,      // 0-100 (música de fondo)
+    winningScore: 5,       // 3, 5, 7, 11
+    ballSpeed:    2,       // 1 Lenta, 2 Normal, 3 Rápida
+    crtEffect:    true,    // efecto de escaneo estilo monitor CRT
+    screenShake:  true,
+    mouseControl: false,   // controlar paleta con mouse
     bindings: { ...DEFAULT_BINDINGS }
 };
 
@@ -98,5 +101,10 @@ function saveSettings(settings) {
 // Objeto de configuración activo durante toda la sesión.
 const settings = loadSettings();
 
-// Velocidades de bola derivadas de la configuración de "ballSpeed"
-const BALL_SPEED_PRESETS = { 1: { base: 5, max: 11 }, 2: { base: 7, max: 15 }, 3: { base: 9.5, max: 19 } };
+// Velocidades de bola en píxeles/segundo a 60 FPS de referencia.
+// base = velocidad inicial; max = velocidad tope tras aceleraciones.
+const BALL_SPEED_PRESETS = {
+    1: { base: 5, max: 11 },
+    2: { base: 7, max: 15 },
+    3: { base: 9.5, max: 19 }
+};

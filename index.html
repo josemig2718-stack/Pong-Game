@@ -14,8 +14,6 @@
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
 
-    <!-- El audio se genera 100% en JavaScript (js/audio.js), no requiere archivos externos -->
-
     <!-- ============================== MENÚ PRINCIPAL ============================== -->
     <div id="main-menu" class="screen active-screen z-20">
         <h1 class="title-glow text-5xl md:text-8xl font-bold mb-4 text-center tracking-widest">PONG</h1>
@@ -91,9 +89,9 @@
 
     <!-- ============================== CONFIGURACIÓN ============================== -->
     <div id="settings-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-8 text-center">CONFIGURACIÓN</h2>
+        <h2 class="text-2xl md:text-4xl font-bold mb-8 text-center settings-title">CONFIGURACIÓN</h2>
 
-        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm pb-6">
+        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
 
             <div class="panel">
                 <label class="block mb-4 text-center">COLOR DEL JUEGO</label>
@@ -111,8 +109,13 @@
             </div>
 
             <div class="panel">
-                <label class="block mb-4 text-center">VOLUMEN <span id="vol-display">50%</span></label>
+                <label class="block mb-4 text-center">VOLUMEN SFX <span id="vol-display">50%</span></label>
                 <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
+            </div>
+
+            <div class="panel">
+                <label class="block mb-4 text-center">VOLUMEN MÚSICA <span id="music-vol-display">50%</span></label>
+                <input type="range" id="music-volume-slider" min="0" max="100" value="50" oninput="updateMusicVolume(this.value)">
             </div>
 
             <div class="panel">
@@ -136,6 +139,13 @@
 
             <div class="panel flex flex-col gap-4">
                 <div class="setting-row">
+                    <span>MÚSICA</span>
+                    <label class="switch">
+                        <input type="checkbox" id="music-toggle" checked onchange="toggleMusic(this.checked)">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
                     <span>EFECTOS DE SONIDO</span>
                     <label class="switch">
                         <input type="checkbox" id="sfx-toggle" checked onchange="toggleSfx(this.checked)">
@@ -156,12 +166,19 @@
                         <span class="switch-track"></span>
                     </label>
                 </div>
+                <div class="setting-row">
+                    <span>CONTROLAR CON MOUSE</span>
+                    <label class="switch">
+                        <input type="checkbox" id="mouse-toggle" onchange="toggleMouseControl(this.checked)">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
             </div>
 
             <button class="key-btn self-center" style="padding: 10px 24px;" onclick="resetAllSettings()">RESTABLECER TODO</button>
         </div>
 
-        <button class="retro-button w-64" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn" onclick="showScreen('main-menu')">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -235,4 +252,3 @@
 </body>
 
 </html>
-

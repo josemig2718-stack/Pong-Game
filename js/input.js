@@ -18,8 +18,12 @@ let listeningForAction = null;
 window.addEventListener('keydown', (e) => {
     if (listeningForAction) {
         e.preventDefault();
-        assignBinding(listeningForAction, e.code);
+        // FIX: limpiar listeningForAction ANTES de llamar a assignBinding
+        // para que refreshBindingButtons() vea el estado correcto y
+        // muestre la nueva tecla inmediatamente.
+        const action = listeningForAction;
         listeningForAction = null;
+        assignBinding(action, e.code);
         return;
     }
 

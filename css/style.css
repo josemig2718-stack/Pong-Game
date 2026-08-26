@@ -27,6 +27,7 @@ body {
     touch-action: none;
     margin: 0;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
@@ -34,7 +35,7 @@ body {
 .crt-effect::before {
     content: " ";
     display: block;
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
     background-size: 100% 4px;
@@ -44,7 +45,7 @@ body {
 
 .crt-effect::after {
     content: " ";
-    position: absolute;
+    position: fixed;
     inset: 0;
     box-shadow: inset 0 0 180px rgba(0, 0, 0, 0.65);
     pointer-events: none;
@@ -238,7 +239,7 @@ input[type=range]::-moz-range-track {
     box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.08);
 }
 
-/* Canvas del juego */
+/* Canvas del juego — tamaño fijo controlado por JS, sin auto-grow */
 canvas {
     display: block;
     margin: 0 auto;
@@ -271,26 +272,28 @@ canvas {
     align-items: center;
     position: absolute;
     inset: 0;
-    padding: 40px 24px;
+    padding: 40px 24px 60px;
     overflow-y: auto;
-    /* Centra verticalmente cuando el contenido cabe; si es más alto que la
-       pantalla (p. ej. el menú de Controles en móviles), se alinea arriba
-       en vez de recortarse por ambos lados de forma inalcanzable. */
+    -webkit-overflow-scrolling: touch;
+    /* Centrado seguro: flex-start como fallback universal, safe center
+       para navegadores que lo soporten */
     justify-content: flex-start;
     justify-content: safe center;
 }
 .active-screen { display: flex; }
 
 .watermark {
-    position: absolute;
-    bottom: 16px;
+    position: relative;
+    margin-top: auto;
+    padding-top: 16px;
+    padding-bottom: 8px;
     width: 100%;
     text-align: center;
     font-size: 0.6rem;
     opacity: 0.5;
     font-family: var(--font-body);
     letter-spacing: 1px;
-    pointer-events: none;
+    flex-shrink: 0;
 }
 
 .title-glow {
@@ -443,4 +446,140 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     body.touch-device #orientation-hint { display: flex; }
 }
 
+/* ==================================================================
+   Responsive para pantallas pequeñas (móvil)
+   ------------------------------------------------------------------
+   Asegura que todos los menús (especialmente Configuración) quepan
+   en la pantalla y el botón VOLVER sea siempre accesible.
+   ================================================================== */
 
+/* Pantallas cortas (< 700px de alto): compactar settings */
+@media (max-height: 700px) {
+    .screen {
+        padding: 20px 16px 40px;
+    }
+    .settings-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 12px !important;
+    }
+    .settings-body {
+        gap: 10px !important;
+    }
+    .settings-body .panel {
+        padding: 12px 14px;
+    }
+    .settings-body .panel label {
+        margin-bottom: 6px !important;
+    }
+    .setting-row {
+        font-size: 0.75rem;
+        gap: 8px;
+    }
+    .settings-back-btn {
+        margin-top: 12px;
+        padding: 10px 20px !important;
+        font-size: 0.7rem !important;
+    }
+    #theme-swatches {
+        gap: 6px;
+    }
+    .theme-swatch {
+        padding: 6px 2px;
+        gap: 3px;
+    }
+    .theme-swatch__dot {
+        width: 18px;
+        height: 18px;
+    }
+    .theme-swatch__label {
+        font-size: 0.5rem;
+    }
+    .option-pill {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Pantallas muy cortas (< 500px alto) — landscape en móvil */
+@media (max-height: 500px) {
+    .screen {
+        padding: 10px 12px 30px;
+        justify-content: flex-start !important;
+    }
+    .settings-title {
+        font-size: 1rem !important;
+        margin-bottom: 8px !important;
+    }
+    .settings-body {
+        gap: 6px !important;
+    }
+    .settings-body .panel {
+        padding: 8px 10px;
+    }
+    .settings-body .panel label {
+        margin-bottom: 4px !important;
+        font-size: 0.65rem;
+    }
+    .setting-row {
+        font-size: 0.65rem;
+        gap: 6px;
+        padding: 1px 0;
+    }
+    .switch {
+        width: 36px;
+        height: 20px;
+    }
+    .switch-track::before {
+        height: 12px;
+        width: 12px;
+        left: 2px;
+        top: 1px;
+    }
+    .switch input:checked + .switch-track::before {
+        transform: translateX(14px);
+    }
+    .retro-button {
+        padding: 8px 16px;
+        font-size: 0.65rem !important;
+    }
+    .watermark {
+        font-size: 0.45rem;
+        padding-top: 8px;
+        padding-bottom: 4px;
+    }
+}
+
+/* Pantallas estrechas en ancho (< 400px — teléfonos pequeños) */
+@media (max-width: 400px) {
+    .screen {
+        padding: 20px 12px 40px;
+    }
+    .settings-body .panel {
+        padding: 12px 10px;
+    }
+    .setting-row {
+        font-size: 0.72rem;
+        gap: 8px;
+    }
+    .setting-row span {
+        flex: 1;
+        min-width: 0;
+    }
+    #theme-swatches {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+    }
+    .theme-swatch__label {
+        font-size: 0.5rem;
+    }
+    .retro-button {
+        padding: 12px 16px;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* Game container: forzar tamaño basado en viewport, no en contenido */
+#game-container {
+    max-height: 100vh;
+    max-height: 100dvh;
+}

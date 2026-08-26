@@ -1,8 +1,9 @@
 /**
  * audio.js
  * ------------------------------------------------------------------
- * Sintetizador de audio 100% generado por JavaScript (Web Audio API).
- * No requiere ningún archivo de sonido externo.
+ * Sintetizador de audio 100% generado por JavaScript (Web Audio API)
+ * para efectos de sonido, más reproducción de música de fondo con
+ * elementos <audio> HTML5 para menú y gameplay.
  * ------------------------------------------------------------------
  */
 
@@ -37,19 +38,19 @@ function playTone(freq, type = 'square', duration = 0.1) {
 }
 
 const soundEffects = {
-    paddleHit: () => playTone(600, 'square', 0.1),
-    wallHit: () => playTone(300, 'square', 0.1),
-    score: () => {
+    paddleHit:  () => playTone(600, 'square', 0.1),
+    wallHit:    () => playTone(300, 'square', 0.1),
+    score:      () => {
         playTone(400, 'sawtooth', 0.15);
         setTimeout(() => playTone(600, 'sawtooth', 0.4), 100);
     },
-    uiClick: () => playTone(500, 'triangle', 0.05),
-    countdown: () => playTone(440, 'square', 0.08),
-    go: () => playTone(880, 'square', 0.15),
-    win: () => {
+    uiClick:    () => playTone(500, 'triangle', 0.05),
+    countdown:  () => playTone(440, 'square', 0.08),
+    go:         () => playTone(880, 'square', 0.15),
+    win:        () => {
         [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.2), i * 120));
     },
-    lose: () => {
+    lose:       () => {
         [400, 300, 200].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.25), i * 150));
     }
 };
@@ -63,4 +64,63 @@ function setMasterVolume(val) {
 function setSfxEnabled(enabled) {
     settings.sfxEnabled = enabled;
     saveSettings(settings);
+}
+
+// =================================================================
+//  Música de fondo (HTML5 Audio)
+// =================================================================
+const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
+const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
+
+menuMusic.loop     = true;
+gameplayMusic.loop = true;
+
+// Aplica el volumen de música almacenado al iniciar
+menuMusic.volume     = settings.musicVolume / 100;
+gameplayMusic.volume = settings.musicVolume / 100;
+
+function playMenuMusic() {
+    if (!settings.musicEnabled) return;
+    gameplayMusic.pause();
+    gameplayMusic.currentTime = 0;
+    menuMusic.volume = settings.musicVolume / 100;
+    menuMusic.play().catch(() => {});  // Silencia el autoplay-block
+}
+
+function stopMenuMusic() {
+    menuMusic.pause();
+    menuMusic.currentTime = 0;
+}
+
+function playGameplayMusic() {
+    if (!settings.musicEnabled) return;
+    menuMusic.pause();
+    menuMusic.currentTime = 0;
+    gameplayMusic.volume = settings.musicVolume / 100;
+    gameplayMusic.play().catch(() => {});
+}
+
+function stopGameplayMusic() {
+    gameplayMusic.pause();
+    gameplayMusic.currentTime = 0;
+}
+
+function stopAllMusic() {
+    stopMenuMusic();
+    stopGameplayMusic();
+}
+
+function setMusicVolume(val) {
+    settings.musicVolume = val;
+    menuMusic.volume     = val / 100;
+    gameplayMusic.volume = val / 100;
+    saveSettings(settings);
+}
+
+function setMusicEnabled(enabled) {
+    settings.musicEnabled = enabled;
+    saveSettings(settings);
+    if (!enabled) {
+        stopAllMusic();
+    }
 }
