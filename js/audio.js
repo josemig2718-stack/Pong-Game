@@ -124,3 +124,18 @@ function setMusicEnabled(enabled) {
         stopAllMusic();
     }
 }
+
+// --- Autoplay workaround ---
+// Los navegadores bloquean el autoplay de audio hasta la primera
+// interacción del usuario. Este listener one-shot arranca la música
+// del menú en cuanto el usuario hace click, toca la pantalla o
+// presiona una tecla por primera vez.
+function onFirstInteraction() {
+    playMenuMusic();
+    window.removeEventListener('click', onFirstInteraction);
+    window.removeEventListener('keydown', onFirstInteraction);
+    window.removeEventListener('touchstart', onFirstInteraction);
+}
+window.addEventListener('click', onFirstInteraction, { once: false });
+window.addEventListener('keydown', onFirstInteraction, { once: false });
+window.addEventListener('touchstart', onFirstInteraction, { once: false });
