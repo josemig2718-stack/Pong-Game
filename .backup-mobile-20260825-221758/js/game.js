@@ -43,11 +43,8 @@ const ballRadius = 9;
 
 const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
 
-// `touchY` es la posición (coordenadas internas del canvas) que un dedo está
-// pidiendo para esa paleta. Mientras no sea null, tiene prioridad sobre el
-// teclado (ver update()). La asigna/limpia js/touch.js.
-const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0 };
+const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0 };
 
 const ball = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2, radius: ballRadius, speed: 7, dx: 7, dy: 7 };
 
@@ -93,9 +90,6 @@ function startGame(mode) {
     p2.y = GAME_HEIGHT / 2 - p2.height / 2;
     p1.dy = 0;
     p2.dy = 0;
-    p1.touchY = null;
-    p2.touchY = null;
-    if (typeof resetTouchHints === 'function') resetTouchHints();
 
     isPlaying = true;
     isPaused = false;
@@ -107,7 +101,6 @@ function startGame(mode) {
     container.classList.add('flex');
 
     document.getElementById('mode-badge').textContent = mode === 'cpu' ? 'VS CPU' : 'LOCAL · 2 JUGADORES';
-    document.body.dataset.gameMode = mode;
 
     resizeCanvas();
     resetBall(true);
@@ -188,27 +181,17 @@ function update() {
     const maxBallSpeed = speedPreset.max;
 
     // --- Movimiento Jugador 1 ---
-    // El control táctil (arrastrar el dedo) tiene prioridad sobre el teclado
-    // mientras el jugador tenga un dedo apoyado en su mitad de la pantalla.
-    if (p1.touchY !== null) {
-        p1.y = p1.touchY;
-    } else {
-        if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
-        else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
-        else p1.dy = 0;
-        p1.y += p1.dy;
-    }
+    if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
+    else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
+    else p1.dy = 0;
+    p1.y += p1.dy;
 
     // --- Movimiento Jugador 2 / CPU ---
     if (gameMode === 'local') {
-        if (p2.touchY !== null) {
-            p2.y = p2.touchY;
-        } else {
-            if (isActionPressed('p2Up')) p2.dy = -paddleSpeed;
-            else if (isActionPressed('p2Down')) p2.dy = paddleSpeed;
-            else p2.dy = 0;
-            p2.y += p2.dy;
-        }
+        if (isActionPressed('p2Up')) p2.dy = -paddleSpeed;
+        else if (isActionPressed('p2Down')) p2.dy = paddleSpeed;
+        else p2.dy = 0;
+        p2.y += p2.dy;
     } else {
         let aiSpeed = paddleSpeed, errorMargin = 0;
         if (settings.difficulty === 1) { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
@@ -441,4 +424,3 @@ function gameLoop(timestamp) {
         animationFrameId = requestAnimationFrame(gameLoop);
     }
 }
-

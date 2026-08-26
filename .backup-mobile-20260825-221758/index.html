@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Pong Game — Edición Arcade</title>
     <meta name="description" content="Un clásico juego de Pong con estética retro CRT, temas de color personalizables, teclas reasignables y modo VS CPU o Local a 2 jugadores.">
     <meta name="theme-color" content="#05070a">
@@ -198,30 +198,8 @@
 
     <!-- ============================== CANVAS DEL JUEGO ============================== -->
     <div id="game-container" class="hidden w-full h-full flex-col justify-center items-center p-4 gap-3">
-        <!-- Aviso de "gira tu dispositivo": solo aparece en pantallas táctiles en vertical -->
-        <div id="orientation-hint">
-            <span>💡 Gira tu dispositivo para una mejor experiencia</span>
-            <button type="button" id="orientation-hint-close" aria-label="Cerrar aviso">✕</button>
-        </div>
-
         <span id="mode-badge" class="mode-badge">VS CPU</span>
-
-        <div id="canvas-wrapper">
-            <canvas id="pongCanvas"></canvas>
-
-            <!-- Indicaciones de control táctil: se ocultan tras el primer toque -->
-            <div id="touch-hint-left" class="touch-hint touch-hint--left">
-                <span>↕</span>
-                <p>TOCA Y ARRASTRA</p>
-            </div>
-            <div id="touch-hint-right" class="touch-hint touch-hint--right">
-                <span>↕</span>
-                <p>TOCA Y ARRASTRA</p>
-            </div>
-
-            <!-- Botón de pausa en pantalla (necesario en móvil; también útil con mouse) -->
-            <button type="button" id="mobile-pause-btn" class="hidden" aria-label="Pausar">⏸</button>
-        </div>
+        <canvas id="pongCanvas"></canvas>
     </div>
 
     <!-- El orden de carga importa: config primero, ui al final -->
@@ -230,9 +208,7 @@
     <script src="js/audio.js"></script>
     <script src="js/input.js"></script>
     <script src="js/game.js"></script>
-    <script src="js/touch.js"></script>
     <script src="js/ui.js"></script>
 </body>
 
 </html>
-
