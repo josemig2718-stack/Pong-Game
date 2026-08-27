@@ -353,6 +353,48 @@ canvas {
 }
 #canvas-wrapper canvas { touch-action: none; }
 
+/* Contenedor de personajes Modo Hachepe */
+#hachepe-characters {
+    position: absolute;
+    bottom: 100%; /* Exactamente sobre el borde superior del canvas */
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Alinear abajo para que pisen el borde */
+    pointer-events: none; 
+    z-index: 5; 
+    margin-bottom: -3px; /* Para superponerse justo en el borde de 3px del canvas */
+}
+
+/* En caso de que se haya ocultado con .hidden en HTML, pero flex manda */
+#hachepe-characters.hidden {
+    display: none !important;
+}
+
+.hachepe-group {
+    display: flex;
+    gap: 5px; /* Reducido para que quepan mejor en celular */
+    align-items: flex-end;
+}
+
+.hachepe-group img {
+    height: 10vh; /* Altura responsiva basada en la pantalla */
+    max-height: 70px;
+    min-height: 35px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Escalado para móviles pequeños para que no se monten */
+@media (max-width: 600px) {
+    #hachepe-characters {
+        left: 0;
+        right: 0;
+    }
+    .hachepe-group { gap: 0px; }
+}
+
 /* Indicaciones de "toca y arrastra" que se muestran al iniciar la
    partida y desaparecen en cuanto el jugador correspondiente toca
    la pantalla por primera vez. Solo tienen sentido en dispositivos

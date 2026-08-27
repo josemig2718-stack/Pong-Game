@@ -74,18 +74,23 @@ function setSfxEnabled(enabled) {
 // =================================================================
 const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
 const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
+const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
 
 menuMusic.loop     = true;
 gameplayMusic.loop = true;
+hachepeMusic.loop  = true;
 
 // Aplica el volumen de música almacenado al iniciar
 menuMusic.volume     = settings.musicVolume / 100;
 gameplayMusic.volume = settings.musicVolume / 100;
+hachepeMusic.volume  = settings.musicVolume / 100;
 
 function playMenuMusic() {
     if (!settings.musicEnabled) return;
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
+    hachepeMusic.pause();
+    hachepeMusic.currentTime = 0;
     menuMusic.volume = settings.musicVolume / 100;
     menuMusic.play().catch(() => {});  // Silencia el autoplay-block
 }
@@ -95,17 +100,29 @@ function stopMenuMusic() {
     menuMusic.currentTime = 0;
 }
 
-function playGameplayMusic() {
+function playGameplayMusic(mode = 'cpu') {
     if (!settings.musicEnabled) return;
     menuMusic.pause();
     menuMusic.currentTime = 0;
-    gameplayMusic.volume = settings.musicVolume / 100;
-    gameplayMusic.play().catch(() => {});
+    
+    if (mode === 'hachepe') {
+        gameplayMusic.pause();
+        gameplayMusic.currentTime = 0;
+        hachepeMusic.volume = settings.musicVolume / 100;
+        hachepeMusic.play().catch(() => {});
+    } else {
+        hachepeMusic.pause();
+        hachepeMusic.currentTime = 0;
+        gameplayMusic.volume = settings.musicVolume / 100;
+        gameplayMusic.play().catch(() => {});
+    }
 }
 
 function stopGameplayMusic() {
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
+    hachepeMusic.pause();
+    hachepeMusic.currentTime = 0;
 }
 
 function stopAllMusic() {
@@ -117,6 +134,7 @@ function setMusicVolume(val) {
     settings.musicVolume = val;
     menuMusic.volume     = val / 100;
     gameplayMusic.volume = val / 100;
+    hachepeMusic.volume  = val / 100;
     saveSettings(settings);
 }
 

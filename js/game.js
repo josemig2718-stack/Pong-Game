@@ -149,8 +149,14 @@ function startGame(mode) {
     container.classList.remove('hidden');
     container.classList.add('flex');
 
-    document.getElementById('mode-badge').textContent = mode === 'cpu' ? 'VS CPU' : 'LOCAL · 2 JUGADORES';
+    document.getElementById('mode-badge').textContent = mode === 'cpu' ? 'VS CPU' : mode === 'hachepe' ? 'HACHEPE' : 'LOCAL · 2 JUGADORES';
     document.body.dataset.gameMode = mode;
+    
+    const hachepeChars = document.getElementById('hachepe-characters');
+    if (hachepeChars) {
+        if (mode === 'hachepe') hachepeChars.classList.remove('hidden');
+        else hachepeChars.classList.add('hidden');
+    }
 
     resizeCanvas();
     resetBall(true);
@@ -160,7 +166,7 @@ function startGame(mode) {
 
     // Música
     stopMenuMusic();
-    playGameplayMusic();
+    playGameplayMusic(mode);
 
     cancelAnimationFrame(animationFrameId);
     lastTimestamp = 0;
@@ -178,6 +184,9 @@ function quitGame() {
     // Música
     stopGameplayMusic();
     playMenuMusic();
+
+    const hachepeChars = document.getElementById('hachepe-characters');
+    if (hachepeChars) hachepeChars.classList.add('hidden');
 
     showScreen('main-menu');
 }
@@ -269,9 +278,14 @@ function update(dt) {
         }
     } else {
         let aiSpeed = paddleSpeed, errorMargin = 0;
-        if (settings.difficulty === 1)      { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
-        else if (settings.difficulty === 2) { aiSpeed = paddleSpeed * 0.65; errorMargin = 15; }
-        else                                { aiSpeed = paddleSpeed * 0.95; errorMargin = 0; }
+        if (gameMode === 'hachepe') {
+            aiSpeed = paddleSpeed * 1.5; // Super rápido
+            errorMargin = 0; // Sin margen de error
+        } else {
+            if (settings.difficulty === 1)      { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
+            else if (settings.difficulty === 2) { aiSpeed = paddleSpeed * 0.65; errorMargin = 15; }
+            else                                { aiSpeed = paddleSpeed * 0.95; errorMargin = 0; }
+        }
 
         const p2Center = p2.y + p2.height / 2;
         if (ball.dx > 0) {
@@ -373,7 +387,7 @@ function update(dt) {
 }
 
 function checkWin() {
-    const target = settings.winningScore;
+    const target = gameMode === 'hachepe' ? 10 : settings.winningScore;
     if (p1Score >= target || p2Score >= target) {
         isPlaying = false;
 
@@ -382,7 +396,7 @@ function checkWin() {
         const scoreText      = document.getElementById('final-score');
 
         const p1Won = p1Score >= target;
-        if (gameMode === 'cpu') {
+        if (gameMode === 'cpu' || gameMode === 'hachepe') {
             winnerText.textContent = p1Won ? '¡GANASTE!' : 'CPU GANA :(';
             p1Won ? soundEffects.win() : soundEffects.lose();
         } else {
@@ -396,6 +410,10 @@ function checkWin() {
         // Estadísticas y logros
         if (typeof statsOnGameEnd === 'function') {
             statsOnGameEnd(gameMode, p1Won, p1Score, p2Score);
+        }
+        
+        if (gameMode === 'hachepe' && p1Won && typeof unlockAchievement === 'function') {
+            unlockAchievement('beat_hachepe');
         }
 
         // Música

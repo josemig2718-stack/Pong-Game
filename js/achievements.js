@@ -36,7 +36,8 @@ const ACHIEVEMENTS = [
     { id: 'win_all_diff',   emoji: '🏆', name: 'Todoterreno',      desc: 'Gana al menos una vez en cada dificultad',  category: 'Especiales' },
     { id: 'comeback',       emoji: '🔄', name: 'Remontada',        desc: 'Gana tras ir perdiendo por 3+ puntos',      category: 'Especiales' },
     { id: 'speed_demon',    emoji: '🚀', name: 'Demonio Veloz',    desc: 'Alcanza la velocidad máxima de la bola',    category: 'Especiales' },
-    { id: 'explorer',       emoji: '🎨', name: 'Explorador',       desc: 'Prueba todos los temas de color',           category: 'Especiales' }
+    { id: 'explorer',       emoji: '🎨', name: 'Explorador',       desc: 'Prueba todos los temas de color',           category: 'Especiales' },
+    { id: 'beat_hachepe',   emoji: '👑', name: 'El Hachepe Definitivo', desc: 'Vence a la CPU en el Modo Hachepe', category: 'Especiales' }
 ];
 
 /** Cola de notificaciones de logros pendientes */

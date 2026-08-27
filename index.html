@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=8">
+    <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -36,6 +36,7 @@
 
         <div class="flex flex-col gap-6 w-64 md:w-96 text-center text-sm md:text-base">
             <button class="retro-button" onclick="startGame('cpu')">VS CPU</button>
+            <button class="retro-button" onclick="startGame('hachepe')" style="color: #facc15; border-color: #facc15; text-shadow: 0 0 10px rgba(250,204,21,0.5);">MODO HACHEPE</button>
             <button class="retro-button" onclick="startGame('local')">LOCAL (2 JUGADORES)</button>
             <button class="retro-button mt-8" style="border-style: dashed;" onclick="showScreen('main-menu')">VOLVER</button>
         </div>
@@ -135,7 +136,7 @@
         <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">LOGROS</h2>
 
         <div class="flex flex-col gap-6 w-full max-w-2xl px-4">
-            <p id="achievements-count" class="text-center text-xs opacity-70" style="font-family: var(--font-body)">0 / 20 desbloqueados</p>
+            <p id="achievements-count" class="text-center text-xs opacity-70" style="font-family: var(--font-body)">0 / 21 desbloqueados</p>
             <div id="achievements-grid" class="achievements-grid"></div>
         </div>
 
@@ -280,6 +281,20 @@
         <span id="mode-badge" class="mode-badge">VS CPU</span>
 
         <div id="canvas-wrapper">
+            <!-- Contenedor para los personajes del Modo Hachepe -->
+            <div id="hachepe-characters" class="hidden">
+                <div class="hachepe-group left">
+                    <img src="assets/images/hachepe1.png" alt="Personaje 1">
+                    <img src="assets/images/hachepe2.png" alt="Personaje 2">
+                    <img src="assets/images/hachepe3.png" alt="Personaje 3">
+                </div>
+                <div class="hachepe-group right">
+                    <img src="assets/images/hachepe4.png" alt="Personaje 4">
+                    <img src="assets/images/hachepe5.png" alt="Personaje 5">
+                    <img src="assets/images/hachepe6.png" alt="Personaje 6">
+                </div>
+            </div>
+
             <canvas id="pongCanvas"></canvas>
 
             <!-- Indicaciones de control táctil: se ocultan tras el primer toque -->
@@ -308,15 +323,15 @@
     </div>
 
     <!-- El orden de carga importa: config primero, ui al final -->
-    <script src="js/config.js?v=4"></script>
-    <script src="js/theme.js?v=4"></script>
-    <script src="js/audio.js?v=4"></script>
-    <script src="js/stats.js?v=4"></script>
-    <script src="js/achievements.js?v=4"></script>
-    <script src="js/input.js?v=4"></script>
-    <script src="js/game.js?v=4"></script>
-    <script src="js/touch.js?v=4"></script>
-    <script src="js/ui.js?v=4"></script>
+    <script src="js/config.js?v=10"></script>
+    <script src="js/theme.js?v=10"></script>
+    <script src="js/audio.js?v=10"></script>
+    <script src="js/stats.js?v=10"></script>
+    <script src="js/achievements.js?v=10"></script>
+    <script src="js/input.js?v=10"></script>
+    <script src="js/game.js?v=10"></script>
+    <script src="js/touch.js?v=10"></script>
+    <script src="js/ui.js?v=10"></script>
 </body>
 
 </html>
