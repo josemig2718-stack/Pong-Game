@@ -20,6 +20,9 @@ function applyTheme(themeKey) {
 
     settings.theme = themeKey;
     saveSettings(settings);
+
+    // Estadísticas: rastrear tema usado (logro Explorador)
+    if (typeof statsTrackTheme === 'function') statsTrackTheme(themeKey);
 }
 
 function currentThemeHex() {

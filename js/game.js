@@ -155,6 +155,9 @@ function startGame(mode) {
     resizeCanvas();
     resetBall(true);
 
+    // Estadísticas
+    if (typeof statsOnGameStart === 'function') statsOnGameStart();
+
     // Música
     stopMenuMusic();
     playGameplayMusic();
@@ -334,16 +337,21 @@ function update(dt) {
         soundEffects.paddleHit();
         spawnParticles(ball.x, ball.y, '#ffffff', 16);
         triggerShake(4, 100);
+
+        // Estadísticas: contar golpe para rally
+        if (typeof statsOnPaddleHit === 'function') statsOnPaddleHit();
     }
 
     // Puntuación
     if (ball.x - ball.radius < 0) {
         p2Score++;
+        if (typeof statsOnScore === 'function') statsOnScore(false);
         soundEffects.score();
         triggerShake(10, 260);
         if (!checkWin()) resetBall(false);
     } else if (ball.x + ball.radius > GAME_WIDTH) {
         p1Score++;
+        if (typeof statsOnScore === 'function') statsOnScore(true);
         soundEffects.score();
         triggerShake(10, 260);
         if (!checkWin()) resetBall(false);
@@ -384,6 +392,11 @@ function checkWin() {
 
         scoreText.textContent = `${p1Score} - ${p2Score}`;
         gameOverScreen.classList.add('active-screen');
+
+        // Estadísticas y logros
+        if (typeof statsOnGameEnd === 'function') {
+            statsOnGameEnd(gameMode, p1Won, p1Score, p2Score);
+        }
 
         // Música
         stopGameplayMusic();
@@ -590,5 +603,9 @@ function gameLoop(timestamp) {
 
     update(dt);
     render();
+
+    // Guardar tiempo jugado periódicamente (~cada 30s)
+    if (typeof statsFlushTime === 'function' && Math.random() < 0.001) statsFlushTime();
+
     animationFrameId = requestAnimationFrame(gameLoop);
 }

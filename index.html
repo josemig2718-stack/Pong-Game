@@ -22,6 +22,7 @@
         <div class="flex flex-col gap-6 w-64 md:w-80 text-sm md:text-base text-center">
             <button class="retro-button" onclick="showScreen('mode-select-menu')">JUGAR</button>
             <button class="retro-button" onclick="showScreen('controls-menu')">CONTROLES</button>
+            <button class="retro-button" onclick="showStatsScreen()">ESTADÍSTICAS</button>
             <button class="retro-button" onclick="showScreen('settings-menu')">CONFIGURACIÓN</button>
             <button class="retro-button retro-button--danger" onclick="closeGame()">SALIR</button>
         </div>
@@ -84,6 +85,60 @@
             <button class="key-btn" style="min-width: 220px; padding: 12px 20px;" onclick="resetBindings()">RESTAURAR TECLAS POR DEFECTO</button>
             <button class="retro-button text-sm" onclick="showScreen('main-menu')">VOLVER</button>
         </div>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
+    </div>
+
+    <!-- ============================== ESTADÍSTICAS Y LOGROS ============================== -->
+    <div id="stats-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">ESTADÍSTICAS</h2>
+
+        <!-- Tabs -->
+        <div class="stats-tabs">
+            <button id="stats-tab-btn" class="stats-tab-btn stats-tab-btn--active" onclick="switchStatsTab('stats')">ESTADÍSTICAS</button>
+            <button id="achievements-tab-btn" class="stats-tab-btn" onclick="switchStatsTab('achievements')">LOGROS</button>
+        </div>
+
+        <!-- Tab: Estadísticas -->
+        <div id="stats-tab-content" class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
+            <div class="panel">
+                <h3 class="stat-section-title">GENERAL</h3>
+                <div class="stat-row"><span>Partidas jugadas</span><span id="stat-total-games">0</span></div>
+                <div class="stat-row"><span>Tiempo total jugado</span><span id="stat-total-time">0s</span></div>
+                <div class="stat-row"><span>Puntos anotados</span><span id="stat-total-scored">0</span></div>
+                <div class="stat-row"><span>Puntos recibidos</span><span id="stat-total-conceded">0</span></div>
+            </div>
+
+            <div class="panel">
+                <h3 class="stat-section-title">VS CPU</h3>
+                <div class="stat-row"><span>Victorias / Derrotas</span><span id="stat-cpu-wins">0 / 0</span></div>
+                <div class="stat-row"><span>Tasa de victoria</span><span id="stat-cpu-winrate">0%</span></div>
+                <div class="stat-row"><span>Racha actual</span><span id="stat-cpu-streak">0</span></div>
+                <div class="stat-row"><span>Mejor racha</span><span id="stat-cpu-best">0</span></div>
+                <div class="stat-row"><span>Juegos perfectos</span><span id="stat-cpu-perfect">0</span></div>
+            </div>
+
+            <div class="panel">
+                <h3 class="stat-section-title">LOCAL</h3>
+                <div class="stat-row"><span>Partidas jugadas</span><span id="stat-local-games">0</span></div>
+                <div class="stat-row"><span>Victorias J1 / J2</span><span id="stat-local-wins">0 / 0</span></div>
+            </div>
+
+            <div class="panel">
+                <h3 class="stat-section-title">RÉCORDS</h3>
+                <div class="stat-row"><span>Rally más largo</span><span id="stat-longest-rally">0 golpes</span></div>
+                <div class="stat-row"><span>Mayor velocidad bola</span><span id="stat-max-speed">—</span></div>
+            </div>
+
+            <button class="key-btn self-center" style="padding: 10px 24px;" onclick="confirmResetStats()">BORRAR ESTADÍSTICAS</button>
+        </div>
+
+        <!-- Tab: Logros -->
+        <div id="achievements-tab-content" class="hidden flex flex-col gap-6 w-full max-w-2xl px-4">
+            <p id="achievements-count" class="text-center text-xs opacity-70" style="font-family: var(--font-body)">0 / 20 desbloqueados</p>
+            <div id="achievements-grid" class="achievements-grid"></div>
+        </div>
+
+        <button class="retro-button w-64 settings-back-btn" onclick="showScreen('main-menu')">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -241,10 +296,22 @@
         </div>
     </div>
 
+    <!-- ============================== TOAST DE LOGRO ============================== -->
+    <div id="achievement-toast" class="achievement-toast achievement-toast--hidden">
+        <span class="achievement-toast__emoji">🏓</span>
+        <div class="achievement-toast__text">
+            <span class="achievement-toast__title">¡LOGRO DESBLOQUEADO!</span>
+            <span class="achievement-toast__name">Primer Victoria</span>
+            <span class="achievement-toast__desc">Gana tu primera partida</span>
+        </div>
+    </div>
+
     <!-- El orden de carga importa: config primero, ui al final -->
     <script src="js/config.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/audio.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/achievements.js"></script>
     <script src="js/input.js"></script>
     <script src="js/game.js"></script>
     <script src="js/touch.js"></script>

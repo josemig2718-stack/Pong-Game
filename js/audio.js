@@ -52,6 +52,9 @@ const soundEffects = {
     },
     lose:       () => {
         [400, 300, 200].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.25), i * 150));
+    },
+    achievementUnlock: () => {
+        [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.18), i * 80));
     }
 };
 
