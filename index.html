@@ -9,13 +9,13 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
 
     <!-- ============================== MENÚ PRINCIPAL ============================== -->
-    <div id="main-menu" class="screen active-screen z-20">
+    <div id="main-menu" class="screen active-screen z-20 relative">
         <h1 class="title-glow text-5xl md:text-8xl font-bold mb-4 text-center tracking-widest">PONG</h1>
         <p class="mb-14 text-[10px] md:text-xs tracking-[6px] text-white/50">EDICIÓN ARCADE</p>
 
@@ -23,6 +23,7 @@
             <button class="retro-button" onclick="showScreen('mode-select-menu')">JUGAR</button>
             <button class="retro-button" onclick="showScreen('controls-menu')">CONTROLES</button>
             <button class="retro-button" onclick="showStatsScreen()">ESTADÍSTICAS</button>
+            <button class="retro-button" onclick="showAchievementsScreen()">LOGROS</button>
             <button class="retro-button" onclick="showScreen('settings-menu')">CONFIGURACIÓN</button>
             <button class="retro-button retro-button--danger" onclick="closeGame()">SALIR</button>
         </div>
@@ -88,18 +89,11 @@
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
-    <!-- ============================== ESTADÍSTICAS Y LOGROS ============================== -->
+    <!-- ============================== ESTADÍSTICAS ============================== -->
     <div id="stats-menu" class="screen z-20">
         <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">ESTADÍSTICAS</h2>
 
-        <!-- Tabs -->
-        <div class="stats-tabs">
-            <button id="stats-tab-btn" class="stats-tab-btn stats-tab-btn--active" onclick="switchStatsTab('stats')">ESTADÍSTICAS</button>
-            <button id="achievements-tab-btn" class="stats-tab-btn" onclick="switchStatsTab('achievements')">LOGROS</button>
-        </div>
-
-        <!-- Tab: Estadísticas -->
-        <div id="stats-tab-content" class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
+        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
             <div class="panel">
                 <h3 class="stat-section-title">GENERAL</h3>
                 <div class="stat-row"><span>Partidas jugadas</span><span id="stat-total-games">0</span></div>
@@ -132,13 +126,20 @@
             <button class="key-btn self-center" style="padding: 10px 24px;" onclick="confirmResetStats()">BORRAR ESTADÍSTICAS</button>
         </div>
 
-        <!-- Tab: Logros -->
-        <div id="achievements-tab-content" class="hidden flex flex-col gap-6 w-full max-w-2xl px-4">
+        <button class="retro-button w-64 settings-back-btn mt-6" onclick="showScreen('main-menu')">VOLVER</button>
+        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
+    </div>
+
+    <!-- ============================== LOGROS ============================== -->
+    <div id="achievements-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">LOGROS</h2>
+
+        <div class="flex flex-col gap-6 w-full max-w-2xl px-4">
             <p id="achievements-count" class="text-center text-xs opacity-70" style="font-family: var(--font-body)">0 / 20 desbloqueados</p>
             <div id="achievements-grid" class="achievements-grid"></div>
         </div>
 
-        <button class="retro-button w-64 settings-back-btn" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn mt-6" onclick="showScreen('main-menu')">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -307,15 +308,15 @@
     </div>
 
     <!-- El orden de carga importa: config primero, ui al final -->
-    <script src="js/config.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/stats.js"></script>
-    <script src="js/achievements.js"></script>
-    <script src="js/input.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/touch.js"></script>
-    <script src="js/ui.js"></script>
+    <script src="js/config.js?v=4"></script>
+    <script src="js/theme.js?v=4"></script>
+    <script src="js/audio.js?v=4"></script>
+    <script src="js/stats.js?v=4"></script>
+    <script src="js/achievements.js?v=4"></script>
+    <script src="js/input.js?v=4"></script>
+    <script src="js/game.js?v=4"></script>
+    <script src="js/touch.js?v=4"></script>
+    <script src="js/ui.js?v=4"></script>
 </body>
 
 </html>

@@ -197,32 +197,16 @@ function formatAchievementDate(date) {
     return `✅ ${d}/${m}/${y}`;
 }
 
-/** Alterna entre las pestañas de estadísticas y logros */
-function switchStatsTab(tab) {
-    const statsTab   = document.getElementById('stats-tab-content');
-    const achTab     = document.getElementById('achievements-tab-content');
-    const statsBtn   = document.getElementById('stats-tab-btn');
-    const achBtn     = document.getElementById('achievements-tab-btn');
-
-    if (tab === 'stats') {
-        statsTab.classList.remove('hidden');
-        achTab.classList.add('hidden');
-        statsBtn.classList.add('stats-tab-btn--active');
-        achBtn.classList.remove('stats-tab-btn--active');
-        populateStatsScreen();
-    } else {
-        statsTab.classList.add('hidden');
-        achTab.classList.remove('hidden');
-        achBtn.classList.add('stats-tab-btn--active');
-        statsBtn.classList.remove('stats-tab-btn--active');
-        populateAchievementsGrid();
-    }
-}
-
 /** Muestra la pantalla de stats y carga los datos */
 function showStatsScreen() {
     showScreen('stats-menu');
-    switchStatsTab('stats');
+    populateStatsScreen();
+}
+
+/** Muestra la pantalla de logros y carga los datos */
+function showAchievementsScreen() {
+    showScreen('achievements-menu');
+    populateAchievementsGrid();
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */
