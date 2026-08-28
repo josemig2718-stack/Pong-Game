@@ -37,7 +37,15 @@ const ACHIEVEMENTS = [
     { id: 'comeback',       emoji: '🔄', name: 'Remontada',        desc: 'Gana tras ir perdiendo por 3+ puntos',      category: 'Especiales' },
     { id: 'speed_demon',    emoji: '🚀', name: 'Demonio Veloz',    desc: 'Alcanza la velocidad máxima de la bola',    category: 'Especiales' },
     { id: 'explorer',       emoji: '🎨', name: 'Explorador',       desc: 'Prueba todos los temas de color',           category: 'Especiales' },
-    { id: 'beat_hachepe',   emoji: '👑', name: 'El Hachepe Definitivo', desc: 'Vence a la CPU en el Modo Hachepe', category: 'Especiales' }
+    { id: 'beat_hachepe',   emoji: '👑', name: 'El Hachepe Definitivo', desc: 'Vence a la CPU en el Modo Hachepe', category: 'Especiales' },
+
+    // 🎁 Expansión (Power-ups & Tienda)
+    { id: 'powerup_collector', emoji: '🧲', name: 'Coleccionista',     desc: 'Recoge 50 power-ups en total',              category: 'Veteranía' },
+    { id: 'no_powerups_win',   emoji: '🚫', name: 'Sin Ayuda',         desc: 'Gana una partida sin recoger power-ups',    category: 'Habilidad' },
+    { id: 'reach_level_5',     emoji: '🎖️', name: 'Rango Experto',     desc: 'Alcanza el nivel 5',                        category: 'Veteranía' },
+    { id: 'reach_level_10',    emoji: '👑', name: 'Leyenda Definitiva',desc: 'Alcanza el nivel 10',                       category: 'Especiales' },
+    { id: 'fashionista',       emoji: '💎', name: 'Fashionista',       desc: 'Compra todos los items de la tienda',       category: 'Especiales' },
+    { id: 'grow_partner',      emoji: '🛒', name: 'Grow Partner',      desc: 'Compra tu primer objeto en la tienda',      category: 'Especiales' }
 ];
 
 /** Cola de notificaciones de logros pendientes */
@@ -154,6 +162,16 @@ function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
     // Explorador: todos los temas probados
     if (s.themesUsed.length >= Object.keys(THEMES).length) {
         unlockAchievement('explorer');
+    }
+
+    // --- Nuevos (Power-ups) ---
+    if (s.totalPowerupsCollected >= 50) {
+        unlockAchievement('powerup_collector');
+    }
+    
+    // Sin ayuda (si ganó y no recogió power-ups en esta partida)
+    if (p1Won && typeof powerupsThisGame !== 'undefined' && powerupsThisGame === 0) {
+        unlockAchievement('no_powerups_win');
     }
 }
 

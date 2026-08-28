@@ -3,9 +3,7 @@
  * ------------------------------------------------------------------
  * Estado del juego, física con delta-time, bucle principal y
  * renderizado en <canvas>.
- * Incluye mejoras visuales: bola redonda con estela, partículas al
- * golpear, vibración de pantalla al anotar, cuenta regresiva de 4s
- * con previsualización de trayectoria, y control con mouse.
+ * Soporta multi-bola, power-ups, VFX y sistema de progresión.
  * ------------------------------------------------------------------
  */
 
@@ -17,47 +15,55 @@ let lastTimestamp = 0;
 
 // --- Estado general ---
 let isPlaying = false;
-let isPaused  = false;
-let gameMode  = 'cpu'; // 'cpu' | 'local'
-let p1Score   = 0;
-let p2Score   = 0;
+let isPaused = false;
+let gameMode = 'cpu'; // 'cpu' | 'local' | 'hachepe'
+let p1Score = 0;
+let p2Score = 0;
 let frameCount = 0;
 
 // Cuenta regresiva antes de que la bola empiece a moverse (en milisegundos).
 // 0 = bola en juego.
-let serveCountdownMs  = 0;
-const SERVE_INITIAL   = 4000;  // 4 segundos al iniciar partida
-const SERVE_AFTER_GOAL = 4000; // 4 segundos tras cada punto
+let serveCountdownMs = 0;
+const SERVE_INITIAL = 3000;  // 4 segundos al iniciar partida
+const SERVE_AFTER_GOAL = 3000; // 4 segundos tras cada punto
 
 // Para los sonidos de cuenta regresiva: rastrear el último "segundo" que sonó
 let lastCountdownSec = 0;
 
 // Vibración de pantalla al anotar
-let shakeFrames    = 0;
+let shakeFrames = 0;
 let shakeIntensity = 0;
-let shakeTimeMs    = 0;  // tiempo restante de vibración en ms
+let shakeTimeMs = 0;  // tiempo restante de vibración en ms
 
-// Estela de la bola (para dar sensación de velocidad)
-const ballTrail = [];
-const MAX_TRAIL = 10;
+// --- Multi-bola ---
+// Array principal de bolas. ball es alias de balls[0] para compatibilidad.
+const MAX_TRAIL = 25;
+let balls = [];
+let ball = null; // alias de balls[0], se actualiza en resetBall/startGame
 
 // Partículas de impacto
 let particles = [];
 
-const paddleWidth  = 15;
+const paddleWidth = 15;
 const paddleHeight = 100;
-const paddleSpeed  = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
-const ballRadius   = 9;
+const paddleSpeed = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
+const ballRadius = 9;
 
 const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
 
-// `touchY` es la posición (coordenadas internas del canvas) que un dedo está
-// pidiendo para esa paleta. Mientras no sea null, tiene prioridad sobre el
-// teclado (ver update()). La asigna/limpia js/touch.js y el mouse.
 const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 
-const ball = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2, radius: ballRadius, speed: 7, dx: 7, dy: 7 };
+// Función auxiliar para crear una bola
+function createBall(x, y, speed, dx, dy) {
+    return {
+        x: x, y: y,
+        radius: ballRadius,
+        speed: speed,
+        dx: dx, dy: dy,
+        trail: []
+    };
+}
 
 // --- Control con mouse ---
 let mouseActive = false; // true mientras el mouse está sobre el canvas
@@ -65,7 +71,6 @@ let mouseActive = false; // true mientras el mouse está sobre el canvas
 canvas.addEventListener('mouseenter', () => { mouseActive = true; });
 canvas.addEventListener('mouseleave', () => {
     mouseActive = false;
-    // No limpiar touchY al salir: la paleta se queda donde estaba
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -84,37 +89,31 @@ function clearMouseControl() {
 }
 
 // --- Ajuste de tamaño manteniendo proporción 4:3 ---
-// Usa window.innerWidth/innerHeight para evitar que el canvas crezca
-// acumulativamente al cambiar el tamaño de la ventana o usar F11.
 function resizeCanvas() {
     const wrapper = document.getElementById('canvas-wrapper');
     const container = document.getElementById('game-container');
     const targetRatio = GAME_WIDTH / GAME_HEIGHT;
 
-    // Usar el viewport como referencia, no el contenedor (evita crecimiento acumulativo)
     const maxW = window.innerWidth - 32;
-    const maxH = window.innerHeight - 100; // margen para badge y padding
+    const maxH = window.innerHeight - 100;
     const viewportRatio = maxW / maxH;
 
     let drawWidth, drawHeight;
     if (viewportRatio > targetRatio) {
         drawHeight = maxH;
-        drawWidth  = drawHeight * targetRatio;
+        drawWidth = drawHeight * targetRatio;
     } else {
-        drawWidth  = maxW;
+        drawWidth = maxW;
         drawHeight = drawWidth / targetRatio;
     }
 
-    // Dimensiones lógicas internas (siempre fijas)
-    canvas.width  = GAME_WIDTH;
+    canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
 
-    // Tamaño de visualización en pantalla
-    canvas.style.width  = `${drawWidth}px`;
+    canvas.style.width = `${drawWidth}px`;
     canvas.style.height = `${drawHeight}px`;
 
-    // Limitar el wrapper también para evitar desbordamientos
-    wrapper.style.maxWidth  = `${drawWidth}px`;
+    wrapper.style.maxWidth = `${drawWidth}px`;
     wrapper.style.maxHeight = `${drawHeight}px`;
 }
 window.addEventListener('resize', resizeCanvas);
@@ -124,13 +123,15 @@ function startGame(mode) {
     getAudioContext();
 
     gameMode = mode;
-    p1Score  = 0;
-    p2Score  = 0;
+    p1Score = 0;
+    p2Score = 0;
     particles = [];
-    ballTrail.length = 0;
+
+    // Restaurar tamaño original de paletas (por si un power-up las alteró)
+    p1.height = paddleHeight;
+    p2.height = paddleHeight;
 
     const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
-    ball.speed = speedPreset.base;
 
     p1.y = GAME_HEIGHT / 2 - p1.height / 2;
     p2.y = GAME_HEIGHT / 2 - p2.height / 2;
@@ -141,7 +142,7 @@ function startGame(mode) {
     if (typeof resetTouchHints === 'function') resetTouchHints();
 
     isPlaying = true;
-    isPaused  = false;
+    isPaused = false;
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
 
@@ -151,7 +152,7 @@ function startGame(mode) {
 
     document.getElementById('mode-badge').textContent = mode === 'cpu' ? 'VS CPU' : mode === 'hachepe' ? 'HACHEPE' : 'LOCAL · 2 JUGADORES';
     document.body.dataset.gameMode = mode;
-    
+
     const hachepeChars = document.getElementById('hachepe-characters');
     if (hachepeChars) {
         if (mode === 'hachepe') hachepeChars.classList.remove('hidden');
@@ -161,8 +162,17 @@ function startGame(mode) {
     resizeCanvas();
     resetBall(true);
 
+    // Inicializar power-ups
+    if (typeof initPowerups === 'function') initPowerups();
+
+    // Inicializar VFX
+    if (typeof initVFX === 'function') initVFX();
+
     // Estadísticas
     if (typeof statsOnGameStart === 'function') statsOnGameStart();
+
+    // Progresión: resetear trackers de sesión
+    if (typeof resetSessionTrackers === 'function') resetSessionTrackers();
 
     // Música
     stopMenuMusic();
@@ -180,6 +190,10 @@ function restartCurrentGame() {
 function quitGame() {
     isPlaying = false;
     cancelAnimationFrame(animationFrameId);
+
+    // Restaurar paletas
+    p1.height = paddleHeight;
+    p2.height = paddleHeight;
 
     // Música
     stopGameplayMusic();
@@ -205,21 +219,46 @@ function togglePause() {
 }
 
 function resetBall(initialServe = false) {
-    ball.x = GAME_WIDTH / 2;
-    ball.y = GAME_HEIGHT / 2;
     const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
-    ball.speed = speedPreset.base;
-    ballTrail.length = 0;
-
     const dir = Math.random() > 0.5 ? 1 : -1;
-    ball.dx = dir * ball.speed;
-    let dy = (Math.random() * 2 - 1) * ball.speed;
+    const speed = speedPreset.base;
+    let dy = (Math.random() * 2 - 1) * speed;
     if (Math.abs(dy) < 2) dy = dy < 0 ? -2 : 2;
-    ball.dy = dy;
+
+    const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dir * speed, dy);
+    balls = [newBall];
+    ball = balls[0];
 
     // Congela la bola en el centro durante la cuenta regresiva
     serveCountdownMs = initialServe ? SERVE_INITIAL : SERVE_AFTER_GOAL;
-    lastCountdownSec = Math.ceil(serveCountdownMs / 1000) + 1; // forzar primer sonido
+    lastCountdownSec = Math.ceil(serveCountdownMs / 1000) + 1;
+    
+    // Mantener power-ups persistentes (ej. bola gigante)
+    if (typeof enforcePowerups === 'function') enforcePowerups();
+}
+
+/** Función para generar bolas extra (Multi-Bola power-up) */
+function spawnExtraBalls() {
+    if (balls.length === 0) return;
+    const source = balls[0];
+    const count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar
+
+    if (typeof soundEffects !== 'undefined' && soundEffects.multiBallSplit) soundEffects.multiBallSplit();
+
+    for (let i = 0; i < count; i++) {
+        const angleOffset = (Math.PI / 6) * (i + 1) * (Math.random() > 0.5 ? 1 : -1);
+        const speed = source.speed;
+        const origAngle = Math.atan2(source.dy, source.dx);
+        const newAngle = origAngle + angleOffset;
+
+        const extra = createBall(
+            source.x, source.y, speed,
+            speed * Math.cos(newAngle),
+            speed * Math.sin(newAngle)
+        );
+        extra.radius = source.radius; // Respetar bola gigante si está activa
+        balls.push(extra);
+    }
 }
 
 // --- Colisiones (AABB circulo-rectangulo simplificado) ---
@@ -245,22 +284,25 @@ function spawnParticles(x, y, color, count = 14) {
 function triggerShake(intensity = 8, durationMs = 200) {
     if (!settings.screenShake) return;
     shakeIntensity = intensity;
-    shakeTimeMs    = durationMs;
+    shakeTimeMs = durationMs;
 }
 
 // --- Actualización con delta-time ---
-// dt = 1.0 equivale a un frame perfecto de 60 FPS (16.67ms).
-// Todos los movimientos se multiplican por dt para ser frame-rate-independientes.
 function update(dt) {
-    const speedPreset  = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
+    // Aplicar slowmo de power-ups y VFX de gol
+    let slowmo = 1.0;
+    if (typeof getSlowmoMultiplier === 'function') slowmo = Math.min(slowmo, getSlowmoMultiplier());
+    if (typeof getGoalSlowmo === 'function') slowmo = Math.min(slowmo, getGoalSlowmo());
+    dt *= slowmo;
+
+    const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
     const maxBallSpeed = speedPreset.max;
 
     // --- Movimiento Jugador 1 ---
-    // El control táctil/mouse tiene prioridad sobre el teclado.
     if (p1.touchY !== null) {
         p1.y = p1.touchY;
     } else {
-        if (isActionPressed('p1Up'))        p1.dy = -paddleSpeed;
+        if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
         else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
         else p1.dy = 0;
         p1.y += p1.dy * dt;
@@ -271,7 +313,7 @@ function update(dt) {
         if (p2.touchY !== null) {
             p2.y = p2.touchY;
         } else {
-            if (isActionPressed('p2Up'))        p2.dy = -paddleSpeed;
+            if (isActionPressed('p2Up')) p2.dy = -paddleSpeed;
             else if (isActionPressed('p2Down')) p2.dy = paddleSpeed;
             else p2.dy = 0;
             p2.y += p2.dy * dt;
@@ -279,20 +321,31 @@ function update(dt) {
     } else {
         let aiSpeed = paddleSpeed, errorMargin = 0;
         if (gameMode === 'hachepe') {
-            aiSpeed = paddleSpeed * 1.5; // Super rápido
-            errorMargin = 0; // Sin margen de error
+            aiSpeed = paddleSpeed * 1.5;
+            errorMargin = 0;
         } else {
-            if (settings.difficulty === 1)      { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
+            if (settings.difficulty === 1) { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
             else if (settings.difficulty === 2) { aiSpeed = paddleSpeed * 0.65; errorMargin = 15; }
-            else                                { aiSpeed = paddleSpeed * 0.95; errorMargin = 0; }
+            else { aiSpeed = paddleSpeed * 0.95; errorMargin = 0; }
         }
 
+        // La CPU persigue la bola más cercana que vaya hacia ella
+        let targetBall = balls[0];
+        let closestDist = Infinity;
+        for (const b of balls) {
+            if (b.dx > 0) { // va hacia la CPU
+                const dist = Math.abs(b.x - p2.x);
+                if (dist < closestDist) { closestDist = dist; targetBall = b; }
+            }
+        }
+        if (!targetBall) targetBall = balls[0];
+
         const p2Center = p2.y + p2.height / 2;
-        if (ball.dx > 0) {
-            if (p2Center < ball.y - errorMargin)      p2.y += aiSpeed * dt;
-            else if (p2Center > ball.y + errorMargin)  p2.y -= aiSpeed * dt;
+        if (targetBall && targetBall.dx > 0) {
+            if (p2Center < targetBall.y - errorMargin) p2.y += aiSpeed * dt;
+            else if (p2Center > targetBall.y + errorMargin) p2.y -= aiSpeed * dt;
         } else {
-            if (p2Center < GAME_HEIGHT / 2 - 5)      p2.y += aiSpeed * 0.5 * dt;
+            if (p2Center < GAME_HEIGHT / 2 - 5) p2.y += aiSpeed * 0.5 * dt;
             else if (p2Center > GAME_HEIGHT / 2 + 5) p2.y -= aiSpeed * 0.5 * dt;
         }
     }
@@ -304,72 +357,125 @@ function update(dt) {
     // --- Cuenta regresiva de saque ---
     if (serveCountdownMs > 0) {
         const prevSec = Math.ceil(serveCountdownMs / 1000);
-        serveCountdownMs -= dt * (1000 / 60); // convertir dt a ms
+        serveCountdownMs -= dt * (1000 / 60);
         if (serveCountdownMs < 0) serveCountdownMs = 0;
         const curSec = Math.ceil(serveCountdownMs / 1000);
 
-        // Sonido de cuenta regresiva en cada segundo
         if (curSec !== prevSec && curSec > 0 && curSec <= 4) {
             soundEffects.countdown();
         }
         if (serveCountdownMs <= 0) {
             soundEffects.go();
         }
+
+        // Actualizar VFX y power-ups durante countdown (fondos animados)
+        if (typeof updateVFX === 'function') updateVFX(dt);
+
         return; // No mover la bola durante la cuenta regresiva
     }
 
-    // Estela de la bola
-    ballTrail.push({ x: ball.x, y: ball.y });
-    if (ballTrail.length > MAX_TRAIL) ballTrail.shift();
+    // --- Actualizar todas las bolas ---
+    const ballsToRemove = [];
 
-    // Mover bola (delta-time)
-    ball.x += ball.dx * dt;
-    ball.y += ball.dy * dt;
+    for (let bi = 0; bi < balls.length; bi++) {
+        const b = balls[bi];
 
-    // Rebote en paredes
-    if (ball.y - ball.radius < 0 || ball.y + ball.radius > GAME_HEIGHT) {
-        ball.dy = -ball.dy;
-        ball.y  = Math.max(ball.radius, Math.min(GAME_HEIGHT - ball.radius, ball.y));
-        soundEffects.wallHit();
-        spawnParticles(ball.x, ball.y, currentThemeHex(), 6);
+        // Estela
+        b.trail.push({ x: b.x, y: b.y });
+        if (b.trail.length > MAX_TRAIL) b.trail.shift();
+
+        // Mover bola
+        b.x += b.dx * dt;
+        b.y += b.dy * dt;
+
+        // Rebote en paredes superior/inferior
+        if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
+            b.dy = -b.dy;
+            b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
+            soundEffects.wallHit();
+            spawnParticles(b.x, b.y, currentThemeHex(), 6);
+        }
+
+        // Colisión con paletas
+        const targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
+        if (collision(b, targetPaddle)) {
+            let collidePoint = (b.y - (targetPaddle.y + targetPaddle.height / 2)) / (targetPaddle.height / 2);
+            const angleRad = (Math.PI / 4) * collidePoint;
+            const direction = (b.x + b.radius < GAME_WIDTH / 2) ? 1 : -1;
+
+            b.dx = direction * b.speed * Math.cos(angleRad);
+            b.dy = b.speed * Math.sin(angleRad);
+            if (b.speed < maxBallSpeed) b.speed += 0.5;
+
+            b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
+
+            soundEffects.paddleHit();
+            spawnParticles(b.x, b.y, '#ffffff', 16);
+            triggerShake(4, 100);
+
+            // Registrar último golpeador para power-ups
+            if (typeof setLastHitter === 'function') {
+                setLastHitter(targetPaddle === p1 ? 'p1' : 'p2');
+            }
+
+            // Estadísticas: contar golpe para rally
+            if (typeof statsOnPaddleHit === 'function') statsOnPaddleHit();
+        }
+
+        // Puntuación (bola sale del campo)
+        if (b.x - b.radius < 0) {
+            // CPU/P2 anota
+            p2Score++;
+            if (typeof statsOnScore === 'function') statsOnScore(false);
+            soundEffects.score();
+            triggerShake(10, 260);
+            // VFX de gol
+            if (typeof triggerGoalVFX === 'function') triggerGoalVFX(0, b.y);
+
+            if (balls.length > 1) {
+                // Multi-bola: eliminar esta bola, no resetear
+                ballsToRemove.push(bi);
+                // Verificar si ya ganó
+                if (checkWin()) return;
+            } else {
+                // Última bola: comportamiento normal
+                if (!checkWin()) resetBall(false);
+            }
+        } else if (b.x + b.radius > GAME_WIDTH) {
+            // P1 anota
+            p1Score++;
+            if (typeof statsOnScore === 'function') statsOnScore(true);
+            soundEffects.score();
+            triggerShake(10, 260);
+            if (typeof triggerGoalVFX === 'function') triggerGoalVFX(GAME_WIDTH, b.y);
+
+            if (balls.length > 1) {
+                ballsToRemove.push(bi);
+                if (checkWin()) return;
+            } else {
+                if (!checkWin()) resetBall(false);
+            }
+        }
     }
 
-    // Colisión con paletas
-    const targetPaddle = (ball.x + ball.radius < GAME_WIDTH / 2) ? p1 : p2;
-    if (collision(ball, targetPaddle)) {
-        let collidePoint = (ball.y - (targetPaddle.y + targetPaddle.height / 2)) / (targetPaddle.height / 2);
-        const angleRad  = (Math.PI / 4) * collidePoint;
-        const direction = (ball.x + ball.radius < GAME_WIDTH / 2) ? 1 : -1;
-
-        ball.dx = direction * ball.speed * Math.cos(angleRad);
-        ball.dy = ball.speed * Math.sin(angleRad);
-        if (ball.speed < maxBallSpeed) ball.speed += 0.5;
-
-        // separa la bola del borde de la paleta para que no quede "pegada"
-        ball.x = direction === 1 ? targetPaddle.x + targetPaddle.width + ball.radius : targetPaddle.x - ball.radius;
-
-        soundEffects.paddleHit();
-        spawnParticles(ball.x, ball.y, '#ffffff', 16);
-        triggerShake(4, 100);
-
-        // Estadísticas: contar golpe para rally
-        if (typeof statsOnPaddleHit === 'function') statsOnPaddleHit();
+    // Eliminar bolas que salieron (de atrás hacia adelante para no alterar índices)
+    for (let i = ballsToRemove.length - 1; i >= 0; i--) {
+        balls.splice(ballsToRemove[i], 1);
     }
 
-    // Puntuación
-    if (ball.x - ball.radius < 0) {
-        p2Score++;
-        if (typeof statsOnScore === 'function') statsOnScore(false);
-        soundEffects.score();
-        triggerShake(10, 260);
-        if (!checkWin()) resetBall(false);
-    } else if (ball.x + ball.radius > GAME_WIDTH) {
-        p1Score++;
-        if (typeof statsOnScore === 'function') statsOnScore(true);
-        soundEffects.score();
-        triggerShake(10, 260);
-        if (!checkWin()) resetBall(false);
+    // Si no quedan bolas (todas salieron en multi-bola), resetear
+    if (balls.length === 0 && isPlaying) {
+        resetBall(false);
     }
+
+    // Mantener alias ball actualizado
+    ball = balls[0] || ball;
+
+    // Actualizar power-ups
+    if (typeof updatePowerups === 'function') updatePowerups(dt);
+
+    // Actualizar VFX (fondos, efectos de gol)
+    if (typeof updateVFX === 'function') updateVFX(dt);
 
     // Partículas: física simple + desvanecimiento (con dt)
     particles.forEach(p => {
@@ -392,8 +498,8 @@ function checkWin() {
         isPlaying = false;
 
         const gameOverScreen = document.getElementById('game-over-screen');
-        const winnerText     = document.getElementById('winner-text');
-        const scoreText      = document.getElementById('final-score');
+        const winnerText = document.getElementById('winner-text');
+        const scoreText = document.getElementById('final-score');
 
         const p1Won = p1Score >= target;
         if (gameMode === 'cpu' || gameMode === 'hachepe') {
@@ -411,10 +517,23 @@ function checkWin() {
         if (typeof statsOnGameEnd === 'function') {
             statsOnGameEnd(gameMode, p1Won, p1Score, p2Score);
         }
-        
+
         if (gameMode === 'hachepe' && p1Won && typeof unlockAchievement === 'function') {
             unlockAchievement('beat_hachepe');
         }
+
+        // Progresión: otorgar XP y Chemi Coins
+        if (typeof awardGameRewards === 'function') {
+            awardGameRewards(gameMode, p1Won, p1Score, p2Score);
+        }
+
+        // Actualizar displays de progresión
+        if (typeof updateCoinDisplay === 'function') updateCoinDisplay();
+        if (typeof updateProgressionDisplay === 'function') updateProgressionDisplay();
+
+        // Restaurar paletas por si un power-up las alteró
+        p1.height = paddleHeight;
+        p2.height = paddleHeight;
 
         // Música
         stopGameplayMusic();
@@ -451,13 +570,21 @@ function drawNet(color) {
 }
 
 function drawBallTrail(color) {
-    ballTrail.forEach((pos, i) => {
-        const alpha = (i / ballTrail.length) * 0.35;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, ball.radius * (i / ballTrail.length), 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(color, alpha);
-        ctx.fill();
-    });
+    // Si hay VFX de estela disponible, usarlo
+    for (const b of balls) {
+        if (typeof renderBallTrail === 'function') {
+            renderBallTrail(ctx, b.trail, b.radius);
+        } else {
+            // Fallback: estela clásica
+            b.trail.forEach((pos, i) => {
+                const alpha = (i / b.trail.length) * 0.35;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, b.radius * (i / b.trail.length), 0, Math.PI * 2);
+                ctx.fillStyle = hexToRgba(color, alpha);
+                ctx.fill();
+            });
+        }
+    }
 }
 
 function drawParticles() {
@@ -476,45 +603,39 @@ function hexToRgba(hex, alpha) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/**
- * Dibuja una previsualización de la trayectoria de la bola durante
- * la cuenta regresiva. Simula rebotes contra paredes superior/inferior
- * y dibuja una línea punteada con el recorrido que tomará la bola.
- */
 function drawTrajectoryPreview(themeColor) {
-    const previewLength = 280; // longitud total del recorrido a previsualizar
-    const segmentLen    = 10;  // longitud de cada segmento del punteado
-    const gapLen        = 8;   // espacio entre segmentos
+    if (balls.length === 0) return;
+    const b = balls[0];
+    const previewLength = 280;
+    const segmentLen = 10;
+    const gapLen = 8;
 
-    // Normalizar dirección
-    const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+    const speed = Math.sqrt(b.dx * b.dx + b.dy * b.dy);
     if (speed === 0) return;
-    let dirX = ball.dx / speed;
-    let dirY = ball.dy / speed;
+    let dirX = b.dx / speed;
+    let dirY = b.dy / speed;
 
-    let curX = ball.x;
-    let curY = ball.y;
+    let curX = b.x;
+    let curY = b.y;
     let distLeft = previewLength;
 
-    // Parpadeo sutil
     const pulse = 0.4 + 0.3 * Math.sin(performance.now() / 200);
 
     ctx.save();
     ctx.strokeStyle = hexToRgba(themeColor, pulse);
-    ctx.lineWidth   = 2;
+    ctx.lineWidth = 2;
     ctx.setLineDash([segmentLen, gapLen]);
     ctx.beginPath();
     ctx.moveTo(curX, curY);
 
     while (distLeft > 0) {
-        // Calcular distancia hasta la próxima pared (arriba o abajo)
         let distToWall;
         if (dirY < 0) {
-            distToWall = (curY - ball.radius) / (-dirY);
+            distToWall = (curY - b.radius) / (-dirY);
         } else if (dirY > 0) {
-            distToWall = (GAME_HEIGHT - ball.radius - curY) / dirY;
+            distToWall = (GAME_HEIGHT - b.radius - curY) / dirY;
         } else {
-            distToWall = distLeft; // horizontal puro
+            distToWall = distLeft;
         }
 
         if (distToWall <= 0) distToWall = distLeft;
@@ -526,7 +647,6 @@ function drawTrajectoryPreview(themeColor) {
 
         ctx.lineTo(curX, curY);
 
-        // Rebotar si tocó la pared y aún queda distancia
         if (distLeft > 0 && distToWall <= step + 0.01) {
             dirY = -dirY;
         }
@@ -547,8 +667,11 @@ function render() {
         ctx.translate(dx, dy);
     }
 
-    // Fondo
+    // Fondo negro base
     drawRect(-20, -20, GAME_WIDTH + 40, GAME_HEIGHT + 40, '#000');
+
+    // Fondo animado VFX (estrellas, lluvia, aurora)
+    if (typeof renderBackground === 'function') renderBackground(ctx);
 
     // Resplandor sutil detrás del centro
     const gradient = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 10, GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_HEIGHT / 1.3);
@@ -563,39 +686,50 @@ function render() {
     drawText(p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
     drawText(p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
 
-    // Estela + bola
+    // Estelas + bolas
     drawBallTrail(themeColor);
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-    ctx.fillStyle   = '#ffffff';
-    ctx.shadowColor = themeColor;
-    ctx.shadowBlur  = 18;
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    for (const b of balls) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = themeColor;
+        ctx.shadowBlur = 18;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
 
-    // Paletas con esquinas suaves y resplandor
-    ctx.shadowColor = themeColor;
-    ctx.shadowBlur  = 10;
-    drawRoundedRect(p1.x, p1.y, p1.width, p1.height, 4, '#ffffff');
-    drawRoundedRect(p2.x, p2.y, p2.width, p2.height, 4, '#ffffff');
-    ctx.shadowBlur = 0;
+    // Paletas
+    if (typeof renderPaddleVFX === 'function') {
+        renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, '#ffffff');
+        renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
+    } else {
+        ctx.shadowColor = themeColor;
+        ctx.shadowBlur = 10;
+        drawRoundedRect(p1.x, p1.y, p1.width, p1.height, 4, '#ffffff');
+        drawRoundedRect(p2.x, p2.y, p2.width, p2.height, 4, '#ffffff');
+        ctx.shadowBlur = 0;
+    }
+
+    // Power-ups
+    if (typeof renderPowerup === 'function') renderPowerup(ctx, themeColor);
+    if (typeof renderShield === 'function') renderShield(ctx, themeColor);
+    if (typeof renderActiveEffectHUD === 'function') renderActiveEffectHUD(ctx, GAME_WIDTH);
 
     drawParticles();
+
+    // Efectos de gol VFX (flash, confeti, shockwave)
+    if (typeof renderGoalVFX === 'function') renderGoalVFX(ctx);
 
     // Cuenta regresiva de saque + previsualización de trayectoria
     if (serveCountdownMs > 0) {
         const secs = Math.ceil(serveCountdownMs / 1000);
-
-        // Línea de trayectoria
         drawTrajectoryPreview(themeColor);
-
-        // Número de cuenta regresiva
         ctx.globalAlpha = 0.9;
         drawText(secs > 0 ? String(secs) : '¡YA!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
         ctx.globalAlpha = 1;
     }
 
-    // Efecto de líneas de escaneo (scanlines) sutil sobre el canvas
+    // Scanlines
     ctx.fillStyle = hexToRgba(themeColor, 0.03);
     for (let i = 0; i < GAME_HEIGHT; i += 4) {
         ctx.fillRect(0, i, GAME_WIDTH, 1);
@@ -605,19 +739,16 @@ function render() {
 }
 
 // --- Game Loop con delta-time ---
-// dt normalizado: dt = 1.0 ≈ frame perfecto de 60 FPS (16.67ms)
 function gameLoop(timestamp) {
     if (!isPlaying || isPaused) return;
 
     if (lastTimestamp === 0) lastTimestamp = timestamp;
     const elapsedMs = timestamp - lastTimestamp;
-    lastTimestamp    = timestamp;
+    lastTimestamp = timestamp;
 
-    // dt normalizado a 60 FPS. Limitar a max 3.0 para evitar saltos
-    // enormes si la pestaña se congela momentáneamente.
     let dt = elapsedMs / (1000 / 60);
     if (dt > 3) dt = 3;
-    if (dt <= 0) dt = 1; // primer frame o timestamp raro
+    if (dt <= 0) dt = 1;
 
     update(dt);
     render();

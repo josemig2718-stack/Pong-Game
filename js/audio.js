@@ -55,7 +55,19 @@ const soundEffects = {
     },
     achievementUnlock: () => {
         [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.18), i * 80));
-    }
+    },
+
+    // --- Power-ups ---
+    powerupSpawn:   () => { playTone(350, 'triangle', 0.12); setTimeout(() => playTone(500, 'triangle', 0.08), 80); },
+    powerupCollect: () => { [700, 900, 1100].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.1), i * 60)); },
+    powerupExpire:  () => { playTone(400, 'sawtooth', 0.1); setTimeout(() => playTone(300, 'sawtooth', 0.1), 80); },
+    multiBallSplit: () => { playTone(600, 'square', 0.06); setTimeout(() => playTone(800, 'square', 0.06), 50); setTimeout(() => playTone(600, 'square', 0.06), 100); },
+    shieldBlock:    () => playTone(200, 'square', 0.15),
+
+    // --- Progresión y Tienda ---
+    levelUp:   () => { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.25), i * 100)); },
+    coinEarned: () => playTone(1200, 'triangle', 0.06),
+    shopBuy:   () => { playTone(800, 'square', 0.08); setTimeout(() => playTone(1000, 'triangle', 0.12), 60); setTimeout(() => playTone(1200, 'triangle', 0.08), 120); }
 };
 
 function setMasterVolume(val) {

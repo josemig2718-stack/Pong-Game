@@ -37,6 +37,9 @@ const DEFAULT_STATS = {
     longestRally: 0,
     maxBallSpeed: 0,
 
+    // Power-ups
+    totalPowerupsCollected: 0,
+
     // Temas usados (para logro "Explorador")
     themesUsed: [],
 

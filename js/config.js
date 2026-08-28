@@ -65,6 +65,7 @@ const DEFAULT_SETTINGS = {
     crtEffect:    true,    // efecto de escaneo estilo monitor CRT
     screenShake:  true,
     mouseControl: false,   // controlar paleta con mouse
+    powerupsEnabled: true, // power-ups en partida
     bindings: { ...DEFAULT_BINDINGS }
 };
 

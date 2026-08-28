@@ -17,6 +17,8 @@ function showScreen(screenId) {
 
         // Música del menú principal
         playMenuMusic();
+    } else if (screenId === 'shop-menu') {
+        if (typeof showShopScreen === 'function') showShopScreen();
     }
     soundEffects.uiClick();
 }
@@ -121,11 +123,19 @@ function populateSettingsUI() {
     document.getElementById('music-volume-slider').value    = settings.musicVolume;
     document.getElementById('music-vol-display').textContent = `${settings.musicVolume}%`;
     document.getElementById('mouse-toggle').checked         = settings.mouseControl;
+    if (document.getElementById('powerups-toggle')) {
+        document.getElementById('powerups-toggle').checked = settings.powerupsEnabled;
+    }
     document.body.classList.toggle('crt-effect', settings.crtEffect);
 
     updateWinningScore(settings.winningScore);
     updateBallSpeed(settings.ballSpeed);
     refreshBindingButtons();
+}
+
+function togglePowerups(enabled) {
+    settings.powerupsEnabled = enabled;
+    saveSettings(settings);
 }
 
 // =====================================================================
@@ -207,6 +217,12 @@ function showStatsScreen() {
 function showAchievementsScreen() {
     showScreen('achievements-menu');
     populateAchievementsGrid();
+    
+    if (typeof getUnlockedCount === 'function') {
+        const unlocked = getUnlockedCount();
+        const total = ACHIEVEMENTS.length;
+        setText('achievements-count', `${unlocked} / ${total} desbloqueados`);
+    }
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */
@@ -224,10 +240,54 @@ function setText(id, text) {
     if (el) el.textContent = text;
 }
 
+/**
+ * Actualiza la UI de progresión (barra XP, nivel, y el panel de fin de partida)
+ */
+function updateProgressionDisplay() {
+    // 1. Menú principal
+    const titleEl = document.getElementById('menu-level-title');
+    const barEl = document.getElementById('menu-xp-bar');
+    
+    if (titleEl && typeof getCurrentLevel === 'function') {
+        const lvl = getCurrentLevel();
+        titleEl.textContent = `Nv. ${lvl.level} — ${lvl.title}`;
+    }
+    
+    if (barEl && typeof getXPProgress === 'function') {
+        const prog = getXPProgress();
+        barEl.style.width = `${prog.percentage}%`;
+    }
+
+    // 2. Pantalla de fin de partida
+    const gameOverProgression = document.getElementById('game-over-progression');
+    if (gameOverProgression && typeof sessionXPGained !== 'undefined') {
+        if (sessionXPGained > 0 || sessionCoinsGained > 0) {
+            gameOverProgression.classList.remove('hidden');
+            
+            document.getElementById('game-over-xp').textContent = `+${sessionXPGained} XP`;
+            document.getElementById('game-over-coins').innerHTML = `+${sessionCoinsGained} <img src="assets/chemi_coin.png" class="w-4 h-4 inline object-contain" style="vertical-align: text-top;">`;
+            
+            const alertEl = document.getElementById('level-up-alert');
+            if (sessionLeveledUp) {
+                alertEl.classList.remove('hidden');
+                document.getElementById('level-up-text').textContent = sessionNewTitle;
+            } else {
+                alertEl.classList.add('hidden');
+            }
+        } else {
+            gameOverProgression.classList.add('hidden');
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     buildThemeSwatches(document.getElementById('theme-swatches'));
     applyTheme(settings.theme);
     populateSettingsUI();
+    
+    if (typeof updateProgressionDisplay === 'function') updateProgressionDisplay();
+    if (typeof updateCoinDisplay === 'function') updateCoinDisplay();
+    
     showScreen('main-menu');
 
     document.querySelectorAll('[data-binding-action]').forEach(btn => {
