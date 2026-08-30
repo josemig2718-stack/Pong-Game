@@ -1,67 +1,90 @@
 # 🏓 Pong Game — Edición Arcade
 
-Un clásico juego de Pong para navegador, con estética retro de monitor CRT, temas de color personalizables, teclas reasignables y un modo VS CPU o Local a 2 jugadores.
+Un clásico juego de Pong para navegador, expandido masivamente en una experiencia arcade moderna. Cuenta con modos de juego variados (VS CPU, Multijugador Local, Modo Jefe "Hachepe"), un sistema de progresión con niveles (XP), una tienda de cosméticos (Chemi Coins), power-ups dinámicos, sistema de logros y estadísticas detalladas.
 
 ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-22c55e) ![Sin dependencias de build](https://img.shields.io/badge/build-no%20requerido-blue) ![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 
-## ✨ Características
+## 🕹️ Características Principales
 
+### Modos de Juego
 - **Modo VS CPU**: 3 niveles de dificultad (Fácil, Normal, Imposible).
-- **Modo Local (2 jugadores)**: juega con un amigo en el mismo teclado.
-- **8 temas de color**: verde, morado, azul, rojo, naranja, cian, amarillo y rosa. Se aplican tanto a la interfaz como al propio juego.
-- **Teclas reasignables**: cambia cualquier combinación de control desde el menú de Controles; se guardan automáticamente.
-- **Configuración ampliada**: dificultad de la CPU, volumen, puntos para ganar (3/5/7/11), velocidad de la bola, efectos de sonido, efecto CRT y vibración de pantalla, todo activable/desactivable y persistente entre sesiones (`localStorage`).
-- **Mejoras visuales**: bola redonda con resplandor y estela de movimiento, partículas al golpear la bola, vibración de pantalla al anotar, cuenta regresiva de saque y paletas con brillo.
-- **Audio 100% sintetizado**: todos los sonidos se generan en tiempo real con la Web Audio API, sin archivos externos.
-- **Responsive**: se adapta a escritorio y móvil, manteniendo la proporción 4:3 del campo de juego.
+- **Modo Local (2 jugadores)**: Juega con un amigo compartiendo teclado (soporte anti-ghosting mejorado) o mediante controles táctiles divididos en móviles.
+- **Modo Hachepe (Jefe)**: Un intenso desafío contra la CPU donde la bola siempre va al máximo de velocidad y la CPU devuelve con precisión robótica. Incluye banda sonora exclusiva.
 
-## 📁 Estructura del proyecto
+### Sistemas Arcade (Novedad)
+- **Progresión (XP) y Títulos**: Gana experiencia al jugar. Sube de nivel para desbloquear nuevos títulos (desde Novato hasta Leyenda) y gana Chemi Coins.
+- **Chemi Coins y Tienda 🪙**: Moneda virtual del juego obtenida al jugar y ganar (deshabilitada en Modo Local para evitar trampas). Úsala para comprar:
+  - *Estelas:* Clásica, Neón, Fuego, Hielo, Arcoíris.
+  - *Fondos:* Clásico, Estrellas, Lluvia Digital, Aurora Boreal.
+  - *Paletas:* Clásica, Pixel, Gradiente, Neón, Delgada Pro.
+  - *Efectos de Gol:* Clásico, Flash Épico, Confeti, Onda Expansiva.
+- **Power-ups Dinámicos**: Durante las partidas aparecerán mejoras aleatorias como Paleta XL/Mini, Bola Gigante, Escudo protector, Cámara lenta, Turbo y Multi-bola (hasta 3 bolas simultáneas).
+- **Logros (Achievements)**: 27 logros desbloqueables (ej. "Tiro Rápido", "Veterano", "Grow Partner") con notificaciones en pantalla tipo "toast".
+- **Estadísticas (Stats)**: Registro persistente de tus victorias, rachas máximas, horas jugadas, velocidad máxima de la bola y más.
+
+### Interfaz y Personalización
+- **8 temas de color base**: verde, morado, azul, rojo, naranja, cian, amarillo y rosa.
+- **Soporte Táctil Completo**: Juega en tu teléfono arrastrando el dedo por los laterales de la pantalla, con un botón de pausa dedicado y reajuste automático de escala (viewport fix).
+- **Teclas Reasignables**: Cambia cualquier combinación de control desde el menú; guardado automático.
+- **Configuraciones Técnicas**: Activa o desactiva el efecto monitor CRT, las vibraciones de cámara, los power-ups y ajusta volúmenes independientemente.
+
+## 📂 Estructura del Proyecto
+
+El código está estructurado en módulos modulares (vanilla JS global namespace). No utiliza NPM, Node.js ni bundlers.
 
 ```
 pong-game/
-├── index.html          # Estructura de las pantallas/menús
+├── index.html          # Interfaz, menús y contenedor del juego
 ├── README.md
 ├── css/
-│   └── style.css        # Estilos y variables de tema (CSS custom properties)
+│   └── style.css       # Estilos, UI, Tailwind (vía CDN) y variables CSS
 ├── js/
-│   ├── config.js         # Constantes, catálogo de temas y persistencia (localStorage)
-│   ├── theme.js           # Aplicación del tema de color elegido
-│   ├── audio.js            # Sintetizador de audio (Web Audio API)
-│   ├── input.js             # Teclado y sistema de reasignación de teclas
-│   ├── game.js               # Estado, física y renderizado del juego (canvas)
-│   └── ui.js                  # Navegación de menús y conexión de la configuración
+│   ├── config.js       # Constantes y base de configuración
+│   ├── theme.js        # Gestor de temas y colores CSS variables
+│   ├── audio.js        # Efectos de sonido (Web Audio API) y música MP3
+│   ├── stats.js        # Lógica de guardado/lectura de estadísticas globales
+│   ├── achievements.js # Definiciones y verificación de logros (con toasts UI)
+│   ├── input.js        # Mapeo de teclado
+│   ├── progression.js  # Sistema de niveles (XP) y monedas (Chemi Coins)
+│   ├── shop.js         # Lógica de compras, inventario y UI de la tienda
+│   ├── vfx.js          # Sistema de partículas, estelas avanzadas y renders
+│   ├── powerups.js     # Lógica y física de los potenciadores en partida
+│   ├── game.js         # Bucle principal (Game Loop), física de las bolas, colisiones
+│   ├── touch.js        # Gestión de eventos táctiles para móviles
+│   └── ui.js           # Navegación entre menús y sincronización con config
 └── assets/
-    └── favicon.svg
+    ├── favicon.svg
+    ├── chemi_coin.png  # Icono de la moneda
+    ├── los_hachepe_rap.mp3 # Banda sonora Jefe Hachepe
+    └── shop/           # Imágenes previas de todos los cosméticos de la tienda
 ```
 
-Los archivos JavaScript se cargan como scripts clásicos (no módulos ES) en un orden concreto —`config → theme → audio → input → game → ui`— para que el juego funcione simplemente abriendo `index.html`, sin necesidad de un servidor local ni de un paso de compilación.
+*Los archivos JS se cargan secuencialmente al final del `index.html`.*
 
-## 🎮 Controles (por defecto)
+## 🎮 Controles por Defecto
 
 ### Jugador 1 (Izquierda)
-- **W**: Mover Arriba
-- **S**: Mover Abajo
+- **W** / **S**: Mover Arriba / Abajo
 
-### Jugador 2 (Derecha) — *Solo en Modo Local*
-- **Flecha Arriba**: Mover Arriba
-- **Flecha Abajo**: Mover Abajo
+### Jugador 2 (Derecha) — *Solo Modo Local*
+- **Flecha Arriba** / **Flecha Abajo**: Mover Arriba / Abajo
 
-### Sistema
-- **ESC**: Pausar el juego o volver al menú anterior.
+### Interfaz / Sistema
+- **ESC**: Pausar / Volver atrás.
+- **Controles Táctiles (Móviles)**: Arrastra el dedo en la zona izquierda o derecha de la pantalla. El botón "Pausa" aparece arriba al centro durante la partida.
 
-> Todas las teclas anteriores se pueden reasignar libremente desde el menú **Controles**.
+## 🚀 Cómo Jugar (Despliegue)
+Al ser una aplicación 100% frontend (*Static Web App*), no requiere servidor ni compilación:
+1. Clona el repositorio o descarga el código.
+2. Abre `index.html` en cualquier navegador moderno.
+3. Alternativamente, puedes hospedar la carpeta directamente en **GitHub Pages**.
 
-## 🕹️ Cómo jugar
+## 🛠️ Tecnologías
+- **HTML5 Canvas** y **requestAnimationFrame**.
+- **JavaScript (Vanilla, ES6+)**.
+- **TailwindCSS** (vía CDN) y animaciones nativas CSS3.
+- **Web Audio API** y etiquetas `<audio>`.
+- **LocalStorage API** (El progreso, compras y configuraciones se guardan localmente en el navegador).
 
-No requiere instalación ni dependencias de compilación. Simplemente abre el archivo `index.html` en tu navegador (Chrome, Firefox, Edge o Safari recientes) para empezar a jugar. Requiere conexión a internet la primera vez para cargar la tipografía y TailwindCSS desde su CDN.
-
-## 🛠️ Tecnologías utilizadas
-
-- **HTML5 Canvas** para renderizar el juego.
-- **JavaScript (Vanilla, ES6+)** para toda la lógica, física, temas, controles y audio.
-- **TailwindCSS** (vía CDN) + **CSS** propio con variables (custom properties) para el theming dinámico.
-- **Web Audio API** para el audio sintetizado.
-
-## 📄 Licencia
-
-MIT — libre para usar, modificar y compartir.
+## 📝 Licencia
+MIT — Libre para usar, modificar y compartir.
