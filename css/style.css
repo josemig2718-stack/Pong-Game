@@ -288,10 +288,13 @@ canvas {
     padding: 20px 16px 30px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* Centrado seguro: flex-start como fallback universal, safe center
-       para navegadores que lo soporten */
+    /* Para evitar que el contenido se corte arriba al hacer scroll en pantallas pequeñas,
+       usamos flex-start en el contenedor, y empujamos con pseudo-elementos o auto margins. */
     justify-content: flex-start;
-    justify-content: safe center;
+}
+.screen::before, .screen::after {
+    content: "";
+    margin: auto;
 }
 @media (min-width: 768px) {
     .screen {

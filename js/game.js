@@ -94,8 +94,27 @@ function resizeCanvas() {
     const container = document.getElementById('game-container');
     const targetRatio = GAME_WIDTH / GAME_HEIGHT;
 
-    const maxW = window.innerWidth - 32;
-    const maxH = window.innerHeight - 100;
+    // Calcular el espacio disponible dinámicamente restando los hermanos visibles (ej. mode-badge, orientation-hint)
+    let siblingHeight = 0;
+    let activeSiblings = 0;
+    if (container) {
+        Array.from(container.children).forEach(child => {
+            if (child.id !== 'canvas-wrapper' && window.getComputedStyle(child).display !== 'none') {
+                siblingHeight += child.offsetHeight;
+                activeSiblings++;
+            }
+        });
+    }
+
+    // El container tiene p-4 (32px padding vertical/horizontal) y gap-3 (12px por hueco)
+    const totalGaps = activeSiblings > 0 ? (activeSiblings) * 12 : 0; 
+    const verticalPadding = 32; 
+    const horizontalPadding = 32;
+
+    // 15px de margen extra de seguridad para evitar cualquier scrollbar accidental
+    const maxW = window.innerWidth - horizontalPadding - 15;
+    const maxH = window.innerHeight - siblingHeight - totalGaps - verticalPadding - 15;
+    
     const viewportRatio = maxW / maxH;
 
     let drawWidth, drawHeight;
