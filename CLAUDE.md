@@ -131,3 +131,19 @@ All three load with `{ ...DEFAULTS, ...saved }` spread so adding a new field doe
 - Any keyframe animating `transform` on a centred element must re-apply its `translateX(-50%)`, or the element jumps out of the viewport. That is why `#dialogue-box` has its own `dialogue-shake` instead of reusing the generic `shake-error`.
 - The mouse writes into the same `p1.touchY`/`p1.touchX` channel as touch, and must pick the axis from `bossIsRotatedArena()` — otherwise the mouse does nothing in the Creator fight. It reuses `touchToCanvasX/Y` from `js/touch.js`.
 - `startGame()` restores paddle `width`, `height` **and** `x`. The Creator's rotated arena reshapes `p1` into a horizontal paddle, and restoring only `height` leaves a square block mid-field in the next match.
+- `.mcp.json` configures the Playwright MCP server used to drive the game in a real browser (`--browser msedge`, since Chrome isn't installed on this machine). It wraps `npx` in `cmd /c` because npx is a `.cmd` on Windows and fails when spawned without a shell — change that to plain `npx` if the repo is ever opened on Linux or macOS.
+- Playwright's output (`.playwright-mcp/`) and stray root-level `*.png` screenshots are gitignored. Keep test captures out of the repo.
+
+## Verifying changes
+
+There are no tests, so verification means driving the real game. Serve it (`python -m http.server 8000`) and use Playwright MCP; the game's globals are all reachable from `browser_evaluate`, which makes it practical to script a whole match:
+
+```js
+currentCampaignLevel = 4; startGame('campaign'); stopDialogue();
+for (let i = 0; i < 3000; i++) { serveCountdownMs = 0; update(1); }
+```
+
+Two habits worth keeping, because both caught real bugs that reading the code did not:
+
+- **Simulate several player skill levels**, not one. Drive `p1` toward the ball with a lerp factor (1.0 = perfect, ~0.3 = human, ~0.1 = weak) and assert the match actually *ends*. A perfect bot rallying forever against a perfect CPU is how the unbeatable-boss and stuck-ball bugs stayed hidden.
+- **Look at the screenshots.** The giant square paddle, the dialogue box sliding off screen and the armor stripes bleeding over the eye were all invisible in the numbers.

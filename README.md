@@ -1,6 +1,8 @@
 # 🏓 Pong Game — Edición Arcade
 
-Un clásico juego de Pong para navegador, expandido masivamente en una experiencia arcade moderna. Cuenta con modos de juego variados (VS CPU, Multijugador Local, Modo Jefe "Hachepe"), un sistema de progresión con niveles (XP), una tienda de cosméticos (Chemi Coins), power-ups dinámicos, sistema de logros y estadísticas detalladas.
+Un clásico juego de Pong para navegador, expandido masivamente en una experiencia arcade moderna: un **modo campaña** con seis jefes y su propia historia, partidas contra la CPU o a dos jugadores, progresión con niveles (XP), una tienda de cosméticos (Chemi Coins), power-ups dinámicos, logros y estadísticas detalladas.
+
+Todo funciona abriendo un archivo: sin instalar nada, sin compilar y sin conexión más allá de la primera carga.
 
 ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-22c55e) ![Sin dependencias de build](https://img.shields.io/badge/build-no%20requerido-blue) ![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 
@@ -23,6 +25,8 @@ Cada Hachepe rompe las reglas del Pong a su manera, y el marcador sube con cada 
 | **Fano** — El Guardián de las Sombras | Apaga la luz: la bola se vuelve invisible y aparecen señuelos |
 | **Yisus** — El Falso Rey | Desvía la bola con telekinesis y detiene el tiempo sobre tu paleta |
 
+Los rivales se eligen en un **carrusel** al estilo de los selectores de personaje arcade, con su retrato, su nivel de peligro y su estado. Los que aún no has desbloqueado aparecen como una silueta sin nombre.
+
 Se puede repetir cualquier jefe ya vencido (con recompensa reducida), y hay un logro secreto que ni siquiera aparece en la lista de logros hasta que lo consigues.
 
 *Y cuando creas que has ganado... sigue jugando.*
@@ -42,7 +46,9 @@ Se puede repetir cualquier jefe ya vencido (con recompensa reducida), y hay un l
 - **8 temas de color base**: verde, morado, azul, rojo, naranja, cian, amarillo y rosa.
 - **Soporte Táctil Completo**: Juega en tu teléfono arrastrando el dedo por los laterales de la pantalla, con un botón de pausa dedicado y reajuste automático de escala (viewport fix).
 - **Teclas Reasignables**: Cambia cualquier combinación de control desde el menú; guardado automático.
+- **Control por ratón** opcional, activable desde Configuración.
 - **Configuraciones Técnicas**: Activa o desactiva el efecto monitor CRT, las vibraciones de cámara, los power-ups y ajusta volúmenes independientemente.
+- **Accesibilidad**: se respeta `prefers-reduced-motion`, así que los efectos de glitch y los parpadeos se desactivan si tu sistema pide menos animación.
 
 ## 📂 Estructura del Proyecto
 
@@ -52,6 +58,7 @@ El código está estructurado en módulos modulares (vanilla JS global namespace
 pong-game/
 ├── index.html          # Interfaz, menús y contenedor del juego
 ├── README.md
+├── CLAUDE.md           # Notas de arquitectura para agentes de IA
 ├── css/
 │   └── style.css       # Estilos, UI, Tailwind (vía CDN) y variables CSS
 ├── js/
@@ -65,7 +72,7 @@ pong-game/
 │   ├── shop.js         # Lógica de compras, inventario y UI de la tienda
 │   ├── vfx.js          # Sistema de partículas, estelas avanzadas y renders
 │   ├── powerups.js     # Lógica y física de los potenciadores en partida
-│   ├── campaign.js     # Modo Campaña: lore, mapa, diálogos y secuencias finales
+│   ├── campaign.js     # Campaña: lore, carrusel, diálogos y secuencias finales
 │   ├── bosses.js       # Mecánicas de cada jefe (tabla BOSS_MECHANICS)
 │   ├── game.js         # Bucle principal (Game Loop), física de las bolas, colisiones
 │   ├── touch.js        # Gestión de eventos táctiles para móviles
@@ -73,11 +80,12 @@ pong-game/
 └── assets/
     ├── favicon.svg
     ├── chemi_coin.png  # Icono de la moneda
-    ├── los_hachepe_rap.mp3 # Banda sonora Jefe Hachepe
+    ├── audio/          # Música de menú, de partida y el rap de los Hachepes
+    ├── images/         # Retratos de los seis Hachepes
     └── shop/           # Imágenes previas de todos los cosméticos de la tienda
 ```
 
-*Los archivos JS se cargan secuencialmente al final del `index.html`.*
+*Los archivos JS se cargan secuencialmente al final del `index.html`, y ese orden importa: `config.js` primero, `ui.js` al final.*
 
 ## 🎮 Controles por Defecto
 
@@ -87,15 +95,31 @@ pong-game/
 ### Jugador 2 (Derecha) — *Solo Modo Local*
 - **Flecha Arriba** / **Flecha Abajo**: Mover Arriba / Abajo
 
+### Campaña
+- **← / →**: Cambiar de rival en el carrusel. **Enter**: entrar al combate.
+- En un combate concreto la arena cambia de orientación y tu paleta pasa a moverse en **horizontal**; las mismas teclas de mover (o el dedo, o el ratón) siguen funcionando.
+
 ### Interfaz / Sistema
 - **ESC**: Pausar / Volver atrás.
-- **Controles Táctiles (Móviles)**: Arrastra el dedo en la zona izquierda o derecha de la pantalla. El botón "Pausa" aparece arriba al centro durante la partida.
+- **Controles Táctiles (Móviles)**: Arrastra el dedo en la zona izquierda o derecha de la pantalla. El botón "Pausa" aparece arriba al centro durante la partida. En la campaña, desliza para cambiar de rival.
+- **Ratón**: actívalo en Configuración para mover la paleta siguiendo el cursor.
 
 ## 🚀 Cómo Jugar (Despliegue)
 Al ser una aplicación 100% frontend (*Static Web App*), no requiere servidor ni compilación:
 1. Clona el repositorio o descarga el código.
 2. Abre `index.html` en cualquier navegador moderno.
 3. Alternativamente, puedes hospedar la carpeta directamente en **GitHub Pages**.
+
+> Para desarrollar es preferible servir la carpeta (`python -m http.server 8000`) en vez de abrir el archivo directo: los MP3 y el `localStorage` se comportan de forma más fiable sobre `http://` que sobre `file://`.
+
+## 🧑‍💻 Notas de desarrollo
+
+No hay build, ni dependencias, ni tests. Se edita y se recarga. Dos cosas que conviene saber antes de tocar el código:
+
+- **La caché se invalida a mano.** Cada `<script>` y el `<link>` del CSS llevan un `?v=N` en `index.html`. **Después de editar cualquier JS o CSS hay que subir ese número**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado.
+- **No hay módulos.** Todo son variables y funciones globales, y los archivos dependen del orden de carga del final de `index.html`. Antes de crear una función o constante nueva, comprueba que el nombre no exista ya.
+
+`CLAUDE.md` recoge la arquitectura en detalle: la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
 
 ## 🛠️ Tecnologías
 - **HTML5 Canvas** y **requestAnimationFrame**.
