@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=11">
+    <link rel="stylesheet" href="css/style.css?v=14">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -53,6 +53,7 @@
         <h2 class="text-2xl md:text-4xl font-bold mb-12 text-center">MODO DE JUEGO</h2>
 
         <div class="flex flex-col gap-6 w-64 md:w-96 text-center text-sm md:text-base">
+            <button class="retro-button" onclick="showScreen('campaign-menu')" style="color: #ef4444; border-color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);">CAMPAÑA</button>
             <button class="retro-button" onclick="startGame('cpu')">VS CPU</button>
             <button class="retro-button" onclick="startGame('hachepe')"
                 style="color: #facc15; border-color: #facc15; text-shadow: 0 0 10px rgba(250,204,21,0.5);">MODO
@@ -62,6 +63,66 @@
                 onclick="showScreen('main-menu')">VOLVER</button>
         </div>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
+    </div>
+
+    <!-- ============================== MAPA DE CAMPAÑA ============================== -->
+    <div id="campaign-menu" class="screen z-20">
+        <h2 class="text-2xl md:text-4xl font-bold mb-4 text-center text-red-500" style="text-shadow: 0 0 15px rgba(239,68,68,0.6);">LA VENGANZA</h2>
+        <p class="text-xs mb-8 text-center max-w-lg text-white/70">Derrota a los Hachepes para recuperar tu ciudad.</p>
+        
+        <div id="campaign-nodes" class="campaign-map-container">
+            <!-- Nodos generados por JS -->
+        </div>
+
+        <button class="retro-button mt-8" style="border-style: dashed;" onclick="showScreen('mode-select-menu')">VOLVER</button>
+
+        <button onclick="replayCampaignIntro()" class="absolute bottom-4 right-4 text-[10px] md:text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer border border-white/20 px-3 py-1 rounded bg-black/50">
+            📖 Ver Historia
+        </button>
+
+        <!-- Overlay de Historia Inicial -->
+        <div id="campaign-intro-overlay" class="hidden absolute inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-8 text-center">
+            <h2 class="text-red-500 text-2xl md:text-4xl mb-6 font-bold">TU CIUDAD ESTÁ EN RUINAS</h2>
+            <p id="campaign-intro-text" class="text-white/80 text-sm md:text-base max-w-2xl leading-relaxed mb-10 min-h-[100px]"></p>
+            <button id="campaign-intro-btn" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444;" onclick="closeCampaignIntro()">ACEPTAR MI DESTINO</button>
+        </div>
+    </div>
+
+    <!-- ============================== PANTALLA VS ============================== -->
+    <div id="vs-screen" class="screen z-30" style="background: #000;">
+        <div id="vs-screen-container" class="w-full h-full flex flex-col justify-center items-center">
+            <h1 class="text-5xl md:text-7xl italic font-bold mb-8 text-red-500 animate-pulse">VS</h1>
+            
+            <div class="flex items-center justify-between w-full max-w-2xl px-8">
+                <!-- Jugador -->
+                <div class="flex flex-col items-center">
+                    <div class="w-24 h-24 md:w-32 md:h-32 bg-slate-800 border-4 border-primary rounded-full overflow-hidden mb-4 shadow-[0_0_20px_var(--primary)] flex justify-center items-center">
+                        <span class="text-4xl">👤</span>
+                    </div>
+                    <span class="font-bold text-lg">TÚ</span>
+                    <span class="text-xs text-primary">El Desconocido</span>
+                </div>
+                
+                <!-- Jefe -->
+                <div class="flex flex-col items-center">
+                    <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-900 border-4 border-red-500 rounded-lg overflow-hidden mb-4 shadow-[0_0_30px_#ef4444] relative flex">
+                        <img id="vs-boss-avatar" src="" class="w-full h-full object-cover">
+                        <img id="vs-boss-avatar2" src="" class="w-full h-full object-cover hidden">
+                    </div>
+                    <span id="vs-boss-name" class="font-bold text-xl text-red-500">Nombre</span>
+                    <span id="vs-boss-title" class="text-xs text-red-400 mb-1">Título</span>
+                    <span id="vs-boss-danger" class="text-[10px] text-yellow-500">Peligro: ⭐</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================== DESENLACE DE CAMPAÑA ============================== -->
+    <!-- Pantalla del falso final y del final verdadero. Sin botones durante
+         la secuencia: el jugador no puede escaparse del momento. -->
+    <div id="finale-screen" class="screen z-40" style="background: #000;">
+        <div id="finale-text" class="finale-text hidden"></div>
+        <button id="finale-exit-btn" class="retro-button hidden mt-10" onclick="closeFinale()">FIN</button>
     </div>
 
     <!-- ============================== CONTROLES ============================== -->
@@ -346,6 +407,7 @@
         </div>
 
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm">
+            <button id="btn-next-campaign" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);" onclick="nextCampaignLevel()">SIGUIENTE HACHEPE</button>
             <button class="retro-button" onclick="restartCurrentGame()">JUGAR DE NUEVO</button>
             <button class="retro-button" onclick="quitGame()">MENÚ PRINCIPAL</button>
         </div>
@@ -365,18 +427,30 @@
             <!-- Contenedor para los personajes del Modo Hachepe -->
             <div id="hachepe-characters" class="hidden">
                 <div class="hachepe-group left">
-                    <img src="assets/images/hachepe1.png" alt="Personaje 1">
-                    <img src="assets/images/hachepe2.png" alt="Personaje 2">
-                    <img src="assets/images/hachepe3.png" alt="Personaje 3">
+                    <img src="assets/images/hachepe_chemi.png" alt="Chemi">
+                    <img src="assets/images/hachepe_dani.png" alt="Dani">
+                    <img src="assets/images/hachepe_mario.png" alt="Mario">
                 </div>
                 <div class="hachepe-group right">
-                    <img src="assets/images/hachepe4.png" alt="Personaje 4">
-                    <img src="assets/images/hachepe5.png" alt="Personaje 5">
-                    <img src="assets/images/hachepe6.png" alt="Personaje 6">
+                    <img src="assets/images/hachepe_fano.png" alt="Fano">
+                    <img src="assets/images/hachepe_yisus.png" alt="Yisus">
+                    <img src="assets/images/hachepe_valen.png" alt="Valen">
                 </div>
             </div>
 
             <canvas id="pongCanvas"></canvas>
+
+            <!-- Diálogo de Campaña -->
+            <div id="dialogue-box" class="hidden">
+                <div class="dialogue-avatar-container flex">
+                    <img id="dialogue-avatar" src="assets/images/hachepe_chemi.png" alt="Avatar">
+                    <img id="dialogue-avatar2" src="assets/images/hachepe_valen.png" alt="Avatar2" class="hidden">
+                </div>
+                <div class="dialogue-content">
+                    <span id="dialogue-name">Nombre</span>
+                    <p id="dialogue-text"></p>
+                </div>
+            </div>
 
             <!-- Indicaciones de control táctil: se ocultan tras el primer toque -->
             <div id="touch-hint-left" class="touch-hint touch-hint--left">
@@ -393,6 +467,9 @@
         </div>
     </div>
 
+    <!-- Apagón a pantalla completa, usado por la secuencia del falso final -->
+    <div id="fade-overlay" class="hidden"></div>
+
     <!-- ============================== TOAST DE LOGRO ============================== -->
     <div id="achievement-toast" class="achievement-toast achievement-toast--hidden">
         <span class="achievement-toast__emoji">🏓</span>
@@ -404,19 +481,21 @@
     </div>
 
     <!-- El orden de carga importa: config primero, ui al final -->
-    <script src="js/config.js?v=13"></script>
-    <script src="js/theme.js?v=13"></script>
-    <script src="js/audio.js?v=13"></script>
-    <script src="js/stats.js?v=13"></script>
-    <script src="js/achievements.js?v=13"></script>
-    <script src="js/input.js?v=13"></script>
-    <script src="js/progression.js?v=13"></script>
-    <script src="js/shop.js?v=13"></script>
-    <script src="js/vfx.js?v=13"></script>
-    <script src="js/powerups.js?v=13"></script>
-    <script src="js/game.js?v=13"></script>
-    <script src="js/touch.js?v=13"></script>
-    <script src="js/ui.js?v=13"></script>
+    <script src="js/config.js?v=14"></script>
+    <script src="js/theme.js?v=14"></script>
+    <script src="js/audio.js?v=14"></script>
+    <script src="js/stats.js?v=14"></script>
+    <script src="js/achievements.js?v=14"></script>
+    <script src="js/input.js?v=14"></script>
+    <script src="js/progression.js?v=14"></script>
+    <script src="js/shop.js?v=14"></script>
+    <script src="js/vfx.js?v=14"></script>
+    <script src="js/powerups.js?v=14"></script>
+    <script src="js/campaign.js?v=14"></script>
+    <script src="js/bosses.js?v=14"></script>
+    <script src="js/game.js?v=14"></script>
+    <script src="js/touch.js?v=14"></script>
+    <script src="js/ui.js?v=14"></script>
 </body>
 
 </html>

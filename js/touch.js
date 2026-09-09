@@ -50,13 +50,17 @@ function assignTouch(touch) {
     const target = (gameMode === 'local' && canvasX >= GAME_WIDTH / 2) ? 'p2' : 'p1';
 
     activeTouches.set(touch.identifier, target);
-    updatePaddleFromTouch(target, canvasY);
+    updatePaddleFromTouch(target, canvasY, canvasX);
     hideTouchHint(target);
 }
 
-function updatePaddleFromTouch(target, canvasY) {
+function updatePaddleFromTouch(target, canvasY, canvasX) {
     const paddle = target === 'p1' ? p1 : p2;
     paddle.touchY = clampPaddleY(canvasY - paddleHeight / 2);
+    if (canvasX !== undefined) {
+        // Arena rotada (El Creador): la paleta se controla en el eje X
+        paddle.touchX = Math.max(0, Math.min(GAME_WIDTH - paddle.width, canvasX - paddle.width / 2));
+    }
 }
 
 function releaseTouch(touch) {
@@ -68,7 +72,11 @@ function releaseTouch(touch) {
     // (relevante si, por accidente, dos dedos tocan el mismo lado).
     const stillHeld = [...activeTouches.values()].includes(target);
     if (!stillHeld) {
-        (target === 'p1' ? p1 : p2).touchY = null;
+        const paddle = target === 'p1' ? p1 : p2;
+        paddle.touchY = null;
+        // Sin esto la paleta horizontal se queda pegada y el teclado
+        // deja de responder hasta recargar la página.
+        paddle.touchX = null;
     }
 }
 
@@ -84,7 +92,7 @@ function handleTouchMove(e) {
     for (const touch of e.changedTouches) {
         const target = activeTouches.get(touch.identifier);
         if (!target) continue;
-        updatePaddleFromTouch(target, touchToCanvasY(touch.clientY));
+        updatePaddleFromTouch(target, touchToCanvasY(touch.clientY), touchToCanvasX(touch.clientX));
     }
 }
 

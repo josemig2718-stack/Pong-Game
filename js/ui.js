@@ -19,6 +19,8 @@ function showScreen(screenId) {
         playMenuMusic();
     } else if (screenId === 'shop-menu') {
         if (typeof showShopScreen === 'function') showShopScreen();
+    } else if (screenId === 'campaign-menu') {
+        if (typeof renderCampaignMap === 'function') renderCampaignMap();
     }
     soundEffects.uiClick();
 }
@@ -171,7 +173,7 @@ function populateStatsScreen() {
 
     // Logros count
     const unlocked = getUnlockedCount();
-    const total    = ACHIEVEMENTS.length;
+    const total    = getVisibleAchievementsTotal();
     setText('achievements-count',  `${unlocked} / ${total} desbloqueados`);
 }
 
@@ -185,13 +187,17 @@ function populateAchievementsGrid() {
         const isUnlocked = !!gameStats.achievements[ach.id];
         const unlockDate = isUnlocked ? new Date(gameStats.achievements[ach.id]) : null;
 
+        // Los logros secretos no revelan ni su nombre ni cómo se consiguen
+        const hidden = !isUnlocked && ach.secret;
+
         const card = document.createElement('div');
-        card.className = `achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}`;
+        card.className = `achievement-card ${isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked'}`
+            + (hidden ? ' achievement-card--secret' : '');
 
         card.innerHTML = `
-            <span class="achievement-card__emoji">${isUnlocked ? ach.emoji : '🔒'}</span>
-            <span class="achievement-card__name">${ach.name}</span>
-            <span class="achievement-card__desc">${ach.desc}</span>
+            <span class="achievement-card__emoji">${isUnlocked ? ach.emoji : (hidden ? '❓' : '🔒')}</span>
+            <span class="achievement-card__name">${hidden ? '????' : ach.name}</span>
+            <span class="achievement-card__desc">${hidden ? '????' : ach.desc}</span>
             <span class="achievement-card__date">${isUnlocked ? formatAchievementDate(unlockDate) : '—'}</span>
         `;
 
@@ -220,7 +226,7 @@ function showAchievementsScreen() {
     
     if (typeof getUnlockedCount === 'function') {
         const unlocked = getUnlockedCount();
-        const total = ACHIEVEMENTS.length;
+        const total = getVisibleAchievementsTotal();
         setText('achievements-count', `${unlocked} / ${total} desbloqueados`);
     }
 }

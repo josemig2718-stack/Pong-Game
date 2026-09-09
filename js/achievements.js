@@ -45,7 +45,14 @@ const ACHIEVEMENTS = [
     { id: 'reach_level_5',     emoji: '🎖️', name: 'Rango Experto',     desc: 'Alcanza el nivel 5',                        category: 'Veteranía' },
     { id: 'reach_level_10',    emoji: '👑', name: 'Leyenda Definitiva',desc: 'Alcanza el nivel 10',                       category: 'Especiales' },
     { id: 'fashionista',       emoji: '💎', name: 'Fashionista',       desc: 'Compra todos los items de la tienda',       category: 'Especiales' },
-    { id: 'grow_partner',      emoji: '🛒', name: 'Grow Partner',      desc: 'Compra tu primer objeto en la tienda',      category: 'Especiales' }
+    { id: 'grow_partner',      emoji: '🛒', name: 'Grow Partner',      desc: 'Compra tu primer objeto en la tienda',      category: 'Especiales' },
+
+    // 🗡️ Campaña
+    { id: 'campaign_first',    emoji: '🗡️', name: 'La Primera Grieta', desc: 'Vence a tu primer Hachepe',                 category: 'Campaña' },
+    { id: 'campaign_clear',    emoji: '🏙️', name: 'La Venganza',       desc: 'Derrota a los cinco Hachepes',              category: 'Campaña' },
+
+    // 👁️ Secreto: se muestra como "????" hasta que se desbloquea
+    { id: 'the_creator',       emoji: '👁️', name: 'The Creator',       desc: 'Vence al Creador',                          category: 'Campaña', secret: true }
 ];
 
 /** Cola de notificaciones de logros pendientes */
@@ -176,6 +183,14 @@ function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
 }
 
 /** Cuenta cuántos logros están desbloqueados */
+/**
+ * Total de logros a efectos de contador. Un secreto aún bloqueado no se
+ * cuenta: si no, el marcador delataría que existe algo escondido.
+ */
+function getVisibleAchievementsTotal() {
+    return ACHIEVEMENTS.filter(a => !a.secret || gameStats.achievements[a.id]).length;
+}
+
 function getUnlockedCount() {
     return Object.keys(gameStats.achievements).length;
 }

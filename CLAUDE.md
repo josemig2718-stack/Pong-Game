@@ -32,8 +32,8 @@ Deployed as a GitHub Pages static site — the repo root is the web root.
 There are no modules, no `import`/`export`, no IIFE wrappers. Every file declares top-level `const`/`let`/`function` that land on the global scope, and files depend on each other purely through **load order in `index.html` (lines 474–487)**:
 
 ```
-config → theme → audio → stats → achievements → input →
-progression → shop → vfx → powerups → campaign → game → touch → ui
+config → theme → audio → stats → achievements → input → progression →
+shop → vfx → powerups → campaign → bosses → game → touch → ui
 ```
 
 Consequences to respect when editing:
@@ -67,17 +67,32 @@ Gameplay is not a screen — `startGame(mode)` clears all `.active-screen` and u
 Mode drives branching throughout `update()`, `checkWin()`, `resetBall()`, audio, and rewards:
 
 - `cpu` — AI paddle speed/error margin from `settings.difficulty` (1/2/3).
-- `local` — both paddles human; **awards XP but no Chemi Coins** (anti-farming, `awardGameRewards` in `js/progression.js:255`).
-- `hachepe` — boss mode: max ball speed, near-perfect AI, exclusive music, target score hardcoded to 10 (all other modes use `settings.winningScore`).
+- `local` — both paddles human; **awards XP but no Chemi Coins** (anti-farming, `awardGameRewards` in `js/progression.js`).
+- `hachepe` — standalone boss mode: max ball speed, near-perfect AI, exclusive music, target score hardcoded to 10. Deliberately kept separate from the campaign.
 - `campaign` — see below.
 
-### Campaign (`js/campaign.js`)
+### Campaign: `campaign.js` narrates, `bosses.js` fights
 
-`HACHEPES_LORE` holds 6 bosses (levels 1–5 plus a secret level 6, "El Creador"). Flow: `renderCampaignMap()` (only draws nodes 1–5) → `prepareCampaignMatch(level)` fills the VS screen and after 3.5s calls `startCampaignGame()` → `startGame('campaign')` + queued typewriter dialogue → on win `handleCampaignVictory()` bumps `playerProgression.campaignProgress`.
+The split matters. **`js/campaign.js`** owns story only: `HACHEPES_LORE` (6 bosses), the node map, the dialogue system, and the finale sequences. **`js/bosses.js`** owns every fight mechanic.
 
-Per-boss mechanics live as `currentCampaignLevel === N` branches inside `game.js` (`update`, `resetBall`, `startGame`), not in `campaign.js`: L2 Dani's periodic shield, L3 twin paddle `p2_twin`, L4 Fano's ball invisibility/illusions, L5 Yisus' telekinesis, L6 the Creator (rotated arena — P1's paddle becomes horizontal and moves on X, plus `creatorHealth`).
+`js/bosses.js` is a dispatch table in the same shape `vfx.js` uses for `BG_RENDERERS`/`GOAL_FX`:
 
-Note `index.html` still has a `TEST CREADOR (DEBUG)` button in the mode-select menu calling `prepareCampaignMatch(6)` directly.
+```js
+BOSS_MECHANICS[level] = { config, init, update, render, renderOverlay, collide, onGoal }
+```
+
+`game.js` never names a boss. It calls `bossInit/bossUpdate/bossRender/bossRenderOverlay/bossCollide/bossOnGoal` and reads behaviour from `bossConfig()`: `targetScore` (5→7, rising per boss), `aiSpeed`, `aiError`, `aiBias`, `paddleAxis`, `useHealth`, `hitDamage`. **Add a boss by adding a table entry, never by adding a `currentCampaignLevel === N` branch to `game.js`.**
+
+Two non-obvious rules learned from bugs, both worth preserving:
+
+- **`aiBias` is what makes a boss beatable.** `aiError` is a dead zone, and any dead zone smaller than the paddle's half-height (50px) never produces a miss — with it alone the CPU is literally unbeatable and rallies never end. `aiBias` offsets the boss's *aim*, refreshed on every hit.
+- **Obstacles belong on the boss's half, and must add spin.** A block on the player's half traps the ball in a paddle↔block loop; a block on the vertical centre intercepts every flat return. Chemi's rubble sits at x ≥ 0.60 clear of the centre lane, and its bounce perturbs `dy`, which is what stops rallies repeating forever.
+
+Story flow: `renderCampaignMap()` (nodes 1–5; the corrupted node 6 appears only once `campaignProgress` reaches 6) → `prepareCampaignMatch(level)` → VS screen → `startCampaignGame()` → `startGame('campaign')` + `queueDialogue()`. Beaten bosses are replayable and pay a reduced reward (`CAMPAIGN_REPLAY_FACTOR`).
+
+**The twist is load-bearing — don't leak it.** Beating Yisus (level 5) routes through `runFinaleSequence()` instead of the game-over screen: fake victory → warped music → blackout → the Creator's reveal → VS. Beating the Creator runs `runTrueEndingSequence()`. `checkWin()` recognises these via its `narrativeEnding` flag and suppresses the normal end screen. Nothing about the Creator should be visible in menus, the achievements grid, or the node map before the story reveals it.
+
+The Creator is the only boss with `useHealth: true`: it is won by emptying `bossHealth()`, and `p2Score` counts the player's *misses*, not the rival's points. Keep those two meanings apart — conflating them is exactly what made the final fight winnable in one hit.
 
 ### Persistence — three independent localStorage keys
 
@@ -101,9 +116,11 @@ All three load with `{ ...DEFAULTS, ...saved }` spread so adding a new field doe
 - `js/touch.js` — split-screen touch: left half drives `p1.touchY`, right half `p2.touchY`; when `touchY` is non-null it overrides keyboard for that paddle.
 - `js/audio.js` — SFX synthesized with Web Audio API (`playTone` / `soundEffects`), music via three `<audio>` elements; browsers require `onFirstInteraction` before audio starts.
 - `js/powerups.js` — one `activePowerup` on field, one `activeEffect` at a time; `revertPowerup()` restores `originalValues`. Because effects mutate `p1`/`p2` dimensions, `startGame`/`quitGame`/`checkWin` all defensively restore `paddleWidth`/`paddleHeight`.
-- `js/achievements.js` — `ACHIEVEMENTS` array; `unlockAchievement(id)` is idempotent and queues toasts.
+- `js/achievements.js` — `ACHIEVEMENTS` array; `unlockAchievement(id)` is idempotent and queues toasts. Entries with `secret: true` render as `????` until unlocked and are excluded from the counter by `getVisibleAchievementsTotal()`, so the total itself doesn't reveal that a hidden one exists. `unlockAchievement` silently does nothing visible for an id absent from the catalogue — check the id exists when wiring a new unlock.
 
 ## Repo notes
 
 - `.backup-mobile-20260825-221758/` is a **committed** snapshot of an older `index.html`/`style.css`/`game.js`. It is dead code — don't edit it, and don't let searches there mislead you.
 - `css/style.css` is one large file split by banner comments (`/* ====== */`); Tailwind utility classes carry most of the layout, `style.css` carries the retro/CRT identity and CSS custom properties (`--primary`, `--primary-rgb`) that `js/theme.js` rewrites per theme. Canvas drawing reads the same theme color via `currentThemeHex()`.
+- Any keyframe animating `transform` on a centred element must re-apply its `translateX(-50%)`, or the element jumps out of the viewport. That is why `#dialogue-box` has its own `dialogue-shake` instead of reusing the generic `shake-error`.
+- `startGame()` restores paddle `width`, `height` **and** `x`. The Creator's rotated arena reshapes `p1` into a horizontal paddle, and restoring only `height` leaves a square block mid-field in the next match.

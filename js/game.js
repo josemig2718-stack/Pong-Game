@@ -35,6 +35,11 @@ let shakeFrames = 0;
 let shakeIntensity = 0;
 let shakeTimeMs = 0;  // tiempo restante de vibración en ms
 
+// --- ESTADO DE JEFES DE CAMPAÑA ---
+// Las mecánicas viven en bosses.js (tabla BOSS_MECHANICS). Aquí solo queda
+// la paleta gemela, porque participa en el movimiento y la colisión de abajo.
+let p2_twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };
+
 // --- Multi-bola ---
 // Array principal de bolas. ball es alias de balls[0] para compatibilidad.
 const MAX_TRAIL = 25;
@@ -146,9 +151,16 @@ function startGame(mode) {
     p2Score = 0;
     particles = [];
 
-    // Restaurar tamaño original de paletas (por si un power-up las alteró)
+    // Restaurar geometría original de las paletas. Hay que reponer también
+    // width y x: la arena rotada del Creador convierte a p1 en una paleta
+    // horizontal centrada, y si no se deshace queda un cuadrado en mitad
+    // del campo en la siguiente partida.
+    p1.width = paddleWidth;
     p1.height = paddleHeight;
+    p1.x = 24;
+    p2.width = paddleWidth;
     p2.height = paddleHeight;
+    p2.x = GAME_WIDTH - 24 - paddleWidth;
 
     const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
 
@@ -158,10 +170,16 @@ function startGame(mode) {
     p2.dy = 0;
     p1.touchY = null;
     p2.touchY = null;
+    p1.touchX = null;   // si no se limpia, la paleta horizontal queda pegada al repetir
+    p2.touchX = null;
     if (typeof resetTouchHints === 'function') resetTouchHints();
 
     isPlaying = true;
     isPaused = false;
+
+    // Limpiar cualquier diálogo de campaña que quedara de la partida anterior
+    if (typeof stopDialogue === 'function') stopDialogue();
+    if (typeof resetMidDialogue === 'function') resetMidDialogue();
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
 
@@ -169,7 +187,11 @@ function startGame(mode) {
     container.classList.remove('hidden');
     container.classList.add('flex');
 
-    document.getElementById('mode-badge').textContent = mode === 'cpu' ? 'VS CPU' : mode === 'hachepe' ? 'HACHEPE' : 'LOCAL · 2 JUGADORES';
+    let badgeText = 'VS CPU';
+    if (mode === 'hachepe') badgeText = 'HACHEPE';
+    if (mode === 'local') badgeText = 'LOCAL · 2 JUGADORES';
+    if (mode === 'campaign') badgeText = 'CAMPAÑA: ' + (typeof currentCampaignLevel !== 'undefined' ? HACHEPES_LORE[currentCampaignLevel].name : '???');
+    document.getElementById('mode-badge').textContent = badgeText;
     document.body.dataset.gameMode = mode;
 
     const hachepeChars = document.getElementById('hachepe-characters');
@@ -177,6 +199,12 @@ function startGame(mode) {
         if (mode === 'hachepe') hachepeChars.classList.remove('hidden');
         else hachepeChars.classList.add('hidden');
     }
+
+    // Resetear mecánicas de jefes: siempre se apaga todo, y el jefe en
+    // curso (si lo hay) arma lo suyo en bossInit().
+    p2_twin.active = false;
+    p2_twin.retreatMs = 0;
+    if (typeof bossInit === 'function') bossInit();
 
     resizeCanvas();
     resetBall(true);
@@ -210,9 +238,16 @@ function quitGame() {
     isPlaying = false;
     cancelAnimationFrame(animationFrameId);
 
-    // Restaurar paletas
+    // Cortar diálogos de campaña en curso
+    if (typeof stopDialogue === 'function') stopDialogue();
+    if (typeof resetMusicRate === 'function') resetMusicRate();
+
+    // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;
+    p1.width = paddleWidth;
+    p1.x = 24;
     p2.height = paddleHeight;
+    p2.width = paddleWidth;
 
     // Música
     stopGameplayMusic();
@@ -244,7 +279,19 @@ function resetBall(initialServe = false) {
     let dy = (Math.random() * 2 - 1) * speed;
     if (Math.abs(dy) < 2) dy = dy < 0 ? -2 : 2;
 
-    const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dir * speed, dy);
+    let dx = dir * speed;
+    
+    if (typeof bossIsRotatedArena === 'function' && bossIsRotatedArena()) {
+        // Arena rotada (El Creador): la bola cae y la paleta pasa a horizontal abajo
+        dy = speed;
+        dx = (Math.random() * 2 - 1) * speed * 0.5;
+        p1.width = 100;
+        p1.height = 15;
+        p1.x = GAME_WIDTH / 2 - p1.width / 2;
+        p1.y = GAME_HEIGHT - 30;
+    }
+
+    const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dx, dy);
     balls = [newBall];
     ball = balls[0];
 
@@ -308,6 +355,9 @@ function triggerShake(intensity = 8, durationMs = 200) {
 
 // --- Actualización con delta-time ---
 function update(dt) {
+    if (typeof isDialogueActive !== 'undefined' && isDialogueActive) {
+        return; // Pausa completa del juego mientras hay un diálogo
+    }
     // Aplicar slowmo de power-ups y VFX de gol
     let slowmo = 1.0;
     if (typeof getSlowmoMultiplier === 'function') slowmo = Math.min(slowmo, getSlowmoMultiplier());
@@ -317,14 +367,43 @@ function update(dt) {
     const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
     const maxBallSpeed = speedPreset.max;
 
+    let playerDt = dt;
+    let ballDt = dt;
+
+    // --- Mecánicas del jefe de campaña (bosses.js) ---
+    if (typeof bossUpdate === 'function') bossUpdate(dt);
+
+    // Yisus congela la paleta del jugador durante su parada de tiempo
+    if (typeof bossFreezesPlayer === 'function' && bossFreezesPlayer()) playerDt = 0;
+
+    const bcfg = (typeof bossConfig === 'function') ? bossConfig() : null;
+    const rotatedArena = !!bcfg && bcfg.paddleAxis === 'x';
+
+    // El Creador invierte los controles en su fase 2
+    const invert = (typeof bossInvertsControls === 'function' && bossInvertsControls()) ? -1 : 1;
+
     // --- Movimiento Jugador 1 ---
-    if (p1.touchY !== null) {
-        p1.y = p1.touchY;
+    if (rotatedArena) {
+        // Arena rotada: la paleta se mueve en X. Se respetan las teclas
+        // reasignadas (p1Up = izquierda, p1Down = derecha).
+        if (p1.touchX !== undefined && p1.touchX !== null) {
+            if (playerDt > 0) p1.x = p1.touchX;
+        } else {
+            if (isActionPressed('p1Up')) p1.dx = -paddleSpeed * invert;
+            else if (isActionPressed('p1Down')) p1.dx = paddleSpeed * invert;
+            else p1.dx = 0;
+            p1.x += p1.dx * playerDt;
+        }
     } else {
-        if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
-        else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
-        else p1.dy = 0;
-        p1.y += p1.dy * dt;
+        if (p1.touchY !== null) {
+            // En time stop el touch también se ignora o se mueve pero no tiene efecto físico
+            if (playerDt > 0) p1.y = p1.touchY;
+        } else {
+            if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
+            else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
+            else p1.dy = 0;
+            p1.y += p1.dy * playerDt;
+        }
     }
 
     // --- Movimiento Jugador 2 / CPU ---
@@ -339,9 +418,14 @@ function update(dt) {
         }
     } else {
         let aiSpeed = paddleSpeed, errorMargin = 0;
-        if (gameMode === 'hachepe') {
-            aiSpeed = paddleSpeed * 1.5;
-            errorMargin = 0;
+        if (bcfg) {
+            // Cada jefe de campaña tiene su propia habilidad: esa es la curva
+            // de dificultad que el lore promete (⭐⭐ a ⭐⭐⭐⭐⭐).
+            aiSpeed = paddleSpeed * bcfg.aiSpeed;
+            errorMargin = bcfg.aiError;
+        } else if (gameMode === 'hachepe') {
+            aiSpeed = paddleSpeed * 1.15; // Velocidad alta pero superable
+            errorMargin = 10; // Un ligero margen de error
         } else {
             if (settings.difficulty === 1) { aiSpeed = paddleSpeed * 0.45; errorMargin = 30; }
             else if (settings.difficulty === 2) { aiSpeed = paddleSpeed * 0.65; errorMargin = 15; }
@@ -360,18 +444,65 @@ function update(dt) {
         if (!targetBall) targetBall = balls[0];
 
         const p2Center = p2.y + p2.height / 2;
+        // Los jefes apuntan con un desvío que se renueva en cada golpe: sin él
+        // la CPU es literalmente imbatible y el combate no termina nunca.
+        const aim = bcfg && typeof bossAim === 'function' ? bossAim() : 0;
         if (targetBall && targetBall.dx > 0) {
-            if (p2Center < targetBall.y - errorMargin) p2.y += aiSpeed * dt;
-            else if (p2Center > targetBall.y + errorMargin) p2.y -= aiSpeed * dt;
+            const objetivo = targetBall.y + aim;
+            if (p2Center < objetivo - errorMargin) p2.y += aiSpeed * dt;
+            else if (p2Center > objetivo + errorMargin) p2.y -= aiSpeed * dt;
         } else {
             if (p2Center < GAME_HEIGHT / 2 - 5) p2.y += aiSpeed * 0.5 * dt;
             else if (p2Center > GAME_HEIGHT / 2 + 5) p2.y -= aiSpeed * 0.5 * dt;
         }
+
+        // Lógica para el clon (Mario y Valen)
+        if (p2_twin.active && p2_twin.retreatMs > 0) {
+            // Retirado tras encajar gol: sale del campo por abajo. Esa es la
+            // ventana del jugador para volver a anotar.
+            p2_twin.y += paddleSpeed * 1.5 * dt;
+        } else if (p2_twin.active) {
+            const twinCenter = p2_twin.y + p2_twin.height / 2;
+            
+            // Valen (p2) cubrirá de la mitad de la cancha hacia arriba
+            // Mario (p2_twin) cubrirá de la mitad de la cancha hacia abajo
+            let twinSpeed = paddleSpeed * 1.25; // Mario es un poco más rápido pero solo cubre abajo
+            
+            if (targetBall && targetBall.dx > 0) {
+                // Si la bola está en la mitad superior, Mario baja al centro para esperar
+                if (targetBall.y < GAME_HEIGHT / 2) {
+                    if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2_twin.y += twinSpeed * dt;
+                    else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2_twin.y -= twinSpeed * dt;
+                } else {
+                    // Si está en la mitad inferior, Mario ataca
+                    if (twinCenter < targetBall.y - 10) p2_twin.y += twinSpeed * dt;
+                    else if (twinCenter > targetBall.y + 10) p2_twin.y -= twinSpeed * dt;
+                }
+            } else {
+                // Volver a posición default inferior
+                if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2_twin.y += twinSpeed * 0.5 * dt;
+                else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2_twin.y -= twinSpeed * 0.5 * dt;
+            }
+            
+            // Y Valen (p2) modifica su comportamiento para priorizar arriba
+            if (targetBall && targetBall.dx > 0 && targetBall.y >= GAME_HEIGHT / 2) {
+                // Si la bola va muy abajo, Valen se queda en el centro alto
+                if (p2Center < GAME_HEIGHT * 0.25 - 10) p2.y += aiSpeed * dt;
+                else if (p2Center > GAME_HEIGHT * 0.25 + 10) p2.y -= aiSpeed * dt;
+            }
+        }
     }
 
     // Límites de las paletas
-    p1.y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
+    if (rotatedArena) {
+        p1.x = Math.max(0, Math.min(GAME_WIDTH - p1.width, p1.x));
+    } else {
+        p1.y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
+    }
     p2.y = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
+    if (p2_twin.active && p2_twin.retreatMs <= 0) {
+        p2_twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2_twin.height, p2_twin.y));
+    }
 
     // --- Cuenta regresiva de saque ---
     if (serveCountdownMs > 0) {
@@ -404,33 +535,86 @@ function update(dt) {
         if (b.trail.length > MAX_TRAIL) b.trail.shift();
 
         // Mover bola
-        b.x += b.dx * dt;
-        b.y += b.dy * dt;
+        b.x += b.dx * ballDt;
+        b.y += b.dy * ballDt;
 
-        // Rebote en paredes superior/inferior
-        if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
-            b.dy = -b.dy;
-            b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
-            soundEffects.wallHit();
-            spawnParticles(b.x, b.y, currentThemeHex(), 6);
+        const isLevel6 = rotatedArena;
+
+        if (isLevel6) {
+            // Rebote en paredes laterales
+            if (b.x - b.radius < 0 || b.x + b.radius > GAME_WIDTH) {
+                b.dx = -b.dx;
+                b.x = Math.max(b.radius, Math.min(GAME_WIDTH - b.radius, b.x));
+                soundEffects.wallHit();
+                spawnParticles(b.x, b.y, currentThemeHex(), 6);
+            }
+            // Impacto contra el Creador (franja superior): le quita vida.
+            // Ojo: NO toca p1Score — el marcador y el daño son cosas distintas.
+            if (b.y - b.radius < 80) {
+                b.dy = -b.dy;
+                b.y = 80 + b.radius;
+                if (typeof bossDamage === 'function') bossDamage((bcfg && bcfg.hitDamage) || 10);
+                soundEffects.score();
+                triggerShake(8, 200);
+                spawnParticles(b.x, b.y, '#ef4444', 20);
+                if (b.speed < maxBallSpeed) b.speed += 0.2;
+            }
+        } else {
+            // Rebote en paredes superior/inferior normales
+            if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
+                b.dy = -b.dy;
+                b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
+                soundEffects.wallHit();
+                spawnParticles(b.x, b.y, currentThemeHex(), 6);
+            }
         }
 
+        // Obstáculos propios del jefe (escombros de Chemi, escudo de Dani)
+        if (typeof bossCollide === 'function') bossCollide(b);
+
         // Colisión con paletas
-        const targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
+        let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
+        if (isLevel6) targetPaddle = p1; // En la arena rotada solo existe p1 (abajo)
+
+        // Comprobar colisión
+        let hit = false;
         if (collision(b, targetPaddle)) {
-            let collidePoint = (b.y - (targetPaddle.y + targetPaddle.height / 2)) / (targetPaddle.height / 2);
-            const angleRad = (Math.PI / 4) * collidePoint;
-            const direction = (b.x + b.radius < GAME_WIDTH / 2) ? 1 : -1;
+            hit = true;
+        } else if (!isLevel6 && p2_twin.active && p2_twin.retreatMs <= 0 && b.x + b.radius > GAME_WIDTH / 2 && collision(b, p2_twin)) {
+            targetPaddle = p2_twin;
+            hit = true;
+        }
 
-            b.dx = direction * b.speed * Math.cos(angleRad);
-            b.dy = b.speed * Math.sin(angleRad);
-            if (b.speed < maxBallSpeed) b.speed += 0.5;
-
-            b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
+        if (hit) {
+            if (isLevel6) {
+                // Cálculo de rebote estilo Breakout (basado en X)
+                let collidePoint = (b.x - (targetPaddle.x + targetPaddle.width / 2)) / (targetPaddle.width / 2);
+                const angleRad = (Math.PI / 3) * collidePoint; // Max 60 grados
+                
+                b.dx = b.speed * Math.sin(angleRad);
+                b.dy = -b.speed * Math.cos(angleRad); // Siempre hacia arriba
+                if (b.speed < maxBallSpeed) b.speed += 0.5;
+                
+                b.y = targetPaddle.y - b.radius;
+            } else {
+                // Pong normal (basado en Y)
+                let collidePoint = (b.y - (targetPaddle.y + targetPaddle.height / 2)) / (targetPaddle.height / 2);
+                const angleRad = (Math.PI / 4) * collidePoint;
+                const direction = (b.x + b.radius < GAME_WIDTH / 2) ? 1 : -1;
+    
+                b.dx = direction * b.speed * Math.cos(angleRad);
+                b.dy = b.speed * Math.sin(angleRad);
+                if (b.speed < maxBallSpeed) b.speed += 0.5;
+    
+                b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
+            }
 
             soundEffects.paddleHit();
             spawnParticles(b.x, b.y, '#ffffff', 16);
             triggerShake(4, 100);
+
+            // Nuevo intercambio: el jefe recalcula su puntería
+            if (typeof bossRefreshAim === 'function') bossRefreshAim();
 
             // Registrar último golpeador para power-ups
             if (typeof setLastHitter === 'function') {
@@ -442,10 +626,30 @@ function update(dt) {
         }
 
         // Puntuación (bola sale del campo)
-        if (b.x - b.radius < 0) {
+        if (isLevel6) {
+            if (b.y - b.radius > GAME_HEIGHT) {
+                // El jugador falla: cuenta como fallo, no como punto del rival
+                p2Score++;
+                soundEffects.score();
+                triggerShake(10, 260);
+                if (typeof triggerGoalVFX === 'function') triggerGoalVFX(b.x, GAME_HEIGHT);
+                if (balls.length > 1) {
+                    ballsToRemove.push(bi);
+                    if (checkWin()) return;
+                } else {
+                    if (!checkWin()) resetBall(false);
+                }
+            }
+            // La victoria se decide en checkWin() leyendo la barra de vida
+            if (typeof bossHealth === 'function' && bossHealth() <= 0) {
+                if (checkWin()) return;
+            }
+        } else if (b.x - b.radius < 0) {
             // CPU/P2 anota
             p2Score++;
             if (typeof statsOnScore === 'function') statsOnScore(false);
+            if (typeof bossOnGoal === 'function') bossOnGoal(false);
+            if (typeof checkMidDialogue === 'function') checkMidDialogue();
             soundEffects.score();
             triggerShake(10, 260);
             // VFX de gol
@@ -464,6 +668,7 @@ function update(dt) {
             // P1 anota
             p1Score++;
             if (typeof statsOnScore === 'function') statsOnScore(true);
+            if (typeof bossOnGoal === 'function') bossOnGoal(true);
             soundEffects.score();
             triggerShake(10, 260);
             if (typeof triggerGoalVFX === 'function') triggerGoalVFX(GAME_WIDTH, b.y);
@@ -512,16 +717,57 @@ function update(dt) {
 }
 
 function checkWin() {
-    const target = gameMode === 'hachepe' ? 10 : settings.winningScore;
-    if (p1Score >= target || p2Score >= target) {
+    const bcfg = (typeof bossConfig === 'function') ? bossConfig() : null;
+
+    // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.
+    let target = settings.winningScore;
+    if (bcfg) target = bcfg.targetScore;
+    else if (gameMode === 'hachepe') target = 10;
+
+    // Los jefes con barra de vida se ganan vaciándola, no por marcador: aquí
+    // p2Score cuenta los fallos del jugador, no los puntos del rival.
+    let p1Won, finished;
+    if (bcfg && bcfg.useHealth) {
+        const hp = (typeof bossHealth === 'function') ? bossHealth() : 1;
+        p1Won = hp <= 0;
+        finished = p1Won || p2Score >= target;
+    } else {
+        p1Won = p1Score >= target;
+        finished = p1Won || p2Score >= target;
+    }
+
+    if (finished) {
         isPlaying = false;
 
         const gameOverScreen = document.getElementById('game-over-screen');
         const winnerText = document.getElementById('winner-text');
         const scoreText = document.getElementById('final-score');
 
-        const p1Won = p1Score >= target;
-        if (gameMode === 'cpu' || gameMode === 'hachepe') {
+        const btnNextCampaign = document.getElementById('btn-next-campaign');
+        if (btnNextCampaign) btnNextCampaign.classList.add('hidden'); // Ocultar por defecto
+
+        // ¿Este desenlace lo narra la campaña en vez de la pantalla de fin?
+        // Vencer a Yisus dispara el falso final; vencer al Creador, el final real.
+        let narrativeEnding = null;
+        if (gameMode === 'campaign' && p1Won) {
+            if (currentCampaignLevel === 5) narrativeEnding = 'finale';
+            else if (currentCampaignLevel === 6) narrativeEnding = 'trueEnding';
+        }
+
+        if (gameMode === 'campaign') {
+            winnerText.textContent = p1Won ? '¡DERROTASTE AL HACHEPE!' : 'HAS CAÍDO...';
+            if (!narrativeEnding) p1Won ? soundEffects.win() : soundEffects.lose();
+
+            // Diálogo de despedida del jefe (win/lose desde su punto de vista)
+            if (typeof playBossOutcomeDialogue === 'function') playBossOutcomeDialogue(p1Won);
+
+            if (p1Won && typeof handleCampaignVictory === 'function') {
+                handleCampaignVictory();
+                if (btnNextCampaign && !narrativeEnding && playerProgression.campaignProgress <= 6) {
+                    btnNextCampaign.classList.remove('hidden');
+                }
+            }
+        } else if (gameMode === 'cpu' || gameMode === 'hachepe') {
             winnerText.textContent = p1Won ? '¡GANASTE!' : 'CPU GANA :(';
             p1Won ? soundEffects.win() : soundEffects.lose();
         } else {
@@ -530,7 +776,8 @@ function checkWin() {
         }
 
         scoreText.textContent = `${p1Score} - ${p2Score}`;
-        gameOverScreen.classList.add('active-screen');
+        // En los desenlaces narrados, la pantalla de fin se salta por completo
+        if (!narrativeEnding) gameOverScreen.classList.add('active-screen');
 
         // Estadísticas y logros
         if (typeof statsOnGameEnd === 'function') {
@@ -550,12 +797,21 @@ function checkWin() {
         if (typeof updateCoinDisplay === 'function') updateCoinDisplay();
         if (typeof updateProgressionDisplay === 'function') updateProgressionDisplay();
 
-        // Restaurar paletas por si un power-up las alteró
+        // Restaurar paletas por si un power-up las alteró o la arena estaba rotada
+        p1.width = paddleWidth;
         p1.height = paddleHeight;
+        p1.x = 24;
         p2.height = paddleHeight;
 
         // Música
         stopGameplayMusic();
+
+        // Encadenar la secuencia narrativa que corresponda
+        if (narrativeEnding === 'finale' && typeof runFinaleSequence === 'function') {
+            runFinaleSequence();
+        } else if (narrativeEnding === 'trueEnding' && typeof runTrueEndingSequence === 'function') {
+            runTrueEndingSequence();
+        }
         return true;
     }
     return false;
@@ -699,15 +955,29 @@ function render() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    drawNet(themeColor);
+    const isLevel6 = (typeof bossIsRotatedArena === 'function') && bossIsRotatedArena();
 
-    // Marcador
-    drawText(p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
-    drawText(p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
+    if (!isLevel6) {
+        drawNet(themeColor);
+        // Marcador
+        drawText(p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
+        drawText(p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
+    } else {
+        // Arena rotada: abajo se muestran los fallos restantes del jugador
+        const bcfg = bossConfig();
+        const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - p2Score);
+        drawText('♥ '.repeat(vidas).trim() || '—', GAME_WIDTH / 2, GAME_HEIGHT - 55, '#ef4444', 22);
+    }
+
+    // Capa propia del jefe: escombros, escudo, franja del Creador...
+    if (typeof bossRender === 'function') bossRender(ctx);
 
     // Estelas + bolas
-    drawBallTrail(themeColor);
+    const hideBall = (typeof bossHidesBall === 'function') && bossHidesBall();
+    if (!hideBall) drawBallTrail(themeColor);
     for (const b of balls) {
+        if (hideBall) continue; // Fano oculta la bola real
+
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
@@ -720,14 +990,20 @@ function render() {
     // Paletas
     if (typeof renderPaddleVFX === 'function') {
         renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, '#ffffff');
-        renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
+        if (!isLevel6) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
+        if (!isLevel6 && p2_twin.active) renderPaddleVFX(ctx, p2_twin.x, p2_twin.y, p2_twin.width, p2_twin.height, '#ef4444');
     } else {
         ctx.shadowColor = themeColor;
         ctx.shadowBlur = 10;
         drawRoundedRect(p1.x, p1.y, p1.width, p1.height, 4, '#ffffff');
-        drawRoundedRect(p2.x, p2.y, p2.width, p2.height, 4, '#ffffff');
+        if (!isLevel6) drawRoundedRect(p2.x, p2.y, p2.width, p2.height, 4, '#ffffff');
+        if (!isLevel6 && p2_twin.active) {
+            ctx.shadowColor = '#ef4444';
+            drawRoundedRect(p2_twin.x, p2_twin.y, p2_twin.width, p2_twin.height, 4, '#ef4444');
+        }
         ctx.shadowBlur = 0;
     }
+
 
     // Power-ups
     if (typeof renderPowerup === 'function') renderPowerup(ctx, themeColor);
@@ -735,6 +1011,10 @@ function render() {
     if (typeof renderActiveEffectHUD === 'function') renderActiveEffectHUD(ctx, GAME_WIDTH);
 
     drawParticles();
+
+
+    // Capa superior del jefe: viñetas, tintes, avisos y glitch
+    if (typeof bossRenderOverlay === 'function') bossRenderOverlay(ctx);
 
     // Efectos de gol VFX (flash, confeti, shockwave)
     if (typeof renderGoalVFX === 'function') renderGoalVFX(ctx);

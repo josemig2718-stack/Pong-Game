@@ -941,3 +941,277 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     75% { transform: translateX(5px); }
 }
 .coin-error { animation: shake-error 0.3s ease; color: #ef4444 !important; }
+
+/* ==================================================================
+   CAMPAÑA
+   ================================================================== */
+.campaign-map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+.campaign-node {
+    width: 250px;
+    max-width: 100%;   /* sin esto se desborda en pantallas muy estrechas */
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.campaign-node.unlocked { cursor: pointer; border-color: var(--primary); }
+.campaign-node.unlocked:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.4); }
+.campaign-node.current { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); animation: pulse-danger 2s infinite; }
+.campaign-node.locked { opacity: 0.5; border-color: #475569; }
+
+.node-icon { font-size: 1.5rem; }
+.node-label { font-family: var(--font-body); font-weight: 600; flex-grow: 1; color: #fff; }
+.node-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #334155; }
+.campaign-node.current .node-avatar { border-color: #ef4444; }
+
+.campaign-line {
+    width: 4px;
+    height: 30px;
+    background: #334155;
+    margin: -15px 0;
+    z-index: -1;
+}
+.campaign-line.completed { background: var(--primary); }
+
+/* Etiqueta "repetir" en los jefes ya vencidos */
+.node-replay {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* El nodo del Creador: corrompido, fuera de la paleta del juego */
+.campaign-node.corrupted {
+    border-color: #22c55e;
+    background: #050a05;
+    animation: corrupt-flicker 3s infinite;
+}
+.campaign-node.corrupted .node-label {
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-shadow: 1px 0 0 #f00, -1px 0 0 #0ff;
+}
+.campaign-line.corrupted {
+    background: repeating-linear-gradient(to bottom, #22c55e 0 4px, transparent 4px 8px);
+}
+@keyframes corrupt-flicker {
+    0%, 92%, 100% { box-shadow: 0 0 14px rgba(34, 197, 94, 0.35); }
+    94%           { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); transform: translateX(2px); }
+    96%           { box-shadow: 0 0 8px rgba(34, 197, 94, 0.2); transform: translateX(-2px); }
+}
+
+/* Avatares: el del Creador se ve manipulado; el del dúo se atenúa
+   cuando habla el otro. */
+.avatar-corrupted {
+    filter: invert(1) hue-rotate(90deg) contrast(1.4) saturate(2);
+    animation: corrupt-flicker 2.4s infinite;
+}
+.avatar-dimmed {
+    filter: brightness(0.4) grayscale(0.6);
+    transition: filter 0.2s;
+}
+
+@keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+    50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+}
+
+
+#dialogue-box {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    background: rgba(5, 7, 10, 0.9);
+    border: 3px solid #ef4444;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+    z-index: 50;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+}
+.dialogue-avatar-container {
+    display: flex;
+    gap: 5px;
+    height: 60px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.dialogue-avatar-container img { 
+    width: 60px; 
+    height: 60px; 
+    object-fit: cover; 
+    border: 2px solid #ef4444; 
+    border-radius: 8px; 
+}
+.dialogue-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+#dialogue-name { font-family: var(--font-display); font-size: 0.6rem; color: #ef4444; margin-bottom: 5px; }
+#dialogue-text { font-family: var(--font-body); font-size: 0.9rem; color: #fff; line-height: 1.4; min-height: 2.8em; }
+
+/* El shake genérico usa translateX y pisaría el translateX(-50%) que centra
+   el cuadro, tirándolo fuera de pantalla. Este mantiene el centrado. */
+@keyframes dialogue-shake {
+    0%, 100% { transform: translateX(-50%); }
+    25%      { transform: translate(calc(-50% - 4px), 1px); }
+    75%      { transform: translate(calc(-50% + 4px), -1px); }
+}
+.dialogue-glitch {
+    border-color: #f00 !important;
+    background: rgba(255, 0, 0, 0.2) !important;
+    animation: dialogue-shake 0.2s infinite;
+}
+.glitch-mode h1 {
+    font-family: monospace;
+    letter-spacing: 5px;
+    text-shadow: 3px 3px 0 #0f0, -3px -3px 0 #00f;
+    animation: glitch-shift 0.4s infinite steps(2);
+}
+@keyframes glitch-shift {
+    0%   { transform: translate(0, 0); text-shadow: 3px 3px 0 #0f0, -3px -3px 0 #00f; }
+    50%  { transform: translate(-3px, 1px); text-shadow: -4px 2px 0 #f00, 4px -2px 0 #0ff; }
+    100% { transform: translate(2px, -1px); text-shadow: 2px -3px 0 #0f0, -2px 3px 0 #00f; }
+}
+
+/* ==================================================================
+   DESENLACE DE CAMPAÑA (falso final y final verdadero)
+   ================================================================== */
+
+/* Apagón a pantalla completa. Vive por encima de todo. */
+#fade-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    z-index: 90;
+    pointer-events: none;
+    transition: opacity 800ms ease;
+}
+
+/* La intro se escribe con textContent: sin esto los párrafos se pierden */
+#campaign-intro-text { white-space: pre-line; }
+
+/* Por encima de #fade-overlay (z-90): durante la revelación el texto se lee
+   sobre el negro, no debajo de él. */
+#finale-screen {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 24px;
+    z-index: 95;
+}
+
+.finale-text {
+    max-width: 720px;
+    color: #fff;
+    font-family: var(--font-body);
+    line-height: 1.7;
+    white-space: pre-wrap;   /* la revelación se escribe con saltos reales */
+}
+.finale-text h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 5vw, 2.6rem);
+    line-height: 1.3;
+    margin-bottom: 18px;
+}
+.finale-text p { font-size: clamp(0.85rem, 2.6vw, 1.05rem); margin-bottom: 12px; }
+.finale-text .finale-small { font-size: 0.8rem; opacity: 0.6; margin-top: 22px; }
+
+/* 1. Victoria falsa: cálida y triunfal, para que el giro duela más */
+.finale-victory h2 { color: var(--primary); text-shadow: 0 0 25px var(--primary); }
+.finale-victory { animation: finale-in 1.2s ease both; }
+
+/* 2. La grieta: la voz que no debería estar ahí */
+.finale-crack .finale-voice {
+    color: #cbd5e1;
+    font-style: italic;
+    font-size: clamp(0.9rem, 3vw, 1.15rem);
+    animation: finale-in 2s ease both;
+}
+
+/* 3. La revelación: monoespaciada y sucia */
+.finale-reveal {
+    font-family: monospace;
+    font-size: clamp(0.9rem, 3.2vw, 1.35rem);
+    color: #22c55e;
+    text-shadow: 2px 0 0 rgba(255, 0, 0, 0.5), -2px 0 0 rgba(0, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+/* 4. Final verdadero: la ciudad vuelve a encenderse */
+.finale-true h2 { color: var(--primary); text-shadow: 0 0 30px var(--primary); }
+.finale-true { animation: finale-in 2.5s ease both; }
+
+@keyframes finale-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Logro secreto: no debe insinuar qué es */
+.achievement-card--secret .achievement-card__name,
+.achievement-card--secret .achievement-card__desc {
+    letter-spacing: 3px;
+    opacity: 0.65;
+}
+
+/* ==================================================================
+   Responsive de campaña (antes no tenía ninguna regla propia)
+   ================================================================== */
+@media (max-height: 700px) {
+    .campaign-map-container { gap: 8px; margin-bottom: 10px; }
+    .campaign-node { padding: 7px 10px; gap: 10px; }
+    .node-avatar { width: 30px; height: 30px; }
+    .node-icon { font-size: 1.15rem; }
+    .node-label { font-size: 0.8rem; }
+    .campaign-line { height: 18px; margin: -8px 0; }
+    #dialogue-box { bottom: 8px; padding: 9px; gap: 9px; }
+    .dialogue-avatar-container { height: 42px; }
+    .dialogue-avatar-container img { width: 42px; height: 42px; }
+    #dialogue-text { font-size: 0.78rem; min-height: 2.4em; }
+}
+
+@media (max-width: 400px) {
+    .campaign-node { width: 100%; padding: 7px 9px; gap: 9px; }
+    .node-label { font-size: 0.75rem; }
+    .node-replay { font-size: 0.5rem; }
+    #dialogue-box { width: 96%; padding: 8px; gap: 8px; }
+    .dialogue-avatar-container { height: 36px; }
+    .dialogue-avatar-container img { width: 36px; height: 36px; }
+    #dialogue-name { font-size: 0.5rem; }
+    #dialogue-text { font-size: 0.72rem; }
+    .finale-text { padding: 0 6px; }
+}
+
+/* En pantallas bajas la pantalla VS necesita encoger para no cortarse */
+@media (max-height: 620px) {
+    #vs-screen-container h1 { font-size: 2.2rem; margin-bottom: 12px; }
+    #vs-screen-container img { max-height: 90px; }
+    #vs-boss-name { font-size: 1rem; }
+}
+
+/* El glitch y el parpadeo son agresivos: respetar quien pida menos motion */
+@media (prefers-reduced-motion: reduce) {
+    .campaign-node.corrupted,
+    .avatar-corrupted,
+    .glitch-mode h1,
+    .dialogue-glitch {
+        animation: none;
+    }
+}

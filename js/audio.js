@@ -67,7 +67,29 @@ const soundEffects = {
     // --- Progresión y Tienda ---
     levelUp:   () => { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.25), i * 100)); },
     coinEarned: () => playTone(1200, 'triangle', 0.06),
-    shopBuy:   () => { playTone(800, 'square', 0.08); setTimeout(() => playTone(1000, 'triangle', 0.12), 60); setTimeout(() => playTone(1200, 'triangle', 0.08), 120); }
+    shopBuy:   () => { playTone(800, 'square', 0.08); setTimeout(() => playTone(1000, 'triangle', 0.12), 60); setTimeout(() => playTone(1200, 'triangle', 0.08), 120); },
+
+    // --- Campaña: todo sintetizado, sin archivos nuevos ---
+    /** Aviso previo de un ataque de jefe (escudo de Dani, parada de tiempo). */
+    bossWarning: () => { playTone(220, 'square', 0.09); setTimeout(() => playTone(220, 'square', 0.09), 160); },
+    /** El escudo de Dani se materializa. */
+    bossShield:  () => { playTone(180, 'sawtooth', 0.18); setTimeout(() => playTone(260, 'square', 0.14), 90); },
+    /** Teletransporte de Dani. */
+    bossTeleport: () => { playTone(900, 'triangle', 0.05); setTimeout(() => playTone(500, 'triangle', 0.08), 50); },
+    /** Uno del dúo se retira del campo. */
+    bossRetreat: () => { [520, 420, 330].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.1), i * 70)); },
+    /** La bola desaparece (Fano): un latido grave. */
+    bossVanish:  () => { playTone(120, 'sine', 0.3); setTimeout(() => playTone(90, 'sine', 0.35), 180); },
+    /** Parada de tiempo de Yisus. */
+    timeStop:    () => { [660, 550, 440, 330].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.3), i * 60)); },
+    /** Ruido de glitch del Creador: disonancia deliberada. */
+    glitch:      () => {
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => playTone(90 + Math.random() * 900, 'sawtooth', 0.05), i * 45);
+        }
+    },
+    /** Pitido suave de la máquina de escribir en los diálogos. */
+    dialogueBlip: () => playTone(680, 'square', 0.02)
 };
 
 function setMasterVolume(val) {
@@ -116,8 +138,19 @@ function playGameplayMusic(mode = 'cpu') {
     if (!settings.musicEnabled) return;
     menuMusic.pause();
     menuMusic.currentTime = 0;
-    
-    if (mode === 'hachepe') {
+
+    // El combate contra El Creador va en silencio: la tensión la llevan
+    // los tonos sintetizados del propio jefe.
+    if (mode === 'campaign' && typeof currentCampaignLevel !== 'undefined' && currentCampaignLevel === 6) {
+        gameplayMusic.pause();
+        gameplayMusic.currentTime = 0;
+        hachepeMusic.pause();
+        hachepeMusic.currentTime = 0;
+        return;
+    }
+
+    // El resto de jefes comparten el rap de los Hachepes
+    if (mode === 'hachepe' || mode === 'campaign') {
         gameplayMusic.pause();
         gameplayMusic.currentTime = 0;
         hachepeMusic.volume = settings.musicVolume / 100;

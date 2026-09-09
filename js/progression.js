@@ -26,7 +26,9 @@ const XP_REWARDS = {
     perfectGame: 20,
     scorePoint: 2,
     completeLocal: 10,
-    unlockAchievement: 30
+    unlockAchievement: 30,
+    winCampaignBase: 40,     // se multiplica por el nº de jefe (1 a 5)
+    winCreator: 300
 };
 
 const COIN_REWARDS = {
@@ -34,8 +36,14 @@ const COIN_REWARDS = {
     winHachepe: 20,
     // NO coins for local mode (user explicitly requested this to prevent exploitation)
     perfectGame: 10,
-    unlockAchievement: 8
+    unlockAchievement: 8,
+    winCampaignBase: 10,     // se multiplica por el nº de jefe (1 a 5)
+    winCreator: 100
 };
+
+// Al repetir un jefe ya vencido solo se recibe esta fracción: evita farmear
+// la campaña, igual que el modo local no da monedas.
+const CAMPAIGN_REPLAY_FACTOR = 0.25;
 
 const DEFAULT_PROGRESSION = {
     totalXP: 0,
@@ -45,7 +53,10 @@ const DEFAULT_PROGRESSION = {
     selectedBg: 'none',
     selectedPaddle: 'classic',
     selectedGoalFx: 'classic',
-    purchasedItems: ['default', 'none', 'classic']  // Free items pre-purchased
+    purchasedItems: ['default', 'none', 'classic'],  // Free items pre-purchased
+    campaignProgress: 1, // Nivel de la campaña (1 a 6)
+    campaignIntroSeen: false // Si ya vio la historia inicial
+
 };
 
 let playerProgression = loadProgression();
@@ -154,8 +165,9 @@ function checkLevelUp() {
         }
         
         if (typeof unlockAchievement === 'function') {
-            if (playerProgression.level >= 5) unlockAchievement('level_5');
-            if (playerProgression.level >= 10) unlockAchievement('level_10');
+            // Los ids del catálogo son reach_level_*, no level_*
+            if (playerProgression.level >= 5) unlockAchievement('reach_level_5');
+            if (playerProgression.level >= 10) unlockAchievement('reach_level_10');
         }
     }
 }
@@ -266,6 +278,18 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     }
     else if (mode === 'local') {
         addXP(XP_REWARDS.completeLocal);
+    }
+    else if (mode === 'campaign' && p1Won) {
+        const level = (typeof currentCampaignLevel !== 'undefined') ? currentCampaignLevel : 1;
+        const isCreator = level === 6;
+        // Repetir un jefe ya vencido paga mucho menos
+        const factor = (typeof isReplayingBoss !== 'undefined' && isReplayingBoss) ? CAMPAIGN_REPLAY_FACTOR : 1;
+
+        const xp = isCreator ? XP_REWARDS.winCreator : XP_REWARDS.winCampaignBase * level;
+        const coins = isCreator ? COIN_REWARDS.winCreator : COIN_REWARDS.winCampaignBase * level;
+
+        addXP(Math.round(xp * factor));
+        addCoins(Math.round(coins * factor));
     }
     
     if (p1Won && p2Score === 0) {

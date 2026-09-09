@@ -7,9 +7,25 @@ Un clásico juego de Pong para navegador, expandido masivamente en una experienc
 ## 🕹️ Características Principales
 
 ### Modos de Juego
+- **Modo Campaña — "La Venganza contra los Hachepes"**: Un desconocido sin nombre se venga de los tiranos que quemaron y esclavizaron su ciudad. Cinco jefes, cada uno con su mecánica, sus diálogos y su lore… y un final que no es el que parece. Ver abajo.
 - **Modo VS CPU**: 3 niveles de dificultad (Fácil, Normal, Imposible).
 - **Modo Local (2 jugadores)**: Juega con un amigo compartiendo teclado (soporte anti-ghosting mejorado) o mediante controles táctiles divididos en móviles.
 - **Modo Hachepe (Jefe)**: Un intenso desafío contra la CPU donde la bola siempre va al máximo de velocidad y la CPU devuelve con precisión robótica. Incluye banda sonora exclusiva.
+
+### 🗡️ La Campaña
+Cada Hachepe rompe las reglas del Pong a su manera, y el marcador sube con cada uno:
+
+| Jefe | Lo que te hace |
+|------|----------------|
+| **Chemi** — El Guardián de la Frontera | Pelea entre los escombros de tu barrio, que desvían la bola |
+| **Dani** — El Arquitecto del Caos | Levanta escudos que aguantan dos impactos y se teletransporta |
+| **Mario y Valentín** — El Dúo Letal | Dos paletas repartiéndose el campo; al encajar gol, una se retira |
+| **Fano** — El Guardián de las Sombras | Apaga la luz: la bola se vuelve invisible y aparecen señuelos |
+| **Yisus** — El Falso Rey | Desvía la bola con telekinesis y detiene el tiempo sobre tu paleta |
+
+Se puede repetir cualquier jefe ya vencido (con recompensa reducida), y hay un logro secreto que ni siquiera aparece en la lista de logros hasta que lo consigues.
+
+*Y cuando creas que has ganado... sigue jugando.*
 
 ### Sistemas Arcade (Novedad)
 - **Progresión (XP) y Títulos**: Gana experiencia al jugar. Sube de nivel para desbloquear nuevos títulos (desde Novato hasta Leyenda) y gana Chemi Coins.
@@ -19,7 +35,7 @@ Un clásico juego de Pong para navegador, expandido masivamente en una experienc
   - *Paletas:* Clásica, Pixel, Gradiente, Neón, Delgada Pro.
   - *Efectos de Gol:* Clásico, Flash Épico, Confeti, Onda Expansiva.
 - **Power-ups Dinámicos**: Durante las partidas aparecerán mejoras aleatorias como Paleta XL/Mini, Bola Gigante, Escudo protector, Cámara lenta, Turbo y Multi-bola (hasta 3 bolas simultáneas).
-- **Logros (Achievements)**: 27 logros desbloqueables (ej. "Tiro Rápido", "Veterano", "Grow Partner") con notificaciones en pantalla tipo "toast".
+- **Logros (Achievements)**: 30 logros desbloqueables (ej. "Veterano", "Grow Partner", "La Venganza") con notificaciones en pantalla tipo "toast". Uno de ellos es **secreto**: se muestra como `????` hasta que lo consigues, y ni el contador delata que existe.
 - **Estadísticas (Stats)**: Registro persistente de tus victorias, rachas máximas, horas jugadas, velocidad máxima de la bola y más.
 
 ### Interfaz y Personalización
@@ -49,6 +65,8 @@ pong-game/
 │   ├── shop.js         # Lógica de compras, inventario y UI de la tienda
 │   ├── vfx.js          # Sistema de partículas, estelas avanzadas y renders
 │   ├── powerups.js     # Lógica y física de los potenciadores en partida
+│   ├── campaign.js     # Modo Campaña: lore, mapa, diálogos y secuencias finales
+│   ├── bosses.js       # Mecánicas de cada jefe (tabla BOSS_MECHANICS)
 │   ├── game.js         # Bucle principal (Game Loop), física de las bolas, colisiones
 │   ├── touch.js        # Gestión de eventos táctiles para móviles
 │   └── ui.js           # Navegación entre menús y sincronización con config
