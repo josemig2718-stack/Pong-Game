@@ -80,16 +80,26 @@ canvas.addEventListener('mouseleave', () => {
 
 canvas.addEventListener('mousemove', (e) => {
     if (!settings.mouseControl || !isPlaying || isPaused || !mouseActive) return;
-    const rect = canvas.getBoundingClientRect();
-    const ratio = GAME_HEIGHT / rect.height;
-    const canvasY = (e.clientY - rect.top) * ratio;
-    p1.touchY = Math.max(0, Math.min(GAME_HEIGHT - paddleHeight, canvasY - paddleHeight / 2));
+
+    // La arena rotada (El Creador) mueve la paleta en X: si solo se
+    // escribiera touchY, el mouse no controlaría nada en ese combate.
+    if (typeof bossIsRotatedArena === 'function' && bossIsRotatedArena()) {
+        const canvasX = touchToCanvasX(e.clientX);
+        p1.touchX = Math.max(0, Math.min(GAME_WIDTH - p1.width, canvasX - p1.width / 2));
+        p1.touchY = null;
+    } else {
+        const canvasY = touchToCanvasY(e.clientY);
+        p1.touchY = Math.max(0, Math.min(GAME_HEIGHT - p1.height, canvasY - p1.height / 2));
+        p1.touchX = null;
+    }
 });
 
-// Al desactivar el mouse control, limpiar touchY si venía del mouse
+// Al desactivar el mouse control, soltar la paleta en ambos ejes: dejar
+// touchX puesto la mantendría pegada e ignoraría el teclado.
 function clearMouseControl() {
     if (mouseActive) {
         p1.touchY = null;
+        p1.touchX = null;
     }
 }
 
@@ -550,13 +560,24 @@ function update(dt) {
             }
             // Impacto contra el Creador (franja superior): le quita vida.
             // Ojo: NO toca p1Score — el marcador y el daño son cosas distintas.
-            if (b.y - b.radius < 80) {
+            const bandaH = (typeof CREATOR_BAND_H !== 'undefined') ? CREATOR_BAND_H : 80;
+            if (b.y - b.radius < bandaH) {
                 b.dy = -b.dy;
-                b.y = 80 + b.radius;
-                if (typeof bossDamage === 'function') bossDamage((bcfg && bcfg.hitDamage) || 10);
-                soundEffects.score();
-                triggerShake(8, 200);
-                spawnParticles(b.x, b.y, '#ef4444', 20);
+                b.y = bandaH + b.radius;
+
+                // Los tramos blindados rebotan sin recibir daño: hay que
+                // apuntar al hueco en vez de repetir siempre el mismo golpe.
+                const blindado = (typeof bossSegmentArmored === 'function') && bossSegmentArmored(b.x);
+                if (blindado) {
+                    soundEffects.wallHit();
+                    triggerShake(4, 120);
+                    spawnParticles(b.x, b.y, '#9ca3af', 12);
+                } else {
+                    if (typeof bossDamage === 'function') bossDamage((bcfg && bcfg.hitDamage) || 10);
+                    soundEffects.score();
+                    triggerShake(8, 200);
+                    spawnParticles(b.x, b.y, '#ef4444', 20);
+                }
                 if (b.speed < maxBallSpeed) b.speed += 0.2;
             }
         } else {
@@ -763,7 +784,10 @@ function checkWin() {
 
             if (p1Won && typeof handleCampaignVictory === 'function') {
                 handleCampaignVictory();
-                if (btnNextCampaign && !narrativeEnding && playerProgression.campaignProgress <= 6) {
+                // El botón solo aparece si de verdad hay un Hachepe siguiente
+                // desbloqueado; si no, quedan "jugar de nuevo" y "menú".
+                const siguiente = (typeof getNextCampaignBoss === 'function') ? getNextCampaignBoss() : null;
+                if (btnNextCampaign && !narrativeEnding && siguiente) {
                     btnNextCampaign.classList.remove('hidden');
                 }
             }

@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=14">
+    <link rel="stylesheet" href="css/style.css?v=15">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -70,9 +70,16 @@
         <h2 class="text-2xl md:text-4xl font-bold mb-4 text-center text-red-500" style="text-shadow: 0 0 15px rgba(239,68,68,0.6);">LA VENGANZA</h2>
         <p class="text-xs mb-8 text-center max-w-lg text-white/70">Derrota a los Hachepes para recuperar tu ciudad.</p>
         
-        <div id="campaign-nodes" class="campaign-map-container">
-            <!-- Nodos generados por JS -->
+        <div class="boss-carousel">
+            <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" onclick="carouselMove(-1)">&lsaquo;</button>
+            <div class="carousel-viewport">
+                <div id="campaign-nodes" class="carousel-track">
+                    <!-- Cartas de jefe generadas por JS -->
+                </div>
+            </div>
+            <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" onclick="carouselMove(1)">&rsaquo;</button>
         </div>
+        <div id="carousel-dots" class="carousel-dots"></div>
 
         <button class="retro-button mt-8" style="border-style: dashed;" onclick="showScreen('mode-select-menu')">VOLVER</button>
 
@@ -121,6 +128,17 @@
     <!-- Pantalla del falso final y del final verdadero. Sin botones durante
          la secuencia: el jugador no puede escaparse del momento. -->
     <div id="finale-screen" class="screen z-40" style="background: #000;">
+        <!-- El ojo del Creador, dibujado en SVG para que escale sin assets -->
+        <div id="finale-eye" class="hidden">
+            <svg viewBox="0 0 260 150" aria-hidden="true">
+                <ellipse cx="130" cy="75" rx="124" ry="64" fill="#04140a" stroke="#22c55e" stroke-width="4"/>
+                <g class="eye-pupil">
+                    <circle cx="130" cy="75" r="40" fill="#22c55e"/>
+                    <circle cx="130" cy="75" r="19" fill="#000"/>
+                    <circle cx="118" cy="63" r="7" fill="rgba(255,255,255,0.85)"/>
+                </g>
+            </svg>
+        </div>
         <div id="finale-text" class="finale-text hidden"></div>
         <button id="finale-exit-btn" class="retro-button hidden mt-10" onclick="closeFinale()">FIN</button>
     </div>
@@ -470,6 +488,12 @@
     <!-- Apagón a pantalla completa, usado por la secuencia del falso final -->
     <div id="fade-overlay" class="hidden"></div>
 
+    <!-- Apagado/encendido de monitor CRT para la revelación -->
+    <div id="crt-collapse" class="hidden">
+        <div class="crt-line"></div>
+        <div class="crt-dot"></div>
+    </div>
+
     <!-- ============================== TOAST DE LOGRO ============================== -->
     <div id="achievement-toast" class="achievement-toast achievement-toast--hidden">
         <span class="achievement-toast__emoji">🏓</span>
@@ -481,21 +505,21 @@
     </div>
 
     <!-- El orden de carga importa: config primero, ui al final -->
-    <script src="js/config.js?v=14"></script>
-    <script src="js/theme.js?v=14"></script>
-    <script src="js/audio.js?v=14"></script>
-    <script src="js/stats.js?v=14"></script>
-    <script src="js/achievements.js?v=14"></script>
-    <script src="js/input.js?v=14"></script>
-    <script src="js/progression.js?v=14"></script>
-    <script src="js/shop.js?v=14"></script>
-    <script src="js/vfx.js?v=14"></script>
-    <script src="js/powerups.js?v=14"></script>
-    <script src="js/campaign.js?v=14"></script>
-    <script src="js/bosses.js?v=14"></script>
-    <script src="js/game.js?v=14"></script>
-    <script src="js/touch.js?v=14"></script>
-    <script src="js/ui.js?v=14"></script>
+    <script src="js/config.js?v=15"></script>
+    <script src="js/theme.js?v=15"></script>
+    <script src="js/audio.js?v=15"></script>
+    <script src="js/stats.js?v=15"></script>
+    <script src="js/achievements.js?v=15"></script>
+    <script src="js/input.js?v=15"></script>
+    <script src="js/progression.js?v=15"></script>
+    <script src="js/shop.js?v=15"></script>
+    <script src="js/vfx.js?v=15"></script>
+    <script src="js/powerups.js?v=15"></script>
+    <script src="js/campaign.js?v=15"></script>
+    <script src="js/bosses.js?v=15"></script>
+    <script src="js/game.js?v=15"></script>
+    <script src="js/touch.js?v=15"></script>
+    <script src="js/ui.js?v=15"></script>
 </body>
 
 </html>

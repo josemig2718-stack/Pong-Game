@@ -88,9 +88,15 @@ Two non-obvious rules learned from bugs, both worth preserving:
 - **`aiBias` is what makes a boss beatable.** `aiError` is a dead zone, and any dead zone smaller than the paddle's half-height (50px) never produces a miss — with it alone the CPU is literally unbeatable and rallies never end. `aiBias` offsets the boss's *aim*, refreshed on every hit.
 - **Obstacles belong on the boss's half, and must add spin.** A block on the player's half traps the ball in a paddle↔block loop; a block on the vertical centre intercepts every flat return. Chemi's rubble sits at x ≥ 0.60 clear of the centre lane, and its bounce perturbs `dy`, which is what stops rallies repeating forever.
 
-Story flow: `renderCampaignMap()` (nodes 1–5; the corrupted node 6 appears only once `campaignProgress` reaches 6) → `prepareCampaignMatch(level)` → VS screen → `startCampaignGame()` → `startGame('campaign')` + `queueDialogue()`. Beaten bosses are replayable and pay a reduced reward (`CAMPAIGN_REPLAY_FACTOR`).
+Story flow: `renderCampaignMap()` builds the boss-select **carousel** (cards 1–5; the corrupted Creator card appears only once `campaignProgress` reaches 6) → `prepareCampaignMatch(level, opts)` → VS screen → `startCampaignGame()` → `startGame('campaign')` + `queueDialogue()`. Beaten bosses are replayable and pay a reduced reward (`CAMPAIGN_REPLAY_FACTOR`).
+
+The carousel positions cards purely with `transform` from `updateCarousel()`; only the two neighbours either side are rendered. It is driven by arrows, keyboard, dots and swipe — keep all four working when touching it.
+
+**"Next boss" must come from `getNextCampaignBoss()`**, which counts from `currentCampaignLevel`, not from `campaignProgress`. Using progress sent players straight to the Creator the moment they replayed an early boss.
 
 **The twist is load-bearing — don't leak it.** Beating Yisus (level 5) routes through `runFinaleSequence()` instead of the game-over screen: fake victory → warped music → blackout → the Creator's reveal → VS. Beating the Creator runs `runTrueEndingSequence()`. `checkWin()` recognises these via its `narrativeEnding` flag and suppresses the normal end screen. Nothing about the Creator should be visible in menus, the achievements grid, or the node map before the story reveals it.
+
+The Creator's identity on screen is a **canvas-drawn eye** whose pupil tracks the ball (`CREATOR_TONES` shifts it green → amber → bloodshot per phase); the health bar reads as its lower lid. Its three phases stack armored band segments (`segmentIsArmored`, dispatched through `bossSegmentArmored`), a telegraphed ball warp, and an eye beam that freezes rather than kills. Every one of them is announced before it lands; that is the rule that keeps the fight hard instead of unfair.
 
 The Creator is the only boss with `useHealth: true`: it is won by emptying `bossHealth()`, and `p2Score` counts the player's *misses*, not the rival's points. Keep those two meanings apart — conflating them is exactly what made the final fight winnable in one hit.
 
@@ -123,4 +129,5 @@ All three load with `{ ...DEFAULTS, ...saved }` spread so adding a new field doe
 - `.backup-mobile-20260825-221758/` is a **committed** snapshot of an older `index.html`/`style.css`/`game.js`. It is dead code — don't edit it, and don't let searches there mislead you.
 - `css/style.css` is one large file split by banner comments (`/* ====== */`); Tailwind utility classes carry most of the layout, `style.css` carries the retro/CRT identity and CSS custom properties (`--primary`, `--primary-rgb`) that `js/theme.js` rewrites per theme. Canvas drawing reads the same theme color via `currentThemeHex()`.
 - Any keyframe animating `transform` on a centred element must re-apply its `translateX(-50%)`, or the element jumps out of the viewport. That is why `#dialogue-box` has its own `dialogue-shake` instead of reusing the generic `shake-error`.
+- The mouse writes into the same `p1.touchY`/`p1.touchX` channel as touch, and must pick the axis from `bossIsRotatedArena()` — otherwise the mouse does nothing in the Creator fight. It reuses `touchToCanvasX/Y` from `js/touch.js`.
 - `startGame()` restores paddle `width`, `height` **and** `x`. The Creator's rotated arena reshapes `p1` into a horizontal paddle, and restoring only `height` leaves a square block mid-field in the next match.
