@@ -1,5 +1,5 @@
 /**
- * input.js
+ * systems/input.js
  * ------------------------------------------------------------------
  * Manejo de teclado y sistema de reasignación de teclas ("key rebinding").
  * Usa event.code (posición física de la tecla) en vez de event.key,
@@ -7,9 +7,9 @@
  * ------------------------------------------------------------------
  */
 
-import { DEFAULT_BINDINGS, keyLabel, saveSettings, settings } from './config.js';
-import { state } from './state.js';
-import { togglePause } from './game.js';
+import { DEFAULT_BINDINGS, keyLabel, saveSettings, settings } from '../core/settings.js';
+import { state } from '../core/state.js';
+import { togglePause } from '../game.js';
 
 // Estado de teclas presionadas en este instante (se llena dinámicamente
 // según las combinaciones configuradas en `settings.bindings`).
@@ -59,7 +59,7 @@ function assignBinding(action, code) {
         if (settings.bindings[key] === code) settings.bindings[key] = null;
     }
     settings.bindings[action] = code;
-    saveSettings(settings);
+    saveSettings();
     keysDown.clear();
     refreshBindingButtons();
 }
@@ -71,7 +71,7 @@ export function startListeningFor(action) {
 
 export function resetBindings() {
     settings.bindings = { ...DEFAULT_BINDINGS };
-    saveSettings(settings);
+    saveSettings();
     refreshBindingButtons();
 }
 

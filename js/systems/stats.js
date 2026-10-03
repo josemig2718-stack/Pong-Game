@@ -1,13 +1,14 @@
 /**
- * stats.js
+ * systems/stats.js
  * ------------------------------------------------------------------
  * Sistema de estadísticas persistentes. Almacena en localStorage
  * contadores de partidas, puntos, rachas, récords y tiempo jugado.
  * ------------------------------------------------------------------
  */
 
-import { settings } from './config.js';
-import { state } from './state.js';
+import { settings } from '../core/settings.js';
+import { state } from '../core/state.js';
+import { readJSON, writeJSON } from '../core/storage.js';
 import { checkAllAchievements } from './achievements.js';
 
 const STATS_STORAGE_KEY = 'pongGame.stats.v1';
@@ -51,13 +52,7 @@ const DEFAULT_STATS = {
 };
 
 function loadStats() {
-    let saved = {};
-    try {
-        const raw = localStorage.getItem(STATS_STORAGE_KEY);
-        if (raw) saved = JSON.parse(raw);
-    } catch (err) {
-        console.warn('No se pudieron leer las estadísticas:', err);
-    }
+    const saved = readJSON(STATS_STORAGE_KEY, {}, 'No se pudieron leer las estadísticas:');
     return {
         ...DEFAULT_STATS,
         ...saved,
@@ -67,11 +62,7 @@ function loadStats() {
 }
 
 export function saveStats() {
-    try {
-        localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(gameStats));
-    } catch (err) {
-        console.warn('No se pudieron guardar las estadísticas:', err);
-    }
+    writeJSON(STATS_STORAGE_KEY, gameStats, 'No se pudieron guardar las estadísticas:');
 }
 
 /** Borra solo las estadísticas numéricas, manteniendo los logros intactos */

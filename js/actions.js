@@ -15,8 +15,7 @@
  * ------------------------------------------------------------------
  */
 
-import { resetBindings } from './input.js';
-import { switchShopTab } from './shop.js';
+import { resetBindings } from './systems/input.js';
 import {
     carouselMove,
     closeCampaignIntro,
@@ -25,6 +24,7 @@ import {
     replayCampaignIntro
 } from './campaign.js';
 import { quitGame, restartCurrentGame, startGame, togglePause } from './game.js';
+import { switchShopTab } from './shop.js';
 import {
     closeGame,
     confirmResetStats,

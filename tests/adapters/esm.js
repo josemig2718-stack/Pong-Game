@@ -12,22 +12,40 @@
  * actualizan aquí los import y el resto de los tests no se entera.
  * ------------------------------------------------------------------
  */
-import { GAME_WIDTH, settings } from '../../js/config.js';
-import { state, p1, p2, p2Twin } from '../../js/state.js';
-import { gameStats, currentRally, maxDeficit } from '../../js/stats.js';
-import { playerProgression } from '../../js/progression.js';
-import { goalSlowmoTimer, confettiParticles, shockwave } from '../../js/vfx.js';
+
+import { GAME_WIDTH } from '../../js/core/constants.js';
+import { settings } from '../../js/core/settings.js';
+import { p1, p2, p2Twin, state } from '../../js/core/state.js';
+import { playerProgression } from '../../js/systems/progression.js';
+import { currentRally, gameStats, maxDeficit } from '../../js/systems/stats.js';
 import {
-    activePowerup, activeEffect, shieldWall, slowmoActive, powerupCooldownMs,
-    lastHitter, powerupsThisGame
-} from '../../js/powerups.js';
+    bossAim,
+    bossConfig,
+    bossFreezesPlayer,
+    bossHealth,
+    bossHidesBall,
+    bossInvertsControls,
+    bossIsRotatedArena,
+    bossSegmentArmored,
+    bossState
+} from '../../js/bosses.js';
 import {
-    currentCampaignLevel, isReplayingBoss, isDialogueActive, midDialogueShown, carouselIndex
+    carouselIndex,
+    currentCampaignLevel,
+    isDialogueActive,
+    isReplayingBoss,
+    midDialogueShown
 } from '../../js/campaign.js';
 import {
-    bossConfig, bossHealth, bossIsRotatedArena, bossHidesBall, bossFreezesPlayer,
-    bossInvertsControls, bossAim, bossSegmentArmored, bossState
-} from '../../js/bosses.js';
+    activeEffect,
+    activePowerup,
+    lastHitter,
+    powerupCooldownMs,
+    powerupsThisGame,
+    shieldWall,
+    slowmoActive
+} from '../../js/powerups.js';
+import { confettiParticles, goalSlowmoTimer, shockwave } from '../../js/vfx.js';
 
 const paddle = (p) => ({
     x: p.x, y: p.y, width: p.width, height: p.height,

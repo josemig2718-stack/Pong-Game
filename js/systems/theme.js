@@ -1,12 +1,13 @@
 /**
- * theme.js
+ * systems/theme.js
  * ------------------------------------------------------------------
  * Aplica el tema de color elegido a la interfaz (variables CSS) y lo
  * expone al canvas a través de currentThemeHex().
  * ------------------------------------------------------------------
  */
 
-import { saveSettings, settings, THEMES } from './config.js';
+import { saveSettings, settings } from '../core/settings.js';
+import { THEMES } from '../data/themes.js';
 import { statsTrackTheme } from './stats.js';
 
 export function applyTheme(themeKey) {
@@ -22,7 +23,7 @@ export function applyTheme(themeKey) {
     });
 
     settings.theme = themeKey;
-    saveSettings(settings);
+    saveSettings();
 
     // Estadísticas: rastrear tema usado (logro Explorador)
     statsTrackTheme(themeKey);

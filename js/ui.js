@@ -6,9 +6,10 @@
  * ------------------------------------------------------------------
  */
 
-import { DEFAULT_BINDINGS, DEFAULT_SETTINGS, saveSettings, settings } from './config.js';
-import { state } from './state.js';
-import { applyTheme, buildThemeSwatches } from './theme.js';
+import { DEFAULT_BINDINGS, DEFAULT_SETTINGS, saveSettings, settings } from './core/settings.js';
+import { state } from './core/state.js';
+import { ACHIEVEMENTS } from './data/achievements.js';
+import { getUnlockedCount, getVisibleAchievementsTotal } from './systems/achievements.js';
 import {
     getAudioContext,
     playGameplayMusic,
@@ -20,10 +21,8 @@ import {
     setSfxEnabled,
     soundEffects,
     stopAllMusic
-} from './audio.js';
-import { formatPlayTime, gameStats, resetStats } from './stats.js';
-import { ACHIEVEMENTS, getUnlockedCount, getVisibleAchievementsTotal } from './achievements.js';
-import { refreshBindingButtons, startListeningFor } from './input.js';
+} from './systems/audio.js';
+import { refreshBindingButtons, startListeningFor } from './systems/input.js';
 import {
     getCurrentLevel,
     getXPProgress,
@@ -31,10 +30,12 @@ import {
     sessionLeveledUp,
     sessionNewTitle,
     sessionXPGained
-} from './progression.js';
-import { showShopScreen, updateCoinDisplay } from './shop.js';
+} from './systems/progression.js';
+import { formatPlayTime, gameStats, resetStats } from './systems/stats.js';
+import { applyTheme, buildThemeSwatches } from './systems/theme.js';
 import { renderCampaignMap } from './campaign.js';
 import { clearMouseControl } from './game.js';
+import { showShopScreen, updateCoinDisplay } from './shop.js';
 
 export function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
@@ -67,7 +68,7 @@ export function forceClose() {
 // --- Configuración: dificultad, volumen y demás opciones ---
 export function updateDifficulty(val) {
     settings.difficulty = parseInt(val, 10);
-    saveSettings(settings);
+    saveSettings();
 }
 
 export function updateVolume(val) {
@@ -96,7 +97,7 @@ export function toggleMusic(enabled) {
 
 export function updateWinningScore(val) {
     settings.winningScore = parseInt(val, 10);
-    saveSettings(settings);
+    saveSettings();
     document.querySelectorAll('[data-winning-score]').forEach(btn => {
         btn.classList.toggle('option-pill--active', parseInt(btn.dataset.winningScore, 10) === settings.winningScore);
     });
@@ -104,7 +105,7 @@ export function updateWinningScore(val) {
 
 export function updateBallSpeed(val) {
     settings.ballSpeed = parseInt(val, 10);
-    saveSettings(settings);
+    saveSettings();
     document.querySelectorAll('[data-ball-speed]').forEach(btn => {
         btn.classList.toggle('option-pill--active', parseInt(btn.dataset.ballSpeed, 10) === settings.ballSpeed);
     });
@@ -117,18 +118,18 @@ export function toggleSfx(enabled) {
 
 export function toggleCrtEffect(enabled) {
     settings.crtEffect = enabled;
-    saveSettings(settings);
+    saveSettings();
     document.body.classList.toggle('crt-effect', enabled);
 }
 
 export function toggleScreenShake(enabled) {
     settings.screenShake = enabled;
-    saveSettings(settings);
+    saveSettings();
 }
 
 export function toggleMouseControl(enabled) {
     settings.mouseControl = enabled;
-    saveSettings(settings);
+    saveSettings();
     if (!enabled) {
         clearMouseControl();
     }
@@ -136,7 +137,7 @@ export function toggleMouseControl(enabled) {
 
 export function resetAllSettings() {
     Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
-    saveSettings(settings);
+    saveSettings();
     populateSettingsUI();
     applyTheme(settings.theme);
     stopAllMusic();
@@ -167,7 +168,7 @@ function populateSettingsUI() {
 
 export function togglePowerups(enabled) {
     settings.powerupsEnabled = enabled;
-    saveSettings(settings);
+    saveSettings();
 }
 
 // =====================================================================

@@ -9,8 +9,8 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './config.js';
-import { p1, p2, state } from './state.js';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './core/constants.js';
+import { p1, p2, state } from './core/state.js';
 import { canvas, togglePause } from './game.js';
 
 /** Heurística estándar para saber si el dispositivo es "táctil primario" */

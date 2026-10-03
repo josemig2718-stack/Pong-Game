@@ -1,53 +1,24 @@
-// ==========================================
-// progression.js
-// Sistema de Progresión, Niveles, y Monedas
-// ==========================================
+/**
+ * systems/progression.js
+ * ------------------------------------------------------------------
+ * Progresión del jugador: XP, nivel, Chemi Coins, objetos comprados,
+ * cosméticos equipados y avance de la campaña. Se guarda en
+ * localStorage (clave pongGame.progression.v1).
+ *
+ * Las tablas de niveles y recompensas están en data/levels.js.
+ * ------------------------------------------------------------------
+ */
 
-import { settings } from './config.js';
-import { soundEffects } from './audio.js';
+import { settings } from '../core/settings.js';
+import { writeJSON } from '../core/storage.js';
+import { CAMPAIGN_REPLAY_FACTOR, COIN_REWARDS, LEVELS, XP_REWARDS } from '../data/levels.js';
+import { CAMPAIGN_CREATOR } from '../data/lore.js';
 import { unlockAchievement } from './achievements.js';
-import { setActiveBg } from './vfx.js';
-import { currentCampaignLevel, isReplayingBoss } from './campaign.js';
+import { soundEffects } from './audio.js';
+import { currentCampaignLevel, isReplayingBoss } from '../campaign.js';
+import { setActiveBg } from '../vfx.js';
 
 const PROG_STORAGE_KEY = 'pongGame.progression.v1';
-
-const LEVELS = [
-    { level: 1,  title: 'Novato',        xpRequired: 0,    coinBonus: 0 },
-    { level: 2,  title: 'Aprendiz',       xpRequired: 141,  coinBonus: 20 },
-    { level: 3,  title: 'Jugador',        xpRequired: 259,  coinBonus: 30 },
-    { level: 4,  title: 'Competidor',     xpRequired: 400,  coinBonus: 40 },
-    { level: 5,  title: 'Experto',        xpRequired: 559,  coinBonus: 50 },
-    { level: 6,  title: 'Veterano',       xpRequired: 735,  coinBonus: 60 },
-    { level: 7,  title: 'Campeón',        xpRequired: 926,  coinBonus: 80 },
-    { level: 8,  title: 'Maestro',        xpRequired: 1131, coinBonus: 100 },
-    { level: 9,  title: 'Gran Maestro',   xpRequired: 1350, coinBonus: 120 },
-    { level: 10, title: 'Leyenda',        xpRequired: 1581, coinBonus: 200 }
-];
-
-const XP_REWARDS = {
-    winCpuEasy: 15,
-    winCpuNormal: 25,
-    winCpuHard: 40,
-    winHachepe: 100,
-    perfectGame: 20,
-    scorePoint: 2,
-    completeLocal: 10,
-    winCampaignBase: 40,     // se multiplica por el nº de jefe (1 a 5)
-    winCreator: 300
-};
-
-const COIN_REWARDS = {
-    winCpu: 5,
-    winHachepe: 20,
-    // NO coins for local mode (user explicitly requested this to prevent exploitation)
-    perfectGame: 10,
-    winCampaignBase: 10,     // se multiplica por el nº de jefe (1 a 5)
-    winCreator: 100
-};
-
-// Al repetir un jefe ya vencido solo se recibe esta fracción: evita farmear
-// la campaña, igual que el modo local no da monedas.
-const CAMPAIGN_REPLAY_FACTOR = 0.25;
 
 const DEFAULT_PROGRESSION = {
     totalXP: 0,
@@ -60,10 +31,9 @@ const DEFAULT_PROGRESSION = {
     purchasedItems: ['default', 'none', 'classic'],  // Free items pre-purchased
     campaignProgress: 1, // Nivel de la campaña (1 a 6)
     campaignIntroSeen: false // Si ya vio la historia inicial
-
 };
 
-export let playerProgression = loadProgression();
+export const playerProgression = loadProgression();
 
 // Session trackers for end-of-game summary
 export let sessionXPGained = 0;
@@ -72,7 +42,10 @@ export let sessionLeveledUp = false;
 export let sessionNewTitle = '';
 
 /**
- * Carga la progresión desde localStorage y combina con los valores por defecto
+ * Carga la progresión desde localStorage y combina con los valores por defecto.
+ * No usa readJSON(): aquí la combinación va dentro del try, así que una
+ * partida guardada ilegible (incluido el JSON `null`) vuelve a los valores
+ * por defecto en vez de romper la carga.
  */
 function loadProgression() {
     try {
@@ -91,11 +64,7 @@ function loadProgression() {
  * Guarda la progresión en localStorage
  */
 export function saveProgression() {
-    try {
-        localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(playerProgression));
-    } catch (e) {
-        console.warn("Error guardando progresión:", e);
-    }
+    writeJSON(PROG_STORAGE_KEY, playerProgression, 'Error guardando progresión:');
 }
 
 /**
@@ -275,7 +244,7 @@ export function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     }
     else if (mode === 'campaign' && p1Won) {
         const level = currentCampaignLevel;
-        const isCreator = level === 6;
+        const isCreator = level === CAMPAIGN_CREATOR;
         // Repetir un jefe ya vencido paga mucho menos
         const factor = (isReplayingBoss) ? CAMPAIGN_REPLAY_FACTOR : 1;
 

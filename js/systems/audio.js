@@ -1,5 +1,5 @@
 /**
- * audio.js
+ * systems/audio.js
  * ------------------------------------------------------------------
  * Sintetizador de audio 100% generado por JavaScript (Web Audio API)
  * para efectos de sonido, más reproducción de música de fondo con
@@ -7,8 +7,9 @@
  * ------------------------------------------------------------------
  */
 
-import { saveSettings, settings } from './config.js';
-import { currentCampaignLevel } from './campaign.js';
+import { saveSettings, settings } from '../core/settings.js';
+import { CAMPAIGN_CREATOR } from '../data/lore.js';
+import { currentCampaignLevel } from '../campaign.js';
 
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
@@ -97,12 +98,12 @@ export const soundEffects = {
 export function setMasterVolume(val) {
     masterVolume = val / 100;
     settings.volume = val;
-    saveSettings(settings);
+    saveSettings();
 }
 
 export function setSfxEnabled(enabled) {
     settings.sfxEnabled = enabled;
-    saveSettings(settings);
+    saveSettings();
 }
 
 // =================================================================
@@ -143,7 +144,7 @@ export function playGameplayMusic(mode = 'cpu') {
 
     // El combate contra El Creador va en silencio: la tensión la llevan
     // los tonos sintetizados del propio jefe.
-    if (mode === 'campaign' && currentCampaignLevel === 6) {
+    if (mode === 'campaign' && currentCampaignLevel === CAMPAIGN_CREATOR) {
         gameplayMusic.pause();
         gameplayMusic.currentTime = 0;
         hachepeMusic.pause();
@@ -182,12 +183,12 @@ export function setMusicVolume(val) {
     menuMusic.volume     = val / 100;
     gameplayMusic.volume = val / 100;
     hachepeMusic.volume  = val / 100;
-    saveSettings(settings);
+    saveSettings();
 }
 
 export function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
-    saveSettings(settings);
+    saveSettings();
     if (!enabled) {
         stopAllMusic();
     }

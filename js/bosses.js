@@ -11,9 +11,9 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH } from './config.js';
-import { p1, p2, p2Twin, state } from './state.js';
-import { soundEffects } from './audio.js';
+import { GAME_HEIGHT, GAME_WIDTH } from './core/constants.js';
+import { p1, p2, p2Twin, state } from './core/state.js';
+import { soundEffects } from './systems/audio.js';
 import { currentCampaignLevel } from './campaign.js';
 import { drawText, spawnExtraBalls, spawnParticles, triggerShake } from './game.js';
 

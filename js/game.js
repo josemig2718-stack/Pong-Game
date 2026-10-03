@@ -14,11 +14,12 @@ import {
     GAME_WIDTH,
     paddleHeight,
     paddleSpeed,
-    paddleWidth,
-    settings
-} from './config.js';
-import { p1, p2, p2Twin, state } from './state.js';
-import { currentThemeHex } from './theme.js';
+    paddleWidth
+} from './core/constants.js';
+import { settings } from './core/settings.js';
+import { p1, p2, p2Twin, state } from './core/state.js';
+import { HACHEPES_LORE } from './data/lore.js';
+import { unlockAchievement } from './systems/achievements.js';
 import {
     getAudioContext,
     playGameplayMusic,
@@ -26,52 +27,17 @@ import {
     soundEffects,
     stopGameplayMusic,
     stopMenuMusic
-} from './audio.js';
+} from './systems/audio.js';
+import { isActionPressed } from './systems/input.js';
+import { awardGameRewards, resetSessionTrackers } from './systems/progression.js';
 import {
     statsFlushTime,
     statsOnGameEnd,
     statsOnGameStart,
     statsOnPaddleHit,
     statsOnScore
-} from './stats.js';
-import { unlockAchievement } from './achievements.js';
-import { isActionPressed } from './input.js';
-import { awardGameRewards, resetSessionTrackers } from './progression.js';
-import { updateCoinDisplay } from './shop.js';
-import {
-    getGoalSlowmo,
-    initVFX,
-    renderBackground,
-    renderBallTrail,
-    renderGoalVFX,
-    renderPaddleVFX,
-    triggerGoalVFX,
-    updateVFX
-} from './vfx.js';
-import {
-    enforcePowerups,
-    getSlowmoMultiplier,
-    initPowerups,
-    renderActiveEffectHUD,
-    renderPowerup,
-    renderShield,
-    setLastHitter,
-    updatePowerups
-} from './powerups.js';
-import {
-    checkMidDialogue,
-    currentCampaignLevel,
-    getNextCampaignBoss,
-    HACHEPES_LORE,
-    handleCampaignVictory,
-    isDialogueActive,
-    playBossOutcomeDialogue,
-    resetMidDialogue,
-    resetMusicRate,
-    runFinaleSequence,
-    runTrueEndingSequence,
-    stopDialogue
-} from './campaign.js';
+} from './systems/stats.js';
+import { currentThemeHex } from './systems/theme.js';
 import {
     bossAim,
     bossCollide,
@@ -91,8 +57,42 @@ import {
     bossUpdate,
     CREATOR_BAND_H
 } from './bosses.js';
+import {
+    checkMidDialogue,
+    currentCampaignLevel,
+    getNextCampaignBoss,
+    handleCampaignVictory,
+    isDialogueActive,
+    playBossOutcomeDialogue,
+    resetMidDialogue,
+    resetMusicRate,
+    runFinaleSequence,
+    runTrueEndingSequence,
+    stopDialogue
+} from './campaign.js';
+import {
+    enforcePowerups,
+    getSlowmoMultiplier,
+    initPowerups,
+    renderActiveEffectHUD,
+    renderPowerup,
+    renderShield,
+    setLastHitter,
+    updatePowerups
+} from './powerups.js';
+import { updateCoinDisplay } from './shop.js';
 import { resetTouchHints, touchToCanvasX, touchToCanvasY } from './touch.js';
 import { showScreen, updateProgressionDisplay } from './ui.js';
+import {
+    getGoalSlowmo,
+    initVFX,
+    renderBackground,
+    renderBallTrail,
+    renderGoalVFX,
+    renderPaddleVFX,
+    triggerGoalVFX,
+    updateVFX
+} from './vfx.js';
 
 export const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
@@ -760,7 +760,6 @@ function update(dt) {
         resetBall(false);
     }
 
-
     // Actualizar power-ups
     updatePowerups(dt);
 
@@ -1036,14 +1035,12 @@ function render() {
     if (!isLevel6) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
     if (!isLevel6 && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
 
-
     // Power-ups
     renderPowerup(ctx);
     renderShield(ctx);
     renderActiveEffectHUD(ctx, GAME_WIDTH);
 
     drawParticles();
-
 
     // Capa superior del jefe: viñetas, tintes, avisos y glitch
     bossRenderOverlay(ctx);

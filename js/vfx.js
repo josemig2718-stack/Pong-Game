@@ -1,9 +1,9 @@
 // Variables de estado actuales para los efectos visuales
 
-import { GAME_HEIGHT, GAME_WIDTH } from './config.js';
-import { state } from './state.js';
-import { currentThemeHex } from './theme.js';
-import { playerProgression } from './progression.js';
+import { GAME_HEIGHT, GAME_WIDTH } from './core/constants.js';
+import { state } from './core/state.js';
+import { playerProgression } from './systems/progression.js';
+import { currentThemeHex } from './systems/theme.js';
 
 let currentBgId = 'none';
 

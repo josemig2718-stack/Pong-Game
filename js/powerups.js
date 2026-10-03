@@ -1,19 +1,9 @@
-// Tipos de power-ups disponibles en el juego
-
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, settings } from './config.js';
-import { p1, p2, state } from './state.js';
-import { soundEffects } from './audio.js';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './core/constants.js';
+import { settings } from './core/settings.js';
+import { p1, p2, state } from './core/state.js';
+import { POWERUP_TYPES } from './data/powerups.js';
+import { soundEffects } from './systems/audio.js';
 import { spawnExtraBalls, spawnParticles } from './game.js';
-
-const POWERUP_TYPES = [
-    { id: 'paddle_xl',    emoji: '⬆️', color: '#22c55e', duration: 8000,  weight: 20 },
-    { id: 'paddle_mini',  emoji: '⬇️', color: '#a855f7', duration: 8000,  weight: 20 },
-    { id: 'big_ball',     emoji: '🔴', color: '#ef4444', duration: 6000,  weight: 15 },
-    { id: 'turbo',        emoji: '⚡', color: '#eab308', duration: 0,     weight: 15 },
-    { id: 'shield',       emoji: '🛡️', color: '#3b82f6', duration: 5000,  weight: 10 },
-    { id: 'slowmo',       emoji: '🌀', color: '#f97316', duration: 4000,  weight: 10 },
-    { id: 'multi_ball',   emoji: '✨', color: '#ffffff', duration: 0,     weight: 10 }
-];
 
 // Variables de estado del sistema de power-ups
 export let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }

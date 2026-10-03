@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------
  */
 
-import { initAudio } from './audio.js';
-import { initInput } from './input.js';
+import { initAudio } from './systems/audio.js';
+import { initInput } from './systems/input.js';
+import { initActions } from './actions.js';
 import { initCarouselControls } from './campaign.js';
 import { initCanvas } from './game.js';
 import { initTouchControls } from './touch.js';
 import { initUI } from './ui.js';
-import { initActions } from './actions.js';
 
 initAudio();             // desbloqueo del audio con la primera interacción
 initInput();             // teclado de juego y reasignación de teclas

@@ -1,5 +1,5 @@
 /**
- * state.js
+ * core/state.js
  * ------------------------------------------------------------------
  * Estado de la partida en curso, compartido por todos los scripts.
  *
@@ -11,11 +11,11 @@
  * Las paletas son objetos estables: se mutan sus propiedades, nunca se
  * sustituyen, así que se declaran aparte como constantes.
  *
- * Solo importa config.js (dimensiones y geometría).
+ * Capa base: solo importa core/constants.js.
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './config.js';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './constants.js';
 
 export const state = {
     /** 'cpu' | 'local' | 'hachepe' | 'campaign' */
