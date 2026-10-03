@@ -26,9 +26,9 @@ import {
     stopAllMusic
 } from './systems/audio.js';
 import { playerProgression, saveProgression } from './systems/progression.js';
+import { triggerGoalConfetti } from './vfx/goal-fx.js';
 import { startGame } from './game.js';
 import { showScreen } from './ui.js';
-import { triggerGoalConfetti } from './vfx.js';
 
 export let currentCampaignLevel = 1;
 let dialogueQueue = [];

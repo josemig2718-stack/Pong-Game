@@ -15,8 +15,8 @@ import { CAMPAIGN_REPLAY_FACTOR, COIN_REWARDS, LEVELS, XP_REWARDS } from '../dat
 import { CAMPAIGN_CREATOR } from '../data/lore.js';
 import { unlockAchievement } from './achievements.js';
 import { soundEffects } from './audio.js';
+import { setActiveBg } from '../vfx/backgrounds.js';
 import { currentCampaignLevel, isReplayingBoss } from '../campaign.js';
-import { setActiveBg } from '../vfx.js';
 
 const PROG_STORAGE_KEY = 'pongGame.progression.v1';
 

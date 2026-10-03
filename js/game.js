@@ -38,6 +38,11 @@ import {
     statsOnScore
 } from './systems/stats.js';
 import { currentThemeHex } from './systems/theme.js';
+import { renderBackground } from './vfx/backgrounds.js';
+import { getGoalSlowmo, renderGoalVFX, triggerGoalVFX } from './vfx/goal-fx.js';
+import { initVFX, updateVFX } from './vfx/index.js';
+import { renderPaddleVFX } from './vfx/paddles.js';
+import { renderBallTrail } from './vfx/trails.js';
 import {
     bossAim,
     bossCollide,
@@ -83,16 +88,6 @@ import {
 import { updateCoinDisplay } from './shop.js';
 import { resetTouchHints, touchToCanvasX, touchToCanvasY } from './touch.js';
 import { showScreen, updateProgressionDisplay } from './ui.js';
-import {
-    getGoalSlowmo,
-    initVFX,
-    renderBackground,
-    renderBallTrail,
-    renderGoalVFX,
-    renderPaddleVFX,
-    triggerGoalVFX,
-    updateVFX
-} from './vfx.js';
 
 export const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');

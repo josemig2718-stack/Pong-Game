@@ -18,6 +18,7 @@ import { settings } from '../../js/core/settings.js';
 import { p1, p2, p2Twin, state } from '../../js/core/state.js';
 import { playerProgression } from '../../js/systems/progression.js';
 import { currentRally, gameStats, maxDeficit } from '../../js/systems/stats.js';
+import { confettiParticles, goalSlowmoTimer, shockwave } from '../../js/vfx/goal-fx.js';
 import {
     bossAim,
     bossConfig,
@@ -45,7 +46,6 @@ import {
     shieldWall,
     slowmoActive
 } from '../../js/powerups.js';
-import { confettiParticles, goalSlowmoTimer, shockwave } from '../../js/vfx.js';
 
 const paddle = (p) => ({
     x: p.x, y: p.y, width: p.width, height: p.height,

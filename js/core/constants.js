@@ -24,7 +24,7 @@ export const ballRadius = 9;
  * normalizado a 60 FPS (dt = 1 es un fotograma a 60 FPS), así que pasar
  * dt a milisegundos es dt * MS_PER_FRAME.
  */
-const MS_PER_FRAME = 1000 / 60;
+export const MS_PER_FRAME = 1000 / 60;
 
 // Velocidades de bola en píxeles por fotograma (a 60 FPS de referencia).
 // base = velocidad inicial; max = velocidad tope tras aceleraciones.
