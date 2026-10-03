@@ -27,9 +27,9 @@ import {
     bossHidesBall,
     bossInvertsControls,
     bossIsRotatedArena,
-    bossSegmentArmored,
-    bossState
-} from '../../js/bosses.js';
+    bossSegmentArmored
+} from '../../js/bosses/index.js';
+import { bossState } from '../../js/bosses/shared.js';
 import {
     carouselIndex,
     currentCampaignLevel,

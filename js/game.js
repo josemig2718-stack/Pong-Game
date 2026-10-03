@@ -59,9 +59,9 @@ import {
     bossRender,
     bossRenderOverlay,
     bossSegmentArmored,
-    bossUpdate,
-    CREATOR_BAND_H
-} from './bosses.js';
+    bossUpdate
+} from './bosses/index.js';
+import { CREATOR_BAND_H } from './bosses/shared.js';
 import {
     checkMidDialogue,
     currentCampaignLevel,
