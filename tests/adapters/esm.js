@@ -39,13 +39,9 @@ import {
     bossSegmentArmored
 } from '../../js/bosses/index.js';
 import { bossState } from '../../js/bosses/shared.js';
-import {
-    carouselIndex,
-    currentCampaignLevel,
-    isDialogueActive,
-    isReplayingBoss,
-    midDialogueShown
-} from '../../js/campaign.js';
+import { isDialogueActive, midDialogueShown } from '../../js/campaign/dialogue.js';
+import { carouselIndex } from '../../js/campaign/menu.js';
+import { currentCampaignLevel, isReplayingBoss } from '../../js/campaign/progress.js';
 
 const paddle = (p) => ({
     x: p.x, y: p.y, width: p.width, height: p.height,

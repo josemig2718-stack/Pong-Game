@@ -46,7 +46,7 @@ import {
     bossUpdate
 } from '../bosses/index.js';
 import { CREATOR_BAND_H } from '../bosses/shared.js';
-import { checkMidDialogue, isDialogueActive } from '../campaign.js';
+import { checkMidDialogue, isDialogueActive } from '../campaign/dialogue.js';
 
 // Puntos que guarda la estela de cada bola
 const MAX_TRAIL = 25;

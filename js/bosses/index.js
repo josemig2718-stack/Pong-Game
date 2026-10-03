@@ -28,7 +28,7 @@ import { bossDuo } from './duo.js';
 import { bossFano } from './fano.js';
 import { bossState, resetBossState } from './shared.js';
 import { bossYisus } from './yisus.js';
-import { currentCampaignLevel } from '../campaign.js';
+import { currentCampaignLevel } from '../campaign/progress.js';
 
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
 const BOSS_DEFAULT_CONFIG = {

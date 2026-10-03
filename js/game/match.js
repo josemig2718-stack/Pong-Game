@@ -33,17 +33,13 @@ import { resumeLoop, startLoop, stopLoop } from './loop.js';
 import { initPowerups } from './powerups.js';
 import { initVFX } from '../vfx/index.js';
 import { bossConfig, bossHealth, bossInit } from '../bosses/index.js';
+import { playBossOutcomeDialogue, resetMidDialogue, stopDialogue } from '../campaign/dialogue.js';
+import { resetMusicRate, runFinaleSequence, runTrueEndingSequence } from '../campaign/finale.js';
 import {
     currentCampaignLevel,
     getNextCampaignBoss,
-    handleCampaignVictory,
-    playBossOutcomeDialogue,
-    resetMidDialogue,
-    resetMusicRate,
-    runFinaleSequence,
-    runTrueEndingSequence,
-    stopDialogue
-} from '../campaign.js';
+    handleCampaignVictory
+} from '../campaign/progress.js';
 import { updateCoinDisplay } from '../shop.js';
 import { showScreen, updateProgressionDisplay } from '../ui.js';
 

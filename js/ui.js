@@ -34,7 +34,7 @@ import {
 } from './systems/progression.js';
 import { formatPlayTime, gameStats, resetStats } from './systems/stats.js';
 import { applyTheme, buildThemeSwatches } from './systems/theme.js';
-import { renderCampaignMap } from './campaign.js';
+import { renderCampaignMap } from './campaign/menu.js';
 import { showShopScreen, updateCoinDisplay } from './shop.js';
 
 export function showScreen(screenId) {

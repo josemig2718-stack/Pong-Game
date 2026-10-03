@@ -9,7 +9,7 @@
 
 import { saveSettings, settings } from '../core/settings.js';
 import { CAMPAIGN_CREATOR } from '../data/lore.js';
-import { currentCampaignLevel } from '../campaign.js';
+import { currentCampaignLevel } from '../campaign/progress.js';
 
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
