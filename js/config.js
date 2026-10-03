@@ -14,10 +14,9 @@ const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 
 // --- Catálogo de temas de color -----------------------------------
-// Cada tema define el color "primario" (paletas, HUD, marcador) y un
-// color de acento opcional para detalles. Se aplican como variables
-// CSS (--primary / --primary-rgb) y también se usan directamente al
-// dibujar en el <canvas>.
+// Cada tema define el color "primario" (paletas, HUD, marcador). Se
+// aplica como variables CSS (--primary / --primary-rgb) y también se usa
+// directamente al dibujar en el <canvas>, a través de currentThemeHex().
 const THEMES = {
     green:  { label: 'Verde',    hex: '#22c55e', rgb: '34, 197, 94' },
     purple: { label: 'Morado',   hex: '#a855f7', rgb: '168, 85, 247' },
@@ -104,7 +103,7 @@ function saveSettings(settings) {
 // Objeto de configuración activo durante toda la sesión.
 const settings = loadSettings();
 
-// Velocidades de bola en píxeles/segundo a 60 FPS de referencia.
+// Velocidades de bola en píxeles por fotograma (a 60 FPS de referencia).
 // base = velocidad inicial; max = velocidad tope tras aceleraciones.
 const BALL_SPEED_PRESETS = {
     1: { base: 5, max: 11 },

@@ -2,10 +2,7 @@
 
 'use strict';
 
-let currentTrailId = 'default';
 let currentBgId = 'none';
-let currentPaddleId = 'classic';
-let currentGoalFxId = 'classic';
 
 // Variables de estado para los fondos
 let bgStars = [];
@@ -158,7 +155,7 @@ function drawTrailRainbow(ctx, trail, radius, color) {
         const p2 = trail[i];
         const pct = i / trail.length;
         
-        const hue = (i * 15 + (typeof frameCount !== 'undefined' ? frameCount : Date.now()/20) * 3) % 360;
+        const hue = (i * 15 + frameCount * 3) % 360;
         
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
@@ -257,7 +254,7 @@ function updateRain(dt) {
 }
 function renderRain(ctx) {
     ctx.save();
-    const themeColor = typeof currentThemeHex === 'function' ? currentThemeHex() : '#22c55e';
+    const themeColor = currentThemeHex();
     ctx.fillStyle = themeColor;
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';
@@ -279,7 +276,7 @@ function renderRain(ctx) {
 // --- Aurora ---
 function initAurora() {
     bgAuroraWaves = [];
-    const themeColor = typeof currentThemeHex === 'function' ? currentThemeHex() : '#22c55e';
+    const themeColor = currentThemeHex();
     for (let i = 0; i < 4; i++) {
         bgAuroraWaves.push({
             phase: Math.random() * Math.PI * 2,
@@ -540,7 +537,7 @@ const GOAL_FX = {
 // ==========================================
 
 function initVFX() {
-    const bgId = (typeof playerProgression !== 'undefined' && playerProgression.selectedBg) ? playerProgression.selectedBg : 'none';
+    const bgId = (playerProgression.selectedBg) ? playerProgression.selectedBg : 'none';
     currentBgId = bgId;
     if (BG_RENDERERS[bgId]) {
         BG_RENDERERS[bgId].init();
@@ -564,12 +561,10 @@ function renderBackground(ctx) {
 
 function renderBallTrail(ctx, trail, radius) {
     let color = '#ffffff';
-    if (typeof currentThemeHex === 'function') {
-        color = currentThemeHex();
-    }
+    color = currentThemeHex();
     
     let trailId = 'default';
-    if (typeof playerProgression !== 'undefined' && playerProgression.selectedTrail) {
+    if (playerProgression.selectedTrail) {
         trailId = playerProgression.selectedTrail;
     }
     
@@ -582,7 +577,7 @@ function renderBallTrail(ctx, trail, radius) {
 
 function renderPaddleVFX(ctx, x, y, w, h, color) {
     let paddleId = 'classic';
-    if (typeof playerProgression !== 'undefined' && playerProgression.selectedPaddle) {
+    if (playerProgression.selectedPaddle) {
         paddleId = playerProgression.selectedPaddle;
     }
     
@@ -595,7 +590,7 @@ function renderPaddleVFX(ctx, x, y, w, h, color) {
 
 function triggerGoalVFX(goalX, goalY) {
     let fxId = 'classic';
-    if (typeof playerProgression !== 'undefined' && playerProgression.selectedGoalFx) {
+    if (playerProgression.selectedGoalFx) {
         fxId = playerProgression.selectedGoalFx;
     }
     
@@ -606,7 +601,7 @@ function triggerGoalVFX(goalX, goalY) {
 
 function updateGoalVFX(dt) {
     let fxId = 'classic';
-    if (typeof playerProgression !== 'undefined' && playerProgression.selectedGoalFx) {
+    if (playerProgression.selectedGoalFx) {
         fxId = playerProgression.selectedGoalFx;
     }
     
@@ -627,7 +622,7 @@ function updateGoalVFX(dt) {
 
 function renderGoalVFX(ctx) {
     let fxId = 'classic';
-    if (typeof playerProgression !== 'undefined' && playerProgression.selectedGoalFx) {
+    if (playerProgression.selectedGoalFx) {
         fxId = playerProgression.selectedGoalFx;
     }
     
@@ -640,27 +635,9 @@ function getGoalSlowmo() {
     return goalSlowmoTimer > 0 ? 0.3 : 1.0;
 }
 
-function setActiveTrail(id) {
-    if (TRAIL_RENDERERS[id]) {
-        currentTrailId = id;
-    }
-}
-
 function setActiveBg(id) {
     if (BG_RENDERERS[id]) {
         currentBgId = id;
         BG_RENDERERS[id].init();
-    }
-}
-
-function setActivePaddle(id) {
-    if (PADDLE_RENDERERS[id]) {
-        currentPaddleId = id;
-    }
-}
-
-function setActiveGoalFx(id) {
-    if (GOAL_FX[id]) {
-        currentGoalFxId = id;
     }
 }

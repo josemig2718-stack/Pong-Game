@@ -117,13 +117,11 @@ function statsOnScore(scorerIsP1) {
     }
 
     // Rastrear mayor déficit (para comeback)
-    if (typeof p2Score !== 'undefined' && typeof p1Score !== 'undefined') {
-        const deficit = p2Score - p1Score;
-        if (deficit > maxDeficit) maxDeficit = deficit;
-    }
+    const deficit = p2Score - p1Score;
+    if (deficit > maxDeficit) maxDeficit = deficit;
 
     // Rastrear velocidad máxima de la bola
-    if (typeof ball !== 'undefined' && ball.speed > gameStats.maxBallSpeed) {
+    if (ball.speed > gameStats.maxBallSpeed) {
         gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
     }
 
@@ -144,7 +142,7 @@ function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
     }
 
     // Velocidad máxima
-    if (typeof ball !== 'undefined' && ball.speed > gameStats.maxBallSpeed) {
+    if (ball.speed > gameStats.maxBallSpeed) {
         gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
     }
 
@@ -176,9 +174,7 @@ function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
     saveStats();
 
     // Verificar logros después de guardar stats
-    if (typeof checkAllAchievements === 'function') {
-        checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore);
-    }
+    checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore);
 }
 
 /** Registrar que se usó un tema (para logro Explorador) */
@@ -187,9 +183,7 @@ function statsTrackTheme(themeKey) {
         gameStats.themesUsed.push(themeKey);
         saveStats();
         // Verificar logro explorador
-        if (typeof checkAllAchievements === 'function') {
-            checkAllAchievements();
-        }
+        checkAllAchievements();
     }
 }
 

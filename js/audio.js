@@ -68,7 +68,6 @@ const soundEffects = {
 
     // --- Progresión y Tienda ---
     levelUp:   () => { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.25), i * 100)); },
-    coinEarned: () => playTone(1200, 'triangle', 0.06),
     shopBuy:   () => { playTone(800, 'square', 0.08); setTimeout(() => playTone(1000, 'triangle', 0.12), 60); setTimeout(() => playTone(1200, 'triangle', 0.08), 120); },
 
     // --- Campaña: todo sintetizado, sin archivos nuevos ---
@@ -143,7 +142,7 @@ function playGameplayMusic(mode = 'cpu') {
 
     // El combate contra El Creador va en silencio: la tensión la llevan
     // los tonos sintetizados del propio jefe.
-    if (mode === 'campaign' && typeof currentCampaignLevel !== 'undefined' && currentCampaignLevel === 6) {
+    if (mode === 'campaign' && currentCampaignLevel === 6) {
         gameplayMusic.pause();
         gameplayMusic.currentTime = 0;
         hachepeMusic.pause();
@@ -204,6 +203,6 @@ function onFirstInteraction() {
     window.removeEventListener('keydown', onFirstInteraction);
     window.removeEventListener('touchstart', onFirstInteraction);
 }
-window.addEventListener('click', onFirstInteraction, { once: false });
-window.addEventListener('keydown', onFirstInteraction, { once: false });
-window.addEventListener('touchstart', onFirstInteraction, { once: false });
+window.addEventListener('click', onFirstInteraction);
+window.addEventListener('keydown', onFirstInteraction);
+window.addEventListener('touchstart', onFirstInteraction);

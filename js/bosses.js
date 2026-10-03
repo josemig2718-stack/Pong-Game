@@ -24,8 +24,7 @@ const BOSS_DEFAULT_CONFIG = {
                          // Es lo que hace fallar de verdad al jefe: la zona muerta
                          // sola no basta, porque cabe dentro de la propia paleta.
     paddleAxis: 'y',     // 'x' invierte la arena (paleta horizontal abajo)
-    useHealth: false,    // true = se gana vaciando la barra de vida, no por marcador
-    accent: '#ef4444'
+    useHealth: false     // true = se gana vaciando la barra de vida, no por marcador
 };
 
 /** Desvío de puntería actual del jefe. Se renueva en cada intercambio. */
@@ -55,7 +54,7 @@ const BOSS_MS_PER_DT = 1000 / 60;
 //  Hachepes no juegan al Pong limpio.
 // ==================================================================
 const bossChemi = {
-    config: { targetScore: 5, aiSpeed: 0.7,  aiError: 26, aiBias: 78, accent: '#a8a29e' },
+    config: { targetScore: 5, aiSpeed: 0.7,  aiError: 26, aiBias: 78 },
 
     init() {
         // Dos reglas que hacen que el combate no se encalle:
@@ -173,7 +172,7 @@ const bossChemi = {
 //  prevista de la bola. Escudo propio, aislado de los power-ups.
 // ==================================================================
 const bossDani = {
-    config: { targetScore: 6, aiSpeed: 0.85, aiError: 16, aiBias: 66, accent: '#3b82f6' },
+    config: { targetScore: 6, aiSpeed: 0.85, aiError: 16, aiBias: 66 },
 
     init() {
         bossState.shieldPhase = 'idle';   // idle → warning → active
@@ -194,12 +193,12 @@ const bossDani = {
             if (bossState.shieldPhase === 'idle') {
                 bossState.shieldPhase = 'warning';
                 bossState.shieldTimer = 1000;              // 1s de aviso antes de aparecer
-                if (soundEffects.bossWarning) soundEffects.bossWarning();
+                soundEffects.bossWarning();
             } else if (bossState.shieldPhase === 'warning') {
                 bossState.shieldPhase = 'active';
                 bossState.shieldHp = 2;
                 bossState.shieldTimer = 6000;
-                if (soundEffects.bossShield) soundEffects.bossShield();
+                soundEffects.bossShield();
             } else {
                 bossState.shieldPhase = 'idle';
                 bossState.shieldTimer = 8000;
@@ -216,7 +215,7 @@ const bossDani = {
                 p2.y = Math.max(0, Math.min(GAME_HEIGHT - p2.height, b.y - p2.height / 2));
                 bossState.teleportFlash = 320;
                 spawnParticles(p2.x + p2.width / 2, p2.y + p2.height / 2, '#3b82f6', 14);
-                if (soundEffects.bossTeleport) soundEffects.bossTeleport();
+                soundEffects.bossTeleport();
             }
         }
     },
@@ -233,7 +232,7 @@ const bossDani = {
         bossState.shieldHp--;
         triggerShake(5, 140);
         spawnParticles(sx, b.y, '#3b82f6', 18);
-        if (soundEffects.shieldBlock) soundEffects.shieldBlock();
+        soundEffects.shieldBlock();
         if (bossState.shieldHp <= 0) {
             bossState.shieldPhase = 'idle';
             bossState.shieldTimer = 8000;
@@ -300,13 +299,12 @@ const bossDani = {
 //  retira unos segundos: esa es la ventana del jugador.
 // ==================================================================
 const bossDuo = {
-    config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58, accent: '#f97316' },
+    config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58 },
 
     init() {
         p2_twin.active = true;
         p2_twin.y = GAME_HEIGHT / 2 + 50;
         p2_twin.retreatMs = 0;
-        bossState.retreatWho = null;
     },
 
     update(dt) {
@@ -314,7 +312,6 @@ const bossDuo = {
             p2_twin.retreatMs -= dt * BOSS_MS_PER_DT;
             if (p2_twin.retreatMs <= 0) {
                 p2_twin.retreatMs = 0;
-                bossState.retreatWho = null;
             }
         }
     },
@@ -323,8 +320,7 @@ const bossDuo = {
     onGoal(scorerIsP1) {
         if (!scorerIsP1) return;
         p2_twin.retreatMs = 3000;
-        bossState.retreatWho = 'mario';
-        if (soundEffects.bossRetreat) soundEffects.bossRetreat();
+        soundEffects.bossRetreat();
     },
 
     render(ctx) {
@@ -354,7 +350,7 @@ const bossDuo = {
 //  Difícil, pero no injusto: siempre queda un rastro tenue.
 // ==================================================================
 const bossFano = {
-    config: { targetScore: 7, aiSpeed: 0.9,  aiError: 12, aiBias: 50, accent: '#7c3aed' },
+    config: { targetScore: 7, aiSpeed: 0.9,  aiError: 12, aiBias: 50 },
 
     init() {
         bossState.invisible = false;
@@ -444,7 +440,7 @@ const bossFano = {
 //  El muro final antes del giro.
 // ==================================================================
 const bossYisus = {
-    config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48, accent: '#eab308' },
+    config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48 },
 
     init() {
         bossState.telekinesis = 0;
@@ -479,11 +475,11 @@ const bossYisus = {
             if (bossState.timeStopPhase === 'idle') {
                 bossState.timeStopPhase = 'warning';
                 bossState.timeStopTimer = 800;
-                if (soundEffects.bossWarning) soundEffects.bossWarning();
+                soundEffects.bossWarning();
             } else if (bossState.timeStopPhase === 'warning') {
                 bossState.timeStopPhase = 'active';
                 bossState.timeStopTimer = 600;
-                if (soundEffects.timeStop) soundEffects.timeStop();
+                soundEffects.timeStop();
             } else {
                 bossState.timeStopPhase = 'idle';
                 bossState.timeStopTimer = 10000 + Math.random() * 5000;
@@ -552,8 +548,7 @@ const bossCreator = {
         aiError: 0,
         hitDamage: 10,         // 20 impactos: con tanta presión encima, 25 era demasiado
         paddleAxis: 'x',
-        useHealth: true,
-        accent: '#22c55e'
+        useHealth: true
     },
 
     init() {
@@ -620,10 +615,10 @@ const bossCreator = {
             bossState.glitchMs = 900;
             bossState.blink = 1;              // el ojo se cierra y se abre de golpe
             triggerShake(14, 500);
-            if (soundEffects.glitch) soundEffects.glitch();
+            soundEffects.glitch();
             bossState.announce = newPhase === 2 ? 'TE VEO' : 'FIN DE LA SIMULACIÓN';
             bossState.announceMs = 2200;
-            if (newPhase === 3 && typeof spawnExtraBalls === 'function') spawnExtraBalls();
+            if (newPhase === 3) spawnExtraBalls();
         }
 
         // --- Blindaje rotatorio: obliga a apuntar en vez de repetir el golpe ---
@@ -636,7 +631,7 @@ const bossCreator = {
             while (bossState.armor.filter(Boolean).length < cuantos) {
                 bossState.armor[Math.floor(Math.random() * 5)] = true;
             }
-            if (soundEffects.bossShield) soundEffects.bossShield();
+            soundEffects.bossShield();
         }
 
         // --- Fase 2+: controles invertidos, falsos errores y teletransporte ---
@@ -650,7 +645,7 @@ const bossCreator = {
                     bossState.invertMs = 3000;
                     bossState.announce = 'CONTROLES INVERTIDOS';
                     bossState.announceMs = 1400;
-                    if (soundEffects.glitch) soundEffects.glitch();
+                    soundEffects.glitch();
                 }
             }
 
@@ -683,7 +678,7 @@ const bossCreator = {
             if (bossState.warpPhase === 'idle' && bossState.warpTimer <= 0) {
                 bossState.warpPhase = 'warning';
                 bossState.warpTimer = 500;
-                if (soundEffects.bossWarning) soundEffects.bossWarning();
+                soundEffects.bossWarning();
             } else if (bossState.warpPhase === 'warning' && bossState.warpTimer <= 0) {
                 bossState.warpPhase = 'idle';
                 bossState.warpTimer = 8000 + Math.random() * 5000;
@@ -692,7 +687,7 @@ const bossCreator = {
                     spawnParticles(b.x, b.y, '#22c55e', 16);
                     b.x = 80 + Math.random() * (GAME_WIDTH - 160);
                     spawnParticles(b.x, b.y, '#22c55e', 16);
-                    if (soundEffects.glitch) soundEffects.glitch();
+                    soundEffects.glitch();
                 }
             }
         }
@@ -704,11 +699,11 @@ const bossCreator = {
                 bossState.beamPhase = 'charge';
                 bossState.beamTimer = 1200;                 // aviso largo: da tiempo a salir
                 bossState.beamX = p1.x + p1.width / 2;
-                if (soundEffects.bossWarning) soundEffects.bossWarning();
+                soundEffects.bossWarning();
             } else if (bossState.beamPhase === 'charge' && bossState.beamTimer <= 0) {
                 bossState.beamPhase = 'fire';
                 bossState.beamTimer = 320;
-                if (soundEffects.timeStop) soundEffects.timeStop();
+                soundEffects.timeStop();
                 triggerShake(10, 260);
                 // Solo congela si te pilla dentro. Nunca quita vida: castiga, no mata.
                 if (bossState.beamX > p1.x && bossState.beamX < p1.x + p1.width) {

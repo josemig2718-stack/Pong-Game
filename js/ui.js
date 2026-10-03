@@ -20,9 +20,9 @@ function showScreen(screenId) {
         // Música del menú principal
         playMenuMusic();
     } else if (screenId === 'shop-menu') {
-        if (typeof showShopScreen === 'function') showShopScreen();
+        showShopScreen();
     } else if (screenId === 'campaign-menu') {
-        if (typeof renderCampaignMap === 'function') renderCampaignMap();
+        renderCampaignMap();
     }
     soundEffects.uiClick();
 }
@@ -101,7 +101,7 @@ function toggleScreenShake(enabled) {
 function toggleMouseControl(enabled) {
     settings.mouseControl = enabled;
     saveSettings(settings);
-    if (!enabled && typeof clearMouseControl === 'function') {
+    if (!enabled) {
         clearMouseControl();
     }
 }
@@ -226,11 +226,9 @@ function showAchievementsScreen() {
     showScreen('achievements-menu');
     populateAchievementsGrid();
     
-    if (typeof getUnlockedCount === 'function') {
-        const unlocked = getUnlockedCount();
-        const total = getVisibleAchievementsTotal();
-        setText('achievements-count', `${unlocked} / ${total} desbloqueados`);
-    }
+    const unlocked = getUnlockedCount();
+    const total = getVisibleAchievementsTotal();
+    setText('achievements-count', `${unlocked} / ${total} desbloqueados`);
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */
@@ -256,19 +254,19 @@ function updateProgressionDisplay() {
     const titleEl = document.getElementById('menu-level-title');
     const barEl = document.getElementById('menu-xp-bar');
     
-    if (titleEl && typeof getCurrentLevel === 'function') {
+    if (titleEl) {
         const lvl = getCurrentLevel();
         titleEl.textContent = `Nv. ${lvl.level} — ${lvl.title}`;
     }
     
-    if (barEl && typeof getXPProgress === 'function') {
+    if (barEl) {
         const prog = getXPProgress();
         barEl.style.width = `${prog.percentage}%`;
     }
 
     // 2. Pantalla de fin de partida
     const gameOverProgression = document.getElementById('game-over-progression');
-    if (gameOverProgression && typeof sessionXPGained !== 'undefined') {
+    if (gameOverProgression) {
         if (sessionXPGained > 0 || sessionCoinsGained > 0) {
             gameOverProgression.classList.remove('hidden');
             
@@ -293,8 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(settings.theme);
     populateSettingsUI();
     
-    if (typeof updateProgressionDisplay === 'function') updateProgressionDisplay();
-    if (typeof updateCoinDisplay === 'function') updateCoinDisplay();
+    updateProgressionDisplay();
+    updateCoinDisplay();
     
     showScreen('main-menu');
 

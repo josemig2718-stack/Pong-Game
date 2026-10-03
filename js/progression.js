@@ -28,7 +28,6 @@ const XP_REWARDS = {
     perfectGame: 20,
     scorePoint: 2,
     completeLocal: 10,
-    unlockAchievement: 30,
     winCampaignBase: 40,     // se multiplica por el nº de jefe (1 a 5)
     winCreator: 300
 };
@@ -38,7 +37,6 @@ const COIN_REWARDS = {
     winHachepe: 20,
     // NO coins for local mode (user explicitly requested this to prevent exploitation)
     perfectGame: 10,
-    unlockAchievement: 8,
     winCampaignBase: 10,     // se multiplica por el nº de jefe (1 a 5)
     winCreator: 100
 };
@@ -67,7 +65,6 @@ let playerProgression = loadProgression();
 let sessionXPGained = 0;
 let sessionCoinsGained = 0;
 let sessionLeveledUp = false;
-let sessionNewLevel = 0;
 let sessionNewTitle = '';
 
 /**
@@ -104,7 +101,6 @@ function resetSessionTrackers() {
     sessionXPGained = 0;
     sessionCoinsGained = 0;
     sessionLeveledUp = false;
-    sessionNewLevel = 0;
     sessionNewTitle = '';
 }
 
@@ -157,20 +153,15 @@ function checkLevelUp() {
     if (newLevelObj.level > playerProgression.level) {
         playerProgression.level = newLevelObj.level;
         sessionLeveledUp = true;
-        sessionNewLevel = newLevelObj.level;
         sessionNewTitle = newLevelObj.title;
         
         addCoins(newLevelObj.coinBonus);
         
-        if (typeof soundEffects !== 'undefined' && soundEffects.levelUp) {
-            soundEffects.levelUp();
-        }
+        soundEffects.levelUp();
         
-        if (typeof unlockAchievement === 'function') {
-            // Los ids del catálogo son reach_level_*, no level_*
-            if (playerProgression.level >= 5) unlockAchievement('reach_level_5');
-            if (playerProgression.level >= 10) unlockAchievement('reach_level_10');
-        }
+        // Los ids del catálogo son reach_level_*, no level_*
+        if (playerProgression.level >= 5) unlockAchievement('reach_level_5');
+        if (playerProgression.level >= 10) unlockAchievement('reach_level_10');
     }
 }
 
@@ -228,7 +219,7 @@ function purchaseItem(itemId, cost) {
         saveProgression();
         
         if (playerProgression.purchasedItems.length === DEFAULT_PROGRESSION.purchasedItems.length + 1) {
-            if (typeof unlockAchievement === 'function') unlockAchievement('grow_partner');
+            unlockAchievement('grow_partner');
         }
         return true;
     }
@@ -242,19 +233,16 @@ function selectCosmetic(category, id) {
     switch (category) {
         case 'trail':
             playerProgression.selectedTrail = id;
-            if (typeof setActiveTrail === 'function') setActiveTrail(id);
             break;
         case 'bg':
             playerProgression.selectedBg = id;
-            if (typeof setActiveBg === 'function') setActiveBg(id);
+            setActiveBg(id);
             break;
         case 'paddle':
             playerProgression.selectedPaddle = id;
-            if (typeof setActivePaddle === 'function') setActivePaddle(id);
             break;
         case 'goalFx':
             playerProgression.selectedGoalFx = id;
-            if (typeof setActiveGoalFx === 'function') setActiveGoalFx(id);
             break;
     }
     saveProgression();
@@ -267,7 +255,7 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     addXP(p1Score * XP_REWARDS.scorePoint);
     
     if (mode === 'cpu' && p1Won) {
-        let diff = (typeof settings !== 'undefined' && settings.difficulty) ? settings.difficulty : 2;
+        let diff = (settings.difficulty) ? settings.difficulty : 2;
         if (diff === 1) addXP(XP_REWARDS.winCpuEasy);
         else if (diff === 3) addXP(XP_REWARDS.winCpuHard);
         else addXP(XP_REWARDS.winCpuNormal);
@@ -282,10 +270,10 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
         addXP(XP_REWARDS.completeLocal);
     }
     else if (mode === 'campaign' && p1Won) {
-        const level = (typeof currentCampaignLevel !== 'undefined') ? currentCampaignLevel : 1;
+        const level = currentCampaignLevel;
         const isCreator = level === 6;
         // Repetir un jefe ya vencido paga mucho menos
-        const factor = (typeof isReplayingBoss !== 'undefined' && isReplayingBoss) ? CAMPAIGN_REPLAY_FACTOR : 1;
+        const factor = (isReplayingBoss) ? CAMPAIGN_REPLAY_FACTOR : 1;
 
         const xp = isCreator ? XP_REWARDS.winCreator : XP_REWARDS.winCampaignBase * level;
         const coins = isCreator ? COIN_REWARDS.winCreator : COIN_REWARDS.winCampaignBase * level;

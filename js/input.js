@@ -31,7 +31,7 @@ window.addEventListener('keydown', (e) => {
 
     keysDown.add(e.code);
 
-    if (e.code === settings.bindings.pause && typeof isPlaying !== 'undefined' && isPlaying) {
+    if (e.code === settings.bindings.pause && isPlaying) {
         togglePause();
     }
 

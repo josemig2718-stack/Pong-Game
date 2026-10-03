@@ -167,9 +167,7 @@ function buyShopItem(categoryKey, itemId) {
     if (!item) return;
 
     if (purchaseItem(item.id, item.price)) {
-        if (typeof soundEffects !== 'undefined' && soundEffects.shopBuy) {
-            soundEffects.shopBuy();
-        }
+        soundEffects.shopBuy();
         
         const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
         selectCosmetic(categoryInfo.cosmKey, item.id);
@@ -177,7 +175,7 @@ function buyShopItem(categoryKey, itemId) {
         populateShopTab(currentShopTab);
         updateCoinDisplay();
         
-        if (typeof unlockAchievement === 'function' && isAllItemsPurchased()) {
+        if (isAllItemsPurchased()) {
             unlockAchievement('fashionista');
         }
     } else {

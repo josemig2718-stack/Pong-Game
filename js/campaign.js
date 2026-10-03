@@ -19,7 +19,6 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
  */
 const HACHEPES_LORE = {
     1: {
-        id: 'chemi',
         name: 'Hachepe Chemi',
         title: 'El Guardián de la Frontera',
         image: 'assets/images/hachepe_chemi.png',
@@ -37,7 +36,6 @@ const HACHEPES_LORE = {
         }
     },
     2: {
-        id: 'dani',
         name: 'Hachepe Dani',
         title: 'El Arquitecto del Caos',
         image: 'assets/images/hachepe_dani.png',
@@ -55,7 +53,6 @@ const HACHEPES_LORE = {
         }
     },
     3: {
-        id: 'mario_valen',
         name: 'Mario y Valentín',
         title: 'El Dúo Letal',
         image: 'assets/images/hachepe_mario.png',
@@ -83,7 +80,6 @@ const HACHEPES_LORE = {
         }
     },
     4: {
-        id: 'fano',
         name: 'Hachepe Fano',
         title: 'El Guardián de las Sombras',
         image: 'assets/images/hachepe_fano.png',
@@ -101,7 +97,6 @@ const HACHEPES_LORE = {
         }
     },
     5: {
-        id: 'yisus',
         name: 'Hachepe Yisus',
         title: 'El Falso Rey',
         image: 'assets/images/hachepe_yisus.png',
@@ -119,7 +114,6 @@ const HACHEPES_LORE = {
         }
     },
     6: {
-        id: 'creator',
         name: 'El Creador',
         title: '¿?¿?¿?',
         image: 'assets/images/hachepe_chemi.png',
@@ -243,7 +237,7 @@ function buildCarouselDots() {
     const dots = document.getElementById('carousel-dots');
     if (!dots) return;
     dots.innerHTML = '';
-    carouselCards.forEach((nivel, i) => {
+    carouselCards.forEach((_, i) => {
         const d = document.createElement('button');
         d.type = 'button';
         d.className = 'carousel-dot';
@@ -528,7 +522,7 @@ function showNextDialogue() {
 /** Corta cualquier diálogo en curso (al salir de la partida). */
 function stopDialogue() {
     clearInterval(currentDialogueTimer);
-    if (typeof clearFinaleTimers === 'function') clearFinaleTimers();
+    clearFinaleTimers();
     clearTimeout(dialogueAdvanceTimer);
     dialogueQueue = [];
     dialogueCallback = null;
@@ -570,11 +564,9 @@ function playBossOutcomeDialogue(p1Won) {
 // ==================================================================
 
 function handleCampaignVictory() {
-    if (typeof unlockAchievement === 'function') {
-        unlockAchievement('campaign_first');
-        if (currentCampaignLevel === CAMPAIGN_LAST_BOSS) unlockAchievement('campaign_clear');
-        if (currentCampaignLevel === CAMPAIGN_CREATOR) unlockAchievement('the_creator');
-    }
+    unlockAchievement('campaign_first');
+    if (currentCampaignLevel === CAMPAIGN_LAST_BOSS) unlockAchievement('campaign_clear');
+    if (currentCampaignLevel === CAMPAIGN_CREATOR) unlockAchievement('the_creator');
 
     // Solo avanza si era el jefe pendiente (repetir uno vencido no cuenta)
     if (currentCampaignLevel === playerProgression.campaignProgress && currentCampaignLevel < CAMPAIGN_CREATOR) {
@@ -711,7 +703,7 @@ function runFinaleSequence() {
         '<p>Nadie sabe tu nombre, pero hoy todos te lo deben.</p>',
         'finale-victory'
     );
-    if (typeof triggerGoalConfetti === 'function') triggerGoalConfetti(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    triggerGoalConfetti(GAME_WIDTH / 2, GAME_HEIGHT / 2);
     soundEffects.win();
     playVictoryJingle();
 
@@ -719,7 +711,7 @@ function runFinaleSequence() {
     finaleStep(3600, () => {
         warpMusic();
         if (screen) screen.classList.add('glitching');
-        if (soundEffects.glitch) soundEffects.glitch();
+        soundEffects.glitch();
     });
 
     // --- 3. La voz que no debería estar ahí ---
@@ -766,14 +758,14 @@ function runFinaleSequence() {
         if (!eye) return;
         eye.classList.remove('hidden');
         eye.classList.add('opening');
-        if (soundEffects.bossVanish) soundEffects.bossVanish();
+        soundEffects.bossVanish();
     });
 
     // --- 8. Golpe a la pantalla VS ---
     finaleStep(27000, () => {
         if (eye) { eye.classList.add('hidden'); eye.classList.remove('opening'); }
         hideFinaleText();
-        if (soundEffects.glitch) soundEffects.glitch();
+        soundEffects.glitch();
         prepareCampaignMatch(CAMPAIGN_CREATOR, { slam: true });
     });
 }

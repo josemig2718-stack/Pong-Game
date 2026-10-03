@@ -3,13 +3,13 @@
 'use strict';
 
 const POWERUP_TYPES = [
-    { id: 'paddle_xl',    emoji: '⬆️', name: 'Paleta XL',     color: '#22c55e', duration: 8000,  weight: 20 },
-    { id: 'paddle_mini',  emoji: '⬇️', name: 'Paleta Mini',   color: '#a855f7', duration: 8000,  weight: 20 },
-    { id: 'big_ball',     emoji: '🔴', name: 'Bola Gigante',  color: '#ef4444', duration: 6000,  weight: 15 },
-    { id: 'turbo',        emoji: '⚡', name: 'Turbo',         color: '#eab308', duration: 0,     weight: 15 },
-    { id: 'shield',       emoji: '🛡️', name: 'Escudo',        color: '#3b82f6', duration: 5000,  weight: 10 },
-    { id: 'slowmo',       emoji: '🌀', name: 'Cámara Lenta',  color: '#f97316', duration: 4000,  weight: 10 },
-    { id: 'multi_ball',   emoji: '✨', name: 'Multi-Bola',    color: '#ffffff', duration: 0,     weight: 10 }
+    { id: 'paddle_xl',    emoji: '⬆️', color: '#22c55e', duration: 8000,  weight: 20 },
+    { id: 'paddle_mini',  emoji: '⬇️', color: '#a855f7', duration: 8000,  weight: 20 },
+    { id: 'big_ball',     emoji: '🔴', color: '#ef4444', duration: 6000,  weight: 15 },
+    { id: 'turbo',        emoji: '⚡', color: '#eab308', duration: 0,     weight: 15 },
+    { id: 'shield',       emoji: '🛡️', color: '#3b82f6', duration: 5000,  weight: 10 },
+    { id: 'slowmo',       emoji: '🌀', color: '#f97316', duration: 4000,  weight: 10 },
+    { id: 'multi_ball',   emoji: '✨', color: '#ffffff', duration: 0,     weight: 10 }
 ];
 
 // Variables de estado del sistema de power-ups
@@ -18,7 +18,6 @@ let activeEffect = null;        // { type, target, remainingMs, originalValues: 
 let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
 let shieldWall = null;          // { x, y, width, height, owner }
 let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
-let totalPowerupsCollected = 0; // Contador de sesión para estadísticas
 let powerupsThisGame = 0;       // Contador por partida (para logros)
 let slowmoActive = false;       // Indica si la cámara lenta está activa
 
@@ -41,9 +40,9 @@ function initPowerups() {
  * @param {number} dt Delta time normalizado a 60 FPS
  */
 function updatePowerups(dt) {
-    if (typeof settings !== 'undefined' && !settings.powerupsEnabled) return;
-    if (typeof isPaused !== 'undefined' && isPaused) return;
-    if (typeof isPlaying !== 'undefined' && !isPlaying) return;
+    if (!settings.powerupsEnabled) return;
+    if (isPaused) return;
+    if (!isPlaying) return;
 
     const dtMs = dt * (1000 / 60);
     const timeNow = Date.now();
@@ -51,7 +50,7 @@ function updatePowerups(dt) {
     // 1. Manejo del cooldown y aparición
     if (!activePowerup && !activeEffect) {
         powerupCooldownMs -= dtMs;
-        if (powerupCooldownMs <= 0 && (typeof serveCountdownMs === 'undefined' || serveCountdownMs <= 0)) {
+        if (powerupCooldownMs <= 0 && serveCountdownMs <= 0) {
             spawnPowerup();
         }
     }
@@ -63,12 +62,12 @@ function updatePowerups(dt) {
             activePowerup = null;
             // Nuevo cooldown tras desaparecer
             powerupCooldownMs = 8000 + Math.random() * 7000;
-        } else if (typeof balls !== 'undefined') {
+        } else {
             // Comprobar colisiones con todas las pelotas
             for (let i = 0; i < balls.length; i++) {
                 const b = balls[i];
                 if (powerupCollision(b.x, b.y, b.radius, activePowerup.x, activePowerup.y, 22)) {
-                    collectPowerup(i);
+                    collectPowerup();
                     break; // Solo puede ser recogido por una pelota a la vez
                 }
             }
@@ -84,7 +83,7 @@ function updatePowerups(dt) {
     }
 
     // 4. Lógica del escudo
-    if (shieldWall && typeof balls !== 'undefined') {
+    if (shieldWall) {
         for (let i = 0; i < balls.length; i++) {
             const b = balls[i];
             // Detección de colisión AABB simple
@@ -102,9 +101,7 @@ function updatePowerups(dt) {
                 }
                 
                 // Efecto de sonido si existe
-                if (typeof soundEffects !== 'undefined' && soundEffects.paddleHit) {
-                    soundEffects.paddleHit();
-                }
+                soundEffects.paddleHit();
             }
         }
     }
@@ -136,31 +133,23 @@ function spawnPowerup() {
         maxLifetime: 12000 // 12 segundos antes de desaparecer
     };
 
-    if (typeof soundEffects !== 'undefined' && soundEffects.powerupSpawn) {
-        soundEffects.powerupSpawn();
-    }
+    soundEffects.powerupSpawn();
 }
 
 /**
  * Recoge el power-up activo y aplica su efecto
- * @param {number} collectorBallIndex Índice de la pelota en el arreglo
  */
-function collectPowerup(collectorBallIndex) {
+function collectPowerup() {
     if (!activePowerup) return;
 
     const type = activePowerup.type;
     const beneficiary = lastHitter; // 'p1' o 'p2'
 
     // Partículas y sonido
-    if (typeof spawnParticles !== 'undefined') {
-        spawnParticles(activePowerup.x, activePowerup.y, type.color, 20);
-    }
-    if (typeof soundEffects !== 'undefined' && soundEffects.powerupCollect) {
-        soundEffects.powerupCollect();
-    }
+    spawnParticles(activePowerup.x, activePowerup.y, type.color, 20);
+    soundEffects.powerupCollect();
 
     // Actualizar contadores
-    totalPowerupsCollected++;
     powerupsThisGame++;
 
     // Aplicar efecto
@@ -193,31 +182,27 @@ function applyPowerup(type, beneficiary) {
         case 'paddle_xl':
             const targetPaddle = beneficiary === 'p1' ? p1 : p2;
             activeEffect.originalValues.height = targetPaddle.height;
-            targetPaddle.height = (typeof paddleHeight !== 'undefined' ? paddleHeight : 100) * 1.6;
+            targetPaddle.height = paddleHeight * 1.6;
             break;
 
         case 'paddle_mini':
             const rivalPaddle = rival === 'p1' ? p1 : p2;
             activeEffect.target = rival; // El objetivo visual es el rival
             activeEffect.originalValues.height = rivalPaddle.height;
-            rivalPaddle.height = (typeof paddleHeight !== 'undefined' ? paddleHeight : 100) * 0.6;
+            rivalPaddle.height = paddleHeight * 0.6;
             break;
 
         case 'big_ball':
             activeEffect.target = rival; // Cuenta como efecto negativo visualmente
             activeEffect.originalValues.radius = balls[0].radius; // Asume que todas tienen el mismo radio base
-            if (typeof balls !== 'undefined') {
-                balls.forEach(b => b.radius = 27); // 9 * 3 = 27
-            }
+            balls.forEach(b => b.radius = 27); // 9 * 3 = 27
             break;
 
         case 'turbo':
-            if (typeof balls !== 'undefined') {
-                balls.forEach(b => {
-                    b.dx *= 1.4;
-                    b.dy *= 1.4;
-                });
-            }
+            balls.forEach(b => {
+                b.dx *= 1.4;
+                b.dy *= 1.4;
+            });
             break;
 
         case 'shield':
@@ -233,9 +218,7 @@ function applyPowerup(type, beneficiary) {
             break;
 
         case 'multi_ball':
-            if (typeof spawnExtraBalls !== 'undefined') {
-                spawnExtraBalls();
-            }
+            spawnExtraBalls();
             break;
     }
 }
@@ -256,9 +239,7 @@ function revertPowerup() {
             break;
             
         case 'big_ball':
-            if (typeof balls !== 'undefined') {
-                balls.forEach(b => b.radius = activeEffect.originalValues.radius);
-            }
+            balls.forEach(b => b.radius = activeEffect.originalValues.radius);
             break;
             
         case 'shield':
@@ -270,9 +251,7 @@ function revertPowerup() {
             break;
     }
 
-    if (typeof soundEffects !== 'undefined' && soundEffects.powerupExpire) {
-        soundEffects.powerupExpire();
-    }
+    soundEffects.powerupExpire();
 
     activeEffect = null;
 }
@@ -282,7 +261,7 @@ function revertPowerup() {
  */
 function enforcePowerups() {
     if (!activeEffect) return;
-    if (activeEffect.type.id === 'big_ball' && typeof balls !== 'undefined') {
+    if (activeEffect.type.id === 'big_ball') {
         balls.forEach(b => b.radius = 27);
     }
 }
@@ -315,9 +294,8 @@ function powerupCollision(bx, by, bradius, px, py, pradius) {
 /**
  * Renderiza el power-up en el campo de juego
  * @param {CanvasRenderingContext2D} ctx Contexto 2D del canvas
- * @param {string} themeColor Color principal del tema (opcional)
  */
-function renderPowerup(ctx, themeColor) {
+function renderPowerup(ctx) {
     if (!activePowerup) return;
 
     const lifetimeMs = Date.now() - activePowerup.spawnTime;
@@ -424,9 +402,8 @@ function renderActiveEffectHUD(ctx, canvasWidth) {
 /**
  * Renderiza el escudo si está activo
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
- * @param {string} themeColor Color principal del tema
  */
-function renderShield(ctx, themeColor) {
+function renderShield(ctx) {
     if (!shieldWall) return;
 
     ctx.save();

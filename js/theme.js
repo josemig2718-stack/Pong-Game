@@ -1,8 +1,8 @@
 /**
  * theme.js
  * ------------------------------------------------------------------
- * Aplica el tema de color elegido tanto a la interfaz (vía variables
- * CSS) como al juego (el canvas lee estas mismas variables al dibujar).
+ * Aplica el tema de color elegido a la interfaz (variables CSS) y lo
+ * expone al canvas a través de currentThemeHex().
  * ------------------------------------------------------------------
  */
 
@@ -24,7 +24,7 @@ function applyTheme(themeKey) {
     saveSettings(settings);
 
     // Estadísticas: rastrear tema usado (logro Explorador)
-    if (typeof statsTrackTheme === 'function') statsTrackTheme(themeKey);
+    statsTrackTheme(themeKey);
 }
 
 function currentThemeHex() {
