@@ -286,7 +286,8 @@ function updateProgressionDisplay() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+/** Construye la interfaz inicial y muestra el menú principal. */
+function initUI() {
     buildThemeSwatches(document.getElementById('theme-swatches'));
     applyTheme(settings.theme);
     populateSettingsUI();
@@ -299,5 +300,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-binding-action]').forEach(btn => {
         btn.addEventListener('click', () => startListeningFor(btn.dataset.bindingAction));
     });
-});
+}
 

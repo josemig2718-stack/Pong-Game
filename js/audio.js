@@ -203,6 +203,10 @@ function onFirstInteraction() {
     window.removeEventListener('keydown', onFirstInteraction);
     window.removeEventListener('touchstart', onFirstInteraction);
 }
-window.addEventListener('click', onFirstInteraction);
-window.addEventListener('keydown', onFirstInteraction);
-window.addEventListener('touchstart', onFirstInteraction);
+
+/** Registra el desbloqueo del audio. Debe ir antes que initInput(). */
+function initAudio() {
+    window.addEventListener('click', onFirstInteraction);
+    window.addEventListener('keydown', onFirstInteraction);
+    window.addEventListener('touchstart', onFirstInteraction);
+}

@@ -33,7 +33,7 @@ There are no modules, no `import`/`export`, no IIFE wrappers. Every file declare
 
 ```
 config → state → theme → audio → stats → achievements → input → progression →
-shop → vfx → powerups → campaign → bosses → game → touch → ui
+shop → vfx → powerups → campaign → bosses → game → touch → ui → main
 ```
 
 Consequences to respect when editing:
@@ -42,7 +42,7 @@ Consequences to respect when editing:
 - `config.js` must stay dependency-free — it is loaded first and creates the session-wide `settings` object.
 - Top-level code may only use symbols from files loaded *before* it. Function bodies can call anything, since they run after every script has loaded — no `typeof` guards are needed.
 - Mutable match state shared across files lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. Write `state.isPlaying = false`, never a new top-level `let` that another file reassigns. The paddles `p1`, `p2` and `p2Twin` are stable objects declared next to it.
-- `ui.js` is last and owns `DOMContentLoaded`: it builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
+- No file registers listeners or touches the DOM while loading. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
 
 ### Screens are divs, wired by inline `onclick`
 

@@ -38,12 +38,7 @@ function createBall(x, y, speed, dx, dy) {
 // --- Control con mouse ---
 let mouseActive = false; // true mientras el mouse está sobre el canvas
 
-canvas.addEventListener('mouseenter', () => { mouseActive = true; });
-canvas.addEventListener('mouseleave', () => {
-    mouseActive = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
+function handleMouseMove(e) {
     if (!settings.mouseControl || !state.isPlaying || state.isPaused || !mouseActive) return;
 
     // La arena rotada (El Creador) mueve la paleta en X: si solo se
@@ -57,7 +52,7 @@ canvas.addEventListener('mousemove', (e) => {
         p1.touchY = Math.max(0, Math.min(GAME_HEIGHT - p1.height, canvasY - p1.height / 2));
         p1.touchX = null;
     }
-});
+}
 
 // Al desactivar el mouse control, soltar la paleta en ambos ejes: dejar
 // touchX puesto la mantendría pegada e ignoraría el teclado.
@@ -115,7 +110,16 @@ function resizeCanvas() {
     wrapper.style.maxWidth = `${drawWidth}px`;
     wrapper.style.maxHeight = `${drawHeight}px`;
 }
-window.addEventListener('resize', resizeCanvas);
+
+/** Registra el ratón sobre el canvas y el redimensionado de la ventana. */
+function initCanvas() {
+    canvas.addEventListener('mouseenter', () => { mouseActive = true; });
+    canvas.addEventListener('mouseleave', () => {
+        mouseActive = false;
+    });
+    canvas.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', resizeCanvas);
+}
 
 // --- Ciclo de vida de la partida ---
 function startGame(mode) {

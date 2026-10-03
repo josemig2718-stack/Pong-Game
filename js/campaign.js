@@ -285,7 +285,7 @@ function carouselMove(paso) {
 }
 
 /** Teclado y deslizamiento: el carrusel se maneja sin ratón. */
-function setupCarouselControls() {
+function initCarouselControls() {
     const menu = document.getElementById('campaign-menu');
     if (!menu) return;
 
@@ -315,8 +315,6 @@ function setupCarouselControls() {
         startX = null;
     }, { passive: true });
 }
-
-document.addEventListener('DOMContentLoaded', setupCarouselControls);
 
 function showCampaignIntro() {
     const overlay = document.getElementById('campaign-intro-overlay');

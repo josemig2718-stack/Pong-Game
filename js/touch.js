@@ -20,8 +20,6 @@ function isTouchDevice() {
     );
 }
 
-const touchDevice = isTouchDevice();
-
 // Recuerda qué paleta (p1/p2) está controlando cada dedo (por touch.identifier),
 // para que un dedo que se desliza no "salte" de paleta al cruzar el centro.
 const activeTouches = new Map();
@@ -131,7 +129,8 @@ function setupOrientationHint() {
     closeBtn.addEventListener('click', () => hint.classList.add('orientation-hint--dismissed'));
 }
 
-function setupTouchControls() {
+/** Registra los controles táctiles, el botón de pausa y el aviso de orientación. */
+function initTouchControls() {
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -140,10 +139,8 @@ function setupTouchControls() {
     setupMobilePauseButton();
     setupOrientationHint();
 
-    if (touchDevice) {
+    if (isTouchDevice()) {
         document.body.classList.add('touch-device');
     }
 }
-
-document.addEventListener('DOMContentLoaded', setupTouchControls);
 

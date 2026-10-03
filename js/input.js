@@ -17,7 +17,7 @@ const keysDown = new Set();
 // en vez de jugar (p. ej. 'p1Up', 'pause', etc.)
 let listeningForAction = null;
 
-window.addEventListener('keydown', (e) => {
+function handleKeyDown(e) {
     if (listeningForAction) {
         e.preventDefault();
         // FIX: limpiar listeningForAction ANTES de llamar a assignBinding
@@ -37,11 +37,15 @@ window.addEventListener('keydown', (e) => {
 
     // Evita que el scroll de la página se dispare con flechas/espacio durante el juego
     if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
-});
+}
 
-window.addEventListener('keyup', (e) => {
-    keysDown.delete(e.code);
-});
+/** Registra el teclado de juego y de reasignación. */
+function initInput() {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', (e) => {
+        keysDown.delete(e.code);
+    });
+}
 
 function isActionPressed(action) {
     return keysDown.has(settings.bindings[action]);
