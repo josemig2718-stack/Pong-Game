@@ -3,6 +3,8 @@
 // Sistema de Progresión, Niveles, y Monedas
 // ==========================================
 
+'use strict';
+
 const PROG_STORAGE_KEY = 'pongGame.progression.v1';
 
 const LEVELS = [

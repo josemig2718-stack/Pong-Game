@@ -13,6 +13,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
 const BOSS_DEFAULT_CONFIG = {
     targetScore: 5,      // puntos necesarios para ganar el combate

@@ -6,6 +6,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 // --- Catálogo de logros ---
 const ACHIEVEMENTS = [
     // 🏁 Inicio

@@ -7,6 +7,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
 

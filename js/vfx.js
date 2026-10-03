@@ -1,4 +1,7 @@
 // Variables de estado actuales para los efectos visuales
+
+'use strict';
+
 let currentTrailId = 'default';
 let currentBgId = 'none';
 let currentPaddleId = 'classic';

@@ -7,6 +7,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 // Estado de teclas presionadas en este instante (se llena dinámicamente
 // según las combinaciones configuradas en `settings.bindings`).
 const keysDown = new Set();

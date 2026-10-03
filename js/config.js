@@ -7,6 +7,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 // --- Dimensiones lógicas del campo de juego (resolución interna fija) ---
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;

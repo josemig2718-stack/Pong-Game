@@ -6,6 +6,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 function applyTheme(themeKey) {
     const theme = THEMES[themeKey] || THEMES.green;
     const root = document.documentElement;

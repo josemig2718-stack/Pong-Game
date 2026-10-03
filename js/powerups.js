@@ -1,4 +1,7 @@
 // Tipos de power-ups disponibles en el juego
+
+'use strict';
+
 const POWERUP_TYPES = [
     { id: 'paddle_xl',    emoji: '⬆️', name: 'Paleta XL',     color: '#22c55e', duration: 8000,  weight: 20 },
     { id: 'paddle_mini',  emoji: '⬇️', name: 'Paleta Mini',   color: '#a855f7', duration: 8000,  weight: 20 },

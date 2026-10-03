@@ -3,6 +3,8 @@
 // Tienda de Cosméticos y Generación de UI
 // ==========================================
 
+'use strict';
+
 const SHOP_CATALOG = {
     trails: [
         { id: 'default',  name: 'Clásica',   desc: 'Círculos que se desvanecen',                    price: 0,   preview: '○○○' },

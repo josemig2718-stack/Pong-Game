@@ -7,6 +7,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 const STATS_STORAGE_KEY = 'pongGame.stats.v1';
 
 const DEFAULT_STATS = {

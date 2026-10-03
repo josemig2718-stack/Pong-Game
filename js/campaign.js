@@ -8,6 +8,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 const CAMPAIGN_LAST_BOSS = 5;   // últimos Hachepes "normales"
 const CAMPAIGN_CREATOR = 6;     // nivel secreto
 

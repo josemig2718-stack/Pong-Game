@@ -6,6 +6,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
     const requested = document.getElementById(screenId);

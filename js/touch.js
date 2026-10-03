@@ -9,6 +9,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /** Heurística estándar para saber si el dispositivo es "táctil primario" */
 function isTouchDevice() {
     return (
