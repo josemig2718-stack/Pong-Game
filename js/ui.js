@@ -58,7 +58,7 @@ function toggleMusic(enabled) {
     setMusicEnabled(enabled);
     if (enabled) {
         // Reanudar la música que corresponda según el estado actual
-        if (isPlaying) {
+        if (state.isPlaying) {
             playGameplayMusic();
         } else {
             playMenuMusic();

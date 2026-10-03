@@ -537,8 +537,8 @@ function stopDialogue() {
 /** Diálogo de "voy ganando": salta una sola vez, al ir perdiendo por 2. */
 let midDialogueShown = false;
 function checkMidDialogue() {
-    if (gameMode !== 'campaign' || midDialogueShown) return;
-    if (p2Score - p1Score < 2) return;
+    if (state.mode !== 'campaign' || midDialogueShown) return;
+    if (state.p2Score - state.p1Score < 2) return;
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!boss || !boss.dialogues.mid) return;
     midDialogueShown = true;
@@ -685,7 +685,7 @@ function playCrtShutdownSound() {
 function runFinaleSequence() {
     stopDialogue();
     clearFinaleTimers();
-    isPlaying = false;
+    state.isPlaying = false;
 
     playerProgression.campaignProgress = CAMPAIGN_CREATOR;
     saveProgression();
@@ -828,7 +828,7 @@ function playVictoryJingle() {
 function runTrueEndingSequence() {
     stopDialogue();
     clearFinaleTimers();
-    isPlaying = false;
+    state.isPlaying = false;
     stopAllMusic();
     resetMusicRate();
 

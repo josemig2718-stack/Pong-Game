@@ -29,10 +29,10 @@ Deployed as a GitHub Pages static site — the repo root is the web root.
 
 ### Global namespace, ordered script loading
 
-There are no modules, no `import`/`export`, no IIFE wrappers. Every file declares top-level `const`/`let`/`function` that land on the global scope, and files depend on each other purely through **load order in `index.html` (lines 474–487)**:
+There are no modules, no `import`/`export`, no IIFE wrappers. Every file declares top-level `const`/`let`/`function` that land on the global scope, and files depend on each other purely through **load order of the `<script>` tags at the end of `index.html`**:
 
 ```
-config → theme → audio → stats → achievements → input → progression →
+config → state → theme → audio → stats → achievements → input → progression →
 shop → vfx → powerups → campaign → bosses → game → touch → ui
 ```
 
@@ -40,7 +40,8 @@ Consequences to respect when editing:
 
 - A new top-level `const`/`let`/`function` name collides globally. Grep before naming.
 - `config.js` must stay dependency-free — it is loaded first and creates the session-wide `settings` object.
-- Cross-file calls into *later*-loaded files are guarded with `typeof fn === 'function'` (e.g. `game.js` calling `statsOnGameStart`, `initPowerups`, `awardGameRewards`). Follow that pattern rather than assuming a symbol exists.
+- Top-level code may only use symbols from files loaded *before* it. Function bodies can call anything, since they run after every script has loaded — no `typeof` guards are needed.
+- Mutable match state shared across files lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. Write `state.isPlaying = false`, never a new top-level `let` that another file reassigns. The paddles `p1`, `p2` and `p2Twin` are stable objects declared next to it.
 - `ui.js` is last and owns `DOMContentLoaded`: it builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
 
 ### Screens are divs, wired by inline `onclick`
@@ -56,13 +57,13 @@ Gameplay is not a screen — `startGame(mode)` clears all `.active-screen` and u
 `gameLoop(timestamp)` → `update(dt)` → `render()` via `requestAnimationFrame`. `dt` is normalized to 60 FPS units (`elapsedMs / (1000/60)`, clamped to ≤3), so all speed constants are "pixels per frame at 60 FPS" and every movement must be multiplied by `dt`.
 
 - Fixed logical resolution `GAME_WIDTH × GAME_HEIGHT` = 800×600. `canvas.width/height` are always the logical size; `resizeCanvas()` only sets CSS `width/height` to scale it, preserving 4:3 by measuring visible siblings of `#canvas-wrapper`. Touch input converts client coords back into logical coords (`js/touch.js`).
-- `balls` is an array (multi-ball power-up spawns up to 3); `ball` is a legacy alias for `balls[0]` refreshed in `resetBall`/`startGame`.
+- `state.balls` is an array (multi-ball power-up spawns up to 3). `resetBall()` replaces the whole array, even mid-`update()`, so never keep a reference to it across calls — always read `state.balls`.
 - Slow-motion is a `dt` multiplier composed from `getSlowmoMultiplier()` (power-up) and `getGoalSlowmo()` (goal VFX).
 - `update()` returns early while `isDialogueActive` (campaign dialogue) — that is the campaign's "pause".
 
 ### Game modes
 
-`gameMode` is a string set by `startGame(mode)`: `'cpu'` | `'local'` | `'hachepe'` | `'campaign'`.
+`state.mode` is a string set by `startGame(mode)`: `'cpu'` | `'local'` | `'hachepe'` | `'campaign'`.
 
 Mode drives branching throughout `update()`, `checkWin()`, `resetBall()`, audio, and rewards:
 
@@ -98,7 +99,7 @@ The carousel positions cards purely with `transform` from `updateCarousel()`; on
 
 The Creator's identity on screen is a **canvas-drawn eye** whose pupil tracks the ball (`CREATOR_TONES` shifts it green → amber → bloodshot per phase); the health bar reads as its lower lid. Its three phases stack armored band segments (`segmentIsArmored`, dispatched through `bossSegmentArmored`), a telegraphed ball warp, and an eye beam that freezes rather than kills. Every one of them is announced before it lands; that is the rule that keeps the fight hard instead of unfair.
 
-The Creator is the only boss with `useHealth: true`: it is won by emptying `bossHealth()`, and `p2Score` counts the player's *misses*, not the rival's points. Keep those two meanings apart — conflating them is exactly what made the final fight winnable in one hit.
+The Creator is the only boss with `useHealth: true`: it is won by emptying `bossHealth()`, and `state.p2Score` counts the player's *misses*, not the rival's points. Keep those two meanings apart — conflating them is exactly what made the final fight winnable in one hit.
 
 ### Persistence — three independent localStorage keys
 
@@ -140,7 +141,7 @@ There are no tests, so verification means driving the real game. Serve it (`pyth
 
 ```js
 currentCampaignLevel = 4; startGame('campaign'); stopDialogue();
-for (let i = 0; i < 3000; i++) { serveCountdownMs = 0; update(1); }
+for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; update(1); }
 ```
 
 Two habits worth keeping, because both caught real bugs that reading the code did not:

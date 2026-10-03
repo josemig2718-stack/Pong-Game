@@ -1,9 +1,9 @@
 /**
  * game.js
  * ------------------------------------------------------------------
- * Estado del juego, física con delta-time, bucle principal y
- * renderizado en <canvas>.
+ * Física con delta-time, bucle principal y renderizado en <canvas>.
  * Soporta multi-bola, power-ups, VFX y sistema de progresión.
+ * El estado de la partida y las paletas viven en state.js.
  * ------------------------------------------------------------------
  */
 
@@ -15,48 +15,14 @@ const ctx = canvas.getContext('2d');
 let animationFrameId;
 let lastTimestamp = 0;
 
-// --- Estado general ---
-let isPlaying = false;
-let isPaused = false;
-let gameMode = 'cpu'; // 'cpu' | 'local' | 'hachepe' | 'campaign'
-let p1Score = 0;
-let p2Score = 0;
-let frameCount = 0;
-
-// Cuenta regresiva antes de que la bola empiece a moverse (en milisegundos).
-// 0 = bola en juego.
-let serveCountdownMs = 0;
+// Duración de la cuenta regresiva antes de que la bola se mueva (ms)
 const SERVE_INITIAL = 3000;    // 3 segundos al iniciar partida
 const SERVE_AFTER_GOAL = 3000; // 3 segundos tras cada punto
 
-
-// Vibración de pantalla al anotar
-let shakeIntensity = 0;
-let shakeTimeMs = 0;  // tiempo restante de vibración en ms
-
-// --- ESTADO DE JEFES DE CAMPAÑA ---
-// Las mecánicas viven en bosses.js (tabla BOSS_MECHANICS). Aquí solo queda
-// la paleta gemela, porque participa en el movimiento y la colisión de abajo.
-let p2_twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };
-
-// --- Multi-bola ---
-// Array principal de bolas. ball es alias de balls[0] para compatibilidad.
+// Puntos que guarda la estela de cada bola
 const MAX_TRAIL = 25;
-let balls = [];
-let ball = null; // alias de balls[0], se actualiza en resetBall/startGame
-
-// Partículas de impacto
-let particles = [];
-
-const paddleWidth = 15;
-const paddleHeight = 100;
-const paddleSpeed = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
-const ballRadius = 9;
 
 const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
-
-const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 
 // Función auxiliar para crear una bola
 function createBall(x, y, speed, dx, dy) {
@@ -78,7 +44,7 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    if (!settings.mouseControl || !isPlaying || isPaused || !mouseActive) return;
+    if (!settings.mouseControl || !state.isPlaying || state.isPaused || !mouseActive) return;
 
     // La arena rotada (El Creador) mueve la paleta en X: si solo se
     // escribiera touchY, el mouse no controlaría nada en ese combate.
@@ -155,10 +121,10 @@ window.addEventListener('resize', resizeCanvas);
 function startGame(mode) {
     getAudioContext();
 
-    gameMode = mode;
-    p1Score = 0;
-    p2Score = 0;
-    particles = [];
+    state.mode = mode;
+    state.p1Score = 0;
+    state.p2Score = 0;
+    state.particles = [];
 
     // Restaurar geometría original de las paletas. Hay que reponer también
     // width y x: la arena rotada del Creador convierte a p1 en una paleta
@@ -181,8 +147,8 @@ function startGame(mode) {
     p2.touchX = null;
     resetTouchHints();
 
-    isPlaying = true;
-    isPaused = false;
+    state.isPlaying = true;
+    state.isPaused = false;
 
     // Limpiar cualquier diálogo de campaña que quedara de la partida anterior
     stopDialogue();
@@ -209,8 +175,8 @@ function startGame(mode) {
 
     // Resetear mecánicas de jefes: siempre se apaga todo, y el jefe en
     // curso (si lo hay) arma lo suyo en bossInit().
-    p2_twin.active = false;
-    p2_twin.retreatMs = 0;
+    p2Twin.active = false;
+    p2Twin.retreatMs = 0;
     bossInit();
 
     resizeCanvas();
@@ -238,11 +204,11 @@ function startGame(mode) {
 }
 
 function restartCurrentGame() {
-    startGame(gameMode);
+    startGame(state.mode);
 }
 
 function quitGame() {
-    isPlaying = false;
+    state.isPlaying = false;
     cancelAnimationFrame(animationFrameId);
 
     // Cortar diálogos de campaña en curso
@@ -267,9 +233,9 @@ function quitGame() {
 }
 
 function togglePause() {
-    if (!isPlaying) return;
-    isPaused = !isPaused;
-    if (isPaused) {
+    if (!state.isPlaying) return;
+    state.isPaused = !state.isPaused;
+    if (state.isPaused) {
         document.getElementById('pause-menu').classList.add('active-screen');
         cancelAnimationFrame(animationFrameId);
     } else {
@@ -299,11 +265,10 @@ function resetBall(initialServe = false) {
     }
 
     const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dx, dy);
-    balls = [newBall];
-    ball = balls[0];
+    state.balls = [newBall];
 
     // Congela la bola en el centro durante la cuenta regresiva
-    serveCountdownMs = initialServe ? SERVE_INITIAL : SERVE_AFTER_GOAL;
+    state.serveCountdownMs = initialServe ? SERVE_INITIAL : SERVE_AFTER_GOAL;
     
     // Mantener power-ups persistentes (ej. bola gigante)
     enforcePowerups();
@@ -311,8 +276,8 @@ function resetBall(initialServe = false) {
 
 /** Función para generar bolas extra (Multi-Bola power-up) */
 function spawnExtraBalls() {
-    if (balls.length === 0) return;
-    const source = balls[0];
+    if (state.balls.length === 0) return;
+    const source = state.balls[0];
     const count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar
 
     soundEffects.multiBallSplit();
@@ -329,7 +294,7 @@ function spawnExtraBalls() {
             speed * Math.sin(newAngle)
         );
         extra.radius = source.radius; // Respetar bola gigante si está activa
-        balls.push(extra);
+        state.balls.push(extra);
     }
 }
 
@@ -343,7 +308,7 @@ function spawnParticles(x, y, color, count = 14) {
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 2 + Math.random() * 4;
-        particles.push({
+        state.particles.push({
             x, y,
             dx: Math.cos(angle) * speed,
             dy: Math.sin(angle) * speed,
@@ -355,8 +320,8 @@ function spawnParticles(x, y, color, count = 14) {
 
 function triggerShake(intensity = 8, durationMs = 200) {
     if (!settings.screenShake) return;
-    shakeIntensity = intensity;
-    shakeTimeMs = durationMs;
+    state.shakeIntensity = intensity;
+    state.shakeTimeMs = durationMs;
 }
 
 // --- Actualización con delta-time ---
@@ -412,7 +377,7 @@ function update(dt) {
     }
 
     // --- Movimiento Jugador 2 / CPU ---
-    if (gameMode === 'local') {
+    if (state.mode === 'local') {
         if (p2.touchY !== null) {
             p2.y = p2.touchY;
         } else {
@@ -428,7 +393,7 @@ function update(dt) {
             // de dificultad que el lore promete (⭐⭐ a ⭐⭐⭐⭐⭐).
             aiSpeed = paddleSpeed * bcfg.aiSpeed;
             errorMargin = bcfg.aiError;
-        } else if (gameMode === 'hachepe') {
+        } else if (state.mode === 'hachepe') {
             aiSpeed = paddleSpeed * 1.15; // Velocidad alta pero superable
             errorMargin = 10; // Un ligero margen de error
         } else {
@@ -438,15 +403,15 @@ function update(dt) {
         }
 
         // La CPU persigue la bola más cercana que vaya hacia ella
-        let targetBall = balls[0];
+        let targetBall = state.balls[0];
         let closestDist = Infinity;
-        for (const b of balls) {
+        for (const b of state.balls) {
             if (b.dx > 0) { // va hacia la CPU
                 const dist = Math.abs(b.x - p2.x);
                 if (dist < closestDist) { closestDist = dist; targetBall = b; }
             }
         }
-        if (!targetBall) targetBall = balls[0];
+        if (!targetBall) targetBall = state.balls[0];
 
         const p2Center = p2.y + p2.height / 2;
         // Los jefes apuntan con un desvío que se renueva en cada golpe: sin él
@@ -462,31 +427,31 @@ function update(dt) {
         }
 
         // Lógica para el clon (Mario y Valen)
-        if (p2_twin.active && p2_twin.retreatMs > 0) {
+        if (p2Twin.active && p2Twin.retreatMs > 0) {
             // Retirado tras encajar gol: sale del campo por abajo. Esa es la
             // ventana del jugador para volver a anotar.
-            p2_twin.y += paddleSpeed * 1.5 * dt;
-        } else if (p2_twin.active) {
-            const twinCenter = p2_twin.y + p2_twin.height / 2;
+            p2Twin.y += paddleSpeed * 1.5 * dt;
+        } else if (p2Twin.active) {
+            const twinCenter = p2Twin.y + p2Twin.height / 2;
             
             // Valen (p2) cubrirá de la mitad de la cancha hacia arriba
-            // Mario (p2_twin) cubrirá de la mitad de la cancha hacia abajo
+            // Mario (p2Twin) cubrirá de la mitad de la cancha hacia abajo
             let twinSpeed = paddleSpeed * 1.25; // Mario es un poco más rápido pero solo cubre abajo
             
             if (targetBall && targetBall.dx > 0) {
                 // Si la bola está en la mitad superior, Mario baja al centro para esperar
                 if (targetBall.y < GAME_HEIGHT / 2) {
-                    if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2_twin.y += twinSpeed * dt;
-                    else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2_twin.y -= twinSpeed * dt;
+                    if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2Twin.y += twinSpeed * dt;
+                    else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2Twin.y -= twinSpeed * dt;
                 } else {
                     // Si está en la mitad inferior, Mario ataca
-                    if (twinCenter < targetBall.y - 10) p2_twin.y += twinSpeed * dt;
-                    else if (twinCenter > targetBall.y + 10) p2_twin.y -= twinSpeed * dt;
+                    if (twinCenter < targetBall.y - 10) p2Twin.y += twinSpeed * dt;
+                    else if (twinCenter > targetBall.y + 10) p2Twin.y -= twinSpeed * dt;
                 }
             } else {
                 // Volver a posición default inferior
-                if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2_twin.y += twinSpeed * 0.5 * dt;
-                else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2_twin.y -= twinSpeed * 0.5 * dt;
+                if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2Twin.y += twinSpeed * 0.5 * dt;
+                else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2Twin.y -= twinSpeed * 0.5 * dt;
             }
             
             // Y Valen (p2) modifica su comportamiento para priorizar arriba
@@ -505,21 +470,21 @@ function update(dt) {
         p1.y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
     }
     p2.y = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
-    if (p2_twin.active && p2_twin.retreatMs <= 0) {
-        p2_twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2_twin.height, p2_twin.y));
+    if (p2Twin.active && p2Twin.retreatMs <= 0) {
+        p2Twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2Twin.height, p2Twin.y));
     }
 
     // --- Cuenta regresiva de saque ---
-    if (serveCountdownMs > 0) {
-        const prevSec = Math.ceil(serveCountdownMs / 1000);
-        serveCountdownMs -= dt * (1000 / 60);
-        if (serveCountdownMs < 0) serveCountdownMs = 0;
-        const curSec = Math.ceil(serveCountdownMs / 1000);
+    if (state.serveCountdownMs > 0) {
+        const prevSec = Math.ceil(state.serveCountdownMs / 1000);
+        state.serveCountdownMs -= dt * (1000 / 60);
+        if (state.serveCountdownMs < 0) state.serveCountdownMs = 0;
+        const curSec = Math.ceil(state.serveCountdownMs / 1000);
 
         if (curSec !== prevSec && curSec > 0) {
             soundEffects.countdown();
         }
-        if (serveCountdownMs <= 0) {
+        if (state.serveCountdownMs <= 0) {
             soundEffects.go();
         }
 
@@ -532,8 +497,8 @@ function update(dt) {
     // --- Actualizar todas las bolas ---
     const ballsToRemove = [];
 
-    for (let bi = 0; bi < balls.length; bi++) {
-        const b = balls[bi];
+    for (let bi = 0; bi < state.balls.length; bi++) {
+        const b = state.balls[bi];
 
         // Estela
         b.trail.push({ x: b.x, y: b.y });
@@ -554,7 +519,7 @@ function update(dt) {
                 spawnParticles(b.x, b.y, currentThemeHex(), 6);
             }
             // Impacto contra el Creador (franja superior): le quita vida.
-            // Ojo: NO toca p1Score — el marcador y el daño son cosas distintas.
+            // Ojo: NO toca state.p1Score — el marcador y el daño son cosas distintas.
             const bandaH = CREATOR_BAND_H;
             if (b.y - b.radius < bandaH) {
                 b.dy = -b.dy;
@@ -596,8 +561,8 @@ function update(dt) {
         let hit = false;
         if (collision(b, targetPaddle)) {
             hit = true;
-        } else if (!isLevel6 && p2_twin.active && p2_twin.retreatMs <= 0 && b.x + b.radius > GAME_WIDTH / 2 && collision(b, p2_twin)) {
-            targetPaddle = p2_twin;
+        } else if (!isLevel6 && p2Twin.active && p2Twin.retreatMs <= 0 && b.x + b.radius > GAME_WIDTH / 2 && collision(b, p2Twin)) {
+            targetPaddle = p2Twin;
             hit = true;
         }
 
@@ -643,11 +608,11 @@ function update(dt) {
         if (isLevel6) {
             if (b.y - b.radius > GAME_HEIGHT) {
                 // El jugador falla: cuenta como fallo, no como punto del rival
-                p2Score++;
+                state.p2Score++;
                 soundEffects.score();
                 triggerShake(10, 260);
                 triggerGoalVFX(b.x, GAME_HEIGHT);
-                if (balls.length > 1) {
+                if (state.balls.length > 1) {
                     ballsToRemove.push(bi);
                     if (checkWin()) return;
                 } else {
@@ -660,7 +625,7 @@ function update(dt) {
             }
         } else if (b.x - b.radius < 0) {
             // CPU/P2 anota
-            p2Score++;
+            state.p2Score++;
             statsOnScore(false);
             bossOnGoal(false);
             checkMidDialogue();
@@ -669,7 +634,7 @@ function update(dt) {
             // VFX de gol
             triggerGoalVFX(0, b.y);
 
-            if (balls.length > 1) {
+            if (state.balls.length > 1) {
                 // Multi-bola: eliminar esta bola, no resetear
                 ballsToRemove.push(bi);
                 // Verificar si ya ganó
@@ -680,14 +645,14 @@ function update(dt) {
             }
         } else if (b.x + b.radius > GAME_WIDTH) {
             // P1 anota
-            p1Score++;
+            state.p1Score++;
             statsOnScore(true);
             bossOnGoal(true);
             soundEffects.score();
             triggerShake(10, 260);
             triggerGoalVFX(GAME_WIDTH, b.y);
 
-            if (balls.length > 1) {
+            if (state.balls.length > 1) {
                 ballsToRemove.push(bi);
                 if (checkWin()) return;
             } else {
@@ -698,16 +663,14 @@ function update(dt) {
 
     // Eliminar bolas que salieron (de atrás hacia adelante para no alterar índices)
     for (let i = ballsToRemove.length - 1; i >= 0; i--) {
-        balls.splice(ballsToRemove[i], 1);
+        state.balls.splice(ballsToRemove[i], 1);
     }
 
     // Si no quedan bolas (todas salieron en multi-bola), resetear
-    if (balls.length === 0 && isPlaying) {
+    if (state.balls.length === 0 && state.isPlaying) {
         resetBall(false);
     }
 
-    // Mantener alias ball actualizado
-    ball = balls[0] || ball;
 
     // Actualizar power-ups
     updatePowerups(dt);
@@ -716,17 +679,17 @@ function update(dt) {
     updateVFX(dt);
 
     // Partículas: física simple + desvanecimiento (con dt)
-    particles.forEach(p => {
+    state.particles.forEach(p => {
         p.x += p.dx * dt;
         p.y += p.dy * dt;
         p.life -= 0.04 * dt;
     });
-    particles = particles.filter(p => p.life > 0);
+    state.particles = state.particles.filter(p => p.life > 0);
 
     // Vibración de pantalla (basada en tiempo, no frames)
-    if (shakeTimeMs > 0) {
-        shakeTimeMs -= dt * (1000 / 60);
-        if (shakeTimeMs < 0) shakeTimeMs = 0;
+    if (state.shakeTimeMs > 0) {
+        state.shakeTimeMs -= dt * (1000 / 60);
+        if (state.shakeTimeMs < 0) state.shakeTimeMs = 0;
     }
 }
 
@@ -736,22 +699,22 @@ function checkWin() {
     // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.
     let target = settings.winningScore;
     if (bcfg) target = bcfg.targetScore;
-    else if (gameMode === 'hachepe') target = 10;
+    else if (state.mode === 'hachepe') target = 10;
 
     // Los jefes con barra de vida se ganan vaciándola, no por marcador: aquí
-    // p2Score cuenta los fallos del jugador, no los puntos del rival.
+    // state.p2Score cuenta los fallos del jugador, no los puntos del rival.
     let p1Won, finished;
     if (bcfg && bcfg.useHealth) {
         const hp = bossHealth();
         p1Won = hp <= 0;
-        finished = p1Won || p2Score >= target;
+        finished = p1Won || state.p2Score >= target;
     } else {
-        p1Won = p1Score >= target;
-        finished = p1Won || p2Score >= target;
+        p1Won = state.p1Score >= target;
+        finished = p1Won || state.p2Score >= target;
     }
 
     if (finished) {
-        isPlaying = false;
+        state.isPlaying = false;
 
         const gameOverScreen = document.getElementById('game-over-screen');
         const winnerText = document.getElementById('winner-text');
@@ -763,12 +726,12 @@ function checkWin() {
         // ¿Este desenlace lo narra la campaña en vez de la pantalla de fin?
         // Vencer a Yisus dispara el falso final; vencer al Creador, el final real.
         let narrativeEnding = null;
-        if (gameMode === 'campaign' && p1Won) {
+        if (state.mode === 'campaign' && p1Won) {
             if (currentCampaignLevel === 5) narrativeEnding = 'finale';
             else if (currentCampaignLevel === 6) narrativeEnding = 'trueEnding';
         }
 
-        if (gameMode === 'campaign') {
+        if (state.mode === 'campaign') {
             winnerText.textContent = p1Won ? '¡DERROTASTE AL HACHEPE!' : 'HAS CAÍDO...';
             if (!narrativeEnding) p1Won ? soundEffects.win() : soundEffects.lose();
 
@@ -784,7 +747,7 @@ function checkWin() {
                     btnNextCampaign.classList.remove('hidden');
                 }
             }
-        } else if (gameMode === 'cpu' || gameMode === 'hachepe') {
+        } else if (state.mode === 'cpu' || state.mode === 'hachepe') {
             winnerText.textContent = p1Won ? '¡GANASTE!' : 'CPU GANA :(';
             p1Won ? soundEffects.win() : soundEffects.lose();
         } else {
@@ -792,19 +755,19 @@ function checkWin() {
             soundEffects.win();
         }
 
-        scoreText.textContent = `${p1Score} - ${p2Score}`;
+        scoreText.textContent = `${state.p1Score} - ${state.p2Score}`;
         // En los desenlaces narrados, la pantalla de fin se salta por completo
         if (!narrativeEnding) gameOverScreen.classList.add('active-screen');
 
         // Estadísticas y logros
-        statsOnGameEnd(gameMode, p1Won, p1Score, p2Score);
+        statsOnGameEnd(state.mode, p1Won, state.p1Score, state.p2Score);
 
-        if (gameMode === 'hachepe' && p1Won) {
+        if (state.mode === 'hachepe' && p1Won) {
             unlockAchievement('beat_hachepe');
         }
 
         // Progresión: otorgar XP y Chemi Coins
-        awardGameRewards(gameMode, p1Won, p1Score, p2Score);
+        awardGameRewards(state.mode, p1Won, state.p1Score, state.p2Score);
 
         // Actualizar displays de progresión
         updateCoinDisplay();
@@ -844,18 +807,18 @@ function drawText(text, x, y, color, size) {
 }
 
 function drawNet(color) {
-    frameCount++;
+    state.frameCount++;
     for (let i = 0; i <= GAME_HEIGHT; i += 30) {
-        drawRect(net.x, i + (frameCount % 30), net.width, net.height, color);
+        drawRect(net.x, i + (state.frameCount % 30), net.width, net.height, color);
     }
 }
 
 function drawBallTrail() {
-    for (const b of balls) renderBallTrail(ctx, b.trail, b.radius);
+    for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius);
 }
 
 function drawParticles() {
-    particles.forEach(p => {
+    state.particles.forEach(p => {
         ctx.globalAlpha = Math.max(p.life, 0);
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
@@ -871,8 +834,8 @@ function hexToRgba(hex, alpha) {
 }
 
 function drawTrajectoryPreview(themeColor) {
-    if (balls.length === 0) return;
-    const b = balls[0];
+    if (state.balls.length === 0) return;
+    const b = state.balls[0];
     const previewLength = 280;
     const segmentLen = 10;
     const gapLen = 8;
@@ -928,9 +891,9 @@ function render() {
     const themeColor = currentThemeHex();
 
     ctx.save();
-    if (shakeTimeMs > 0) {
-        const dx = (Math.random() - 0.5) * shakeIntensity;
-        const dy = (Math.random() - 0.5) * shakeIntensity;
+    if (state.shakeTimeMs > 0) {
+        const dx = (Math.random() - 0.5) * state.shakeIntensity;
+        const dy = (Math.random() - 0.5) * state.shakeIntensity;
         ctx.translate(dx, dy);
     }
 
@@ -952,12 +915,12 @@ function render() {
     if (!isLevel6) {
         drawNet(themeColor);
         // Marcador
-        drawText(p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
-        drawText(p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
+        drawText(state.p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
+        drawText(state.p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
     } else {
         // Arena rotada: abajo se muestran los fallos restantes del jugador
         const bcfg = bossConfig();
-        const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - p2Score);
+        const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - state.p2Score);
         drawText('♥ '.repeat(vidas).trim() || '—', GAME_WIDTH / 2, GAME_HEIGHT - 55, '#ef4444', 22);
     }
 
@@ -967,7 +930,7 @@ function render() {
     // Estelas + bolas
     const hideBall = bossHidesBall();
     if (!hideBall) drawBallTrail();
-    for (const b of balls) {
+    for (const b of state.balls) {
         if (hideBall) continue; // Fano oculta la bola real
 
         ctx.beginPath();
@@ -982,7 +945,7 @@ function render() {
     // Paletas
     renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, '#ffffff');
     if (!isLevel6) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
-    if (!isLevel6 && p2_twin.active) renderPaddleVFX(ctx, p2_twin.x, p2_twin.y, p2_twin.width, p2_twin.height, '#ef4444');
+    if (!isLevel6 && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
 
 
     // Power-ups
@@ -1000,8 +963,8 @@ function render() {
     renderGoalVFX(ctx);
 
     // Cuenta regresiva de saque + previsualización de trayectoria
-    if (serveCountdownMs > 0) {
-        const secs = Math.ceil(serveCountdownMs / 1000);
+    if (state.serveCountdownMs > 0) {
+        const secs = Math.ceil(state.serveCountdownMs / 1000);
         drawTrajectoryPreview(themeColor);
         ctx.globalAlpha = 0.9;
         drawText(String(secs), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
@@ -1019,7 +982,7 @@ function render() {
 
 // --- Game Loop con delta-time ---
 function gameLoop(timestamp) {
-    if (!isPlaying || isPaused) return;
+    if (!state.isPlaying || state.isPaused) return;
 
     if (lastTimestamp === 0) lastTimestamp = timestamp;
     const elapsedMs = timestamp - lastTimestamp;

@@ -41,8 +41,8 @@ function initPowerups() {
  */
 function updatePowerups(dt) {
     if (!settings.powerupsEnabled) return;
-    if (isPaused) return;
-    if (!isPlaying) return;
+    if (state.isPaused) return;
+    if (!state.isPlaying) return;
 
     const dtMs = dt * (1000 / 60);
     const timeNow = Date.now();
@@ -50,7 +50,7 @@ function updatePowerups(dt) {
     // 1. Manejo del cooldown y aparición
     if (!activePowerup && !activeEffect) {
         powerupCooldownMs -= dtMs;
-        if (powerupCooldownMs <= 0 && serveCountdownMs <= 0) {
+        if (powerupCooldownMs <= 0 && state.serveCountdownMs <= 0) {
             spawnPowerup();
         }
     }
@@ -64,8 +64,8 @@ function updatePowerups(dt) {
             powerupCooldownMs = 8000 + Math.random() * 7000;
         } else {
             // Comprobar colisiones con todas las pelotas
-            for (let i = 0; i < balls.length; i++) {
-                const b = balls[i];
+            for (let i = 0; i < state.balls.length; i++) {
+                const b = state.balls[i];
                 if (powerupCollision(b.x, b.y, b.radius, activePowerup.x, activePowerup.y, 22)) {
                     collectPowerup();
                     break; // Solo puede ser recogido por una pelota a la vez
@@ -84,8 +84,8 @@ function updatePowerups(dt) {
 
     // 4. Lógica del escudo
     if (shieldWall) {
-        for (let i = 0; i < balls.length; i++) {
-            const b = balls[i];
+        for (let i = 0; i < state.balls.length; i++) {
+            const b = state.balls[i];
             // Detección de colisión AABB simple
             if (b.x + b.radius > shieldWall.x && 
                 b.x - b.radius < shieldWall.x + shieldWall.width &&
@@ -194,12 +194,12 @@ function applyPowerup(type, beneficiary) {
 
         case 'big_ball':
             activeEffect.target = rival; // Cuenta como efecto negativo visualmente
-            activeEffect.originalValues.radius = balls[0].radius; // Asume que todas tienen el mismo radio base
-            balls.forEach(b => b.radius = 27); // 9 * 3 = 27
+            activeEffect.originalValues.radius = state.balls[0].radius; // Asume que todas tienen el mismo radio base
+            state.balls.forEach(b => b.radius = 27); // 9 * 3 = 27
             break;
 
         case 'turbo':
-            balls.forEach(b => {
+            state.balls.forEach(b => {
                 b.dx *= 1.4;
                 b.dy *= 1.4;
             });
@@ -239,7 +239,7 @@ function revertPowerup() {
             break;
             
         case 'big_ball':
-            balls.forEach(b => b.radius = activeEffect.originalValues.radius);
+            state.balls.forEach(b => b.radius = activeEffect.originalValues.radius);
             break;
             
         case 'shield':
@@ -262,7 +262,7 @@ function revertPowerup() {
 function enforcePowerups() {
     if (!activeEffect) return;
     if (activeEffect.type.id === 'big_ball') {
-        balls.forEach(b => b.radius = 27);
+        state.balls.forEach(b => b.radius = 27);
     }
 }
 

@@ -117,10 +117,11 @@ function statsOnScore(scorerIsP1) {
     }
 
     // Rastrear mayor déficit (para comeback)
-    const deficit = p2Score - p1Score;
+    const deficit = state.p2Score - state.p1Score;
     if (deficit > maxDeficit) maxDeficit = deficit;
 
     // Rastrear velocidad máxima de la bola
+    const ball = state.balls[0];
     if (ball.speed > gameStats.maxBallSpeed) {
         gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
     }
@@ -142,6 +143,7 @@ function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
     }
 
     // Velocidad máxima
+    const ball = state.balls[0];
     if (ball.speed > gameStats.maxBallSpeed) {
         gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
     }

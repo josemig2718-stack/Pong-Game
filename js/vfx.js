@@ -155,7 +155,7 @@ function drawTrailRainbow(ctx, trail, radius, color) {
         const p2 = trail[i];
         const pct = i / trail.length;
         
-        const hue = (i * 15 + frameCount * 3) % 360;
+        const hue = (i * 15 + state.frameCount * 3) % 360;
         
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);

@@ -209,7 +209,7 @@ const bossDani = {
         bossState.teleportTimer -= ms;
         if (bossState.teleportTimer <= 0 && bossState.shieldPhase === 'idle') {
             bossState.teleportTimer = 7000 + Math.random() * 4000;
-            const b = balls[0];
+            const b = state.balls[0];
             if (b && b.dx > 0) {
                 spawnParticles(p2.x + p2.width / 2, p2.y + p2.height / 2, '#3b82f6', 14);
                 p2.y = Math.max(0, Math.min(GAME_HEIGHT - p2.height, b.y - p2.height / 2));
@@ -302,16 +302,16 @@ const bossDuo = {
     config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58 },
 
     init() {
-        p2_twin.active = true;
-        p2_twin.y = GAME_HEIGHT / 2 + 50;
-        p2_twin.retreatMs = 0;
+        p2Twin.active = true;
+        p2Twin.y = GAME_HEIGHT / 2 + 50;
+        p2Twin.retreatMs = 0;
     },
 
     update(dt) {
-        if (p2_twin.retreatMs > 0) {
-            p2_twin.retreatMs -= dt * BOSS_MS_PER_DT;
-            if (p2_twin.retreatMs <= 0) {
-                p2_twin.retreatMs = 0;
+        if (p2Twin.retreatMs > 0) {
+            p2Twin.retreatMs -= dt * BOSS_MS_PER_DT;
+            if (p2Twin.retreatMs <= 0) {
+                p2Twin.retreatMs = 0;
             }
         }
     },
@@ -319,7 +319,7 @@ const bossDuo = {
     /** Tras encajar gol, el gemelo se retira 3s. */
     onGoal(scorerIsP1) {
         if (!scorerIsP1) return;
-        p2_twin.retreatMs = 3000;
+        p2Twin.retreatMs = 3000;
         soundEffects.bossRetreat();
     },
 
@@ -338,7 +338,7 @@ const bossDuo = {
     },
 
     renderOverlay(ctx) {
-        if (p2_twin.retreatMs > 0) {
+        if (p2Twin.retreatMs > 0) {
             drawText('¡MARIO SE RETIRA!', GAME_WIDTH * 0.72, 130, '#f97316', 18);
         }
     }
@@ -377,7 +377,7 @@ const bossFano = {
 
         // Señuelos: máximo 3 a la vez y con cooldown, para que no sea ruido puro
         bossState.illusionCooldown -= ms;
-        const b = balls[0];
+        const b = state.balls[0];
         if (bossState.illusionCooldown <= 0 && b && b.dx < 0 && bossState.illusions.length < 3) {
             bossState.illusionCooldown = 700 + Math.random() * 800;
             bossState.illusions.push({
@@ -412,7 +412,7 @@ const bossFano = {
             ctx.shadowBlur = 0;
         }
         // Rastro tenue de la bola real: la pista justa para que sea jugable
-        const b = balls[0];
+        const b = state.balls[0];
         if (bossState.invisible && b) {
             ctx.beginPath();
             ctx.arc(b.x, b.y, b.radius + 2, 0, Math.PI * 2);
@@ -452,7 +452,7 @@ const bossYisus = {
 
     update(dt) {
         const ms = dt * BOSS_MS_PER_DT;
-        const b = balls[0];
+        const b = state.balls[0];
 
         // --- Telekinesis: desvía la bola cuando va hacia el jugador ---
         if (bossState.telekinesis > 0) {
@@ -495,11 +495,11 @@ const bossYisus = {
     },
 
     render(ctx) {
-        if (bossState.telekinesis > 0 && balls.length > 0) {
+        if (bossState.telekinesis > 0 && state.balls.length > 0) {
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(p2.x, p2.y + p2.height / 2);
-            ctx.lineTo(balls[0].x, balls[0].y);
+            ctx.lineTo(state.balls[0].x, state.balls[0].y);
             ctx.strokeStyle = 'rgba(234, 179, 8, 0.55)';
             ctx.lineWidth = 4;
             ctx.stroke();
@@ -589,7 +589,7 @@ const bossCreator = {
         if (bossState.announceMs > 0) bossState.announceMs -= ms;
         if (bossState.freezeMs > 0) bossState.freezeMs -= ms;
 
-        const b = balls[0];
+        const b = state.balls[0];
 
         // --- El ojo: la pupila persigue la bola, y parpadea ---
         if (b) {
@@ -855,8 +855,8 @@ const bossCreator = {
         }
 
         // Aviso del teletransporte
-        if (bossState.warpPhase === 'warning' && balls[0]) {
-            const b = balls[0];
+        if (bossState.warpPhase === 'warning' && state.balls[0]) {
+            const b = state.balls[0];
             ctx.beginPath();
             ctx.arc(b.x, b.y, b.radius + 12 + Math.sin(Date.now() / 40) * 4, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(34, 197, 94, 0.9)';
@@ -916,7 +916,7 @@ const BOSS_MECHANICS = {
 
 /** Jefe activo, o null si no estamos en un combate de campaña. */
 function currentBoss() {
-    if (gameMode !== 'campaign') return null;
+    if (state.mode !== 'campaign') return null;
     return BOSS_MECHANICS[currentCampaignLevel] || null;
 }
 

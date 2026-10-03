@@ -13,6 +13,12 @@
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 
+// --- Geometría de paletas y bola (en unidades lógicas) ---
+const paddleWidth = 15;
+const paddleHeight = 100;
+const paddleSpeed = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
+const ballRadius = 9;
+
 // --- Catálogo de temas de color -----------------------------------
 // Cada tema define el color "primario" (paletas, HUD, marcador). Se
 // aplica como variables CSS (--primary / --primary-rgb) y también se usa

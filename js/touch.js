@@ -49,7 +49,7 @@ function assignTouch(touch) {
 
     // En modo Local, la mitad izquierda de la pantalla mueve a P1 y la
     // derecha a P2. En modo VS CPU, cualquier toque mueve a P1.
-    const target = (gameMode === 'local' && canvasX >= GAME_WIDTH / 2) ? 'p2' : 'p1';
+    const target = (state.mode === 'local' && canvasX >= GAME_WIDTH / 2) ? 'p2' : 'p1';
 
     activeTouches.set(touch.identifier, target);
     updatePaddleFromTouch(target, canvasY, canvasX);
@@ -83,13 +83,13 @@ function releaseTouch(touch) {
 }
 
 function handleTouchStart(e) {
-    if (!isPlaying || isPaused) return;
+    if (!state.isPlaying || state.isPaused) return;
     e.preventDefault();
     for (const touch of e.changedTouches) assignTouch(touch);
 }
 
 function handleTouchMove(e) {
-    if (!isPlaying || isPaused) return;
+    if (!state.isPlaying || state.isPaused) return;
     e.preventDefault();
     for (const touch of e.changedTouches) {
         const target = activeTouches.get(touch.identifier);

@@ -11,8 +11,7 @@
  * código original sin modificarlo.
  * ------------------------------------------------------------------
  */
-/* global gameMode, isPlaying, isPaused, p1Score, p2Score, serveCountdownMs,
-   shakeTimeMs, shakeIntensity, balls, p1, p2, p2_twin, particles, frameCount,
+/* global state, p1, p2, p2Twin,
    bossConfig, bossHealth, bossIsRotatedArena, bossHidesBall, bossFreezesPlayer,
    bossInvertsControls, bossAim, bossSegmentArmored, bossState, GAME_WIDTH,
    activePowerup, activeEffect, shieldWall, slowmoActive, powerupCooldownMs,
@@ -42,15 +41,18 @@
         /** Estado de la partida en curso. */
         match() {
             return {
-                mode: gameMode,
-                isPlaying, isPaused, p1Score, p2Score, serveCountdownMs,
-                shakeTimeMs, shakeIntensity, frameCount,
-                balls: balls.map(ball),
+                mode: state.mode,
+                isPlaying: state.isPlaying, isPaused: state.isPaused,
+                p1Score: state.p1Score, p2Score: state.p2Score,
+                serveCountdownMs: state.serveCountdownMs,
+                shakeTimeMs: state.shakeTimeMs, shakeIntensity: state.shakeIntensity,
+                frameCount: state.frameCount,
+                balls: state.balls.map(ball),
                 p1: paddle(p1),
                 p2: paddle(p2),
                 twin: {
-                    x: p2_twin.x, y: p2_twin.y, width: p2_twin.width, height: p2_twin.height,
-                    active: p2_twin.active, retreatMs: p2_twin.retreatMs
+                    x: p2Twin.x, y: p2Twin.y, width: p2Twin.width, height: p2Twin.height,
+                    active: p2Twin.active, retreatMs: p2Twin.retreatMs
                 }
             };
         },
@@ -58,7 +60,7 @@
         /** Partículas como lista plana [x, y, dx, dy, life, color, ...]. */
         particles() {
             const out = [];
-            for (const p of particles) out.push(p.x, p.y, p.dx, p.dy, p.life, p.color);
+            for (const p of state.particles) out.push(p.x, p.y, p.dx, p.dy, p.life, p.color);
             return out;
         },
 
