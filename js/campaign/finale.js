@@ -27,7 +27,7 @@ import { playerProgression, saveProgression } from '../systems/progression.js';
 import { triggerGoalConfetti } from '../vfx/goal-fx.js';
 import { clearTypewriter, startTypewriter, stopDialogue } from './dialogue.js';
 import { prepareCampaignMatch } from './progress.js';
-import { showScreen } from '../ui.js';
+import { showScreen } from '../ui/screens.js';
 
 /** Overlay negro a pantalla completa. amount: 0 (transparente) a 1 (negro). */
 function setFadeOverlay(amount, ms) {

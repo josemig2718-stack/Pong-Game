@@ -1,5 +1,5 @@
 /**
- * actions.js
+ * ui/actions.js
  * ------------------------------------------------------------------
  * Delegación de eventos de la interfaz. El HTML no lleva manejadores
  * en línea: cada control declara qué hace con atributos data-*.
@@ -15,20 +15,14 @@
  * ------------------------------------------------------------------
  */
 
-import { resetBindings } from './systems/input.js';
-import { quitGame, restartCurrentGame, startGame, togglePause } from './game/match.js';
-import { closeFinale } from './campaign/finale.js';
-import { carouselMove, closeCampaignIntro, replayCampaignIntro } from './campaign/menu.js';
-import { nextCampaignLevel } from './campaign/progress.js';
-import { switchShopTab } from './shop.js';
+import { resetBindings } from '../systems/input.js';
+import { quitGame, restartCurrentGame, startGame, togglePause } from '../game/match.js';
+import { closeFinale } from '../campaign/finale.js';
+import { carouselMove, closeCampaignIntro, replayCampaignIntro } from '../campaign/menu.js';
+import { nextCampaignLevel } from '../campaign/progress.js';
+import { closeGame, forceClose, showScreen } from './screens.js';
 import {
-    closeGame,
-    confirmResetStats,
-    forceClose,
     resetAllSettings,
-    showAchievementsScreen,
-    showScreen,
-    showStatsScreen,
     toggleCrtEffect,
     toggleMouseControl,
     toggleMusic,
@@ -40,7 +34,9 @@ import {
     updateMusicVolume,
     updateVolume,
     updateWinningScore
-} from './ui.js';
+} from './settings-panel.js';
+import { switchShopTab } from './shop-ui.js';
+import { confirmResetStats, showAchievementsScreen, showStatsScreen } from './stats-panel.js';
 
 /** @type {Record<string, (el: HTMLElement) => void>} */
 const CLICK_ACTIONS = {

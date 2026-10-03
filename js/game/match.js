@@ -40,8 +40,8 @@ import {
     getNextCampaignBoss,
     handleCampaignVictory
 } from '../campaign/progress.js';
-import { updateCoinDisplay } from '../shop.js';
-import { showScreen, updateProgressionDisplay } from '../ui.js';
+import { updateCoinDisplay, updateProgressionDisplay } from '../ui/progress-display.js';
+import { showScreen } from '../ui/screens.js';
 
 /**
  * Empieza una partida.

@@ -17,7 +17,7 @@ import { soundEffects } from '../systems/audio.js';
 import { playerProgression, saveProgression } from '../systems/progression.js';
 import { startGame } from '../game/match.js';
 import { queueDialogue, stopDialogue } from './dialogue.js';
-import { showScreen } from '../ui.js';
+import { showScreen } from '../ui/screens.js';
 
 /** Nivel (jefe) del combate en curso o del último jugado. */
 export let currentCampaignLevel = 1;

@@ -13,6 +13,7 @@ import { settings } from '../core/settings.js';
 import { writeJSON } from '../core/storage.js';
 import { CAMPAIGN_REPLAY_FACTOR, COIN_REWARDS, LEVELS, XP_REWARDS } from '../data/levels.js';
 import { CAMPAIGN_CREATOR } from '../data/lore.js';
+import { SHOP_CATALOG } from '../data/shop.js';
 import { unlockAchievement } from './achievements.js';
 import { soundEffects } from './audio.js';
 import { setActiveBg } from '../vfx/backgrounds.js';
@@ -115,7 +116,7 @@ function spendCoins(amount) {
  */
 function checkLevelUp() {
     let currentLevelObj = getCurrentLevel();
-    
+
     let newLevelObj = currentLevelObj;
     for (let i = 0; i < LEVELS.length; i++) {
         if (playerProgression.totalXP >= LEVELS[i].xpRequired) {
@@ -127,11 +128,11 @@ function checkLevelUp() {
         playerProgression.level = newLevelObj.level;
         sessionLeveledUp = true;
         sessionNewTitle = newLevelObj.title;
-        
+
         addCoins(newLevelObj.coinBonus);
-        
+
         soundEffects.levelUp();
-        
+
         // Los ids del catálogo son reach_level_*, no level_*
         if (playerProgression.level >= 5) unlockAchievement('reach_level_5');
         if (playerProgression.level >= 10) unlockAchievement('reach_level_10');
@@ -159,16 +160,16 @@ export function getCurrentLevel() {
 export function getXPProgress() {
     let currentLvl = getCurrentLevel();
     let nextLvlIndex = currentLvl.level; // porque el index es nivel-1
-    
+
     if (nextLvlIndex >= LEVELS.length) {
         return { current: 0, required: 1, percentage: 100 };
     }
-    
+
     let nextLvl = LEVELS[nextLvlIndex];
     let xpInCurrentLevel = playerProgression.totalXP - currentLvl.xpRequired;
     let xpNeededForNext = nextLvl.xpRequired - currentLvl.xpRequired;
     let percentage = (xpInCurrentLevel / xpNeededForNext) * 100;
-    
+
     return {
         current: xpInCurrentLevel,
         required: xpNeededForNext,
@@ -190,7 +191,7 @@ export function purchaseItem(itemId, cost) {
     if (spendCoins(cost)) {
         playerProgression.purchasedItems.push(itemId);
         saveProgression();
-        
+
         if (playerProgression.purchasedItems.length === DEFAULT_PROGRESSION.purchasedItems.length + 1) {
             unlockAchievement('grow_partner');
         }
@@ -226,15 +227,15 @@ export function selectCosmetic(category, id) {
  */
 export function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     addXP(p1Score * XP_REWARDS.scorePoint);
-    
+
     if (mode === 'cpu' && p1Won) {
         let diff = (settings.difficulty) ? settings.difficulty : 2;
         if (diff === 1) addXP(XP_REWARDS.winCpuEasy);
         else if (diff === 3) addXP(XP_REWARDS.winCpuHard);
         else addXP(XP_REWARDS.winCpuNormal);
-        
+
         addCoins(COIN_REWARDS.winCpu);
-    } 
+    }
     else if (mode === 'hachepe' && p1Won) {
         addXP(XP_REWARDS.winHachepe);
         addCoins(COIN_REWARDS.winHachepe);
@@ -254,11 +255,50 @@ export function awardGameRewards(mode, p1Won, p1Score, p2Score) {
         addXP(Math.round(xp * factor));
         addCoins(Math.round(coins * factor));
     }
-    
+
     if (p1Won && p2Score === 0) {
         addXP(XP_REWARDS.perfectGame);
         addCoins(COIN_REWARDS.perfectGame);
     }
-    
+
     saveProgression();
+}
+
+/**
+ * Obtiene el número total de artículos en la tienda
+ */
+function getTotalShopItems() {
+    let count = 0;
+    for (const key in SHOP_CATALOG) {
+        SHOP_CATALOG[key].forEach(item => {
+            if (item.price > 0) count++;
+        });
+    }
+    return count;
+}
+
+/**
+ * Obtiene el número de artículos comprados
+ */
+function getTotalPurchasedItems() {
+    let count = 0;
+    playerProgression.purchasedItems.forEach(id => {
+        for (const key in SHOP_CATALOG) {
+            const item = SHOP_CATALOG[key].find(i => i.id === id);
+            if (item && item.price > 0) {
+                count++;
+                break;
+            }
+        }
+    });
+    return count;
+}
+
+/**
+ * Determina si todos los objetos han sido comprados
+ */
+export function isAllItemsPurchased() {
+    const total = getTotalShopItems();
+    const purchased = getTotalPurchasedItems();
+    return total > 0 && purchased >= total;
 }

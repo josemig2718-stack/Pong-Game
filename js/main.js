@@ -17,8 +17,8 @@ import { initInput } from './systems/input.js';
 import { initPointer } from './systems/pointer.js';
 import { initCanvas } from './game/canvas.js';
 import { initCarouselControls } from './campaign/menu.js';
-import { initActions } from './actions.js';
-import { initUI } from './ui.js';
+import { initActions } from './ui/actions.js';
+import { initUI } from './ui/screens.js';
 
 initAudio();             // desbloqueo del audio con la primera interacción
 initInput();             // teclado de juego y reasignación de teclas
