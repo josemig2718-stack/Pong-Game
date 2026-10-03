@@ -23,7 +23,7 @@
 
         <!-- Barra de Progreso y Chemi Coins -->
         <div id="main-progression" class="mb-6 md:mb-10 text-center flex flex-col items-center cursor-pointer"
-            onclick="showScreen('shop-menu')" title="Ir a la Tienda">
+            data-action="showScreen" data-arg="shop-menu" title="Ir a la Tienda">
             <div class="flex justify-between w-64 md:w-80 text-xs mb-1 font-bold" style="color: var(--primary)">
                 <span id="menu-level-title">Nv. 1 — Novato</span>
                 <span id="menu-coins" class="text-yellow-400 drop-shadow-md"><img src="assets/chemi_coin.png" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> 0</span>
@@ -36,14 +36,14 @@
         </div>
 
         <div class="flex flex-col gap-3 md:gap-5 w-64 md:w-80 text-sm md:text-base text-center">
-            <button class="retro-button" onclick="showScreen('mode-select-menu')">JUGAR</button>
-            <button class="retro-button" onclick="showScreen('shop-menu')"
+            <button class="retro-button" data-action="showScreen" data-arg="mode-select-menu">JUGAR</button>
+            <button class="retro-button" data-action="showScreen" data-arg="shop-menu"
                 style="color: #facc15; border-color: #facc15;">TIENDA <img src="assets/chemi_coin.png" class="w-4 h-4 inline object-contain ml-1" style="vertical-align: text-top;"></button>
-            <button class="retro-button" onclick="showScreen('controls-menu')">CONTROLES</button>
-            <button class="retro-button" onclick="showStatsScreen()">ESTADÍSTICAS</button>
-            <button class="retro-button" onclick="showAchievementsScreen()">LOGROS</button>
-            <button class="retro-button" onclick="showScreen('settings-menu')">CONFIGURACIÓN</button>
-            <button class="retro-button retro-button--danger" onclick="closeGame()">SALIR</button>
+            <button class="retro-button" data-action="showScreen" data-arg="controls-menu">CONTROLES</button>
+            <button class="retro-button" data-action="showStatsScreen">ESTADÍSTICAS</button>
+            <button class="retro-button" data-action="showAchievementsScreen">LOGROS</button>
+            <button class="retro-button" data-action="showScreen" data-arg="settings-menu">CONFIGURACIÓN</button>
+            <button class="retro-button retro-button--danger" data-action="closeGame">SALIR</button>
         </div>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
@@ -53,14 +53,14 @@
         <h2 class="text-2xl md:text-4xl font-bold mb-12 text-center">MODO DE JUEGO</h2>
 
         <div class="flex flex-col gap-6 w-64 md:w-96 text-center text-sm md:text-base">
-            <button class="retro-button" onclick="showScreen('campaign-menu')" style="color: #ef4444; border-color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);">CAMPAÑA</button>
-            <button class="retro-button" onclick="startGame('cpu')">VS CPU</button>
-            <button class="retro-button" onclick="startGame('hachepe')"
+            <button class="retro-button" data-action="showScreen" data-arg="campaign-menu" style="color: #ef4444; border-color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);">CAMPAÑA</button>
+            <button class="retro-button" data-action="startGame" data-arg="cpu">VS CPU</button>
+            <button class="retro-button" data-action="startGame" data-arg="hachepe"
                 style="color: #facc15; border-color: #facc15; text-shadow: 0 0 10px rgba(250,204,21,0.5);">MODO
                 HACHEPE</button>
-            <button class="retro-button" onclick="startGame('local')">LOCAL (2 JUGADORES)</button>
+            <button class="retro-button" data-action="startGame" data-arg="local">LOCAL (2 JUGADORES)</button>
             <button class="retro-button mt-8" style="border-style: dashed;"
-                onclick="showScreen('main-menu')">VOLVER</button>
+                data-action="showScreen" data-arg="main-menu">VOLVER</button>
         </div>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
@@ -71,19 +71,19 @@
         <p class="text-xs mb-8 text-center max-w-lg text-white/70">Derrota a los Hachepes para recuperar tu ciudad.</p>
         
         <div class="boss-carousel">
-            <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" onclick="carouselMove(-1)">&lsaquo;</button>
+            <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" data-action="carouselMove" data-arg="-1">&lsaquo;</button>
             <div class="carousel-viewport">
                 <div id="campaign-nodes" class="carousel-track">
                     <!-- Cartas de jefe generadas por JS -->
                 </div>
             </div>
-            <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" onclick="carouselMove(1)">&rsaquo;</button>
+            <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" data-action="carouselMove" data-arg="1">&rsaquo;</button>
         </div>
         <div id="carousel-dots" class="carousel-dots"></div>
 
-        <button class="retro-button mt-8" style="border-style: dashed;" onclick="showScreen('mode-select-menu')">VOLVER</button>
+        <button class="retro-button mt-8" style="border-style: dashed;" data-action="showScreen" data-arg="mode-select-menu">VOLVER</button>
 
-        <button onclick="replayCampaignIntro()" class="absolute bottom-4 right-4 text-[10px] md:text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer border border-white/20 px-3 py-1 rounded bg-black/50">
+        <button data-action="replayCampaignIntro" class="absolute bottom-4 right-4 text-[10px] md:text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer border border-white/20 px-3 py-1 rounded bg-black/50">
             📖 Ver Historia
         </button>
 
@@ -91,7 +91,7 @@
         <div id="campaign-intro-overlay" class="hidden absolute inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-8 text-center">
             <h2 class="text-red-500 text-2xl md:text-4xl mb-6 font-bold">TU CIUDAD ESTÁ EN RUINAS</h2>
             <p id="campaign-intro-text" class="text-white/80 text-sm md:text-base max-w-2xl leading-relaxed mb-10 min-h-[100px]"></p>
-            <button id="campaign-intro-btn" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444;" onclick="closeCampaignIntro()">ACEPTAR MI DESTINO</button>
+            <button id="campaign-intro-btn" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444;" data-action="closeCampaignIntro">ACEPTAR MI DESTINO</button>
         </div>
     </div>
 
@@ -140,7 +140,7 @@
             </svg>
         </div>
         <div id="finale-text" class="finale-text hidden"></div>
-        <button id="finale-exit-btn" class="retro-button hidden mt-10" onclick="closeFinale()">FIN</button>
+        <button id="finale-exit-btn" class="retro-button hidden mt-10" data-action="closeFinale">FIN</button>
     </div>
 
     <!-- ============================== CONTROLES ============================== -->
@@ -188,9 +188,9 @@
         </div>
 
         <div class="flex flex-col md:flex-row gap-4 mt-10">
-            <button class="key-btn" style="min-width: 220px; padding: 12px 20px;" onclick="resetBindings()">RESTAURAR
+            <button class="key-btn" style="min-width: 220px; padding: 12px 20px;" data-action="resetBindings">RESTAURAR
                 TECLAS POR DEFECTO</button>
-            <button class="retro-button text-sm" onclick="showScreen('main-menu')">VOLVER</button>
+            <button class="retro-button text-sm" data-action="showScreen" data-arg="main-menu">VOLVER</button>
         </div>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
@@ -229,11 +229,11 @@
                 <div class="stat-row"><span>Mayor velocidad bola</span><span id="stat-max-speed">—</span></div>
             </div>
 
-            <button class="key-btn self-center" style="padding: 10px 24px;" onclick="confirmResetStats()">BORRAR
+            <button class="key-btn self-center" style="padding: 10px 24px;" data-action="confirmResetStats">BORRAR
                 ESTADÍSTICAS</button>
         </div>
 
-        <button class="retro-button w-64 settings-back-btn mt-6" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn mt-6" data-action="showScreen" data-arg="main-menu">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -247,7 +247,7 @@
             <div id="achievements-grid" class="achievements-grid"></div>
         </div>
 
-        <button class="retro-button w-64 settings-back-btn mt-6" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn mt-6" data-action="showScreen" data-arg="main-menu">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -271,36 +271,36 @@
                     <span>IMPOSIBLE</span>
                 </div>
                 <input type="range" id="difficulty-slider" min="1" max="3" value="2"
-                    onchange="updateDifficulty(this.value)">
+                    data-change="updateDifficulty">
             </div>
 
             <div class="panel">
                 <label class="block mb-4 text-center">VOLUMEN SFX <span id="vol-display">50%</span></label>
-                <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
+                <input type="range" id="volume-slider" min="0" max="100" value="50" data-input="updateVolume">
             </div>
 
             <div class="panel">
                 <label class="block mb-4 text-center">VOLUMEN MÚSICA <span id="music-vol-display">50%</span></label>
                 <input type="range" id="music-volume-slider" min="0" max="100" value="50"
-                    oninput="updateMusicVolume(this.value)">
+                    data-input="updateMusicVolume">
             </div>
 
             <div class="panel">
                 <label class="block mb-4 text-center">PUNTOS PARA GANAR</label>
                 <div class="option-pill-group">
-                    <button class="option-pill" data-winning-score="3" onclick="updateWinningScore(3)">3</button>
-                    <button class="option-pill" data-winning-score="5" onclick="updateWinningScore(5)">5</button>
-                    <button class="option-pill" data-winning-score="7" onclick="updateWinningScore(7)">7</button>
-                    <button class="option-pill" data-winning-score="11" onclick="updateWinningScore(11)">11</button>
+                    <button class="option-pill" data-winning-score="3" data-action="updateWinningScore">3</button>
+                    <button class="option-pill" data-winning-score="5" data-action="updateWinningScore">5</button>
+                    <button class="option-pill" data-winning-score="7" data-action="updateWinningScore">7</button>
+                    <button class="option-pill" data-winning-score="11" data-action="updateWinningScore">11</button>
                 </div>
             </div>
 
             <div class="panel">
                 <label class="block mb-4 text-center">VELOCIDAD DE LA BOLA</label>
                 <div class="option-pill-group">
-                    <button class="option-pill" data-ball-speed="1" onclick="updateBallSpeed(1)">LENTA</button>
-                    <button class="option-pill" data-ball-speed="2" onclick="updateBallSpeed(2)">NORMAL</button>
-                    <button class="option-pill" data-ball-speed="3" onclick="updateBallSpeed(3)">RÁPIDA</button>
+                    <button class="option-pill" data-ball-speed="1" data-action="updateBallSpeed">LENTA</button>
+                    <button class="option-pill" data-ball-speed="2" data-action="updateBallSpeed">NORMAL</button>
+                    <button class="option-pill" data-ball-speed="3" data-action="updateBallSpeed">RÁPIDA</button>
                 </div>
             </div>
 
@@ -308,52 +308,52 @@
                 <div class="setting-row">
                     <span>MÚSICA</span>
                     <label class="switch">
-                        <input type="checkbox" id="music-toggle" checked onchange="toggleMusic(this.checked)">
+                        <input type="checkbox" id="music-toggle" checked data-change="toggleMusic">
                         <span class="switch-track"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <span>EFECTOS DE SONIDO</span>
                     <label class="switch">
-                        <input type="checkbox" id="sfx-toggle" checked onchange="toggleSfx(this.checked)">
+                        <input type="checkbox" id="sfx-toggle" checked data-change="toggleSfx">
                         <span class="switch-track"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <span>EFECTO DE MONITOR CRT</span>
                     <label class="switch">
-                        <input type="checkbox" id="crt-toggle" checked onchange="toggleCrtEffect(this.checked)">
+                        <input type="checkbox" id="crt-toggle" checked data-change="toggleCrtEffect">
                         <span class="switch-track"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <span>VIBRACIÓN DE PANTALLA</span>
                     <label class="switch">
-                        <input type="checkbox" id="shake-toggle" checked onchange="toggleScreenShake(this.checked)">
+                        <input type="checkbox" id="shake-toggle" checked data-change="toggleScreenShake">
                         <span class="switch-track"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <span>CONTROLAR CON MOUSE</span>
                     <label class="switch">
-                        <input type="checkbox" id="mouse-toggle" onchange="toggleMouseControl(this.checked)">
+                        <input type="checkbox" id="mouse-toggle" data-change="toggleMouseControl">
                         <span class="switch-track"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <span>POWER-UPS (EN PARTIDA)</span>
                     <label class="switch">
-                        <input type="checkbox" id="powerups-toggle" checked onchange="togglePowerups(this.checked)">
+                        <input type="checkbox" id="powerups-toggle" checked data-change="togglePowerups">
                         <span class="switch-track"></span>
                     </label>
                 </div>
             </div>
 
-            <button class="key-btn self-center" style="padding: 10px 24px;" onclick="resetAllSettings()">RESTABLECER
+            <button class="key-btn self-center" style="padding: 10px 24px;" data-action="resetAllSettings">RESTABLECER
                 TODO</button>
         </div>
 
-        <button class="retro-button w-64 settings-back-btn" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn" data-action="showScreen" data-arg="main-menu">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -369,10 +369,10 @@
         <div class="flex flex-col gap-6 w-full max-w-4xl px-4 h-[60vh] md:h-[65vh]">
             <div
                 class="flex overflow-x-auto gap-2 md:gap-4 pb-2 justify-start md:justify-center w-full shop-tabs hide-scrollbar">
-                <button class="shop-tab-btn active" onclick="switchShopTab('trails')">ESTELAS</button>
-                <button class="shop-tab-btn" onclick="switchShopTab('backgrounds')">FONDOS</button>
-                <button class="shop-tab-btn" onclick="switchShopTab('paddles')">PALETAS</button>
-                <button class="shop-tab-btn" onclick="switchShopTab('goalEffects')">GOLES</button>
+                <button class="shop-tab-btn active" data-action="switchShopTab" data-arg="trails">ESTELAS</button>
+                <button class="shop-tab-btn" data-action="switchShopTab" data-arg="backgrounds">FONDOS</button>
+                <button class="shop-tab-btn" data-action="switchShopTab" data-arg="paddles">PALETAS</button>
+                <button class="shop-tab-btn" data-action="switchShopTab" data-arg="goalEffects">GOLES</button>
             </div>
 
             <div id="shop-grid" class="shop-grid flex-1 overflow-y-auto pb-4 px-2 custom-scrollbar">
@@ -380,7 +380,7 @@
             </div>
         </div>
 
-        <button class="retro-button w-64 settings-back-btn mt-6" onclick="showScreen('main-menu')">VOLVER</button>
+        <button class="retro-button w-64 settings-back-btn mt-6" data-action="showScreen" data-arg="main-menu">VOLVER</button>
         <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </div>
 
@@ -388,8 +388,8 @@
     <div id="pause-menu" class="screen z-30" style="background: rgba(5,7,10,0.85); backdrop-filter: blur(4px);">
         <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-white animate-pulse">PAUSA</h2>
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm md:text-base">
-            <button class="retro-button" onclick="togglePause()">CONTINUAR</button>
-            <button class="retro-button retro-button--danger" onclick="quitGame()">RENDIRSE</button>
+            <button class="retro-button" data-action="togglePause">CONTINUAR</button>
+            <button class="retro-button retro-button--danger" data-action="quitGame">RENDIRSE</button>
         </div>
     </div>
 
@@ -398,8 +398,8 @@
         <div class="panel text-center max-w-lg mx-4" style="border-width: 3px;">
             <h2 class="text-xl md:text-2xl font-bold mb-8 leading-relaxed">¿SEGURO QUE QUIERES<br>SALIR DEL JUEGO?</h2>
             <div class="flex flex-col md:flex-row gap-6 justify-center">
-                <button class="retro-button retro-button--danger" onclick="forceClose()">SÍ, SALIR</button>
-                <button class="retro-button" onclick="showScreen('main-menu')">NO, VOLVER</button>
+                <button class="retro-button retro-button--danger" data-action="forceClose">SÍ, SALIR</button>
+                <button class="retro-button" data-action="showScreen" data-arg="main-menu">NO, VOLVER</button>
             </div>
         </div>
     </div>
@@ -425,9 +425,9 @@
         </div>
 
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm">
-            <button id="btn-next-campaign" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);" onclick="nextCampaignLevel()">SIGUIENTE HACHEPE</button>
-            <button class="retro-button" onclick="restartCurrentGame()">JUGAR DE NUEVO</button>
-            <button class="retro-button" onclick="quitGame()">MENÚ PRINCIPAL</button>
+            <button id="btn-next-campaign" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);" data-action="nextCampaignLevel">SIGUIENTE HACHEPE</button>
+            <button class="retro-button" data-action="restartCurrentGame">JUGAR DE NUEVO</button>
+            <button class="retro-button" data-action="quitGame">MENÚ PRINCIPAL</button>
         </div>
     </div>
 
@@ -521,6 +521,7 @@
     <script src="js/game.js?v=15"></script>
     <script src="js/touch.js?v=15"></script>
     <script src="js/ui.js?v=15"></script>
+    <script src="js/actions.js?v=15"></script>
     <script src="js/main.js?v=15"></script>
 </body>
 

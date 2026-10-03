@@ -18,4 +18,5 @@ initInput();             // teclado de juego y reasignación de teclas
 initCanvas();            // ratón sobre el canvas y redimensionado
 initCarouselControls();  // teclado y deslizamiento del selector de jefes
 initTouchControls();     // controles táctiles y botón de pausa
+initActions();           // botones, sliders e interruptores del HTML (data-action…)
 initUI();                // interfaz inicial y menú principal

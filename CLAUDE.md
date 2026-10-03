@@ -33,7 +33,7 @@ There are no modules, no `import`/`export`, no IIFE wrappers. Every file declare
 
 ```
 config → state → theme → audio → stats → achievements → input → progression →
-shop → vfx → powerups → campaign → bosses → game → touch → ui → main
+shop → vfx → powerups → campaign → bosses → game → touch → ui → actions → main
 ```
 
 Consequences to respect when editing:
@@ -42,11 +42,11 @@ Consequences to respect when editing:
 - `config.js` must stay dependency-free — it is loaded first and creates the session-wide `settings` object.
 - Top-level code may only use symbols from files loaded *before* it. Function bodies can call anything, since they run after every script has loaded — no `typeof` guards are needed.
 - Mutable match state shared across files lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. Write `state.isPlaying = false`, never a new top-level `let` that another file reassigns. The paddles `p1`, `p2` and `p2Twin` are stable objects declared next to it.
-- No file registers listeners or touches the DOM while loading. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
+- No file registers listeners or touches the DOM while loading. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initActions`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
 
-### Screens are divs, wired by inline `onclick`
+### Screens are divs, wired by `data-action`
 
-Every menu is a `<div class="screen">` in `index.html`; `showScreen(id)` (`js/ui.js:9`) removes `.active-screen` from all of them and adds it to one. Navigation and most actions are **inline `onclick` attributes in the HTML** (~43 of them) calling global functions — there is no event-delegation layer. Adding a menu action means adding a global function and referencing it from the markup.
+Every menu is a `<div class="screen">` in `index.html`; `showScreen(id)` (`js/ui.js`) removes `.active-screen` from all of them and adds it to one. The markup has **no inline handlers**: controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/actions.js` holds one registry per event type and three delegated listeners on `document`. Adding a menu action means adding an entry to the registry — named after the function it calls — and converting its argument there (dataset values are always strings: `carouselMove("-1")` would concatenate). Never add `data-category` to the shop tabs: `switchShopTab` reads it and adding it would silently fix a preserved bug.
 
 `showScreen` also side-effects: entering `main-menu` hides `#game-container` and starts menu music; `shop-menu` calls `showShopScreen()`; `campaign-menu` calls `renderCampaignMap()`.
 

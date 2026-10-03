@@ -119,9 +119,14 @@ function populateShopTab(categoryKey) {
         
         // Cargar imagen de icono o mostrar el emoji si falla
         previewDiv.innerHTML = `
-            <img src="${imgSrc}" class="w-full h-full object-contain z-10" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <img src="${imgSrc}" class="w-full h-full object-contain z-10" alt="${item.name}">
             <span class="hidden absolute inset-0 flex items-center justify-center text-3xl z-0">${item.preview}</span>
         `;
+        const img = previewDiv.querySelector('img');
+        img.addEventListener('error', () => {
+            img.style.display = 'none';
+            /** @type {HTMLElement} */ (img.nextElementSibling).style.display = 'block';
+        });
 
         const nameDiv = document.createElement('div');
         nameDiv.className = 'shop-card__name';
@@ -141,11 +146,11 @@ function populateShopTab(categoryKey) {
         } else if (isOwned) {
             btn.classList.add('shop-card__btn--use');
             btn.textContent = 'USAR';
-            btn.onclick = () => equipShopItem(categoryKey, item.id);
+            btn.addEventListener('click', () => equipShopItem(categoryKey, item.id));
         } else {
             btn.classList.add('shop-card__btn--buy');
             btn.innerHTML = `<img src="assets/chemi_coin.png" class="w-3 h-3 inline object-contain mr-1" style="vertical-align: text-top;"> ${item.price}`;
-            btn.onclick = () => buyShopItem(categoryKey, item.id);
+            btn.addEventListener('click', () => buyShopItem(categoryKey, item.id));
         }
 
         card.appendChild(previewDiv);

@@ -242,7 +242,7 @@ function buildCarouselDots() {
         d.type = 'button';
         d.className = 'carousel-dot';
         d.setAttribute('aria-label', `Rival ${i + 1}`);
-        d.onclick = () => { carouselIndex = i; updateCarousel(); soundEffects.uiClick(); };
+        d.addEventListener('click', () => { carouselIndex = i; updateCarousel(); soundEffects.uiClick(); });
         dots.appendChild(d);
     });
 }
