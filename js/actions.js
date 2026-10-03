@@ -15,7 +15,36 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { resetBindings } from './input.js';
+import { switchShopTab } from './shop.js';
+import {
+    carouselMove,
+    closeCampaignIntro,
+    closeFinale,
+    nextCampaignLevel,
+    replayCampaignIntro
+} from './campaign.js';
+import { quitGame, restartCurrentGame, startGame, togglePause } from './game.js';
+import {
+    closeGame,
+    confirmResetStats,
+    forceClose,
+    resetAllSettings,
+    showAchievementsScreen,
+    showScreen,
+    showStatsScreen,
+    toggleCrtEffect,
+    toggleMouseControl,
+    toggleMusic,
+    togglePowerups,
+    toggleScreenShake,
+    toggleSfx,
+    updateBallSpeed,
+    updateDifficulty,
+    updateMusicVolume,
+    updateVolume,
+    updateWinningScore
+} from './ui.js';
 
 /** @type {Record<string, (el: HTMLElement) => void>} */
 const CLICK_ACTIONS = {
@@ -86,7 +115,7 @@ function delegate(registry, attr) {
 }
 
 /** Registra los tres listeners delegados en el documento. */
-function initActions() {
+export function initActions() {
     document.addEventListener('click', delegate(CLICK_ACTIONS, 'action'));
     document.addEventListener('input', delegate(INPUT_ACTIONS, 'input'));
     document.addEventListener('change', delegate(CHANGE_ACTIONS, 'change'));

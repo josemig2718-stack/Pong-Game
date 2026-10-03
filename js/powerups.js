@@ -1,6 +1,9 @@
 // Tipos de power-ups disponibles en el juego
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, settings } from './config.js';
+import { p1, p2, state } from './state.js';
+import { soundEffects } from './audio.js';
+import { spawnExtraBalls, spawnParticles } from './game.js';
 
 const POWERUP_TYPES = [
     { id: 'paddle_xl',    emoji: '⬆️', color: '#22c55e', duration: 8000,  weight: 20 },
@@ -13,18 +16,18 @@ const POWERUP_TYPES = [
 ];
 
 // Variables de estado del sistema de power-ups
-let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
-let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
-let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
-let shieldWall = null;          // { x, y, width, height, owner }
-let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
-let powerupsThisGame = 0;       // Contador por partida (para logros)
-let slowmoActive = false;       // Indica si la cámara lenta está activa
+export let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
+export let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
+export let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
+export let shieldWall = null;          // { x, y, width, height, owner }
+export let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
+export let powerupsThisGame = 0;       // Contador por partida (para logros)
+export let slowmoActive = false;       // Indica si la cámara lenta está activa
 
 /**
  * Inicializa o reinicia el sistema de power-ups al empezar una partida
  */
-function initPowerups() {
+export function initPowerups() {
     activePowerup = null;
     activeEffect = null;
     shieldWall = null;
@@ -39,7 +42,7 @@ function initPowerups() {
  * Actualiza la lógica de los power-ups (aparición, expiración, colisiones)
  * @param {number} dt Delta time normalizado a 60 FPS
  */
-function updatePowerups(dt) {
+export function updatePowerups(dt) {
     if (!settings.powerupsEnabled) return;
     if (state.isPaused) return;
     if (!state.isPlaying) return;
@@ -259,7 +262,7 @@ function revertPowerup() {
 /**
  * Fuerza los efectos activos sobre las bolas (útil después de un resetBall)
  */
-function enforcePowerups() {
+export function enforcePowerups() {
     if (!activeEffect) return;
     if (activeEffect.type.id === 'big_ball') {
         state.balls.forEach(b => b.radius = 27);
@@ -270,7 +273,7 @@ function enforcePowerups() {
  * Establece el último jugador en golpear la pelota
  * @param {string} player 'p1' o 'p2'
  */
-function setLastHitter(player) {
+export function setLastHitter(player) {
     lastHitter = player;
 }
 
@@ -278,7 +281,7 @@ function setLastHitter(player) {
  * Retorna el multiplicador de tiempo para la cámara lenta
  * @returns {number} 0.5 si está activo, 1.0 si no
  */
-function getSlowmoMultiplier() {
+export function getSlowmoMultiplier() {
     return slowmoActive ? 0.5 : 1.0;
 }
 
@@ -295,7 +298,7 @@ function powerupCollision(bx, by, bradius, px, py, pradius) {
  * Renderiza el power-up en el campo de juego
  * @param {CanvasRenderingContext2D} ctx Contexto 2D del canvas
  */
-function renderPowerup(ctx) {
+export function renderPowerup(ctx) {
     if (!activePowerup) return;
 
     const lifetimeMs = Date.now() - activePowerup.spawnTime;
@@ -357,7 +360,7 @@ function renderPowerup(ctx) {
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  * @param {number} canvasWidth Ancho del canvas
  */
-function renderActiveEffectHUD(ctx, canvasWidth) {
+export function renderActiveEffectHUD(ctx, canvasWidth) {
     if (!activeEffect || activeEffect.type.duration === 0) return;
 
     const progress = activeEffect.remainingMs / activeEffect.type.duration;
@@ -403,7 +406,7 @@ function renderActiveEffectHUD(ctx, canvasWidth) {
  * Renderiza el escudo si está activo
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  */
-function renderShield(ctx) {
+export function renderShield(ctx) {
     if (!shieldWall) return;
 
     ctx.save();

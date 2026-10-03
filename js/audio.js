@@ -7,12 +7,13 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { saveSettings, settings } from './config.js';
+import { currentCampaignLevel } from './campaign.js';
 
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
 
-function getAudioContext() {
+export function getAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -20,7 +21,7 @@ function getAudioContext() {
     return audioCtx;
 }
 
-function playTone(freq, type = 'square', duration = 0.1) {
+export function playTone(freq, type = 'square', duration = 0.1) {
     if (!settings.sfxEnabled || masterVolume === 0) return;
     const ctx = getAudioContext();
     const oscillator = ctx.createOscillator();
@@ -39,7 +40,7 @@ function playTone(freq, type = 'square', duration = 0.1) {
     oscillator.stop(ctx.currentTime + duration);
 }
 
-const soundEffects = {
+export const soundEffects = {
     paddleHit:  () => playTone(600, 'square', 0.1),
     wallHit:    () => playTone(300, 'square', 0.1),
     score:      () => {
@@ -93,13 +94,13 @@ const soundEffects = {
     dialogueBlip: () => playTone(680, 'square', 0.02)
 };
 
-function setMasterVolume(val) {
+export function setMasterVolume(val) {
     masterVolume = val / 100;
     settings.volume = val;
     saveSettings(settings);
 }
 
-function setSfxEnabled(enabled) {
+export function setSfxEnabled(enabled) {
     settings.sfxEnabled = enabled;
     saveSettings(settings);
 }
@@ -107,9 +108,9 @@ function setSfxEnabled(enabled) {
 // =================================================================
 //  Música de fondo (HTML5 Audio)
 // =================================================================
-const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
-const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
-const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
+export const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
+export const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
+export const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
 
 menuMusic.loop     = true;
 gameplayMusic.loop = true;
@@ -120,7 +121,7 @@ menuMusic.volume     = settings.musicVolume / 100;
 gameplayMusic.volume = settings.musicVolume / 100;
 hachepeMusic.volume  = settings.musicVolume / 100;
 
-function playMenuMusic() {
+export function playMenuMusic() {
     if (!settings.musicEnabled) return;
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
@@ -130,12 +131,12 @@ function playMenuMusic() {
     menuMusic.play().catch(() => {});  // Silencia el autoplay-block
 }
 
-function stopMenuMusic() {
+export function stopMenuMusic() {
     menuMusic.pause();
     menuMusic.currentTime = 0;
 }
 
-function playGameplayMusic(mode = 'cpu') {
+export function playGameplayMusic(mode = 'cpu') {
     if (!settings.musicEnabled) return;
     menuMusic.pause();
     menuMusic.currentTime = 0;
@@ -164,19 +165,19 @@ function playGameplayMusic(mode = 'cpu') {
     }
 }
 
-function stopGameplayMusic() {
+export function stopGameplayMusic() {
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
     hachepeMusic.pause();
     hachepeMusic.currentTime = 0;
 }
 
-function stopAllMusic() {
+export function stopAllMusic() {
     stopMenuMusic();
     stopGameplayMusic();
 }
 
-function setMusicVolume(val) {
+export function setMusicVolume(val) {
     settings.musicVolume = val;
     menuMusic.volume     = val / 100;
     gameplayMusic.volume = val / 100;
@@ -184,7 +185,7 @@ function setMusicVolume(val) {
     saveSettings(settings);
 }
 
-function setMusicEnabled(enabled) {
+export function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
     saveSettings(settings);
     if (!enabled) {
@@ -205,7 +206,7 @@ function onFirstInteraction() {
 }
 
 /** Registra el desbloqueo del audio. Debe ir antes que initInput(). */
-function initAudio() {
+export function initAudio() {
     window.addEventListener('click', onFirstInteraction);
     window.addEventListener('keydown', onFirstInteraction);
     window.addEventListener('touchstart', onFirstInteraction);

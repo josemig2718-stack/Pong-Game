@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=15">
+    <link rel="stylesheet" href="css/style.css?v=16">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -504,25 +504,35 @@
         </div>
     </div>
 
-    <!-- El orden de carga importa: config primero; main arranca el juego al final -->
-    <script src="js/config.js?v=15"></script>
-    <script src="js/state.js?v=15"></script>
-    <script src="js/theme.js?v=15"></script>
-    <script src="js/audio.js?v=15"></script>
-    <script src="js/stats.js?v=15"></script>
-    <script src="js/achievements.js?v=15"></script>
-    <script src="js/input.js?v=15"></script>
-    <script src="js/progression.js?v=15"></script>
-    <script src="js/shop.js?v=15"></script>
-    <script src="js/vfx.js?v=15"></script>
-    <script src="js/powerups.js?v=15"></script>
-    <script src="js/campaign.js?v=15"></script>
-    <script src="js/bosses.js?v=15"></script>
-    <script src="js/game.js?v=15"></script>
-    <script src="js/touch.js?v=15"></script>
-    <script src="js/ui.js?v=15"></script>
-    <script src="js/actions.js?v=15"></script>
-    <script src="js/main.js?v=15"></script>
+    <!-- Módulos del juego. Los import no llevan versión: este mapa añade
+         ?v=N a cada módulo para que GitHub Pages no sirva copias viejas.
+         Al cambiar cualquier JS o CSS, sube N en todas las entradas, en el
+         src de main.js y en el enlace a style.css (tests/ lo comprueba). -->
+    <script type="importmap">
+    {
+        "imports": {
+            "./js/achievements.js": "./js/achievements.js?v=16",
+            "./js/actions.js": "./js/actions.js?v=16",
+            "./js/audio.js": "./js/audio.js?v=16",
+            "./js/bosses.js": "./js/bosses.js?v=16",
+            "./js/campaign.js": "./js/campaign.js?v=16",
+            "./js/config.js": "./js/config.js?v=16",
+            "./js/game.js": "./js/game.js?v=16",
+            "./js/input.js": "./js/input.js?v=16",
+            "./js/main.js": "./js/main.js?v=16",
+            "./js/powerups.js": "./js/powerups.js?v=16",
+            "./js/progression.js": "./js/progression.js?v=16",
+            "./js/shop.js": "./js/shop.js?v=16",
+            "./js/state.js": "./js/state.js?v=16",
+            "./js/stats.js": "./js/stats.js?v=16",
+            "./js/theme.js": "./js/theme.js?v=16",
+            "./js/touch.js": "./js/touch.js?v=16",
+            "./js/ui.js": "./js/ui.js?v=16",
+            "./js/vfx.js": "./js/vfx.js?v=16"
+        }
+    }
+    </script>
+    <script type="module" src="./js/main.js?v=16"></script>
 </body>
 
 </html>

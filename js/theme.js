@@ -6,9 +6,10 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { saveSettings, settings, THEMES } from './config.js';
+import { statsTrackTheme } from './stats.js';
 
-function applyTheme(themeKey) {
+export function applyTheme(themeKey) {
     const theme = THEMES[themeKey] || THEMES.green;
     const root = document.documentElement;
 
@@ -27,11 +28,11 @@ function applyTheme(themeKey) {
     statsTrackTheme(themeKey);
 }
 
-function currentThemeHex() {
+export function currentThemeHex() {
     return (THEMES[settings.theme] || THEMES.green).hex;
 }
 
-function buildThemeSwatches(container) {
+export function buildThemeSwatches(container) {
     container.innerHTML = '';
     Object.entries(THEMES).forEach(([key, theme]) => {
         const btn = document.createElement('button');

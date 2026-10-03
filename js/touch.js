@@ -9,7 +9,9 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './config.js';
+import { p1, p2, state } from './state.js';
+import { canvas, togglePause } from './game.js';
 
 /** Heurística estándar para saber si el dispositivo es "táctil primario" */
 function isTouchDevice() {
@@ -25,13 +27,13 @@ function isTouchDevice() {
 const activeTouches = new Map();
 
 /** Convierte la coordenada Y de un evento táctil a coordenadas internas del canvas */
-function touchToCanvasY(clientY) {
+export function touchToCanvasY(clientY) {
     const rect = canvas.getBoundingClientRect();
     const ratio = GAME_HEIGHT / rect.height;
     return (clientY - rect.top) * ratio;
 }
 
-function touchToCanvasX(clientX) {
+export function touchToCanvasX(clientX) {
     const rect = canvas.getBoundingClientRect();
     const ratio = GAME_WIDTH / rect.width;
     return (clientX - rect.left) * ratio;
@@ -106,7 +108,7 @@ function hideTouchHint(target) {
     if (hint) hint.classList.add('touch-hint--gone');
 }
 
-function resetTouchHints() {
+export function resetTouchHints() {
     document.querySelectorAll('.touch-hint').forEach(hint => hint.classList.remove('touch-hint--gone'));
 }
 
@@ -130,7 +132,7 @@ function setupOrientationHint() {
 }
 
 /** Registra los controles táctiles, el botón de pausa y el aviso de orientación. */
-function initTouchControls() {
+export function initTouchControls() {
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });

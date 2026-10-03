@@ -4,20 +4,20 @@
  * Estado de la partida en curso, compartido por todos los scripts.
  *
  * Todo lo que cambia durante una partida y se lee desde más de un
- * archivo vive en el objeto `state`: así cualquier sistema puede
- * escribirlo (p. ej. la campaña detiene la partida al lanzar el final)
- * sin reasignar variables de otro archivo.
+ * módulo vive en el objeto `state`: así cualquier sistema puede
+ * escribirlo (p. ej. la campaña detiene la partida al lanzar el final).
+ * Un `export let` no serviría: quien lo importa no puede reasignarlo.
  *
  * Las paletas son objetos estables: se mutan sus propiedades, nunca se
  * sustituyen, así que se declaran aparte como constantes.
  *
- * Depende solo de config.js (dimensiones y geometría).
+ * Solo importa config.js (dimensiones y geometría).
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './config.js';
 
-const state = {
+export const state = {
     /** 'cpu' | 'local' | 'hachepe' | 'campaign' */
     mode: 'cpu',
     isPlaying: false,
@@ -42,10 +42,10 @@ const state = {
 };
 
 // --- Paletas ---
-const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+export const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+export const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 
 // Paleta gemela del rival (Mario, en el combate del dúo). Las mecánicas
 // del jefe viven en bosses.js; aquí está porque participa en el
 // movimiento y la colisión de game.js.
-const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };
+export const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };

@@ -8,7 +8,21 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH } from './config.js';
+import { state } from './state.js';
+import {
+    gameplayMusic,
+    hachepeMusic,
+    menuMusic,
+    playTone,
+    soundEffects,
+    stopAllMusic
+} from './audio.js';
+import { unlockAchievement } from './achievements.js';
+import { playerProgression, saveProgression } from './progression.js';
+import { triggerGoalConfetti } from './vfx.js';
+import { startGame } from './game.js';
+import { showScreen } from './ui.js';
 
 const CAMPAIGN_LAST_BOSS = 5;   // últimos Hachepes "normales"
 const CAMPAIGN_CREATOR = 6;     // nivel secreto
@@ -17,7 +31,7 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
  * Los seis Hachepes. Los diálogos aceptan strings (habla el jefe) u
  * objetos { t, s } donde `s` elige el avatar ('a' o 'b') — lo usa el dúo.
  */
-const HACHEPES_LORE = {
+export const HACHEPES_LORE = {
     1: {
         name: 'Hachepe Chemi',
         title: 'El Guardián de la Frontera',
@@ -139,19 +153,19 @@ const CAMPAIGN_INTRO_TEXT =
     'Montaron sobre las ruinas un torneo enfermo donde perder significa desaparecer.\n\n' +
     'No tienes nombre. No tienes nada. Por eso nadie te vio venir.';
 
-let currentCampaignLevel = 1;
+export let currentCampaignLevel = 1;
 let dialogueQueue = [];
-let isDialogueActive = false;
+export let isDialogueActive = false;
 let dialogueCallback = null;
 let currentDialogueTimer = null;
 let dialogueAdvanceTimer = null;
-let isReplayingBoss = false;   // true si el jefe actual ya estaba vencido
+export let isReplayingBoss = false;   // true si el jefe actual ya estaba vencido
 
 // ==================================================================
 //  SELECTOR DE JEFES — carrusel estilo arcade
 // ==================================================================
 
-let carouselIndex = 0;      // carta centrada
+export let carouselIndex = 0;      // carta centrada
 let carouselCards = [];     // niveles disponibles, en orden
 
 /** Niveles que se muestran: los 5 Hachepes, más el Creador si ya se reveló. */
@@ -161,7 +175,7 @@ function getCarouselLevels() {
     return niveles;
 }
 
-function renderCampaignMap() {
+export function renderCampaignMap() {
     const track = document.getElementById('campaign-nodes');
     if (!track) return;
 
@@ -276,7 +290,7 @@ function updateCarousel() {
     if (next) next.disabled = carouselIndex >= carouselCards.length - 1;
 }
 
-function carouselMove(paso) {
+export function carouselMove(paso) {
     const nuevo = carouselIndex + paso;
     if (nuevo < 0 || nuevo >= carouselCards.length) return;
     carouselIndex = nuevo;
@@ -285,7 +299,7 @@ function carouselMove(paso) {
 }
 
 /** Teclado y deslizamiento: el carrusel se maneja sin ratón. */
-function initCarouselControls() {
+export function initCarouselControls() {
     const menu = document.getElementById('campaign-menu');
     if (!menu) return;
 
@@ -346,7 +360,7 @@ function showCampaignIntro() {
     };
 }
 
-function closeCampaignIntro() {
+export function closeCampaignIntro() {
     const overlay = document.getElementById('campaign-intro-overlay');
     if (overlay) overlay.classList.add('hidden');
     playerProgression.campaignIntroSeen = true;
@@ -354,7 +368,7 @@ function closeCampaignIntro() {
     soundEffects.uiClick();
 }
 
-function replayCampaignIntro() {
+export function replayCampaignIntro() {
     soundEffects.uiClick();
     showCampaignIntro();
 }
@@ -518,7 +532,7 @@ function showNextDialogue() {
 }
 
 /** Corta cualquier diálogo en curso (al salir de la partida). */
-function stopDialogue() {
+export function stopDialogue() {
     clearInterval(currentDialogueTimer);
     clearFinaleTimers();
     clearTimeout(dialogueAdvanceTimer);
@@ -533,8 +547,8 @@ function stopDialogue() {
 }
 
 /** Diálogo de "voy ganando": salta una sola vez, al ir perdiendo por 2. */
-let midDialogueShown = false;
-function checkMidDialogue() {
+export let midDialogueShown = false;
+export function checkMidDialogue() {
     if (state.mode !== 'campaign' || midDialogueShown) return;
     if (state.p2Score - state.p1Score < 2) return;
     const boss = HACHEPES_LORE[currentCampaignLevel];
@@ -543,12 +557,12 @@ function checkMidDialogue() {
     queueDialogue(boss.dialogues.mid);
 }
 
-function resetMidDialogue() {
+export function resetMidDialogue() {
     midDialogueShown = false;
 }
 
 /** Diálogo final del jefe, mostrado sobre la pantalla de fin de combate. */
-function playBossOutcomeDialogue(p1Won) {
+export function playBossOutcomeDialogue(p1Won) {
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!boss) return;
     // Al vencer a Yisus o al Creador manda la secuencia narrativa, no esto.
@@ -561,7 +575,7 @@ function playBossOutcomeDialogue(p1Won) {
 //  PROGRESO
 // ==================================================================
 
-function handleCampaignVictory() {
+export function handleCampaignVictory() {
     unlockAchievement('campaign_first');
     if (currentCampaignLevel === CAMPAIGN_LAST_BOSS) unlockAchievement('campaign_clear');
     if (currentCampaignLevel === CAMPAIGN_CREATOR) unlockAchievement('the_creator');
@@ -581,7 +595,7 @@ function handleCampaignVictory() {
  * Usar el progreso mandaba al Creador nada más repetir un jefe antiguo,
  * saltándose media historia.
  */
-function getNextCampaignBoss() {
+export function getNextCampaignBoss() {
     const next = currentCampaignLevel + 1;
     // Al Creador solo se llega por la secuencia narrativa o por su carta.
     if (next > CAMPAIGN_LAST_BOSS) return null;
@@ -589,7 +603,7 @@ function getNextCampaignBoss() {
     return next;
 }
 
-function nextCampaignLevel() {
+export function nextCampaignLevel() {
     soundEffects.uiClick();
     document.getElementById('game-over-screen').classList.remove('active-screen');
     stopDialogue();
@@ -680,7 +694,7 @@ function playCrtShutdownSound() {
  * victoria falsa → la señal se corrompe → apagón CRT → silencio →
  * reencendido en terminal → el ojo → VS El Creador.
  */
-function runFinaleSequence() {
+export function runFinaleSequence() {
     stopDialogue();
     clearFinaleTimers();
     state.isPlaying = false;
@@ -807,7 +821,7 @@ function warpMusic() {
 }
 
 /** Restaura la velocidad normal (al salir de la secuencia). */
-function resetMusicRate() {
+export function resetMusicRate() {
     [menuMusic, gameplayMusic, hachepeMusic].forEach(t => {
         try { t.playbackRate = 1; } catch (err) { /* ignorar */ }
     });
@@ -823,7 +837,7 @@ function playVictoryJingle() {
 //  FINAL VERDADERO — tras vencer al Creador
 // ==================================================================
 
-function runTrueEndingSequence() {
+export function runTrueEndingSequence() {
     stopDialogue();
     clearFinaleTimers();
     state.isPlaying = false;
@@ -853,7 +867,7 @@ function runTrueEndingSequence() {
     });
 }
 
-function closeFinale() {
+export function closeFinale() {
     soundEffects.uiClick();
     hideFinaleText();
     setFadeOverlay(0, 400);

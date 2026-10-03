@@ -6,9 +6,37 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { DEFAULT_BINDINGS, DEFAULT_SETTINGS, saveSettings, settings } from './config.js';
+import { state } from './state.js';
+import { applyTheme, buildThemeSwatches } from './theme.js';
+import {
+    getAudioContext,
+    playGameplayMusic,
+    playMenuMusic,
+    playTone,
+    setMasterVolume,
+    setMusicEnabled,
+    setMusicVolume,
+    setSfxEnabled,
+    soundEffects,
+    stopAllMusic
+} from './audio.js';
+import { formatPlayTime, gameStats, resetStats } from './stats.js';
+import { ACHIEVEMENTS, getUnlockedCount, getVisibleAchievementsTotal } from './achievements.js';
+import { refreshBindingButtons, startListeningFor } from './input.js';
+import {
+    getCurrentLevel,
+    getXPProgress,
+    sessionCoinsGained,
+    sessionLeveledUp,
+    sessionNewTitle,
+    sessionXPGained
+} from './progression.js';
+import { showShopScreen, updateCoinDisplay } from './shop.js';
+import { renderCampaignMap } from './campaign.js';
+import { clearMouseControl } from './game.js';
 
-function showScreen(screenId) {
+export function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
     const requested = document.getElementById(screenId);
     if (requested) requested.classList.add('active-screen');
@@ -27,34 +55,34 @@ function showScreen(screenId) {
     soundEffects.uiClick();
 }
 
-function closeGame() {
+export function closeGame() {
     showScreen('exit-menu');
 }
 
-function forceClose() {
+export function forceClose() {
     stopAllMusic();
     document.body.innerHTML = `<div class="flex w-full h-full items-center justify-center text-center text-lg md:text-2xl px-8" style="color: var(--primary)">EL JUEGO SE HA CERRADO.<br>PUEDES CERRAR ESTA PESTAÑA.</div>`;
 }
 
 // --- Configuración: dificultad, volumen y demás opciones ---
-function updateDifficulty(val) {
+export function updateDifficulty(val) {
     settings.difficulty = parseInt(val, 10);
     saveSettings(settings);
 }
 
-function updateVolume(val) {
+export function updateVolume(val) {
     setMasterVolume(parseInt(val, 10));
     document.getElementById('vol-display').textContent = `${val}%`;
     getAudioContext();
     if (val > 0) playTone(400, 'square', 0.05);
 }
 
-function updateMusicVolume(val) {
+export function updateMusicVolume(val) {
     setMusicVolume(parseInt(val, 10));
     document.getElementById('music-vol-display').textContent = `${val}%`;
 }
 
-function toggleMusic(enabled) {
+export function toggleMusic(enabled) {
     setMusicEnabled(enabled);
     if (enabled) {
         // Reanudar la música que corresponda según el estado actual
@@ -66,7 +94,7 @@ function toggleMusic(enabled) {
     }
 }
 
-function updateWinningScore(val) {
+export function updateWinningScore(val) {
     settings.winningScore = parseInt(val, 10);
     saveSettings(settings);
     document.querySelectorAll('[data-winning-score]').forEach(btn => {
@@ -74,7 +102,7 @@ function updateWinningScore(val) {
     });
 }
 
-function updateBallSpeed(val) {
+export function updateBallSpeed(val) {
     settings.ballSpeed = parseInt(val, 10);
     saveSettings(settings);
     document.querySelectorAll('[data-ball-speed]').forEach(btn => {
@@ -82,23 +110,23 @@ function updateBallSpeed(val) {
     });
 }
 
-function toggleSfx(enabled) {
+export function toggleSfx(enabled) {
     setSfxEnabled(enabled);
     if (enabled) playTone(500, 'triangle', 0.05);
 }
 
-function toggleCrtEffect(enabled) {
+export function toggleCrtEffect(enabled) {
     settings.crtEffect = enabled;
     saveSettings(settings);
     document.body.classList.toggle('crt-effect', enabled);
 }
 
-function toggleScreenShake(enabled) {
+export function toggleScreenShake(enabled) {
     settings.screenShake = enabled;
     saveSettings(settings);
 }
 
-function toggleMouseControl(enabled) {
+export function toggleMouseControl(enabled) {
     settings.mouseControl = enabled;
     saveSettings(settings);
     if (!enabled) {
@@ -106,7 +134,7 @@ function toggleMouseControl(enabled) {
     }
 }
 
-function resetAllSettings() {
+export function resetAllSettings() {
     Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
     saveSettings(settings);
     populateSettingsUI();
@@ -137,7 +165,7 @@ function populateSettingsUI() {
     refreshBindingButtons();
 }
 
-function togglePowerups(enabled) {
+export function togglePowerups(enabled) {
     settings.powerupsEnabled = enabled;
     saveSettings(settings);
 }
@@ -216,13 +244,13 @@ function formatAchievementDate(date) {
 }
 
 /** Muestra la pantalla de stats y carga los datos */
-function showStatsScreen() {
+export function showStatsScreen() {
     showScreen('stats-menu');
     populateStatsScreen();
 }
 
 /** Muestra la pantalla de logros y carga los datos */
-function showAchievementsScreen() {
+export function showAchievementsScreen() {
     showScreen('achievements-menu');
     populateAchievementsGrid();
     
@@ -232,7 +260,7 @@ function showAchievementsScreen() {
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */
-function confirmResetStats() {
+export function confirmResetStats() {
     if (confirm('¿Borrar todas las estadísticas? Los logros se mantendrán.')) {
         resetStats();
         populateStatsScreen();
@@ -249,7 +277,7 @@ function setText(id, text) {
 /**
  * Actualiza la UI de progresión (barra XP, nivel, y el panel de fin de partida)
  */
-function updateProgressionDisplay() {
+export function updateProgressionDisplay() {
     // 1. Menú principal
     const titleEl = document.getElementById('menu-level-title');
     const barEl = document.getElementById('menu-xp-bar');
@@ -287,7 +315,7 @@ function updateProgressionDisplay() {
 }
 
 /** Construye la interfaz inicial y muestra el menú principal. */
-function initUI() {
+export function initUI() {
     buildThemeSwatches(document.getElementById('theme-swatches'));
     applyTheme(settings.theme);
     populateSettingsUI();

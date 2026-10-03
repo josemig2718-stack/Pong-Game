@@ -11,6 +11,7 @@
 import { SCENARIOS } from './scenarios.js';
 import { runScenario, compare } from './runner.js';
 import { canonical } from './lib/canonical.js';
+import { checkImportMap } from './lib/importmap.js';
 
 const stage = /** @type {HTMLElement} */ (document.getElementById('stage'));
 const tbody = /** @type {HTMLElement} */ (document.getElementById('results'));
@@ -62,13 +63,38 @@ const fingerprint = (r) => canonical({
 });
 
 /**
- * @param {(scn:any) => Promise<boolean>} fn
+ * Comprobación estática del mapa de imports de index.html (ver lib/importmap.js).
+ * @returns {Promise<boolean>}
  */
-async function runEach(fn) {
+async function runImportMapCheck() {
+    const row = { name: 'mapa-de-imports' };
+    showRow(row, 'warn', 'ejecutando…');
+    try {
+        const { errors, version, modules } = await checkImportMap(new URL('../', location.href).href);
+        const ok = errors.length === 0;
+        showRow(row, ok ? 'ok' : 'bad', ok ? `OK (${modules} módulos, v=${version})` : 'FALLA', errors.join('\n'));
+        return ok;
+    } catch (err) {
+        showRow(row, 'bad', 'ERROR', String(err && err.stack || err));
+        return false;
+    }
+}
+
+/**
+ * @param {(scn:any) => Promise<boolean>} fn
+ * @param {boolean} [withChecks] ejecutar antes las comprobaciones estáticas
+ */
+async function runEach(fn, withChecks = false) {
     buttons.forEach((b) => { b.disabled = true; });
     let passed = 0;
+    let total = 0;
     const only = new URLSearchParams(location.search).get('only');
     const list = only ? SCENARIOS.filter((s) => only.split(',').includes(s.name)) : SCENARIOS;
+    if (withChecks) {
+        total++;
+        if (await runImportMapCheck()) passed++;
+    }
+    total += list.length;
     for (const scn of list) {
         showRow(scn, 'warn', 'ejecutando…');
         try {
@@ -77,10 +103,10 @@ async function runEach(fn) {
             showRow(scn, 'bad', 'ERROR', String(err && err.stack || err));
         }
     }
-    summary.textContent = `${passed} / ${list.length} correctos`;
-    summary.className = passed === list.length ? 'ok' : 'bad';
+    summary.textContent = `${passed} / ${total} correctos`;
+    summary.className = passed === total ? 'ok' : 'bad';
     buttons.forEach((b) => { b.disabled = false; });
-    /** @type {any} */ (window).__done = { passed, total: list.length };
+    /** @type {any} */ (window).__done = { passed, total };
 }
 
 async function runAll() {
@@ -92,7 +118,7 @@ async function runAll() {
         showRow(scn, ok ? 'ok' : 'bad', ok ? `OK (${got.frames} fotogramas)` : 'FALLA',
             [...errors, ...warnings.map((w) => 'aviso: ' + w)].join('\n'));
         return ok;
-    });
+    }, true);
 }
 
 async function record() {

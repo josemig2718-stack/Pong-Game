@@ -4,45 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS, HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no tests, no linter.**
+Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS (native ES modules), HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no linter.** Regression tests are a web page in `tests/` (see below).
 
 Code, comments, UI strings, and commit history are in **Spanish**. Keep new code and UI text in Spanish to match.
 
 ## Running
 
-Open `index.html` directly in a browser, or serve the folder statically (`python -m http.server 8000`). A local server is preferable because the MP3s and localStorage behave more predictably over `http://` than `file://`.
+Serve the folder over HTTP: `python tests/serve.py` (port 8000). **Opening `index.html` by double-click (`file://`) does not work** — browsers refuse ES modules from `file://`. Prefer `serve.py` over `python -m http.server`: it sends `Cache-Control: no-store` (otherwise the browser heuristically caches stale JS) and forces `text/javascript` for `.js` (some Windows registries map it to `text/plain`, and module scripts then refuse to load).
 
 Deployed as a GitHub Pages static site — the repo root is the web root.
 
-### Cache-busting is manual
+### Cache-busting is manual: one version N
 
-`index.html` loads each script/stylesheet with a query version:
+`index.html` has an **import map** that maps every module to itself plus `?v=N`, a single `<script type="module" src="./js/main.js?v=N">`, and `css/style.css?v=N`. `import` statements never carry a version — the map adds it, because nested imports would otherwise be fetched unversioned and GitHub Pages caches for ~10 min.
 
-```html
-<link rel="stylesheet" href="css/style.css?v=11">
-<script src="js/config.js?v=13"></script>
-```
-
-**After editing JS or CSS, bump the `?v=` number** on the affected tags (in practice all the JS tags share one number). Users otherwise get stale cached files on GitHub Pages.
+**After editing any JS or CSS, bump N everywhere** (every map entry, the `main.js` src, the stylesheet). **Adding a module means adding it to the map.** The `mapa-de-imports` check in `tests/` fails if a reachable module is missing, an entry is unused, or the N values differ.
 
 ## Architecture
 
-### Global namespace, ordered script loading
+### ES modules, one entry point
 
-There are no modules, no `import`/`export`, no IIFE wrappers. Every file declares top-level `const`/`let`/`function` that land on the global scope, and files depend on each other purely through **load order of the `<script>` tags at the end of `index.html`**:
+Every file in `js/` is an ES module with explicit `import`/`export`; `js/main.js` is the only entry. The module graph has cycles (e.g. `game` ↔ `bosses`), which ES modules handle as long as **top-level code only uses imports from `config.js` and `state.js`**. Those two import nothing above them (`config` imports nothing, `state` only `config`), so they are always evaluated first. Anything else may only be used inside function bodies, which run after the whole graph is evaluated; breaking this rule throws a TDZ `ReferenceError` at load.
 
-```
-config → state → theme → audio → stats → achievements → input → progression →
-shop → vfx → powerups → campaign → bosses → game → touch → ui → actions → main
-```
-
-Consequences to respect when editing:
-
-- A new top-level `const`/`let`/`function` name collides globally. Grep before naming.
-- `config.js` must stay dependency-free — it is loaded first and creates the session-wide `settings` object.
-- Top-level code may only use symbols from files loaded *before* it. Function bodies can call anything, since they run after every script has loaded — no `typeof` guards are needed.
-- Mutable match state shared across files lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. Write `state.isPlaying = false`, never a new top-level `let` that another file reassigns. The paddles `p1`, `p2` and `p2Twin` are stable objects declared next to it.
-- No file registers listeners or touches the DOM while loading. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initActions`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
+- Mutable match state shared across modules lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. An importer can't reassign an `export let`, so anything another module must write goes in `state` (e.g. the campaign sets `state.isPlaying = false`). The paddles `p1`, `p2` and `p2Twin` are stable objects exported next to it.
+- Other `export let` values (`currentCampaignLevel`, `activePowerup`, `bossState`…) are reassigned only by their own module; importers read them as live bindings.
+- Some internals are exported only because `tests/adapters/esm.js` reads them (`bossState`, `carouselIndex`, `goalSlowmoTimer`, …). Keep them exported, or update the adapter.
+- No module registers listeners or touches the DOM while being evaluated. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initActions`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
 
 ### Screens are divs, wired by `data-action`
 
@@ -137,11 +124,15 @@ All three load with `{ ...DEFAULTS, ...saved }` spread so adding a new field doe
 
 ## Verifying changes
 
-There are no tests, so verification means driving the real game. Serve it (`python -m http.server 8000`) and use Playwright MCP; the game's globals are all reachable from `browser_evaluate`, which makes it practical to script a whole match:
+**Run the regression suite** after any change: `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It replays 22 deterministic matches frame by frame against `tests/golden/` and checks the import map; `tests/README.md` explains how it works. A refactor must keep it green **without re-recording**; re-recording a golden means accepting a behaviour change.
+
+To drive the real game with Playwright MCP, import its modules from `browser_evaluate` (the import map resolves them to the same instances the game uses). Exported `let`s can't be assigned from outside, so go through functions:
 
 ```js
-currentCampaignLevel = 4; startGame('campaign'); stopDialogue();
-for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; update(1); }
+const c = await import('./js/campaign.js'); const g = await import('./js/game.js');
+const { state } = await import('./js/state.js');
+c.prepareCampaignMatch(4); /* wait for the VS screen to start the match */ c.stopDialogue();
+for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; g.update(1); }
 ```
 
 Two habits worth keeping, because both caught real bugs that reading the code did not:

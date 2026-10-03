@@ -2,28 +2,27 @@
  * config.js
  * ------------------------------------------------------------------
  * Constantes globales del juego, catálogo de temas de color y
- * utilidades de persistencia (localStorage). No depende de ningún
- * otro archivo: debe cargarse primero.
+ * utilidades de persistencia (localStorage). No importa ningún otro
+ * módulo, así que su código de primer nivel puede usarse en cualquier
+ * otro sin riesgo de leerlo antes de que se haya evaluado.
  * ------------------------------------------------------------------
  */
 
-'use strict';
-
 // --- Dimensiones lógicas del campo de juego (resolución interna fija) ---
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 600;
+export const GAME_WIDTH = 800;
+export const GAME_HEIGHT = 600;
 
 // --- Geometría de paletas y bola (en unidades lógicas) ---
-const paddleWidth = 15;
-const paddleHeight = 100;
-const paddleSpeed = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
-const ballRadius = 9;
+export const paddleWidth = 15;
+export const paddleHeight = 100;
+export const paddleSpeed = 8;   // píxeles por frame a 60 FPS → multiplicado por dt
+export const ballRadius = 9;
 
 // --- Catálogo de temas de color -----------------------------------
 // Cada tema define el color "primario" (paletas, HUD, marcador). Se
 // aplica como variables CSS (--primary / --primary-rgb) y también se usa
 // directamente al dibujar en el <canvas>, a través de currentThemeHex().
-const THEMES = {
+export const THEMES = {
     green:  { label: 'Verde',    hex: '#22c55e', rgb: '34, 197, 94' },
     purple: { label: 'Morado',   hex: '#a855f7', rgb: '168, 85, 247' },
     blue:   { label: 'Azul',     hex: '#3b82f6', rgb: '59, 130, 246' },
@@ -35,7 +34,7 @@ const THEMES = {
 };
 
 // --- Combinaciones de teclas por defecto ---------------------------
-const DEFAULT_BINDINGS = {
+export const DEFAULT_BINDINGS = {
     p1Up:   'KeyW',
     p1Down: 'KeyS',
     p2Up:   'ArrowUp',
@@ -51,7 +50,7 @@ const KEY_LABELS = {
     ControlLeft: 'CTRL IZQ', ControlRight: 'CTRL DER'
 };
 
-function keyLabel(code) {
+export function keyLabel(code) {
     if (!code) return '---';
     if (KEY_LABELS[code]) return KEY_LABELS[code];
     if (code.startsWith('Key')) return code.replace('Key', '');
@@ -60,7 +59,7 @@ function keyLabel(code) {
 }
 
 // --- Configuración por defecto (se combina con lo guardado en localStorage) ---
-const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS = {
     theme:        'green',
     difficulty:   2,       // 1 Fácil, 2 Normal, 3 Imposible
     volume:       50,      // 0-100 (SFX)
@@ -98,7 +97,7 @@ function loadSettings() {
     };
 }
 
-function saveSettings(settings) {
+export function saveSettings(settings) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (err) {
@@ -107,11 +106,11 @@ function saveSettings(settings) {
 }
 
 // Objeto de configuración activo durante toda la sesión.
-const settings = loadSettings();
+export const settings = loadSettings();
 
 // Velocidades de bola en píxeles por fotograma (a 60 FPS de referencia).
 // base = velocidad inicial; max = velocidad tope tras aceleraciones.
-const BALL_SPEED_PRESETS = {
+export const BALL_SPEED_PRESETS = {
     1: { base: 5, max: 11 },
     2: { base: 7, max: 15 },
     3: { base: 9.5, max: 19 }

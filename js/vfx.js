@@ -1,6 +1,9 @@
 // Variables de estado actuales para los efectos visuales
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH } from './config.js';
+import { state } from './state.js';
+import { currentThemeHex } from './theme.js';
+import { playerProgression } from './progression.js';
 
 let currentBgId = 'none';
 
@@ -11,9 +14,9 @@ let bgAuroraWaves = [];
 
 // Variables de estado para los efectos de gol (anotación)
 let goalFlashAlpha = 0;
-let goalSlowmoTimer = 0;
-let confettiParticles = [];
-let shockwave = null; // { x, y, radius, maxRadius, alpha }
+export let goalSlowmoTimer = 0;
+export let confettiParticles = [];
+export let shockwave = null; // { x, y, radius, maxRadius, alpha }
 
 // ==========================================
 // 1. RENDERIZADORES DE ESTELAS (TRAILS)
@@ -450,7 +453,7 @@ function renderGoalFlash(ctx) {
     }
 }
 
-function triggerGoalConfetti(goalX, goalY) {
+export function triggerGoalConfetti(goalX, goalY) {
     confettiParticles = [];
     const colors = ['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff','#ffffff'];
     for (let i = 0; i < 50; i++) {
@@ -536,7 +539,7 @@ const GOAL_FX = {
 // 5. FUNCIONES API PÚBLICAS
 // ==========================================
 
-function initVFX() {
+export function initVFX() {
     const bgId = (playerProgression.selectedBg) ? playerProgression.selectedBg : 'none';
     currentBgId = bgId;
     if (BG_RENDERERS[bgId]) {
@@ -544,7 +547,7 @@ function initVFX() {
     }
 }
 
-function updateVFX(dt) {
+export function updateVFX(dt) {
     // Actualizar fondo si el renderizador activo lo requiere
     if (BG_RENDERERS[currentBgId]) {
         BG_RENDERERS[currentBgId].update(dt);
@@ -553,13 +556,13 @@ function updateVFX(dt) {
     updateGoalVFX(dt);
 }
 
-function renderBackground(ctx) {
+export function renderBackground(ctx) {
     if (BG_RENDERERS[currentBgId]) {
         BG_RENDERERS[currentBgId].render(ctx);
     }
 }
 
-function renderBallTrail(ctx, trail, radius) {
+export function renderBallTrail(ctx, trail, radius) {
     let color = '#ffffff';
     color = currentThemeHex();
     
@@ -575,7 +578,7 @@ function renderBallTrail(ctx, trail, radius) {
     }
 }
 
-function renderPaddleVFX(ctx, x, y, w, h, color) {
+export function renderPaddleVFX(ctx, x, y, w, h, color) {
     let paddleId = 'classic';
     if (playerProgression.selectedPaddle) {
         paddleId = playerProgression.selectedPaddle;
@@ -588,7 +591,7 @@ function renderPaddleVFX(ctx, x, y, w, h, color) {
     }
 }
 
-function triggerGoalVFX(goalX, goalY) {
+export function triggerGoalVFX(goalX, goalY) {
     let fxId = 'classic';
     if (playerProgression.selectedGoalFx) {
         fxId = playerProgression.selectedGoalFx;
@@ -620,7 +623,7 @@ function updateGoalVFX(dt) {
     }
 }
 
-function renderGoalVFX(ctx) {
+export function renderGoalVFX(ctx) {
     let fxId = 'classic';
     if (playerProgression.selectedGoalFx) {
         fxId = playerProgression.selectedGoalFx;
@@ -631,11 +634,11 @@ function renderGoalVFX(ctx) {
     }
 }
 
-function getGoalSlowmo() {
+export function getGoalSlowmo() {
     return goalSlowmoTimer > 0 ? 0.3 : 1.0;
 }
 
-function setActiveBg(id) {
+export function setActiveBg(id) {
     if (BG_RENDERERS[id]) {
         currentBgId = id;
         BG_RENDERERS[id].init();

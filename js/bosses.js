@@ -8,12 +8,14 @@
  * config y sus funciones init/update/render, y game.js solo llama a
  * los despachadores de abajo. Así game.js no necesita saber nada de
  * cada jefe en concreto.
- *
- * Debe cargarse después de campaign.js y antes de game.js.
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { GAME_HEIGHT, GAME_WIDTH } from './config.js';
+import { p1, p2, p2Twin, state } from './state.js';
+import { soundEffects } from './audio.js';
+import { currentCampaignLevel } from './campaign.js';
+import { drawText, spawnExtraBalls, spawnParticles, triggerShake } from './game.js';
 
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
 const BOSS_DEFAULT_CONFIG = {
@@ -30,7 +32,7 @@ const BOSS_DEFAULT_CONFIG = {
 /** Desvío de puntería actual del jefe. Se renueva en cada intercambio. */
 let bossAimOffset = 0;
 
-function bossRefreshAim() {
+export function bossRefreshAim() {
     const cfg = bossConfig();
     if (!cfg) { bossAimOffset = 0; return; }
     // Sesgo con forma de campana suave: los desvíos grandes son menos frecuentes
@@ -38,12 +40,12 @@ function bossRefreshAim() {
     bossAimOffset = r * (cfg.aiBias || 0);
 }
 
-function bossAim() {
+export function bossAim() {
     return bossConfig() ? bossAimOffset : 0;
 }
 
 /** Estado vivo del jefe en curso. Se vacía en cada bossInit(). */
-let bossState = {};
+export let bossState = {};
 
 /** Duración de un frame de referencia en ms (el dt del juego es en unidades de 60 FPS). */
 const BOSS_MS_PER_DT = 1000 / 60;
@@ -530,7 +532,7 @@ const bossYisus = {
 //  vaciando su vida, no por marcador.
 // ==================================================================
 const CREATOR_MAX_HEALTH = 200;
-const CREATOR_BAND_H = 110;                    // alto de la franja del jefe
+export const CREATOR_BAND_H = 110;                    // alto de la franja del jefe
 const CREATOR_EYE_CY = CREATOR_BAND_H / 2 - 6; // centro vertical del ojo
 const CREATOR_EYE_R = 92;                      // radio horizontal del ojo
 
@@ -921,84 +923,84 @@ function currentBoss() {
 }
 
 /** Config del jefe activo (con los valores por defecto rellenados), o null. */
-function bossConfig() {
+export function bossConfig() {
     const boss = currentBoss();
     if (!boss) return null;
     return { ...BOSS_DEFAULT_CONFIG, ...(boss.config || {}) };
 }
 
 /** true si la arena está rotada (paleta del jugador horizontal). */
-function bossIsRotatedArena() {
+export function bossIsRotatedArena() {
     const cfg = bossConfig();
     return !!cfg && cfg.paddleAxis === 'x';
 }
 
-function bossInit() {
+export function bossInit() {
     bossState = {};
     const boss = currentBoss();
     if (boss && boss.init) boss.init();
 }
 
-function bossUpdate(dt) {
+export function bossUpdate(dt) {
     const boss = currentBoss();
     if (boss && boss.update) boss.update(dt);
 }
 
 /** Colisiones extra del jefe (escombros, escudo). true si la bola rebotó. */
-function bossCollide(b) {
+export function bossCollide(b) {
     const boss = currentBoss();
     if (boss && boss.collide) return boss.collide(b);
     return false;
 }
 
-function bossOnGoal(scorerIsP1) {
+export function bossOnGoal(scorerIsP1) {
     const boss = currentBoss();
     if (boss && boss.onGoal) boss.onGoal(scorerIsP1);
 }
 
 /** Capa que se dibuja junto al campo (debajo de partículas). */
-function bossRender(ctx) {
+export function bossRender(ctx) {
     const boss = currentBoss();
     if (boss && boss.render) boss.render(ctx);
 }
 
 /** Capa por encima de todo (viñetas, tintes, avisos). */
-function bossRenderOverlay(ctx) {
+export function bossRenderOverlay(ctx) {
     const boss = currentBoss();
     if (boss && boss.renderOverlay) boss.renderOverlay(ctx);
 }
 
 /** ¿Este jefe oculta la bola real? (Fano) */
-function bossHidesBall() {
+export function bossHidesBall() {
     const boss = currentBoss();
     return !!(boss && boss.hidesBall && boss.hidesBall());
 }
 
 /** ¿Está congelada la paleta del jugador? (Yisus) */
-function bossFreezesPlayer() {
+export function bossFreezesPlayer() {
     const boss = currentBoss();
     return !!(boss && boss.freezesPlayer && boss.freezesPlayer());
 }
 
 /** ¿Están invertidos los controles? (El Creador, fase 2+) */
-function bossInvertsControls() {
+export function bossInvertsControls() {
     const boss = currentBoss();
     return !!(boss && boss.invertsControls && boss.invertsControls());
 }
 
 /** Aplica daño al jefe con barra de vida. Devuelve la vida restante. */
-function bossDamage(amount) {
+export function bossDamage(amount) {
     if (typeof bossState.health !== 'number') return 0;
     bossState.health = Math.max(0, bossState.health - amount);
     return bossState.health;
 }
 
 /** ¿El tramo del jefe en esa X está blindado? Si lo está, no recibe daño. */
-function bossSegmentArmored(x) {
+export function bossSegmentArmored(x) {
     const boss = currentBoss();
     return !!(boss && boss.segmentIsArmored && boss.segmentIsArmored(x));
 }
 
-function bossHealth() {
+export function bossHealth() {
     return typeof bossState.health === 'number' ? bossState.health : 0;
 }

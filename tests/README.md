@@ -28,7 +28,9 @@ runner lo detecta y falla con un mensaje claro).
 
 1. `runner.js` descarga `index.html` y lo carga en un iframe (`srcdoc`)
    inyectando dos scripts: `harness/install.js` **antes** que cualquier script
-   del juego y un adaptador de lectura **después**.
+   del juego y el adaptador de lectura (`adapters/esm.js`) **después**. El
+   adaptador importa los módulos del juego por las mismas rutas, que el mapa
+   de imports resuelve a las mismas URL: lee las instancias reales.
 2. `harness/install.js` sustituye todo lo que no es determinista:
    - `Math.random` por un generador con semilla;
    - `Date` y `performance.now` por un reloj virtual;
@@ -77,6 +79,15 @@ El hash del canvas **solo vale en el navegador donde se grabó**: otro
 navegador antialiasa distinto. Si cambia el navegador, el runner lo avisa e
 ignora los píxeles; el resto de secciones se sigue comparando.
 
+### El mapa de imports
+
+Antes de los escenarios se ejecuta una comprobación estática,
+`mapa-de-imports` (`lib/importmap.js`): todo módulo alcanzable desde
+`js/main.js` está en el mapa de `index.html` con el mismo `?v=N`, ningún
+`import` lleva versión, no sobra ninguna entrada y `style.css` usa el mismo N.
+Un módulo olvidado en el mapa funcionaría en local pero GitHub Pages podría
+servir una copia vieja.
+
 ## Grabar referencias
 
 **Grabar referencias** ejecuta cada escenario dos veces y solo graba si ambas
@@ -102,6 +113,6 @@ el test lo detecta aunque el estado coincida.
 | `runner.js` | carga del juego, grabación, bot, acciones y comparación |
 | `scenarios.js` | los escenarios |
 | `harness/install.js` | sustituciones deterministas dentro del iframe |
-| `adapters/` | lectura del estado del juego (una por versión de su arquitectura) |
-| `lib/` | JSON canónico, hashes y serialización del DOM |
+| `adapters/esm.js` | lectura del estado del juego (lo único que conoce sus módulos) |
+| `lib/` | JSON canónico, hashes, serialización del DOM y comprobación del mapa de imports |
 | `golden/` | referencias grabadas |

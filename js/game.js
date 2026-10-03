@@ -7,9 +7,94 @@
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import {
+    BALL_SPEED_PRESETS,
+    ballRadius,
+    GAME_HEIGHT,
+    GAME_WIDTH,
+    paddleHeight,
+    paddleSpeed,
+    paddleWidth,
+    settings
+} from './config.js';
+import { p1, p2, p2Twin, state } from './state.js';
+import { currentThemeHex } from './theme.js';
+import {
+    getAudioContext,
+    playGameplayMusic,
+    playMenuMusic,
+    soundEffects,
+    stopGameplayMusic,
+    stopMenuMusic
+} from './audio.js';
+import {
+    statsFlushTime,
+    statsOnGameEnd,
+    statsOnGameStart,
+    statsOnPaddleHit,
+    statsOnScore
+} from './stats.js';
+import { unlockAchievement } from './achievements.js';
+import { isActionPressed } from './input.js';
+import { awardGameRewards, resetSessionTrackers } from './progression.js';
+import { updateCoinDisplay } from './shop.js';
+import {
+    getGoalSlowmo,
+    initVFX,
+    renderBackground,
+    renderBallTrail,
+    renderGoalVFX,
+    renderPaddleVFX,
+    triggerGoalVFX,
+    updateVFX
+} from './vfx.js';
+import {
+    enforcePowerups,
+    getSlowmoMultiplier,
+    initPowerups,
+    renderActiveEffectHUD,
+    renderPowerup,
+    renderShield,
+    setLastHitter,
+    updatePowerups
+} from './powerups.js';
+import {
+    checkMidDialogue,
+    currentCampaignLevel,
+    getNextCampaignBoss,
+    HACHEPES_LORE,
+    handleCampaignVictory,
+    isDialogueActive,
+    playBossOutcomeDialogue,
+    resetMidDialogue,
+    resetMusicRate,
+    runFinaleSequence,
+    runTrueEndingSequence,
+    stopDialogue
+} from './campaign.js';
+import {
+    bossAim,
+    bossCollide,
+    bossConfig,
+    bossDamage,
+    bossFreezesPlayer,
+    bossHealth,
+    bossHidesBall,
+    bossInit,
+    bossInvertsControls,
+    bossIsRotatedArena,
+    bossOnGoal,
+    bossRefreshAim,
+    bossRender,
+    bossRenderOverlay,
+    bossSegmentArmored,
+    bossUpdate,
+    CREATOR_BAND_H
+} from './bosses.js';
+import { resetTouchHints, touchToCanvasX, touchToCanvasY } from './touch.js';
+import { showScreen, updateProgressionDisplay } from './ui.js';
 
-const canvas = document.getElementById('pongCanvas');
+export const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
 
 let animationFrameId;
@@ -56,7 +141,7 @@ function handleMouseMove(e) {
 
 // Al desactivar el mouse control, soltar la paleta en ambos ejes: dejar
 // touchX puesto la mantendría pegada e ignoraría el teclado.
-function clearMouseControl() {
+export function clearMouseControl() {
     if (mouseActive) {
         p1.touchY = null;
         p1.touchX = null;
@@ -112,7 +197,7 @@ function resizeCanvas() {
 }
 
 /** Registra el ratón sobre el canvas y el redimensionado de la ventana. */
-function initCanvas() {
+export function initCanvas() {
     canvas.addEventListener('mouseenter', () => { mouseActive = true; });
     canvas.addEventListener('mouseleave', () => {
         mouseActive = false;
@@ -122,7 +207,7 @@ function initCanvas() {
 }
 
 // --- Ciclo de vida de la partida ---
-function startGame(mode) {
+export function startGame(mode) {
     getAudioContext();
 
     state.mode = mode;
@@ -207,11 +292,11 @@ function startGame(mode) {
     animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-function restartCurrentGame() {
+export function restartCurrentGame() {
     startGame(state.mode);
 }
 
-function quitGame() {
+export function quitGame() {
     state.isPlaying = false;
     cancelAnimationFrame(animationFrameId);
 
@@ -236,7 +321,7 @@ function quitGame() {
     showScreen('main-menu');
 }
 
-function togglePause() {
+export function togglePause() {
     if (!state.isPlaying) return;
     state.isPaused = !state.isPaused;
     if (state.isPaused) {
@@ -279,7 +364,7 @@ function resetBall(initialServe = false) {
 }
 
 /** Función para generar bolas extra (Multi-Bola power-up) */
-function spawnExtraBalls() {
+export function spawnExtraBalls() {
     if (state.balls.length === 0) return;
     const source = state.balls[0];
     const count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar
@@ -308,7 +393,7 @@ function collision(b, p) {
     return p.x < right && p.y < bottom && p.x + p.width > left && p.y + p.height > top;
 }
 
-function spawnParticles(x, y, color, count = 14) {
+export function spawnParticles(x, y, color, count = 14) {
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 2 + Math.random() * 4;
@@ -322,7 +407,7 @@ function spawnParticles(x, y, color, count = 14) {
     }
 }
 
-function triggerShake(intensity = 8, durationMs = 200) {
+export function triggerShake(intensity = 8, durationMs = 200) {
     if (!settings.screenShake) return;
     state.shakeIntensity = intensity;
     state.shakeTimeMs = durationMs;
@@ -803,7 +888,7 @@ function drawRect(x, y, w, h, color) {
     ctx.fillRect(x, y, w, h);
 }
 
-function drawText(text, x, y, color, size) {
+export function drawText(text, x, y, color, size) {
     ctx.fillStyle = color;
     ctx.font = `${size}px "Press Start 2P", cursive`;
     ctx.textAlign = 'center';

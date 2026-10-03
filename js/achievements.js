@@ -2,14 +2,17 @@
  * achievements.js
  * ------------------------------------------------------------------
  * Catálogo de logros, verificación de condiciones de desbloqueo,
- * y notificación visual (toast). Debe cargarse después de stats.js.
+ * y notificación visual (toast).
  * ------------------------------------------------------------------
  */
 
-'use strict';
+import { BALL_SPEED_PRESETS, settings, THEMES } from './config.js';
+import { soundEffects } from './audio.js';
+import { gameStats, maxDeficit, saveStats } from './stats.js';
+import { powerupsThisGame } from './powerups.js';
 
 // --- Catálogo de logros ---
-const ACHIEVEMENTS = [
+export const ACHIEVEMENTS = [
     // 🏁 Inicio
     { id: 'first_win',      emoji: '🏓', name: 'Primer Victoria',  desc: 'Gana tu primera partida vs CPU' },
     { id: 'first_local',    emoji: '🤝', name: 'En Compañía',      desc: 'Juega tu primera partida local' },
@@ -65,7 +68,7 @@ let isShowingAchievement = false;
  * Desbloquea un logro si no estaba ya desbloqueado.
  * @returns {boolean} true si se desbloqueó ahora
  */
-function unlockAchievement(id) {
+export function unlockAchievement(id) {
     if (gameStats.achievements[id]) return false; // ya desbloqueado
 
     gameStats.achievements[id] = new Date().toISOString();
@@ -125,7 +128,7 @@ function showAchievementToast(achievement) {
  * Verifica todas las condiciones de logros.
  * Se llama al terminar una partida y al cambiar tema.
  */
-function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
+export function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
     const s = gameStats;
 
     // --- Inicio ---
@@ -189,10 +192,10 @@ function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
  * Total de logros a efectos de contador. Un secreto aún bloqueado no se
  * cuenta: si no, el marcador delataría que existe algo escondido.
  */
-function getVisibleAchievementsTotal() {
+export function getVisibleAchievementsTotal() {
     return ACHIEVEMENTS.filter(a => !a.secret || gameStats.achievements[a.id]).length;
 }
 
-function getUnlockedCount() {
+export function getUnlockedCount() {
     return Object.keys(gameStats.achievements).length;
 }

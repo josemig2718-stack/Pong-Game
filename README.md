@@ -2,7 +2,7 @@
 
 Un clásico juego de Pong para navegador, expandido masivamente en una experiencia arcade moderna: un **modo campaña** con seis jefes y su propia historia, partidas contra la CPU o a dos jugadores, progresión con niveles (XP), una tienda de cosméticos (Chemi Coins), power-ups dinámicos, logros y estadísticas detalladas.
 
-Todo funciona abriendo un archivo: sin instalar nada, sin compilar y sin conexión más allá de la primera carga.
+Sin instalar nada y sin compilar: basta servir la carpeta como web estática (GitHub Pages o un servidor local).
 
 ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-22c55e) ![Sin dependencias de build](https://img.shields.io/badge/build-no%20requerido-blue) ![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 
@@ -52,7 +52,7 @@ Se puede repetir cualquier jefe ya vencido (con recompensa reducida), y hay un l
 
 ## 📂 Estructura del Proyecto
 
-El código está estructurado en módulos modulares (vanilla JS global namespace). No utiliza NPM, Node.js ni bundlers.
+El código está organizado en módulos ES nativos. No utiliza NPM, Node.js ni bundlers.
 
 ```
 pong-game/
@@ -85,7 +85,7 @@ pong-game/
     └── shop/           # Imágenes previas de todos los cosméticos de la tienda
 ```
 
-*Los archivos JS se cargan secuencialmente al final del `index.html`, y ese orden importa: `config.js` primero, `ui.js` al final.*
+*`index.html` carga un único módulo, `js/main.js`, que importa el resto a través del mapa de imports.*
 
 ## 🎮 Controles por Defecto
 
@@ -105,19 +105,20 @@ pong-game/
 - **Ratón**: actívalo en Configuración para mover la paleta siguiendo el cursor.
 
 ## 🚀 Cómo Jugar (Despliegue)
-Al ser una aplicación 100% frontend (*Static Web App*), no requiere servidor ni compilación:
+Es una aplicación 100% frontend (*Static Web App*): no requiere compilación, pero sí servirse por HTTP, porque usa módulos ES nativos y los navegadores no los cargan desde `file://` (abrir `index.html` con doble clic no funciona).
 1. Clona el repositorio o descarga el código.
-2. Abre `index.html` en cualquier navegador moderno.
-3. Alternativamente, puedes hospedar la carpeta directamente en **GitHub Pages**.
+2. Sirve la carpeta: `python tests/serve.py` y abre <http://127.0.0.1:8000/>.
+3. O publícala tal cual en **GitHub Pages**.
 
-> Para desarrollar es preferible servir la carpeta (`python -m http.server 8000`) en vez de abrir el archivo directo: los MP3 y el `localStorage` se comportan de forma más fiable sobre `http://` que sobre `file://`.
+> `tests/serve.py` es preferible a `python -m http.server`: desactiva la caché (si no, el navegador puede seguir usando JS viejo tras editarlo) y sirve los `.js` con el tipo MIME correcto, que en algunos Windows falla y entonces los módulos no cargan.
 
 ## 🧑‍💻 Notas de desarrollo
 
-No hay build, ni dependencias, ni tests. Se edita y se recarga. Dos cosas que conviene saber antes de tocar el código:
+No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes de tocar el código:
 
-- **La caché se invalida a mano.** Cada `<script>` y el `<link>` del CSS llevan un `?v=N` en `index.html`. **Después de editar cualquier JS o CSS hay que subir ese número**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado.
-- **No hay módulos.** Todo son variables y funciones globales, y los archivos dependen del orden de carga del final de `index.html`. Antes de crear una función o constante nueva, comprueba que el nombre no exista ya.
+- **La caché se invalida a mano, con un solo número.** El mapa de imports de `index.html` añade `?v=N` a cada módulo, y el `<link>` del CSS lleva el mismo N. **Después de editar cualquier JS o CSS hay que subir N en todos esos sitios**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un módulo nuevo hay que añadirlo al mapa.
+- **Módulos ES nativos.** Cada archivo de `js/` importa lo que usa; `js/main.js` es el punto de entrada y arranca todo.
+- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> reproduce 22 partidas deterministas fotograma a fotograma y las compara con referencias grabadas, además de comprobar el mapa de imports. Ver `tests/README.md`.
 
 `CLAUDE.md` recoge la arquitectura en detalle: la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
 

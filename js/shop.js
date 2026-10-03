@@ -3,7 +3,15 @@
 // Tienda de Cosméticos y Generación de UI
 // ==========================================
 
-'use strict';
+import { soundEffects } from './audio.js';
+import { unlockAchievement } from './achievements.js';
+import {
+    hasItem,
+    playerProgression,
+    purchaseItem,
+    saveProgression,
+    selectCosmetic
+} from './progression.js';
 
 const SHOP_CATALOG = {
     trails: [
@@ -46,14 +54,14 @@ let currentShopTab = 'trails';
 /**
  * Muestra la pantalla de la tienda
  */
-function showShopScreen() {
+export function showShopScreen() {
     populateShopTab(currentShopTab);
 }
 
 /**
  * Cambia la pestaña de la tienda
  */
-function switchShopTab(categoryKey) {
+export function switchShopTab(categoryKey) {
     currentShopTab = categoryKey;
     
     // Actualizar botones UI
@@ -210,7 +218,7 @@ function equipShopItem(categoryKey, itemId) {
 /**
  * Actualiza la UI de monedas en todas partes
  */
-function updateCoinDisplay() {
+export function updateCoinDisplay() {
     const displays = ['shop-coin-display', 'menu-coins'];
     displays.forEach(id => {
         const display = document.getElementById(id);
