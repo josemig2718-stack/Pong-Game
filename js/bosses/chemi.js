@@ -12,8 +12,8 @@
 
 import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
 import { soundEffects } from '../systems/audio.js';
+import { spawnParticles } from '../game/effects.js';
 import { bossState } from './shared.js';
-import { spawnParticles } from '../game.js';
 
 export const bossChemi = {
     config: { targetScore: 5, aiSpeed: 0.7,  aiError: 26, aiBias: 78 },

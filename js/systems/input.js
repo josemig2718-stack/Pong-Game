@@ -9,7 +9,7 @@
 
 import { DEFAULT_BINDINGS, keyLabel, saveSettings, settings } from '../core/settings.js';
 import { state } from '../core/state.js';
-import { togglePause } from '../game.js';
+import { togglePause } from '../game/match.js';
 
 // Estado de teclas presionadas en este instante (se llena dinámicamente
 // según las combinaciones configuradas en `settings.bindings`).

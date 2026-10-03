@@ -1,9 +1,25 @@
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './core/constants.js';
-import { settings } from './core/settings.js';
-import { p1, p2, state } from './core/state.js';
-import { POWERUP_TYPES } from './data/powerups.js';
-import { soundEffects } from './systems/audio.js';
-import { spawnExtraBalls, spawnParticles } from './game.js';
+/**
+ * game/powerups.js
+ * ------------------------------------------------------------------
+ * Power-ups en partida: aparición, recogida, efectos y su reversión.
+ *
+ * Solo hay un power-up en el campo y un efecto activo a la vez. Los
+ * efectos que cambian el tamaño de las paletas o de las bolas guardan el
+ * valor original en activeEffect.originalValues y revertPowerup() lo
+ * restaura; por eso startGame/quitGame/checkWin también reponen el
+ * tamaño de las paletas por si una partida acaba con un efecto activo.
+ *
+ * Los tipos están en data/powerups.js.
+ * ------------------------------------------------------------------
+ */
+
+import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME, paddleHeight } from '../core/constants.js';
+import { settings } from '../core/settings.js';
+import { p1, p2, state } from '../core/state.js';
+import { POWERUP_TYPES } from '../data/powerups.js';
+import { soundEffects } from '../systems/audio.js';
+import { spawnExtraBalls } from './balls.js';
+import { spawnParticles } from './effects.js';
 
 // Variables de estado del sistema de power-ups
 export let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
@@ -37,7 +53,7 @@ export function updatePowerups(dt) {
     if (state.isPaused) return;
     if (!state.isPlaying) return;
 
-    const dtMs = dt * (1000 / 60);
+    const dtMs = dt * MS_PER_FRAME;
     const timeNow = Date.now();
 
     // 1. Manejo del cooldown y aparición
@@ -80,11 +96,11 @@ export function updatePowerups(dt) {
         for (let i = 0; i < state.balls.length; i++) {
             const b = state.balls[i];
             // Detección de colisión AABB simple
-            if (b.x + b.radius > shieldWall.x && 
+            if (b.x + b.radius > shieldWall.x &&
                 b.x - b.radius < shieldWall.x + shieldWall.width &&
-                b.y + b.radius > shieldWall.y && 
+                b.y + b.radius > shieldWall.y &&
                 b.y - b.radius < shieldWall.y + shieldWall.height) {
-                
+
                 // Rebotar y reposicionar para evitar que se quede pegado
                 b.dx *= -1;
                 if (shieldWall.owner === 'p1') {
@@ -92,7 +108,7 @@ export function updatePowerups(dt) {
                 } else {
                     b.x = shieldWall.x - b.radius;
                 }
-                
+
                 // Efecto de sonido si existe
                 soundEffects.paddleHit();
             }
@@ -160,7 +176,7 @@ function collectPowerup() {
  */
 function applyPowerup(type, beneficiary) {
     const rival = beneficiary === 'p1' ? 'p2' : 'p1';
-    
+
     // Preparar el estado del efecto si tiene duración
     if (type.duration > 0) {
         activeEffect = {
@@ -221,24 +237,24 @@ function applyPowerup(type, beneficiary) {
  */
 function revertPowerup() {
     if (!activeEffect) return;
-    
+
     const type = activeEffect.type;
-    
+
     switch (type.id) {
         case 'paddle_xl':
         case 'paddle_mini':
             const targetPaddle = activeEffect.target === 'p1' ? p1 : p2;
             targetPaddle.height = activeEffect.originalValues.height;
             break;
-            
+
         case 'big_ball':
             state.balls.forEach(b => b.radius = activeEffect.originalValues.radius);
             break;
-            
+
         case 'shield':
             shieldWall = null;
             break;
-            
+
         case 'slowmo':
             slowmoActive = false;
             break;
@@ -305,7 +321,7 @@ export function renderPowerup(ctx) {
     const type = activePowerup.type;
 
     ctx.save();
-    
+
     // Efecto de pulso en la escala
     const scale = 1.0 + 0.1 * Math.sin(Date.now() / 300);
     ctx.translate(x, y);
@@ -357,7 +373,7 @@ export function renderActiveEffectHUD(ctx, canvasWidth) {
     const width = 80;
     const height = 20;
     const padding = 20;
-    
+
     // Determinar posición (izquierda p1, derecha p2)
     let x, y = padding;
     if (activeEffect.target === 'p1') {
@@ -367,7 +383,7 @@ export function renderActiveEffectHUD(ctx, canvasWidth) {
     }
 
     ctx.save();
-    
+
     // Fondo de la barra
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(x, y, width, height);
@@ -385,7 +401,7 @@ export function renderActiveEffectHUD(ctx, canvasWidth) {
     ctx.font = '16px Arial';
     ctx.textAlign = activeEffect.target === 'p1' ? 'left' : 'right';
     ctx.textBaseline = 'middle';
-    
+
     const emojiX = activeEffect.target === 'p1' ? x + width + 5 : x - 5;
     ctx.fillText(activeEffect.type.emoji, emojiX, y + height / 2);
 
@@ -400,16 +416,16 @@ export function renderShield(ctx) {
     if (!shieldWall) return;
 
     ctx.save();
-    
+
     // Resplandor
     ctx.shadowBlur = 20;
     ctx.shadowColor = '#3b82f6'; // Color del escudo
-    
+
     // Relleno con transparencia y posible animación de pulso sutil
     const opacity = 0.3 + 0.05 * Math.sin(Date.now() / 150);
     ctx.fillStyle = `rgba(59, 130, 246, ${opacity})`;
-    
+
     ctx.fillRect(shieldWall.x, shieldWall.y, shieldWall.width, shieldWall.height);
-    
+
     ctx.restore();
 }

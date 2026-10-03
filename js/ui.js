@@ -23,6 +23,7 @@ import {
     stopAllMusic
 } from './systems/audio.js';
 import { refreshBindingButtons, startListeningFor } from './systems/input.js';
+import { clearMouseControl } from './systems/pointer.js';
 import {
     getCurrentLevel,
     getXPProgress,
@@ -34,7 +35,6 @@ import {
 import { formatPlayTime, gameStats, resetStats } from './systems/stats.js';
 import { applyTheme, buildThemeSwatches } from './systems/theme.js';
 import { renderCampaignMap } from './campaign.js';
-import { clearMouseControl } from './game.js';
 import { showShopScreen, updateCoinDisplay } from './shop.js';
 
 export function showScreen(screenId) {

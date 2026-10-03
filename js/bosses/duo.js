@@ -13,7 +13,7 @@
 import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
 import { p2Twin } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
-import { drawText } from '../game.js';
+import { drawText } from '../game/draw.js';
 
 export const bossDuo = {
     config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58 },

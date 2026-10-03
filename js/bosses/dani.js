@@ -13,8 +13,8 @@
 import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
 import { p2, state } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
+import { spawnParticles, triggerShake } from '../game/effects.js';
 import { bossState } from './shared.js';
-import { spawnParticles, triggerShake } from '../game.js';
 
 export const bossDani = {
     config: { targetScore: 6, aiSpeed: 0.85, aiError: 16, aiBias: 66 },

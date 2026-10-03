@@ -13,8 +13,10 @@
 import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
 import { p1, state } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
+import { spawnExtraBalls } from '../game/balls.js';
+import { drawText } from '../game/draw.js';
+import { spawnParticles, triggerShake } from '../game/effects.js';
 import { bossState, CREATOR_BAND_H } from './shared.js';
-import { drawText, spawnExtraBalls, spawnParticles, triggerShake } from '../game.js';
 
 const CREATOR_MAX_HEALTH = 200;
 const CREATOR_EYE_CY = CREATOR_BAND_H / 2 - 6; // centro vertical del ojo

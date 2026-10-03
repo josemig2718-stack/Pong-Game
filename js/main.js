@@ -14,16 +14,16 @@
 
 import { initAudio } from './systems/audio.js';
 import { initInput } from './systems/input.js';
+import { initPointer } from './systems/pointer.js';
+import { initCanvas } from './game/canvas.js';
 import { initActions } from './actions.js';
 import { initCarouselControls } from './campaign.js';
-import { initCanvas } from './game.js';
-import { initTouchControls } from './touch.js';
 import { initUI } from './ui.js';
 
 initAudio();             // desbloqueo del audio con la primera interacción
 initInput();             // teclado de juego y reasignación de teclas
-initCanvas();            // ratón sobre el canvas y redimensionado
+initCanvas();            // redimensionado del canvas con la ventana
+initPointer();           // ratón y dedo sobre el canvas, botón de pausa
 initCarouselControls();  // teclado y deslizamiento del selector de jefes
-initTouchControls();     // controles táctiles y botón de pausa
 initActions();           // botones, sliders e interruptores del HTML (data-action…)
 initUI();                // interfaz inicial y menú principal

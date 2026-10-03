@@ -18,7 +18,7 @@
 import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './constants.js';
 
 export const state = {
-    /** 'cpu' | 'local' | 'hachepe' | 'campaign' */
+    /** @type {'cpu' | 'local' | 'hachepe' | 'campaign'} */
     mode: 'cpu',
     isPlaying: false,
     isPaused: false,

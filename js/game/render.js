@@ -1,0 +1,201 @@
+/**
+ * game/render.js
+ * ------------------------------------------------------------------
+ * Dibuja un fotograma de la partida, por capas:
+ * fondo → red/marcador → jefe → estelas y bolas → paletas → power-ups →
+ * partículas → capa superior del jefe → efecto de gol → cuenta
+ * regresiva → scanlines.
+ *
+ * Varios renderizadores consumen Math.random (vibración, estelas de
+ * fuego/hielo, glitch del Creador), que comparte generador con la
+ * física: no cambies el orden de las capas.
+ * ------------------------------------------------------------------
+ */
+
+import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
+import { p1, p2, p2Twin, state } from '../core/state.js';
+import { currentThemeHex } from '../systems/theme.js';
+import { ctx } from './canvas.js';
+import { drawRect, drawText, hexToRgba } from './draw.js';
+import { renderActiveEffectHUD, renderPowerup, renderShield } from './powerups.js';
+import { renderBackground } from '../vfx/backgrounds.js';
+import { renderGoalVFX } from '../vfx/goal-fx.js';
+import { renderPaddleVFX } from '../vfx/paddles.js';
+import { renderBallTrail } from '../vfx/trails.js';
+import {
+    bossConfig,
+    bossHidesBall,
+    bossIsRotatedArena,
+    bossRender,
+    bossRenderOverlay
+} from '../bosses/index.js';
+
+const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
+
+/** La red central. Avanza el contador de fotogramas, que la anima. */
+function drawNet(color) {
+    state.frameCount++;
+    for (let i = 0; i <= GAME_HEIGHT; i += 30) {
+        drawRect(net.x, i + (state.frameCount % 30), net.width, net.height, color);
+    }
+}
+
+function drawBallTrail() {
+    for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius);
+}
+
+function drawParticles() {
+    state.particles.forEach(p => {
+        ctx.globalAlpha = Math.max(p.life, 0);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+    });
+    ctx.globalAlpha = 1;
+}
+
+/** Línea discontinua con la trayectoria de la primera bola (durante el saque). */
+function drawTrajectoryPreview(themeColor) {
+    if (state.balls.length === 0) return;
+    const b = state.balls[0];
+    const previewLength = 280;
+    const segmentLen = 10;
+    const gapLen = 8;
+
+    const speed = Math.sqrt(b.dx * b.dx + b.dy * b.dy);
+    if (speed === 0) return;
+    const dirX = b.dx / speed;
+    let dirY = b.dy / speed;
+
+    let curX = b.x;
+    let curY = b.y;
+    let distLeft = previewLength;
+
+    const pulse = 0.4 + 0.3 * Math.sin(performance.now() / 200);
+
+    ctx.save();
+    ctx.strokeStyle = hexToRgba(themeColor, pulse);
+    ctx.lineWidth = 2;
+    ctx.setLineDash([segmentLen, gapLen]);
+    ctx.beginPath();
+    ctx.moveTo(curX, curY);
+
+    while (distLeft > 0) {
+        let distToWall;
+        if (dirY < 0) {
+            distToWall = (curY - b.radius) / (-dirY);
+        } else if (dirY > 0) {
+            distToWall = (GAME_HEIGHT - b.radius - curY) / dirY;
+        } else {
+            distToWall = distLeft;
+        }
+
+        if (distToWall <= 0) distToWall = distLeft;
+
+        const step = Math.min(distToWall, distLeft);
+        curX += dirX * step;
+        curY += dirY * step;
+        distLeft -= step;
+
+        ctx.lineTo(curX, curY);
+
+        if (distLeft > 0 && distToWall <= step + 0.01) {
+            dirY = -dirY;
+        }
+    }
+
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+/** Dibuja el fotograma completo. */
+export function render() {
+    const themeColor = currentThemeHex();
+
+    ctx.save();
+    if (state.shakeTimeMs > 0) {
+        const dx = (Math.random() - 0.5) * state.shakeIntensity;
+        const dy = (Math.random() - 0.5) * state.shakeIntensity;
+        ctx.translate(dx, dy);
+    }
+
+    // Fondo negro base
+    drawRect(-20, -20, GAME_WIDTH + 40, GAME_HEIGHT + 40, '#000');
+
+    // Fondo animado VFX (estrellas, lluvia, aurora)
+    renderBackground(ctx);
+
+    // Resplandor sutil detrás del centro
+    const gradient = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 10, GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_HEIGHT / 1.3);
+    gradient.addColorStop(0, hexToRgba(themeColor, 0.08));
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    const rotatedArena = bossIsRotatedArena();
+
+    if (!rotatedArena) {
+        drawNet(themeColor);
+        // Marcador
+        drawText(state.p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
+        drawText(state.p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
+    } else {
+        // Arena rotada: abajo se muestran los fallos restantes del jugador
+        const bcfg = bossConfig();
+        const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - state.p2Score);
+        drawText('♥ '.repeat(vidas).trim() || '—', GAME_WIDTH / 2, GAME_HEIGHT - 55, '#ef4444', 22);
+    }
+
+    // Capa propia del jefe: escombros, escudo, franja del Creador...
+    bossRender(ctx);
+
+    // Estelas + bolas
+    const hideBall = bossHidesBall();
+    if (!hideBall) drawBallTrail();
+    for (const b of state.balls) {
+        if (hideBall) continue; // Fano oculta la bola real
+
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = themeColor;
+        ctx.shadowBlur = 18;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // Paletas
+    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, '#ffffff');
+    if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
+    if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
+
+    // Power-ups
+    renderPowerup(ctx);
+    renderShield(ctx);
+    renderActiveEffectHUD(ctx, GAME_WIDTH);
+
+    drawParticles();
+
+    // Capa superior del jefe: viñetas, tintes, avisos y glitch
+    bossRenderOverlay(ctx);
+
+    // Efectos de gol VFX (flash, confeti, shockwave)
+    renderGoalVFX(ctx);
+
+    // Cuenta regresiva de saque + previsualización de trayectoria
+    if (state.serveCountdownMs > 0) {
+        const secs = Math.ceil(state.serveCountdownMs / 1000);
+        drawTrajectoryPreview(themeColor);
+        ctx.globalAlpha = 0.9;
+        drawText(String(secs), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
+        ctx.globalAlpha = 1;
+    }
+
+    // Scanlines
+    ctx.fillStyle = hexToRgba(themeColor, 0.03);
+    for (let i = 0; i < GAME_HEIGHT; i += 4) {
+        ctx.fillRect(0, i, GAME_WIDTH, 1);
+    }
+
+    ctx.restore();
+}

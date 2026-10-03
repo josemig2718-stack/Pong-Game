@@ -12,7 +12,7 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { THEMES } from '../data/themes.js';
 import { soundEffects } from './audio.js';
 import { gameStats, maxDeficit, saveStats } from './stats.js';
-import { powerupsThisGame } from '../powerups.js';
+import { powerupsThisGame } from '../game/powerups.js';
 
 /** Cola de notificaciones de logros pendientes */
 const achievementQueue = [];

@@ -16,6 +16,7 @@
  */
 
 import { resetBindings } from './systems/input.js';
+import { quitGame, restartCurrentGame, startGame, togglePause } from './game/match.js';
 import {
     carouselMove,
     closeCampaignIntro,
@@ -23,7 +24,6 @@ import {
     nextCampaignLevel,
     replayCampaignIntro
 } from './campaign.js';
-import { quitGame, restartCurrentGame, startGame, togglePause } from './game.js';
 import { switchShopTab } from './shop.js';
 import {
     closeGame,

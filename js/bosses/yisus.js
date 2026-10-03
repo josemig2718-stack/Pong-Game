@@ -13,8 +13,9 @@
 import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
 import { p2, state } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
+import { drawText } from '../game/draw.js';
+import { triggerShake } from '../game/effects.js';
 import { bossState } from './shared.js';
-import { drawText, triggerShake } from '../game.js';
 
 export const bossYisus = {
     config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48 },

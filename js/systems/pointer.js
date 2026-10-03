@@ -1,17 +1,26 @@
 /**
- * touch.js
+ * systems/pointer.js
  * ------------------------------------------------------------------
- * Detección automática de dispositivo táctil y controles por arrastre
- * ("tocar y deslizar el dedo") para jugar desde el celular, sin tocar
- * el comportamiento existente por teclado en PC. Ambos esquemas de
- * control conviven: si hay un dedo activo sobre una paleta, manda el
- * dedo (ver game.js -> update()); si no, manda el teclado.
+ * Control de las paletas con el dedo y con el ratón.
+ *
+ * Los dos escriben en el mismo canal, touchY/touchX de la paleta: si
+ * tiene valor, manda sobre el teclado (ver movePlayer1 en
+ * game/physics.js); si es null, manda el teclado. En la arena rotada
+ * del Creador la paleta se mueve en X, así que hay que escribir touchX.
+ *
+ * Táctil: en modo local la mitad izquierda mueve a P1 y la derecha a
+ * P2; en el resto, cualquier toque mueve a P1. Incluye el botón de
+ * pausa en pantalla (imprescindible en móvil, sin tecla ESC) y el aviso
+ * de girar el dispositivo.
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from './core/constants.js';
-import { p1, p2, state } from './core/state.js';
-import { canvas, togglePause } from './game.js';
+import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from '../core/constants.js';
+import { settings } from '../core/settings.js';
+import { p1, p2, state } from '../core/state.js';
+import { canvas } from '../game/canvas.js';
+import { togglePause } from '../game/match.js';
+import { bossIsRotatedArena } from '../bosses/index.js';
 
 /** Heurística estándar para saber si el dispositivo es "táctil primario" */
 function isTouchDevice() {
@@ -27,13 +36,13 @@ function isTouchDevice() {
 const activeTouches = new Map();
 
 /** Convierte la coordenada Y de un evento táctil a coordenadas internas del canvas */
-export function touchToCanvasY(clientY) {
+function touchToCanvasY(clientY) {
     const rect = canvas.getBoundingClientRect();
     const ratio = GAME_HEIGHT / rect.height;
     return (clientY - rect.top) * ratio;
 }
 
-export function touchToCanvasX(clientX) {
+function touchToCanvasX(clientX) {
     const rect = canvas.getBoundingClientRect();
     const ratio = GAME_WIDTH / rect.width;
     return (clientX - rect.left) * ratio;
@@ -131,8 +140,45 @@ function setupOrientationHint() {
     closeBtn.addEventListener('click', () => hint.classList.add('orientation-hint--dismissed'));
 }
 
-/** Registra los controles táctiles, el botón de pausa y el aviso de orientación. */
-export function initTouchControls() {
+// ------------------------------------------------------------------
+//  Ratón (opcional: settings.mouseControl)
+// ------------------------------------------------------------------
+
+let mouseActive = false; // true mientras el mouse está sobre el canvas
+
+function handleMouseMove(e) {
+    if (!settings.mouseControl || !state.isPlaying || state.isPaused || !mouseActive) return;
+
+    // La arena rotada (El Creador) mueve la paleta en X: si solo se
+    // escribiera touchY, el mouse no controlaría nada en ese combate.
+    if (bossIsRotatedArena()) {
+        const canvasX = touchToCanvasX(e.clientX);
+        p1.touchX = Math.max(0, Math.min(GAME_WIDTH - p1.width, canvasX - p1.width / 2));
+        p1.touchY = null;
+    } else {
+        const canvasY = touchToCanvasY(e.clientY);
+        p1.touchY = Math.max(0, Math.min(GAME_HEIGHT - p1.height, canvasY - p1.height / 2));
+        p1.touchX = null;
+    }
+}
+
+// Al desactivar el mouse control, soltar la paleta en ambos ejes: dejar
+// touchX puesto la mantendría pegada e ignoraría el teclado.
+export function clearMouseControl() {
+    if (mouseActive) {
+        p1.touchY = null;
+        p1.touchX = null;
+    }
+}
+
+/** Registra el ratón y el táctil sobre el canvas, el botón de pausa y el aviso de orientación. */
+export function initPointer() {
+    canvas.addEventListener('mouseenter', () => { mouseActive = true; });
+    canvas.addEventListener('mouseleave', () => {
+        mouseActive = false;
+    });
+    canvas.addEventListener('mousemove', handleMouseMove);
+
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
