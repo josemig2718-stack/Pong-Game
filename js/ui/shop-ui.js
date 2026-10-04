@@ -66,12 +66,6 @@ function populateShopTab(categoryKey) {
         const isOwned = hasItem(item.id) || item.price === 0;
         const isEquipped = isOwned && equippedId === item.id;
 
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): dibujar la pestaña guarda la progresión.
-        if (item.price === 0 && !hasItem(item.id)) {
-            playerProgression.purchasedItems.push(item.id);
-            saveProgression();
-        }
-
         const card = document.createElement('div');
         card.className = 'shop-card';
         if (isEquipped) card.classList.add('shop-card--equipped');
@@ -97,8 +91,7 @@ function populateShopTab(categoryKey) {
         const img = previewDiv.querySelector('img');
         img.addEventListener('error', () => {
             img.style.display = 'none';
-            // BUG conocido (conservado, ver docs/bugs-conocidos.md): display:block deja el emoji sin centrar.
-            /** @type {HTMLElement} */ (img.nextElementSibling).style.display = 'block';
+            /** @type {HTMLElement} */ (img.nextElementSibling).style.display = 'flex';
         });
 
         const nameDiv = document.createElement('div');

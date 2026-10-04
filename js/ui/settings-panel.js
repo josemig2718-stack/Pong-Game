@@ -45,9 +45,7 @@ function toggleMusic(enabled) {
     if (enabled) {
         // Reanudar la música que corresponda según el estado actual
         if (state.isPlaying) {
-            // BUG conocido (conservado, ver docs/bugs-conocidos.md): sin el modo: en Hachepe o campaña
-            // suena la pista genérica.
-            playGameplayMusic();
+            playGameplayMusic(state.mode);
         } else {
             playMenuMusic();
         }

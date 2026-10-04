@@ -45,9 +45,14 @@ function loadProgression() {
         const saved = localStorage.getItem(PROG_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            // BUG conocido (conservado, ver docs/bugs-conocidos.md): sin purchasedItems guardado, se
-            // comparte el array de DEFAULT_PROGRESSION y comprar lo modifica.
-            return { ...DEFAULT_PROGRESSION, ...parsed, purchasedItems: parsed.purchasedItems || DEFAULT_PROGRESSION.purchasedItems };
+            const items = [...(parsed.purchasedItems || DEFAULT_PROGRESSION.purchasedItems)];
+            // Los artículos gratuitos siempre están en propiedad
+            for (const list of Object.values(SHOP_CATALOG)) {
+                for (const item of list) {
+                    if (item.price === 0 && !items.includes(item.id)) items.push(item.id);
+                }
+            }
+            return { ...DEFAULT_PROGRESSION, ...parsed, purchasedItems: items };
         }
     } catch (e) {
         console.warn("Error cargando progresión:", e);
@@ -186,8 +191,6 @@ function purchaseItem(itemId, cost) {
         playerProgression.purchasedItems.push(itemId);
         saveProgression();
 
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si el array se comparte con
-        // DEFAULT_PROGRESSION, crecen a la vez y "Grow Partner" nunca salta.
         if (playerProgression.purchasedItems.length === DEFAULT_PROGRESSION.purchasedItems.length + 1) {
             unlockAchievement('grow_partner');
         }

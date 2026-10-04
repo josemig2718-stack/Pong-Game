@@ -14,11 +14,9 @@
 'use strict';
 
 /**
- * Lee y parsea una clave. Devuelve `fallback` si no existe o si falla la
- * lectura o el parseo (avisando por consola).
- *
- * Ojo: si la clave existe y contiene el JSON `null`, devuelve null, no
- * `fallback`. Es intencionado: así se comportaba el código original.
+ * Lee y parsea una clave que guarda un objeto. Devuelve `fallback` si no
+ * existe, si falla la lectura o el parseo (avisando por consola) o si lo
+ * guardado no es un objeto (p. ej. el JSON `null`).
  * @template T
  * @param {string} key
  * @param {T} fallback
@@ -28,7 +26,10 @@
 function readJSON(key, fallback, warning) {
     try {
         const raw = localStorage.getItem(key);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const value = JSON.parse(raw);
+            if (value !== null && typeof value === 'object') return value;
+        }
     } catch (err) {
         console.warn(warning, err);
     }

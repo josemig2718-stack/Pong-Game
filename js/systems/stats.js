@@ -53,8 +53,6 @@ function loadStats() {
     return {
         ...DEFAULT_STATS,
         ...saved,
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si lo guardado es el JSON null,
-        // saved.achievements lanza un error y el juego no arranca.
         achievements: { ...(saved.achievements || {}) },
         themesUsed:   [...(saved.themesUsed || [])]
     };
@@ -68,9 +66,8 @@ function saveStats() {
 /** Borra solo las estadísticas numéricas, manteniendo los logros intactos */
 function resetStats() {
     const preserved = { ...gameStats.achievements };
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): copia la referencia de
-    // DEFAULT_STATS.themesUsed: los temas que se prueben después la modifican.
     Object.assign(gameStats, DEFAULT_STATS);
+    gameStats.themesUsed = [];   // array propio: no compartir el de DEFAULT_STATS
     gameStats.achievements = preserved;
     saveStats();
 }

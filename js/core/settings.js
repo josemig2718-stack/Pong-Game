@@ -70,8 +70,6 @@ function loadSettings() {
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si lo guardado es el JSON null,
-        // saved.bindings lanza un error y el juego no arranca.
         bindings: { ...DEFAULT_BINDINGS, ...(saved.bindings || {}) }
     };
 }

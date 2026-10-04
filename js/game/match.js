@@ -113,7 +113,7 @@ function quitGame() {
     p1.x = 24;
     p2.height = paddleHeight;
     p2.width = paddleWidth;
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): no se restaura p2.x.
+    p2.x = GAME_WIDTH - 24 - paddleWidth;
 
     // Música
     stopGameplayMusic();
@@ -228,7 +228,7 @@ function checkWin() {
     p1.height = paddleHeight;
     p1.x = 24;
     p2.height = paddleHeight;
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): no se restaura p2.width.
+    p2.width = paddleWidth;
 
     // Música
     stopGameplayMusic();

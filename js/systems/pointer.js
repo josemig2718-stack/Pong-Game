@@ -43,10 +43,9 @@ function touchToCanvasX(clientX) {
     return (clientX - rect.left) * ratio;
 }
 
-// BUG conocido (conservado, ver docs/bugs-conocidos.md): usa paddleHeight fijo, no la altura
-// actual de la paleta (los power-ups de tamaño la cambian).
-function clampPaddleY(y) {
-    return Math.max(0, Math.min(GAME_HEIGHT - paddleHeight, y));
+/** Limita la Y pedida para que la paleta (con su altura actual) no salga del campo. */
+function clampPaddleY(y, paddle) {
+    return Math.max(0, Math.min(GAME_HEIGHT - paddle.height, y));
 }
 
 function assignTouch(touch) {
@@ -64,7 +63,7 @@ function assignTouch(touch) {
 
 function updatePaddleFromTouch(target, canvasY, canvasX) {
     const paddle = target === 'p1' ? p1 : p2;
-    paddle.touchY = clampPaddleY(canvasY - paddleHeight / 2);
+    paddle.touchY = clampPaddleY(canvasY - paddle.height / 2, paddle);
     if (canvasX !== undefined) {
         // Arena rotada (El Creador): la paleta se controla en el eje X
         paddle.touchX = Math.max(0, Math.min(GAME_WIDTH - paddle.width, canvasX - paddle.width / 2));
