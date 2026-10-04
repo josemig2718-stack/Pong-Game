@@ -10,6 +10,11 @@ import { saveSettings, settings } from '../core/settings.js';
 import { THEMES } from '../data/themes.js';
 import { statsTrackTheme } from './stats.js';
 
+/**
+ * Aplica un tema de color (variables CSS --primary), lo guarda y lo
+ * cuenta para el logro "Explorador".
+ * @param {string} themeKey clave de THEMES
+ */
 export function applyTheme(themeKey) {
     const theme = THEMES[themeKey] || THEMES.green;
     const root = document.documentElement;
@@ -18,7 +23,7 @@ export function applyTheme(themeKey) {
     root.style.setProperty('--primary-rgb', theme.rgb);
 
     // Marca visualmente el swatch seleccionado en el menú de configuración
-    document.querySelectorAll('.theme-swatch').forEach(btn => {
+    /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.theme-swatch')).forEach(btn => {
         btn.classList.toggle('theme-swatch--active', btn.dataset.theme === themeKey);
     });
 
@@ -29,10 +34,17 @@ export function applyTheme(themeKey) {
     statsTrackTheme(themeKey);
 }
 
+/**
+ * @returns {string} color principal del tema activo, para dibujar en el canvas
+ */
 export function currentThemeHex() {
     return (THEMES[settings.theme] || THEMES.green).hex;
 }
 
+/**
+ * Crea un botón por tema en la pantalla de configuración.
+ * @param {HTMLElement} container
+ */
 export function buildThemeSwatches(container) {
     container.innerHTML = '';
     Object.entries(THEMES).forEach(([key, theme]) => {

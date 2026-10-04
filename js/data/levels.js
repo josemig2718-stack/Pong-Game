@@ -5,6 +5,7 @@
  * ------------------------------------------------------------------
  */
 
+/** Niveles por XP acumulada; al alcanzar uno se cobran sus `coinBonus` monedas. */
 export const LEVELS = [
     { level: 1,  title: 'Novato',        xpRequired: 0,    coinBonus: 0 },
     { level: 2,  title: 'Aprendiz',       xpRequired: 141,  coinBonus: 20 },
@@ -18,6 +19,7 @@ export const LEVELS = [
     { level: 10, title: 'Leyenda',        xpRequired: 1581, coinBonus: 200 }
 ];
 
+/** XP por partida (ver awardGameRewards en systems/progression.js). */
 export const XP_REWARDS = {
     winCpuEasy: 15,
     winCpuNormal: 25,
@@ -30,6 +32,7 @@ export const XP_REWARDS = {
     winCreator: 300
 };
 
+/** Chemi Coins por partida. El modo local no da monedas, para que no se pueda farmear. */
 export const COIN_REWARDS = {
     winCpu: 5,
     winHachepe: 20,

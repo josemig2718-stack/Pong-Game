@@ -49,6 +49,11 @@ export function initInput() {
     });
 }
 
+/**
+ * ¿Está pulsada la tecla asignada a esta acción?
+ * @param {string} action p1Up, p1Down, p2Up, p2Down o pause
+ * @returns {boolean}
+ */
 export function isActionPressed(action) {
     return keysDown.has(settings.bindings[action]);
 }
@@ -64,11 +69,16 @@ function assignBinding(action, code) {
     refreshBindingButtons();
 }
 
+/**
+ * La próxima tecla pulsada se asignará a esta acción.
+ * @param {string} action
+ */
 export function startListeningFor(action) {
     listeningForAction = action;
     refreshBindingButtons();
 }
 
+/** Vuelve a las teclas por defecto. */
 export function resetBindings() {
     settings.bindings = { ...DEFAULT_BINDINGS };
     saveSettings();
@@ -77,7 +87,7 @@ export function resetBindings() {
 
 /** Actualiza el texto de los botones de reasignación en el menú de Controles */
 export function refreshBindingButtons() {
-    document.querySelectorAll('[data-binding-action]').forEach(btn => {
+    /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-binding-action]')).forEach(btn => {
         const action = btn.dataset.bindingAction;
         if (listeningForAction === action) {
             btn.textContent = 'PULSA UNA TECLA...';

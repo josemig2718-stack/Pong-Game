@@ -81,8 +81,8 @@ function showNextDialogue() {
 
     const nameEl = document.getElementById('dialogue-name');
     const textEl = document.getElementById('dialogue-text');
-    const avatar = document.getElementById('dialogue-avatar');
-    const avatar2 = document.getElementById('dialogue-avatar2');
+    const avatar = /** @type {HTMLImageElement} */ (document.getElementById('dialogue-avatar'));
+    const avatar2 = /** @type {HTMLImageElement} */ (document.getElementById('dialogue-avatar2'));
 
     // El dúo alterna avatar y nombre según quién habla
     if (boss.image2) {
@@ -155,6 +155,7 @@ export function stopDialogue() {
 /** Diálogo de "voy ganando": salta una sola vez, al ir perdiendo por 2. */
 export let midDialogueShown = false;
 
+/** Diálogo "voy ganando": salta una sola vez por partida, al ir perdiendo de 2. */
 export function checkMidDialogue() {
     if (state.mode !== 'campaign' || midDialogueShown) return;
     if (state.p2Score - state.p1Score < 2) return;
@@ -164,6 +165,7 @@ export function checkMidDialogue() {
     queueDialogue(boss.dialogues.mid);
 }
 
+/** Permite que el diálogo de mitad de combate vuelva a salir (nueva partida). */
 export function resetMidDialogue() {
     midDialogueShown = false;
 }

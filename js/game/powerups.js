@@ -54,6 +54,8 @@ export function updatePowerups(dt) {
     if (!state.isPlaying) return;
 
     const dtMs = dt * MS_PER_FRAME;
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): la vida del power-up en el campo se mide
+    // con el reloj real (sigue corriendo en pausa); la del efecto, con dt.
     const timeNow = Date.now();
 
     // 1. Manejo del cooldown y aparición

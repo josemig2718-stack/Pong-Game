@@ -28,6 +28,11 @@ const KEY_LABELS = {
     ControlLeft: 'CTRL IZQ', ControlRight: 'CTRL DER'
 };
 
+/**
+ * Nombre legible de una tecla (event.code) para mostrar en pantalla.
+ * @param {string|null} code
+ * @returns {string}
+ */
 export function keyLabel(code) {
     if (!code) return '---';
     if (KEY_LABELS[code]) return KEY_LABELS[code];
@@ -65,6 +70,8 @@ function loadSettings() {
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si lo guardado es el JSON null,
+        // saved.bindings lanza un error y el juego no arranca.
         bindings: { ...DEFAULT_BINDINGS, ...(saved.bindings || {}) }
     };
 }

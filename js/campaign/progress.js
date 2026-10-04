@@ -40,8 +40,8 @@ export function prepareCampaignMatch(level, opts) {
     document.getElementById('vs-boss-title').textContent = boss.title;
     document.getElementById('vs-boss-danger').textContent = 'Peligro: ' + boss.danger;
 
-    const avatar = document.getElementById('vs-boss-avatar');
-    const avatar2 = document.getElementById('vs-boss-avatar2');
+    const avatar = /** @type {HTMLImageElement} */ (document.getElementById('vs-boss-avatar'));
+    const avatar2 = /** @type {HTMLImageElement} */ (document.getElementById('vs-boss-avatar2'));
 
     avatar.src = boss.image;
     avatar.classList.toggle('avatar-corrupted', isCreator);

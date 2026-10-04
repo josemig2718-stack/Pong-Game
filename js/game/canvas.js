@@ -12,7 +12,7 @@
 
 import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
 
-export const canvas = document.getElementById('pongCanvas');
+export const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('pongCanvas'));
 export const ctx = canvas.getContext('2d');
 
 /** Ajusta el tamaño CSS del canvas al espacio libre, manteniendo 4:3. */
@@ -27,7 +27,7 @@ export function resizeCanvas() {
     if (container) {
         Array.from(container.children).forEach(child => {
             if (child.id !== 'canvas-wrapper' && window.getComputedStyle(child).display !== 'none') {
-                siblingHeight += child.offsetHeight;
+                siblingHeight += /** @type {HTMLElement} */ (child).offsetHeight;
                 activeSiblings++;
             }
         });

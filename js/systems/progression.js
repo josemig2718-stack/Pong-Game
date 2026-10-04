@@ -53,6 +53,8 @@ function loadProgression() {
         const saved = localStorage.getItem(PROG_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
+            // BUG conocido (conservado, ver docs/bugs-conocidos.md): sin purchasedItems guardado, se
+            // comparte el array de DEFAULT_PROGRESSION y comprar lo modifica.
             return { ...DEFAULT_PROGRESSION, ...parsed, purchasedItems: parsed.purchasedItems || DEFAULT_PROGRESSION.purchasedItems };
         }
     } catch (e) {
@@ -192,6 +194,8 @@ export function purchaseItem(itemId, cost) {
         playerProgression.purchasedItems.push(itemId);
         saveProgression();
 
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si el array se comparte con
+        // DEFAULT_PROGRESSION, crecen a la vez y "Grow Partner" nunca salta.
         if (playerProgression.purchasedItems.length === DEFAULT_PROGRESSION.purchasedItems.length + 1) {
             unlockAchievement('grow_partner');
         }

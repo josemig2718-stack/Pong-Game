@@ -29,6 +29,7 @@ const CREATOR_TONES = {
     3: { band: '#2a0808', sclera: '#f7e3e3', iris: '#ef4444', lid: '#ef4444' }
 };
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossCreator = {
     config: {
         targetScore: 8,        // aquí es el nº de fallos permitidos al jugador

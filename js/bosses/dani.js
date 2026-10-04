@@ -16,6 +16,7 @@ import { soundEffects } from '../systems/audio.js';
 import { spawnParticles, triggerShake } from '../game/effects.js';
 import { bossState } from './shared.js';
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossDani = {
     config: { targetScore: 6, aiSpeed: 0.85, aiError: 16, aiBias: 66 },
 

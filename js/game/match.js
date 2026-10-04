@@ -123,6 +123,7 @@ export function startGame(mode) {
     startLoop();
 }
 
+/** Botón "JUGAR DE NUEVO": repite la partida con el mismo modo. */
 export function restartCurrentGame() {
     startGame(state.mode);
 }
@@ -142,6 +143,7 @@ export function quitGame() {
     p1.x = 24;
     p2.height = paddleHeight;
     p2.width = paddleWidth;
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): no se restaura p2.x.
 
     // Música
     stopGameplayMusic();
@@ -153,6 +155,7 @@ export function quitGame() {
     showScreen('main-menu');
 }
 
+/** Pausa o reanuda la partida (ESC, botón de pausa, menú de pausa). */
 export function togglePause() {
     if (!state.isPlaying) return;
     state.isPaused = !state.isPaused;
@@ -237,7 +240,7 @@ export function checkWin() {
     if (!narrativeEnding) gameOverScreen.classList.add('active-screen');
 
     // Estadísticas y logros
-    statsOnGameEnd(state.mode, p1Won, state.p1Score, state.p2Score);
+    statsOnGameEnd(state.mode, p1Won, state.p2Score);
 
     if (state.mode === 'hachepe' && p1Won) {
         unlockAchievement('beat_hachepe');
@@ -255,6 +258,7 @@ export function checkWin() {
     p1.height = paddleHeight;
     p1.x = 24;
     p2.height = paddleHeight;
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): no se restaura p2.width.
 
     // Música
     stopGameplayMusic();

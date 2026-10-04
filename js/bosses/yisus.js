@@ -17,6 +17,7 @@ import { drawText } from '../game/draw.js';
 import { triggerShake } from '../game/effects.js';
 import { bossState } from './shared.js';
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossYisus = {
     config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48 },
 

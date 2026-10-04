@@ -54,7 +54,7 @@ export function renderCampaignMap() {
             + (desbloqueado ? ' unlocked' : ' locked')
             + (actual ? ' current' : '')
             + (esCreador ? ' corrupted' : '');
-        card.dataset.index = i;
+        card.dataset.index = String(i);
 
         const estado = !desbloqueado ? '🔒 BLOQUEADO'
             : (vencido ? '✅ DERROTADO' : '⚔️ TE ESPERA');
@@ -119,7 +119,7 @@ function buildCarouselDots() {
 function updateCarousel() {
     const track = document.getElementById('campaign-nodes');
     if (!track) return;
-    const cards = [...track.children];
+    const cards = /** @type {HTMLElement[]} */ ([...track.children]);
 
     cards.forEach((card, i) => {
         const d = i - carouselIndex;
@@ -138,8 +138,8 @@ function updateCarousel() {
         [...dots.children].forEach((d, i) => d.classList.toggle('active', i === carouselIndex));
     }
 
-    const prev = document.getElementById('carousel-prev');
-    const next = document.getElementById('carousel-next');
+    const prev = /** @type {HTMLButtonElement} */ (document.getElementById('carousel-prev'));
+    const next = /** @type {HTMLButtonElement} */ (document.getElementById('carousel-next'));
     if (prev) prev.disabled = carouselIndex === 0;
     if (next) next.disabled = carouselIndex >= carouselCards.length - 1;
 }
@@ -176,8 +176,8 @@ export function initCarouselControls() {
     let startX = null;
     const view = menu.querySelector('.carousel-viewport');
     if (!view) return;
-    view.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
-    view.addEventListener('touchend', (e) => {
+    view.addEventListener('touchstart', (/** @type {TouchEvent} */ e) => { startX = e.touches[0].clientX; }, { passive: true });
+    view.addEventListener('touchend', (/** @type {TouchEvent} */ e) => {
         if (startX === null) return;
         const dx = e.changedTouches[0].clientX - startX;
         if (Math.abs(dx) > 40) carouselMove(dx < 0 ? 1 : -1);
@@ -216,6 +216,7 @@ function showCampaignIntro() {
     };
 }
 
+/** Botón "ACEPTAR MI DESTINO": cierra la intro y la marca como vista. */
 export function closeCampaignIntro() {
     const overlay = document.getElementById('campaign-intro-overlay');
     if (overlay) overlay.classList.add('hidden');
@@ -224,6 +225,7 @@ export function closeCampaignIntro() {
     soundEffects.uiClick();
 }
 
+/** Botón "Ver Historia": vuelve a mostrar la intro. */
 export function replayCampaignIntro() {
     soundEffects.uiClick();
     showCampaignIntro();

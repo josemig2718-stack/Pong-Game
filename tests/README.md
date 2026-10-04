@@ -12,8 +12,14 @@ No hace falta instalar nada: es una página web.
 python tests/serve.py
 ```
 
-Abre <http://127.0.0.1:8000/tests/> y pulsa **Ejecutar todos**. Con
-`?only=jefe-3,pausa` se ejecutan solo esos escenarios.
+Abre <http://127.0.0.1:8000/tests/> y pulsa **Ejecutar todos** (unos 5
+minutos). Con `?only=jefe-3,pausa` se ejecutan solo esos escenarios; el test
+de estilos solo corre con `?only=` si se incluye `estilos-computados`. La
+comprobación del mapa de imports corre siempre.
+
+Desde Playwright o la consola: `window.__tests.runAll()` y esperar a
+`window.__done` (`{ passed, total }`); los resultados quedan en
+`window.__lastResults`.
 
 > Usa `tests/serve.py` y no `python -m http.server`: este último no envía
 > cabeceras de caché, el navegador cachea los archivos de forma heurística y,
@@ -88,6 +94,24 @@ Antes de los escenarios se ejecuta una comprobación estática,
 Un módulo olvidado en el mapa funcionaría en local pero GitHub Pages podría
 servir una copia vieja.
 
+### Estilos computados
+
+`estilos-computados` (`styles.js`) protege los cambios de HTML y CSS que no
+deben verse: para 17 estados de la interfaz (cada pantalla, la partida, la
+pausa, el fin de partida, el diálogo, el aviso de logro, la intro y el falso
+final) y 4 tamaños de ventana (1280×800, 800×600, 390×844, 844×390), guarda
+un hash de **todas** las propiedades de `getComputedStyle` de cada elemento y
+de sus `::before`/`::after`. La clave de cada elemento es su posición en el
+árbol, no su etiqueta, así que cambiar un `<div>` por un `<section>` no la
+altera, pero sí cualquier estilo distinto. Las transiciones se desactivan y
+las animaciones duran 0 s para que la captura sea estable.
+
+Para ver qué cambió en un elemento: `window.__tests.inspectStyle(estado,
+"390x844", clave)` devuelve todas sus propiedades actuales. La referencia
+(`golden/styles.json`) se graba con `window.__tests.recordStyles()`, que
+captura dos veces y solo acepta el resultado si coinciden. Como los hashes
+del canvas, solo vale en el navegador donde se grabó.
+
 ## Grabar referencias
 
 **Grabar referencias** ejecuta cada escenario dos veces y solo graba si ambas
@@ -112,6 +136,8 @@ el test lo detecta aunque el estado coincida.
 | `index.html`, `app.js` | la página y su interfaz |
 | `runner.js` | carga del juego, grabación, bot, acciones y comparación |
 | `scenarios.js` | los escenarios |
+| `styles.js` | el test de estilos computados |
+| `serve.py` | servidor de desarrollo sin caché (también para jugar) |
 | `harness/install.js` | sustituciones deterministas dentro del iframe |
 | `adapters/esm.js` | lectura del estado del juego (lo único que conoce sus módulos) |
 | `lib/` | JSON canónico, hashes, serialización del DOM y comprobación del mapa de imports |

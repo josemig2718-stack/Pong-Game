@@ -48,6 +48,8 @@ function touchToCanvasX(clientX) {
     return (clientX - rect.left) * ratio;
 }
 
+// BUG conocido (conservado, ver docs/bugs-conocidos.md): usa paddleHeight fijo, no la altura
+// actual de la paleta (los power-ups de tamaño la cambian).
 function clampPaddleY(y) {
     return Math.max(0, Math.min(GAME_HEIGHT - paddleHeight, y));
 }
@@ -117,6 +119,7 @@ function hideTouchHint(target) {
     if (hint) hint.classList.add('touch-hint--gone');
 }
 
+/** Vuelve a mostrar los avisos de "toca y arrastra" (nueva partida). */
 export function resetTouchHints() {
     document.querySelectorAll('.touch-hint').forEach(hint => hint.classList.remove('touch-hint--gone'));
 }

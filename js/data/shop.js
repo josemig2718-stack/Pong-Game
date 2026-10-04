@@ -8,6 +8,19 @@
  * ------------------------------------------------------------------
  */
 
+/**
+ * Artículo de la tienda (un cosmético).
+ * @typedef {object} ShopItem
+ * @property {string} id       clave en la tabla de vfx/ y nombre de la imagen
+ * @property {string} name
+ * @property {string} desc
+ * @property {number} price    en Chemi Coins; 0 = gratuito (siempre en propiedad)
+ * @property {string} preview  emoji o texto si la imagen no carga
+ */
+
+// BUG conocido (conservado, ver docs/bugs-conocidos.md): algunas descripciones no describen lo que se dibuja
+// (p. ej. "Gradiente" dibuja un arcoíris fijo; la estela "Clásica", segmentos).
+/** @type {Record<string, ShopItem[]>} */
 export const SHOP_CATALOG = {
     trails: [
         { id: 'default',  name: 'Clásica',   desc: 'Círculos que se desvanecen',                    price: 0,   preview: '○○○' },
@@ -37,6 +50,10 @@ export const SHOP_CATALOG = {
     ]
 };
 
+/**
+ * Pestañas de la tienda: `key` en SHOP_CATALOG ↔ `cosmKey`, la categoría
+ * que entiende selectCosmetic().
+ */
 export const SHOP_CATEGORIES = [
     { key: 'trails',      label: 'Estelas',       cosmKey: 'trail' },
     { key: 'backgrounds', label: 'Fondos',         cosmKey: 'bg' },

@@ -849,6 +849,8 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
 .shop-tabs::-webkit-scrollbar { display: none; }
 
 .shop-tab-btn {
+    /* BUG conocido (conservado): --font-main no existe; la declaración
+       es inválida y se hereda la fuente (ver docs/bugs-conocidos.md). */
     font-family: var(--font-main);
     font-size: 0.75rem;
     padding: 10px 16px;
@@ -897,6 +899,8 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
 }
 
 .shop-card__name {
+    /* BUG conocido (conservado): --font-main no existe; la declaración
+       es inválida y se hereda la fuente (ver docs/bugs-conocidos.md). */
     font-family: var(--font-main);
     font-size: 0.75rem;
     margin-bottom: 6px;
@@ -913,6 +917,8 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
 }
 
 .shop-card__btn {
+    /* BUG conocido (conservado): --font-main no existe; la declaración
+       es inválida y se hereda la fuente (ver docs/bugs-conocidos.md). */
     font-family: var(--font-main);
     font-size: 0.7rem;
     padding: 8px 16px;

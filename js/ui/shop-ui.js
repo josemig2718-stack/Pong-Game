@@ -37,8 +37,10 @@ export function switchShopTab(categoryKey) {
     currentShopTab = categoryKey;
 
     // Actualizar botones UI
-    const tabButtons = document.querySelectorAll('.shop-tab-btn');
+    const tabButtons = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.shop-tab-btn'));
     tabButtons.forEach(btn => {
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): los botones no tienen data-category: tras el
+        // primer clic ninguna pestaña queda resaltada.
         if (btn.dataset.category === categoryKey) {
             btn.classList.add('active');
         } else {
@@ -75,6 +77,7 @@ function populateShopTab(categoryKey) {
         const isOwned = hasItem(item.id) || item.price === 0;
         const isEquipped = isOwned && equippedId === item.id;
 
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): dibujar la pestaña guarda la progresión.
         if (item.price === 0 && !hasItem(item.id)) {
             playerProgression.purchasedItems.push(item.id);
             saveProgression();
@@ -105,6 +108,7 @@ function populateShopTab(categoryKey) {
         const img = previewDiv.querySelector('img');
         img.addEventListener('error', () => {
             img.style.display = 'none';
+            // BUG conocido (conservado, ver docs/bugs-conocidos.md): display:block deja el emoji sin centrar.
             /** @type {HTMLElement} */ (img.nextElementSibling).style.display = 'block';
         });
 

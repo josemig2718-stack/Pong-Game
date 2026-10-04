@@ -235,7 +235,7 @@ function parseStorage(raw) {
  */
 class Bot {
     /**
-     * @param {{side:'p1'|'p2', seed:number, react?:number, noise?:number, deadzone?:number, edge?:number, mouse?:boolean}} opts
+     * @param {{side:'p1'|'p2', seed:number, react?:number, noise?:number, deadzone?:number, edge?:number, mouse?:boolean, touch?:boolean}} opts
      */
     constructor(opts) {
         this.side = opts.side;

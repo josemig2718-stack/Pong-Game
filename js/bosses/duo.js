@@ -15,6 +15,7 @@ import { p2Twin } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
 import { drawText } from '../game/draw.js';
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossDuo = {
     config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58 },
 

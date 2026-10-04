@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS (native ES modules), HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no linter.** Regression tests are a web page in `tests/` (see below).
+Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS (native ES modules), HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no linter.** Regression tests are a web page in `tests/`; editor type checking is `jsconfig.json` + JSDoc.
 
-Code, comments, UI strings, and commit history are in **Spanish**. Keep new code and UI text in Spanish to match.
+Code, comments, UI strings and commit history are in **Spanish**. Keep new code and UI text in Spanish to match.
 
 ## Running
 
-Serve the folder over HTTP: `python tests/serve.py` (port 8000). **Opening `index.html` by double-click (`file://`) does not work** — browsers refuse ES modules from `file://`. Prefer `serve.py` over `python -m http.server`: it sends `Cache-Control: no-store` (otherwise the browser heuristically caches stale JS) and forces `text/javascript` for `.js` (some Windows registries map it to `text/plain`, and module scripts then refuse to load).
+Serve the folder over HTTP: `python tests/serve.py` (port 8000). **Opening `index.html` by double-click (`file://`) does not work** — browsers refuse ES modules from `file://`. Prefer `serve.py` over `python -m http.server`: it sends `Cache-Control: no-store` (otherwise the browser heuristically caches stale JS, and tests end up measuring old code) and forces `text/javascript` for `.js` (some Windows registries map it to `text/plain`, and module scripts then refuse to load).
 
 Deployed as a GitHub Pages static site — the repo root is the web root.
 
@@ -18,124 +18,132 @@ Deployed as a GitHub Pages static site — the repo root is the web root.
 
 `index.html` has an **import map** that maps every module to itself plus `?v=N`, a single `<script type="module" src="./js/main.js?v=N">`, and `css/style.css?v=N`. `import` statements never carry a version — the map adds it, because nested imports would otherwise be fetched unversioned and GitHub Pages caches for ~10 min.
 
-**After editing any JS or CSS, bump N everywhere** (every map entry, the `main.js` src, the stylesheet). **Adding a module means adding it to the map.** The `mapa-de-imports` check in `tests/` fails if a reachable module is missing, an entry is unused, or the N values differ.
+**After editing any JS or CSS, bump N everywhere** (every map entry, the `main.js` src, the stylesheet). **Adding, moving or deleting a module means updating the map.** The `mapa-de-imports` check in `tests/` fails if a reachable module is missing, an entry is unused, or the N values differ.
 
 ## Architecture
 
-### ES modules, one entry point
+### Layers
 
-Every file in `js/` is an ES module with explicit `import`/`export`; `js/main.js` is the only entry. The module graph has cycles (e.g. `game` ↔ `bosses`), which ES modules handle as long as **top-level code only uses imports from `config.js` and `state.js`**. Those two import nothing above them (`config` imports nothing, `state` only `config`), so they are always evaluated first. Anything else may only be used inside function bodies, which run after the whole graph is evaluated; breaking this rule throws a TDZ `ReferenceError` at load.
+```
+js/main.js      entry point: calls every init*() in order
+js/core/        base layer — constants, storage, settings, state
+js/data/        static catalogues — themes, lore, achievements, shop, levels, power-ups
+js/systems/     audio, theme, input (keyboard), pointer (mouse + touch), stats, achievements, progression
+js/game/        canvas, draw, effects, balls, ai, physics, match, loop, render, powerups
+js/vfx/         shop cosmetics — trails, backgrounds, paddles, goal-fx (+ index.js facade)
+js/bosses/      index.js (table + dispatchers), shared.js, one file per boss
+js/campaign/    progress (boss in play, VS, advance), menu (carousel + intro), dialogue, finale
+js/ui/          screens, actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
+```
 
-- Mutable match state shared across modules lives in the `state` object (`js/state.js`): `state.mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `serveCountdownMs`, `balls`, `particles`, shake and `frameCount`. An importer can't reassign an `export let`, so anything another module must write goes in `state` (e.g. the campaign sets `state.isPlaying = false`). The paddles `p1`, `p2` and `p2Twin` are stable objects exported next to it.
-- Other `export let` values (`currentCampaignLevel`, `activePowerup`, `bossState`…) are reassigned only by their own module; importers read them as live bindings.
+The module graph has cycles (e.g. `game` ↔ `bosses` ↔ `campaign`). ES modules handle that as long as **top-level code only uses imports from `core/` and `data/`**, which import nothing above them (`core/constants` and `core/storage` import nothing; `core/state` imports `constants`; `core/settings` imports `storage`). Anything else may only be used inside function bodies, which run after the whole graph is evaluated; breaking the rule throws a TDZ `ReferenceError` at load and every test fails.
+
+Two deliberate exceptions, each documented in place:
+- `bosses/index.js` builds `BOSS_MECHANICS` from the boss modules at evaluation, so **only `bosses/index.js` may import a boss file**. Shared boss things go in `bosses/shared.js` (imports only `core/`).
+- Each `vfx/*.js` and `bosses/creator.js` builds its own tables from its own functions or from `bosses/shared.js`.
+
+### Shared state
+
+- Mutable match state read by several modules lives in the `state` object (`js/core/state.js`, typed `GameState`): `mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `frameCount`, `serveCountdownMs`, shake, `balls`, `particles`. An importer can't reassign an `export let`, so **anything another module must write goes in `state`** (e.g. the campaign sets `state.isPlaying = false`). The paddles `p1`, `p2` and `p2Twin` are stable objects exported next to it.
+- Other `export let` values (`currentCampaignLevel`, `isDialogueActive`, `activePowerup`, `bossState`…) are reassigned only by their own module; importers read them as live bindings. Keep it that way, or add a setter.
+- `state.balls` is replaced wholesale by `resetBall()`, even mid-`update()`: **never keep a reference to the array across calls**; read `state.balls`.
 - Some internals are exported only because `tests/adapters/esm.js` reads them (`bossState`, `carouselIndex`, `goalSlowmoTimer`, …). Keep them exported, or update the adapter.
-- No module registers listeners or touches the DOM while being evaluated. Each exposes an `init*()` (`initAudio`, `initInput`, `initCanvas`, `initCarouselControls`, `initTouchControls`, `initActions`, `initUI`) and `js/main.js`, loaded last, calls them in that order. Keep the order: listeners sharing a target and event type (e.g. `keydown` on `window`) run in registration order. `initUI()` builds theme swatches, applies the theme, syncs the settings UI, and calls `showScreen('main-menu')`.
 
-### Screens are divs, wired by `data-action`
+### Boot and events
 
-Every menu is a `<div class="screen">` in `index.html`; `showScreen(id)` (`js/ui.js`) removes `.active-screen` from all of them and adds it to one. The markup has **no inline handlers**: controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/actions.js` holds one registry per event type and three delegated listeners on `document`. Adding a menu action means adding an entry to the registry — named after the function it calls — and converting its argument there (dataset values are always strings: `carouselMove("-1")` would concatenate). Never add `data-category` to the shop tabs: `switchShopTab` reads it and adding it would silently fix a preserved bug.
+- No module registers listeners or touches the DOM while being evaluated (reading `localStorage`, creating the three `Audio` objects and looking up the canvas are the only load-time work). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI` in that order. **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
+- The markup has **no inline handlers**. Controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/ui/actions.js` has one registry per event type, named after the functions they call, and three delegated listeners on `document`. Adding a control = adding a registry entry that **converts its argument** (dataset values are strings: `carouselMove("-1")` would concatenate). Unknown actions throw.
+- Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. Entering `main-menu` hides `#game-container` and starts menu music; `shop-menu` and `campaign-menu` re-render. Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
 
-`showScreen` also side-effects: entering `main-menu` hides `#game-container` and starts menu music; `shop-menu` calls `showShopScreen()`; `campaign-menu` calls `renderCampaignMap()`.
+### Game loop (`js/game/`)
 
-Gameplay is not a screen — `startGame(mode)` clears all `.active-screen` and unhides `#game-container`. Pause/game-over overlays are screens layered on top at higher `z-`.
+`loop.js` runs `update(dt)` (`physics.js`) then `render()` (`render.js`) per `requestAnimationFrame`. `dt` is normalized to 60 FPS units (`elapsedMs / MS_PER_FRAME`, clamped to ≤3), so speeds are "pixels per frame at 60 FPS" and every movement is multiplied by `dt`; `dt * MS_PER_FRAME` converts to milliseconds.
 
-### Game loop (`js/game.js`, ~1100 lines — the core)
+`update()` is a fixed sequence of named steps: dialogue pause → slow-motion → boss update → player 1 → player 2 or CPU (`ai.js`) → clamp → serve countdown → balls (walls, boss obstacles, paddles, goals) → power-ups → VFX → particles → shake. **The order is behaviour**: physics and several renderers share `Math.random`, so reordering changes every later random number. Two early exits are explicit return values: during the serve countdown only the VFX advance; and a match-ending goal with several balls stops the frame, while with one ball the rest of the frame still runs (`onBallOut` in `physics.js` documents the asymmetry).
 
-`gameLoop(timestamp)` → `update(dt)` → `render()` via `requestAnimationFrame`. `dt` is normalized to 60 FPS units (`elapsedMs / (1000/60)`, clamped to ≤3), so all speed constants are "pixels per frame at 60 FPS" and every movement must be multiplied by `dt`.
-
-- Fixed logical resolution `GAME_WIDTH × GAME_HEIGHT` = 800×600. `canvas.width/height` are always the logical size; `resizeCanvas()` only sets CSS `width/height` to scale it, preserving 4:3 by measuring visible siblings of `#canvas-wrapper`. Touch input converts client coords back into logical coords (`js/touch.js`).
-- `state.balls` is an array (multi-ball power-up spawns up to 3). `resetBall()` replaces the whole array, even mid-`update()`, so never keep a reference to it across calls — always read `state.balls`.
-- Slow-motion is a `dt` multiplier composed from `getSlowmoMultiplier()` (power-up) and `getGoalSlowmo()` (goal VFX).
-- `update()` returns early while `isDialogueActive` (campaign dialogue) — that is the campaign's "pause".
+- Fixed logical resolution `GAME_WIDTH × GAME_HEIGHT` = 800×600. `canvas.width/height` are always the logical size; `resizeCanvas()` only sets CSS size, preserving 4:3 by measuring the visible siblings of `#canvas-wrapper`.
+- Slow-motion is a `dt` multiplier: the min of `getSlowmoMultiplier()` (power-up) and `getGoalSlowmo()` (goal VFX).
+- `update()` returns at once while `isDialogueActive` — that is the campaign's "pause".
+- `checkWin()` (`match.js`) is explicit orchestration, not events: sound → dialogue → campaign victory → stats → achievement → rewards → displays → paddle restore → music → narrative sequence. That order is behaviour too.
 
 ### Game modes
 
-`state.mode` is a string set by `startGame(mode)`: `'cpu'` | `'local'` | `'hachepe'` | `'campaign'`.
+`state.mode` (`GameMode`) is set by `startGame(mode)`: `'cpu'` | `'local'` | `'hachepe'` | `'campaign'`.
 
-Mode drives branching throughout `update()`, `checkWin()`, `resetBall()`, audio, and rewards:
-
-- `cpu` — AI paddle speed/error margin from `settings.difficulty` (1/2/3).
-- `local` — both paddles human; **awards XP but no Chemi Coins** (anti-farming, `awardGameRewards` in `js/progression.js`).
-- `hachepe` — standalone boss mode: max ball speed, near-perfect AI, exclusive music, target score hardcoded to 10. Deliberately kept separate from the campaign.
+- `cpu` — AI paddle speed/dead zone from `settings.difficulty` (1/2/3).
+- `local` — both paddles human; **awards XP but no Chemi Coins** (anti-farming, `awardGameRewards` in `systems/progression.js`).
+- `hachepe` — standalone boss mode: fast near-perfect AI, exclusive music, target score 10. Deliberately separate from the campaign.
 - `campaign` — see below.
 
-### Campaign: `campaign.js` narrates, `bosses.js` fights
+### Campaign: `campaign/` narrates, `bosses/` fights
 
-The split matters. **`js/campaign.js`** owns story only: `HACHEPES_LORE` (6 bosses), the node map, the dialogue system, and the finale sequences. **`js/bosses.js`** owns every fight mechanic.
+`data/lore.js` holds the six Hachepes' story and dialogues; `campaign/` the flow; `bosses/` every fight mechanic. Each boss module exports a `BossMechanics` object (`{ config, init, update, render, renderOverlay, collide, onGoal, hidesBall, freezesPlayer, invertsControls, segmentIsArmored }`, all optional but `config`). `game/` never names a boss: it calls the dispatchers in `bosses/index.js` and reads `bossConfig()` (`targetScore`, `aiSpeed`, `aiError`, `aiBias`, `paddleAxis`, `useHealth`, `hitDamage`). **Add a boss by adding a file and a table entry, never a `currentCampaignLevel === N` branch in `game/`.**
 
-`js/bosses.js` is a dispatch table in the same shape `vfx.js` uses for `BG_RENDERERS`/`GOAL_FX`:
+Two non-obvious rules learned from bugs:
 
-```js
-BOSS_MECHANICS[level] = { config, init, update, render, renderOverlay, collide, onGoal }
-```
+- **`aiBias` is what makes a boss beatable.** `aiError` is a dead zone, and any dead zone smaller than the paddle's half-height (50px) never produces a miss. `aiBias` offsets the boss's *aim*, refreshed on every hit.
+- **Obstacles belong on the boss's half, and must add spin.** A block on the player's half traps the ball in a paddle↔block loop; a block on the vertical centre intercepts every flat return. Chemi's rubble sits at x ≥ 0.60 and its bounce perturbs `dy`.
 
-`game.js` never names a boss. It calls `bossInit/bossUpdate/bossRender/bossRenderOverlay/bossCollide/bossOnGoal` and reads behaviour from `bossConfig()`: `targetScore` (5→7, rising per boss), `aiSpeed`, `aiError`, `aiBias`, `paddleAxis`, `useHealth`, `hitDamage`. **Add a boss by adding a table entry, never by adding a `currentCampaignLevel === N` branch to `game.js`.**
+Flow: `renderCampaignMap()` builds the boss **carousel** (cards 1–5; the corrupted Creator card appears only once `campaignProgress` reaches 6) → `prepareCampaignMatch(level, opts)` → VS screen → `startCampaignGame()` → `startGame('campaign')` + `queueDialogue()`. Beaten bosses are replayable at a reduced reward (`CAMPAIGN_REPLAY_FACTOR`). The carousel positions cards purely with `transform` and renders two neighbours per side; it is driven by arrows, keyboard, dots and swipe — keep all four working.
 
-Two non-obvious rules learned from bugs, both worth preserving:
+**"Next boss" must come from `getNextCampaignBoss()`**, which counts from `currentCampaignLevel`, not from `campaignProgress`. Using progress sent players straight to the Creator after replaying an early boss.
 
-- **`aiBias` is what makes a boss beatable.** `aiError` is a dead zone, and any dead zone smaller than the paddle's half-height (50px) never produces a miss — with it alone the CPU is literally unbeatable and rallies never end. `aiBias` offsets the boss's *aim*, refreshed on every hit.
-- **Obstacles belong on the boss's half, and must add spin.** A block on the player's half traps the ball in a paddle↔block loop; a block on the vertical centre intercepts every flat return. Chemi's rubble sits at x ≥ 0.60 clear of the centre lane, and its bounce perturbs `dy`, which is what stops rallies repeating forever.
+**The twist is load-bearing — don't leak it.** Beating Yisus (`CAMPAIGN_LAST_BOSS`) routes through `runFinaleSequence()` instead of the game-over screen: fake victory → warped music → CRT blackout → the Creator's reveal → VS. Beating the Creator runs `runTrueEndingSequence()`. `checkWin()` recognises both via `narrativeEnding`. Nothing about the Creator may be visible in menus, the achievements grid or the carousel before the story reveals it.
 
-Story flow: `renderCampaignMap()` builds the boss-select **carousel** (cards 1–5; the corrupted Creator card appears only once `campaignProgress` reaches 6) → `prepareCampaignMatch(level, opts)` → VS screen → `startCampaignGame()` → `startGame('campaign')` + `queueDialogue()`. Beaten bosses are replayable and pay a reduced reward (`CAMPAIGN_REPLAY_FACTOR`).
+The Creator's on-screen identity is a **canvas-drawn eye** whose pupil tracks the ball (`CREATOR_TONES`: green → amber → bloodshot per phase); its health bar reads as the lower lid. Its three phases stack armored band segments (`segmentIsArmored` via `bossSegmentArmored`), a telegraphed ball warp and an eye beam that freezes rather than kills. Every attack is announced before it lands — that is what keeps the fight hard instead of unfair. It is the only boss with `useHealth: true`: won by emptying `bossHealth()`, while `state.p2Score` counts the player's *misses*. Keep those meanings apart.
 
-The carousel positions cards purely with `transform` from `updateCarousel()`; only the two neighbours either side are rendered. It is driven by arrows, keyboard, dots and swipe — keep all four working when touching it.
-
-**"Next boss" must come from `getNextCampaignBoss()`**, which counts from `currentCampaignLevel`, not from `campaignProgress`. Using progress sent players straight to the Creator the moment they replayed an early boss.
-
-**The twist is load-bearing — don't leak it.** Beating Yisus (level 5) routes through `runFinaleSequence()` instead of the game-over screen: fake victory → warped music → blackout → the Creator's reveal → VS. Beating the Creator runs `runTrueEndingSequence()`. `checkWin()` recognises these via its `narrativeEnding` flag and suppresses the normal end screen. Nothing about the Creator should be visible in menus, the achievements grid, or the node map before the story reveals it.
-
-The Creator's identity on screen is a **canvas-drawn eye** whose pupil tracks the ball (`CREATOR_TONES` shifts it green → amber → bloodshot per phase); the health bar reads as its lower lid. Its three phases stack armored band segments (`segmentIsArmored`, dispatched through `bossSegmentArmored`), a telegraphed ball warp, and an eye beam that freezes rather than kills. Every one of them is announced before it lands; that is the rule that keeps the fight hard instead of unfair.
-
-The Creator is the only boss with `useHealth: true`: it is won by emptying `bossHealth()`, and `state.p2Score` counts the player's *misses*, not the rival's points. Keep those two meanings apart — conflating them is exactly what made the final fight winnable in one hit.
+The typewriter interval is shared by dialogues, the intro and the finale reveal; `campaign/dialogue.js` owns it (`startTypewriter` / `clearTypewriter`).
 
 ### Persistence — three independent localStorage keys
 
 | Key | Owner | Holds |
 |---|---|---|
-| `pongGame.settings.v1` | `js/config.js` | theme, difficulty, volumes, winning score, ball speed, CRT/shake/mouse/powerups toggles, key bindings |
-| `pongGame.stats.v1` | `js/stats.js` | games/wins/streaks/records **and the unlocked-achievements map** |
-| `pongGame.progression.v1` | `js/progression.js` | XP, level, Chemi Coins, `purchasedItems`, selected cosmetics, `campaignProgress`, `campaignIntroSeen` |
+| `pongGame.settings.v1` | `js/core/settings.js` | theme, difficulty, volumes, winning score, ball speed, CRT/shake/mouse/powerups toggles, key bindings |
+| `pongGame.stats.v1` | `js/systems/stats.js` | games/wins/streaks/records **and the unlocked-achievements map** |
+| `pongGame.progression.v1` | `js/systems/progression.js` | XP, level, Chemi Coins, `purchasedItems`, selected cosmetics, `campaignProgress`, `campaignIntroSeen` |
 
-All three load with `{ ...DEFAULTS, ...saved }` spread so adding a new field doesn't break existing saves — **preserve that pattern** when adding fields, and bump the `.v1` suffix only for a genuinely incompatible change. Achievements live under stats, not progression (`resetStats()` deliberately keeps them).
+`core/storage.js` only wraps get/parse/set in try/catch. **Each key keeps its own merge rules** (`{ ...DEFAULTS, ...saved }` plus key-specific handling, including preserved bugs); don't generalise them. Preserve the spread pattern when adding fields, and bump `.v1` only for a genuinely incompatible change. Achievements live under stats (`resetStats()` keeps them).
 
 ### Cosmetics: shop → progression → vfx
 
-`SHOP_CATALOG` (`js/shop.js`) defines items in 4 categories keyed `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps those to the progression field names `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping calls `selectCosmetic`, which writes `playerProgression.selected*`.
-
-`js/vfx.js` render functions (`renderBallTrail`, `renderPaddleVFX`, `triggerGoalVFX`) read `playerProgression.selected*` **directly each frame** and dispatch through the `TRAIL_RENDERERS` / `PADDLE_RENDERERS` / `GOAL_FX` lookup tables. Adding a cosmetic = add a renderer to the right table + a catalog entry with a matching `id` + a preview PNG in `assets/shop/`. (The `currentTrailId` / `setActiveTrail`-style module vars in `vfx.js` are vestigial for everything except backgrounds, where `currentBgId` gates the stateful `init/update/render` background renderers.)
+`SHOP_CATALOG` (`data/shop.js`) has 4 categories `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps them to `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping `selectCosmetic`, which writes `playerProgression.selected*`. The `vfx/` renderers read `playerProgression.selected*` **every frame** through their id → renderer tables. Adding a cosmetic = a renderer in the right `vfx/` table + a catalogue entry with the same `id` + a preview PNG in `assets/shop/`. Backgrounds are the only stateful ones (`init/update/render`); `setActiveBg()` calls `init()`, which consumes `Math.random`.
 
 ### Other subsystems
 
-- `js/input.js` — `keysDown` Set (anti-ghosting for 2-player), remappable bindings resolved via `isActionPressed(action)` against `settings.bindings`.
-- `js/touch.js` — split-screen touch: left half drives `p1.touchY`, right half `p2.touchY`; when `touchY` is non-null it overrides keyboard for that paddle.
-- `js/audio.js` — SFX synthesized with Web Audio API (`playTone` / `soundEffects`), music via three `<audio>` elements; browsers require `onFirstInteraction` before audio starts.
-- `js/powerups.js` — one `activePowerup` on field, one `activeEffect` at a time; `revertPowerup()` restores `originalValues`. Because effects mutate `p1`/`p2` dimensions, `startGame`/`quitGame`/`checkWin` all defensively restore `paddleWidth`/`paddleHeight`.
-- `js/achievements.js` — `ACHIEVEMENTS` array; `unlockAchievement(id)` is idempotent and queues toasts. Entries with `secret: true` render as `????` until unlocked and are excluded from the counter by `getVisibleAchievementsTotal()`, so the total itself doesn't reveal that a hidden one exists. `unlockAchievement` silently does nothing visible for an id absent from the catalogue — check the id exists when wiring a new unlock.
+- `systems/input.js` — `keysDown` Set (anti-ghosting for 2 players); remappable bindings via `isActionPressed(action)`.
+- `systems/pointer.js` — touch and mouse write the same `touchY`/`touchX` channel, which overrides the keyboard when non-null. Local mode splits the screen (left half p1, right half p2). The mouse must pick the axis from `bossIsRotatedArena()` — otherwise it does nothing in the Creator fight.
+- `systems/audio.js` — SFX synthesized with Web Audio (`playTone` / `soundEffects`), music via three `<audio>` elements, unlocked by the first interaction.
+- `game/powerups.js` — one power-up on the field and one active effect at a time; `revertPowerup()` restores `originalValues`. Effects resize paddles, so `startGame`/`quitGame`/`checkWin` restore paddle sizes defensively. `startGame()` restores `width`, `height` **and** `x` (the rotated arena reshapes `p1`).
+- `systems/achievements.js` — `unlockAchievement(id)` is idempotent and queues toasts; it does nothing visible for an id missing from `data/achievements.js`. `secret: true` entries show as `????` and are excluded from `getVisibleAchievementsTotal()`.
+
+## Known bugs are preserved
+
+`docs/bugs-conocidos.md` lists bugs found during the 2026 refactor that were **kept on purpose** (the refactor promised no behaviour change). Each is marked in code with `BUG conocido (conservado)`. Fixing one is a behaviour change: do it in its own commit, and expect to re-record the affected goldens. Don't fix one silently — e.g. never add `data-category` to the shop tabs.
 
 ## Repo notes
 
-- `.backup-mobile-20260825-221758/` is a **committed** snapshot of an older `index.html`/`style.css`/`game.js`. It is dead code — don't edit it, and don't let searches there mislead you.
-- `css/style.css` is one large file split by banner comments (`/* ====== */`); Tailwind utility classes carry most of the layout, `style.css` carries the retro/CRT identity and CSS custom properties (`--primary`, `--primary-rgb`) that `js/theme.js` rewrites per theme. Canvas drawing reads the same theme color via `currentThemeHex()`.
-- Any keyframe animating `transform` on a centred element must re-apply its `translateX(-50%)`, or the element jumps out of the viewport. That is why `#dialogue-box` has its own `dialogue-shake` instead of reusing the generic `shake-error`.
-- The mouse writes into the same `p1.touchY`/`p1.touchX` channel as touch, and must pick the axis from `bossIsRotatedArena()` — otherwise the mouse does nothing in the Creator fight. It reuses `touchToCanvasX/Y` from `js/touch.js`.
-- `startGame()` restores paddle `width`, `height` **and** `x`. The Creator's rotated arena reshapes `p1` into a horizontal paddle, and restoring only `height` leaves a square block mid-field in the next match.
-- `.mcp.json` configures the Playwright MCP server used to drive the game in a real browser (`--browser msedge`, since Chrome isn't installed on this machine). It wraps `npx` in `cmd /c` because npx is a `.cmd` on Windows and fails when spawned without a shell — change that to plain `npx` if the repo is ever opened on Linux or macOS.
-- Playwright's output (`.playwright-mcp/`) and stray root-level `*.png` screenshots are gitignored. Keep test captures out of the repo.
+- `css/style.css` is one file split by banner comments; Tailwind utilities carry most of the layout, `style.css` the retro/CRT identity and the custom properties (`--primary`, `--primary-rgb`) that `systems/theme.js` rewrites per theme. Canvas drawing reads the same colour via `currentThemeHex()`.
+- Any keyframe animating `transform` on a centred element must re-apply its `translateX(-50%)`, or the element jumps out of the viewport — that is why `#dialogue-box` has its own `dialogue-shake`.
+- `#hachepe-characters.hidden` is needed: without it the id's `display:flex` beats Tailwind's `.hidden`.
+- `.mcp.json` configures the Playwright MCP server (`--browser msedge`, since Chrome isn't installed on this machine). It wraps `npx` in `cmd /c` because npx is a `.cmd` on Windows — change that to plain `npx` on Linux or macOS.
+- Playwright output (`.playwright-mcp/`) and stray root-level `*.png` are gitignored. Keep captures out of the repo.
 
 ## Verifying changes
 
-**Run the regression suite** after any change: `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It replays 22 deterministic matches frame by frame against `tests/golden/` and checks the import map; `tests/README.md` explains how it works. A refactor must keep it green **without re-recording**; re-recording a golden means accepting a behaviour change.
+1. **Types:** `npx -y -p typescript@5 tsc -p jsconfig.json` must report **zero** errors (JSDoc `@typedef`s for `Ball`, `Paddle`, `GameState`, `BossMechanics`, `PowerupType`, `ShopItem`… live next to the code they describe).
+2. **Regression suite:** `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It checks the import map, the computed styles of every screen at four viewport sizes, and replays 22 deterministic matches frame by frame against `tests/golden/`. Expect two non-blocking "Diagnóstico interno distinto" warnings (`jefe-3`, `repetir-y-siguiente`): an internal boss field was removed as dead code. A refactor must stay green **without re-recording**; re-recording means accepting a behaviour change. `tests/README.md` explains the harness. Never edit files while a run is in progress: each scenario reloads the game.
 
 To drive the real game with Playwright MCP, import its modules from `browser_evaluate` (the import map resolves them to the same instances the game uses). Exported `let`s can't be assigned from outside, so go through functions:
 
 ```js
-const c = await import('./js/campaign.js'); const g = await import('./js/game.js');
-const { state } = await import('./js/state.js');
-c.prepareCampaignMatch(4); /* wait for the VS screen to start the match */ c.stopDialogue();
-for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; g.update(1); }
+const p = await import('./js/campaign/progress.js'), m = await import('./js/game/match.js');
+const d = await import('./js/campaign/dialogue.js'), ph = await import('./js/game/physics.js');
+const { state } = await import('./js/core/state.js');
+p.prepareCampaignMatch(4); m.startGame('campaign'); d.stopDialogue();   // the VS timer will restart it ~3 s later
+for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; ph.update(1); }
 ```
 
 Two habits worth keeping, because both caught real bugs that reading the code did not:
 
-- **Simulate several player skill levels**, not one. Drive `p1` toward the ball with a lerp factor (1.0 = perfect, ~0.3 = human, ~0.1 = weak) and assert the match actually *ends*. A perfect bot rallying forever against a perfect CPU is how the unbeatable-boss and stuck-ball bugs stayed hidden.
+- **Simulate several player skill levels**, not one. A perfect bot rallying forever against a perfect CPU is how the unbeatable-boss and stuck-ball bugs stayed hidden; the test bots use edge hits for that reason.
 - **Look at the screenshots.** The giant square paddle, the dialogue box sliding off screen and the armor stripes bleeding over the eye were all invisible in the numbers.

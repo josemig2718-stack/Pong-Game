@@ -15,6 +15,7 @@ import { p1, state } from '../core/state.js';
 import { soundEffects } from '../systems/audio.js';
 import { bossState } from './shared.js';
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossFano = {
     config: { targetScore: 7, aiSpeed: 0.9,  aiError: 12, aiBias: 50 },
 

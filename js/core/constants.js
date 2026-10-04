@@ -10,6 +10,7 @@
  */
 
 // --- Dimensiones lógicas del campo de juego (resolución interna fija) ---
+/** Resolución lógica del campo: el canvas siempre mide esto en píxeles. */
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 600;
 
@@ -28,6 +29,7 @@ export const MS_PER_FRAME = 1000 / 60;
 
 // Velocidades de bola en píxeles por fotograma (a 60 FPS de referencia).
 // base = velocidad inicial; max = velocidad tope tras aceleraciones.
+/** @type {Record<number, {base: number, max: number}>} */
 export const BALL_SPEED_PRESETS = {
     1: { base: 5, max: 11 },
     2: { base: 7, max: 15 },

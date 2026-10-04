@@ -47,7 +47,11 @@ const enterCurrentBoss = [
     { type: 'clickSel', sel: '.boss-card.is-active' }
 ];
 
-/** @param {number} level */
+/**
+ * @param {number} level
+ * @param {number} seed
+ * @param {object} [bot] opciones del bot (ver Bot en runner.js)
+ */
 const bossScenario = (level, seed, bot = ACE) => ({
     name: `jefe-${level}`,
     seed,

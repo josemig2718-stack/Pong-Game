@@ -131,6 +131,10 @@ export function triggerGoalVFX(goalX, goalY) {
     }
 }
 
+/**
+ * Avanza el efecto de gol equipado y los temporizadores comunes.
+ * @param {number} dt
+ */
 export function updateGoalVFX(dt) {
     const fxId = playerProgression.selectedGoalFx || 'classic';
 
@@ -150,6 +154,10 @@ export function updateGoalVFX(dt) {
     }
 }
 
+/**
+ * Dibuja el efecto de gol equipado.
+ * @param {CanvasRenderingContext2D} ctx
+ */
 export function renderGoalVFX(ctx) {
     const fxId = playerProgression.selectedGoalFx || 'classic';
 

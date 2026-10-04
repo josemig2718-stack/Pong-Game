@@ -8,6 +8,16 @@
  * ------------------------------------------------------------------
  */
 
+/**
+ * @typedef {object} Achievement
+ * @property {string} id
+ * @property {string} emoji
+ * @property {string} name
+ * @property {string} desc
+ * @property {boolean} [secret]  se muestra como "????" hasta desbloquearse
+ */
+
+/** @type {Achievement[]} */
 export const ACHIEVEMENTS = [
     // 🏁 Inicio
     { id: 'first_win',      emoji: '🏓', name: 'Primer Victoria',  desc: 'Gana tu primera partida vs CPU' },

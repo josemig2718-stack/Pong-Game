@@ -62,6 +62,7 @@ function finaleStep(ms, fn) {
     finaleTimers.push(setTimeout(fn, ms));
 }
 
+/** Cancela los pasos pendientes de cualquier secuencia final. */
 export function clearFinaleTimers() {
     finaleTimers.forEach(clearTimeout);
     finaleTimers = [];

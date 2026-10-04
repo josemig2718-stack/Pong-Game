@@ -65,7 +65,7 @@ export function initUI() {
 
     showScreen('main-menu');
 
-    document.querySelectorAll('[data-binding-action]').forEach(btn => {
+    /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-binding-action]')).forEach(btn => {
         btn.addEventListener('click', () => startListeningFor(btn.dataset.bindingAction));
     });
 }

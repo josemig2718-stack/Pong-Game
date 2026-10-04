@@ -15,6 +15,7 @@ import { soundEffects } from '../systems/audio.js';
 import { spawnParticles } from '../game/effects.js';
 import { bossState } from './shared.js';
 
+/** @type {import('./index.js').BossMechanics} */
 export const bossChemi = {
     config: { targetScore: 5, aiSpeed: 0.7,  aiError: 26, aiBias: 78 },
 

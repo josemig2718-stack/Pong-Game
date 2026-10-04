@@ -48,7 +48,7 @@ const CLICK_ACTIONS = {
     forceClose:             () => forceClose(),
 
     // Partida
-    startGame:              (el) => startGame(el.dataset.arg),
+    startGame:              (el) => startGame(/** @type {import('../core/state.js').GameMode} */ (el.dataset.arg)),
     togglePause:            () => togglePause(),
     quitGame:               () => quitGame(),
     restartCurrentGame:     () => restartCurrentGame(),

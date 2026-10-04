@@ -21,7 +21,9 @@
 (function () {
     'use strict';
 
-    const cfg = window.__HARNESS_CONFIG__ || {};
+    /** El harness sustituye globales del navegador a propósito: sin tipos. */
+    const win = /** @type {any} */ (window);
+    const cfg = win.__HARNESS_CONFIG__ || {};
     const MS_PER_FRAME = 1000 / 60;
 
     /** Errores no capturados del juego: un test con errores falla. */
@@ -92,11 +94,11 @@
     class VirtualDate extends RealDate {
         constructor(...args) {
             if (args.length === 0) super(EPOCH + clock);
-            else super(...args);
+            else super(.../** @type {[any]} */ (args));
         }
         static now() { return EPOCH + clock; }
     }
-    window.Date = VirtualDate;
+    win.Date = VirtualDate;
     Object.defineProperty(window.performance, 'now', {
         value: () => clock,
         configurable: true
@@ -110,12 +112,12 @@
     /** @type {Map<number, {due:number, seq:number, fn:Function, args:any[], interval:number|null}>} */
     const timers = new Map();
 
-    window.setTimeout = function (fn, delay, ...args) {
+    win.setTimeout = function (fn, delay, ...args) {
         const id = nextTimerId++;
         timers.set(id, { due: clock + Math.max(0, Number(delay) || 0), seq: seq++, fn, args, interval: null });
         return id;
     };
-    window.setInterval = function (fn, delay, ...args) {
+    win.setInterval = function (fn, delay, ...args) {
         const id = nextTimerId++;
         // Un intervalo de 0 ms colgaría el paso: el mínimo es 1 ms virtual.
         const every = Math.max(1, Number(delay) || 0);
@@ -247,8 +249,8 @@
             return osc;
         }
     }
-    window.AudioContext = FakeAudioContext;
-    window.webkitAudioContext = FakeAudioContext;
+    win.AudioContext = FakeAudioContext;
+    win.webkitAudioContext = FakeAudioContext;
 
     class FakeAudio {
         constructor(src) {
@@ -279,7 +281,7 @@
         get playbackRate() { return this._rate; }
         set playbackRate(v) { this._rate = v; audioLog.push(['media', frame, this._name, 'playbackRate', v]); }
     }
-    window.Audio = FakeAudio;
+    win.Audio = FakeAudio;
 
     // ------------------------------------------------------------------
     //  Teclado: se lanza sobre el elemento con foco para que burbujee
@@ -292,7 +294,7 @@
         })));
     }
 
-    window.__harness = {
+    win.__harness = {
         step,
         key,
         inGame,

@@ -14,14 +14,24 @@ import { currentCampaignLevel } from '../campaign/progress.js';
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
 
+/**
+ * Crea el AudioContext la primera vez y lo reanuda si el navegador lo suspendió.
+ * @returns {AudioContext}
+ */
 export function getAudioContext() {
     if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx = new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
     return audioCtx;
 }
 
+/**
+ * Toca un tono sintetizado con el volumen de efectos actual.
+ * @param {number} freq hercios
+ * @param {OscillatorType} [type]
+ * @param {number} [duration] segundos
+ */
 export function playTone(freq, type = 'square', duration = 0.1) {
     if (!settings.sfxEnabled || masterVolume === 0) return;
     const ctx = getAudioContext();
@@ -95,12 +105,19 @@ export const soundEffects = {
     dialogueBlip: () => playTone(680, 'square', 0.02)
 };
 
+/**
+ * Volumen de los efectos, de 0 a 100. Lo guarda en `settings`.
+ * @param {number} val
+ */
 export function setMasterVolume(val) {
     masterVolume = val / 100;
     settings.volume = val;
     saveSettings();
 }
 
+/**
+ * @param {boolean} enabled
+ */
 export function setSfxEnabled(enabled) {
     settings.sfxEnabled = enabled;
     saveSettings();
@@ -122,6 +139,7 @@ menuMusic.volume     = settings.musicVolume / 100;
 gameplayMusic.volume = settings.musicVolume / 100;
 hachepeMusic.volume  = settings.musicVolume / 100;
 
+/** Para la música de partida y pone la del menú (si la música está activada). */
 export function playMenuMusic() {
     if (!settings.musicEnabled) return;
     gameplayMusic.pause();
@@ -132,11 +150,17 @@ export function playMenuMusic() {
     menuMusic.play().catch(() => {});  // Silencia el autoplay-block
 }
 
+/** Para la música del menú y la rebobina. */
 export function stopMenuMusic() {
     menuMusic.pause();
     menuMusic.currentTime = 0;
 }
 
+/**
+ * Música de partida según el modo: el rap de los Hachepes en Hachepe y
+ * campaña, silencio contra el Creador y la pista normal en el resto.
+ * @param {string} [mode]
+ */
 export function playGameplayMusic(mode = 'cpu') {
     if (!settings.musicEnabled) return;
     menuMusic.pause();
@@ -166,6 +190,7 @@ export function playGameplayMusic(mode = 'cpu') {
     }
 }
 
+/** Para las pistas de partida y las rebobina. */
 export function stopGameplayMusic() {
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
@@ -173,11 +198,16 @@ export function stopGameplayMusic() {
     hachepeMusic.currentTime = 0;
 }
 
+/** Para toda la música. */
 export function stopAllMusic() {
     stopMenuMusic();
     stopGameplayMusic();
 }
 
+/**
+ * Volumen de la música, de 0 a 100. Lo aplica a las tres pistas y lo guarda.
+ * @param {number} val
+ */
 export function setMusicVolume(val) {
     settings.musicVolume = val;
     menuMusic.volume     = val / 100;
@@ -186,6 +216,10 @@ export function setMusicVolume(val) {
     saveSettings();
 }
 
+/**
+ * Activa o desactiva la música (al desactivarla, la para).
+ * @param {boolean} enabled
+ */
 export function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
     saveSettings();

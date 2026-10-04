@@ -30,7 +30,36 @@ import { bossState, resetBossState } from './shared.js';
 import { bossYisus } from './yisus.js';
 import { currentCampaignLevel } from '../campaign/progress.js';
 
+/**
+ * Parámetros de un jefe. Cada jefe define solo los que cambia.
+ * @typedef {object} BossConfig
+ * @property {number} targetScore  puntos para ganar; contra el Creador, fallos permitidos al jugador
+ * @property {number} aiSpeed      multiplicador sobre paddleSpeed
+ * @property {number} aiError      zona muerta en píxeles: no corrige por debajo de esto
+ * @property {number} aiBias       desvío de puntería en píxeles, renovado en cada golpe
+ * @property {'x'|'y'} paddleAxis  'x' rota la arena (paleta del jugador horizontal abajo)
+ * @property {boolean} useHealth   true = se gana vaciando la barra de vida, no por marcador
+ * @property {number} [hitDamage]  daño por impacto (jefes con vida)
+ */
+
+/**
+ * Lo que puede definir cada jefe. Todo es opcional salvo `config`.
+ * @typedef {object} BossMechanics
+ * @property {Partial<BossConfig>} config
+ * @property {() => void} [init]                          al empezar el combate
+ * @property {(dt: number) => void} [update]              cada paso de física
+ * @property {(ctx: CanvasRenderingContext2D) => void} [render]         capa junto al campo
+ * @property {(ctx: CanvasRenderingContext2D) => void} [renderOverlay]  capa superior
+ * @property {(b: import('../core/state.js').Ball) => boolean} [collide]  obstáculos propios; true si la bola rebotó
+ * @property {(scorerIsP1: boolean) => void} [onGoal]
+ * @property {() => boolean} [hidesBall]
+ * @property {() => boolean} [freezesPlayer]
+ * @property {() => boolean} [invertsControls]
+ * @property {(x: number) => boolean} [segmentIsArmored]
+ */
+
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
+/** @type {BossConfig} */
 const BOSS_DEFAULT_CONFIG = {
     targetScore: 5,      // puntos necesarios para ganar el combate
     aiSpeed: 0.75,       // multiplicador sobre paddleSpeed
@@ -45,6 +74,10 @@ const BOSS_DEFAULT_CONFIG = {
 /** Desvío de puntería actual del jefe. Se renueva en cada intercambio. */
 let bossAimOffset = 0;
 
+/**
+ * Renueva el desvío de puntería del jefe (en cada golpe de paleta).
+ * Sesgo con forma de campana: los desvíos grandes son menos frecuentes.
+ */
 export function bossRefreshAim() {
     const cfg = bossConfig();
     if (!cfg) { bossAimOffset = 0; return; }
@@ -53,6 +86,9 @@ export function bossRefreshAim() {
     bossAimOffset = r * (cfg.aiBias || 0);
 }
 
+/**
+ * @returns {number} desvío actual en píxeles (0 fuera de la campaña)
+ */
 export function bossAim() {
     return bossConfig() ? bossAimOffset : 0;
 }
@@ -65,6 +101,7 @@ export function bossAim() {
  * único módulo que los importa: no los importes desde ningún otro sitio
  * (para algo compartido, usa bosses/shared.js).
  */
+/** @type {Record<number, BossMechanics>} */
 const BOSS_MECHANICS = {
     1: bossChemi,
     2: bossDani,
@@ -93,12 +130,17 @@ export function bossIsRotatedArena() {
     return !!cfg && cfg.paddleAxis === 'x';
 }
 
+/** Vacía el estado del jefe y arma el del jefe en curso (al empezar la partida). */
 export function bossInit() {
     resetBossState();
     const boss = currentBoss();
     if (boss && boss.init) boss.init();
 }
 
+/**
+ * Avanza las mecánicas del jefe en curso.
+ * @param {number} dt
+ */
 export function bossUpdate(dt) {
     const boss = currentBoss();
     if (boss && boss.update) boss.update(dt);
@@ -111,6 +153,10 @@ export function bossCollide(b) {
     return false;
 }
 
+/**
+ * Avisa al jefe de un gol (el dúo retira a Mario al encajarlo).
+ * @param {boolean} scorerIsP1
+ */
 export function bossOnGoal(scorerIsP1) {
     const boss = currentBoss();
     if (boss && boss.onGoal) boss.onGoal(scorerIsP1);
@@ -159,6 +205,9 @@ export function bossSegmentArmored(x) {
     return !!(boss && boss.segmentIsArmored && boss.segmentIsArmored(x));
 }
 
+/**
+ * @returns {number} vida del jefe en curso (0 si no tiene barra de vida)
+ */
 export function bossHealth() {
     return typeof bossState.health === 'number' ? bossState.health : 0;
 }

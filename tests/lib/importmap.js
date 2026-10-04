@@ -79,7 +79,9 @@ export async function checkImportMap(root) {
         }
         const code = await res.text();
         const file = key.slice(root.length);
-        for (const m of code.matchAll(DYNAMIC_IMPORT)) {
+        // Sin comentarios: los tipos JSDoc usan import('…') y no cargan nada.
+        const codeOnly = code.replace(/\/\*[\s\S]*?\*\//g, '');
+        for (const m of codeOnly.matchAll(DYNAMIC_IMPORT)) {
             errors.push(`${file}: import() dinámico de "${m[1]}" (el mapa no lo verifica)`);
         }
         for (const m of code.matchAll(STATIC_IMPORT)) {

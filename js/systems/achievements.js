@@ -82,7 +82,7 @@ function showAchievementToast(achievement) {
  * Verifica todas las condiciones de logros.
  * Se llama al terminar una partida y al cambiar tema.
  */
-export function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
+export function checkAllAchievements(mode, p1Won) {
     const s = gameStats;
 
     // --- Inicio ---
@@ -131,6 +131,8 @@ export function checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore) {
     }
 
     // --- Nuevos (Power-ups) ---
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): totalPowerupsCollected nunca se
+    // incrementa: "Coleccionista" es inalcanzable.
     if (s.totalPowerupsCollected >= 50) {
         unlockAchievement('powerup_collector');
     }
@@ -150,6 +152,9 @@ export function getVisibleAchievementsTotal() {
     return ACHIEVEMENTS.filter(a => !a.secret || gameStats.achievements[a.id]).length;
 }
 
+/**
+ * @returns {number} logros desbloqueados, secretos incluidos
+ */
 export function getUnlockedCount() {
     return Object.keys(gameStats.achievements).length;
 }

@@ -182,6 +182,8 @@ export function render() {
     // Efectos de gol VFX (flash, confeti, shockwave)
     renderGoalVFX(ctx);
 
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): solo se dibujan los segundos: el "¡YA!"
+    // del saque nunca llega a verse.
     // Cuenta regresiva de saque + previsualización de trayectoria
     if (state.serveCountdownMs > 0) {
         const secs = Math.ceil(state.serveCountdownMs / 1000);

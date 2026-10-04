@@ -7,7 +7,10 @@
  * ------------------------------------------------------------------
  */
 
-/** Estado vivo del jefe en curso. Cada jefe guarda aquí lo suyo en init(). */
+/**
+ * Estado vivo del jefe en curso. Cada jefe guarda aquí lo suyo en init().
+ * @type {Record<string, any>}
+ */
 export let bossState = {};
 
 /** Vacía el estado del jefe (al empezar cada partida, en bossInit()). */

@@ -56,11 +56,14 @@ function loadStats() {
     return {
         ...DEFAULT_STATS,
         ...saved,
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): si lo guardado es el JSON null,
+        // saved.achievements lanza un error y el juego no arranca.
         achievements: { ...(saved.achievements || {}) },
         themesUsed:   [...(saved.themesUsed || [])]
     };
 }
 
+/** Guarda `gameStats` en localStorage. */
 export function saveStats() {
     writeJSON(STATS_STORAGE_KEY, gameStats, 'No se pudieron guardar las estadísticas:');
 }
@@ -68,6 +71,8 @@ export function saveStats() {
 /** Borra solo las estadísticas numéricas, manteniendo los logros intactos */
 export function resetStats() {
     const preserved = { ...gameStats.achievements };
+    // BUG conocido (conservado, ver docs/bugs-conocidos.md): copia la referencia de
+    // DEFAULT_STATS.themesUsed: los temas que se prueben después la modifican.
     Object.assign(gameStats, DEFAULT_STATS);
     gameStats.achievements = preserved;
     saveStats();
@@ -121,8 +126,13 @@ export function statsOnScore(scorerIsP1) {
     saveStats();
 }
 
-/** Llamar cuando termina una partida (checkWin) */
-export function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
+/**
+ * Llamar cuando termina una partida (checkWin).
+ * @param {string} mode
+ * @param {boolean} p1Won
+ * @param {number} p2FinalScore puntos del rival (0 = juego perfecto)
+ */
+export function statsOnGameEnd(mode, p1Won, p2FinalScore) {
     gameStats.totalGamesPlayed++;
 
     // Tiempo jugado
@@ -160,6 +170,7 @@ export function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
             gameStats.cpuCurrentStreak = 0;
         }
     } else {
+        // BUG conocido (conservado, ver docs/bugs-conocidos.md): Hachepe y campaña también caen aquí.
         gameStats.localGamesPlayed++;
         if (p1Won) gameStats.localP1Wins++;
         else       gameStats.localP2Wins++;
@@ -168,7 +179,7 @@ export function statsOnGameEnd(mode, p1Won, p1FinalScore, p2FinalScore) {
     saveStats();
 
     // Verificar logros después de guardar stats
-    checkAllAchievements(mode, p1Won, p1FinalScore, p2FinalScore);
+    checkAllAchievements(mode, p1Won);
 }
 
 /** Registrar que se usó un tema (para logro Explorador) */

@@ -268,6 +268,7 @@ function collision(b, p) {
 
 /** Golpe de paleta: el ángulo de salida depende de dónde toca la bola. */
 function hitPaddles(b, rotatedArena, maxBallSpeed) {
+    /** @type {import('../core/state.js').Paddle} */
     let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
     if (rotatedArena) targetPaddle = p1; // En la arena rotada solo existe p1 (abajo)
 

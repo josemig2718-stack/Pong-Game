@@ -7,6 +7,7 @@
  * ------------------------------------------------------------------
  */
 
+/** Niveles con significado propio en la campaña. */
 export const CAMPAIGN_LAST_BOSS = 5;   // últimos Hachepes "normales"
 export const CAMPAIGN_CREATOR = 6;     // nivel secreto
 

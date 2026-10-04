@@ -56,36 +56,30 @@ El código está organizado en módulos ES nativos. No utiliza NPM, Node.js ni b
 
 ```
 pong-game/
-├── index.html          # Interfaz, menús y contenedor del juego
-├── README.md
-├── CLAUDE.md           # Notas de arquitectura para agentes de IA
-├── css/
-│   └── style.css       # Estilos, UI, Tailwind (vía CDN) y variables CSS
+├── index.html            # Pantallas, menús, contenedor del juego y mapa de imports
+├── css/style.css         # Identidad retro/CRT y variables de tema (Tailwind va por CDN)
 ├── js/
-│   ├── config.js       # Constantes y base de configuración
-│   ├── theme.js        # Gestor de temas y colores CSS variables
-│   ├── audio.js        # Efectos de sonido (Web Audio API) y música MP3
-│   ├── stats.js        # Lógica de guardado/lectura de estadísticas globales
-│   ├── achievements.js # Definiciones y verificación de logros (con toasts UI)
-│   ├── input.js        # Mapeo de teclado
-│   ├── progression.js  # Sistema de niveles (XP) y monedas (Chemi Coins)
-│   ├── shop.js         # Lógica de compras, inventario y UI de la tienda
-│   ├── vfx.js          # Sistema de partículas, estelas avanzadas y renders
-│   ├── powerups.js     # Lógica y física de los potenciadores en partida
-│   ├── campaign.js     # Campaña: lore, carrusel, diálogos y secuencias finales
-│   ├── bosses.js       # Mecánicas de cada jefe (tabla BOSS_MECHANICS)
-│   ├── game.js         # Bucle principal (Game Loop), física de las bolas, colisiones
-│   ├── touch.js        # Gestión de eventos táctiles para móviles
-│   └── ui.js           # Navegación entre menús y sincronización con config
-└── assets/
-    ├── favicon.svg
-    ├── chemi_coin.png  # Icono de la moneda
-    ├── audio/          # Música de menú, de partida y el rap de los Hachepes
-    ├── images/         # Retratos de los seis Hachepes
-    └── shop/           # Imágenes previas de todos los cosméticos de la tienda
+│   ├── main.js           # Punto de entrada: arranca todo en orden
+│   ├── core/             # Base: constantes, localStorage, configuración, estado de la partida
+│   ├── data/             # Catálogos: temas, historia, logros, tienda, niveles, power-ups
+│   ├── systems/          # Audio, tema, teclado, ratón/táctil, estadísticas, logros, progresión
+│   ├── game/             # Canvas, física, IA, partida, bucle, dibujo y power-ups
+│   ├── vfx/              # Cosméticos de la tienda: estelas, fondos, paletas, efectos de gol
+│   ├── bosses/           # Un archivo por jefe + la tabla que los despacha
+│   ├── campaign/         # Avance, selector de jefes, diálogos y finales
+│   └── ui/               # Pantallas, botones (data-action), configuración, stats, tienda
+├── tests/                # Tests de regresión (una página web) y su servidor de desarrollo
+├── docs/
+│   └── bugs-conocidos.md # Fallos conocidos que se conservan a propósito
+├── assets/
+│   ├── audio/            # Música de menú, de partida y el rap de los Hachepes
+│   ├── images/           # Retratos de los seis Hachepes
+│   └── shop/             # Imágenes de todos los cosméticos de la tienda
+├── jsconfig.json         # Comprobación de tipos en el editor (JSDoc), sin compilar nada
+└── CLAUDE.md             # Arquitectura en detalle, para agentes de IA
 ```
 
-*`index.html` carga un único módulo, `js/main.js`, que importa el resto a través del mapa de imports.*
+*`index.html` carga un único módulo, `js/main.js`, que importa el resto a través del mapa de imports. Cada carpeta de `js/` es una capa: las de arriba (`core/`, `data/`) no importan nada de las de abajo.*
 
 ## 🎮 Controles por Defecto
 
@@ -118,13 +112,15 @@ No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes
 
 - **La caché se invalida a mano, con un solo número.** El mapa de imports de `index.html` añade `?v=N` a cada módulo, y el `<link>` del CSS lleva el mismo N. **Después de editar cualquier JS o CSS hay que subir N en todos esos sitios**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un módulo nuevo hay que añadirlo al mapa.
 - **Módulos ES nativos.** Cada archivo de `js/` importa lo que usa; `js/main.js` es el punto de entrada y arranca todo.
-- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> reproduce 22 partidas deterministas fotograma a fotograma y las compara con referencias grabadas, además de comprobar el mapa de imports. Ver `tests/README.md`.
+- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> → *Ejecutar todos*. Reproduce 22 partidas deterministas fotograma a fotograma, compara los estilos de cada pantalla en cuatro tamaños de ventana y comprueba el mapa de imports, todo contra referencias grabadas. Tarda unos 5 minutos. Ver `tests/README.md`.
+- **Tipos sin compilar.** `jsconfig.json` activa la comprobación de tipos de los editores a partir de los comentarios JSDoc. Para revisarla entera: `npx -y -p typescript@5 tsc -p jsconfig.json` (debe dar cero errores).
+- **Bugs conocidos.** `docs/bugs-conocidos.md` recoge fallos que se conservaron a propósito durante la refactorización; cada uno está marcado en el código con `BUG conocido (conservado)`.
 
-`CLAUDE.md` recoge la arquitectura en detalle: la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
+`CLAUDE.md` recoge la arquitectura en detalle: las capas, el estado compartido, la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
 
 ## 🛠️ Tecnologías
 - **HTML5 Canvas** y **requestAnimationFrame**.
-- **JavaScript (Vanilla, ES6+)**.
+- **JavaScript (Vanilla, módulos ES nativos)**, con tipos en JSDoc.
 - **TailwindCSS** (vía CDN) y animaciones nativas CSS3.
 - **Web Audio API** y etiquetas `<audio>`.
 - **LocalStorage API** (El progreso, compras y configuraciones se guardan localmente en el navegador).
