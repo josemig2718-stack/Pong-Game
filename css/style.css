@@ -381,12 +381,12 @@ canvas {
     display: flex;
     justify-content: space-between;
     align-items: flex-end; /* Alinear abajo para que pisen el borde */
-    pointer-events: none; 
-    z-index: 5; 
+    pointer-events: none;
+    z-index: 5;
     margin-bottom: -3px; /* Para superponerse justo en el borde de 3px del canvas */
 }
 
-/* En caso de que se haya ocultado con .hidden en HTML, pero flex manda */
+/* .hidden (Tailwind) pierde contra el display:flex del id: esta regla lo restablece */
 #hachepe-characters.hidden {
     display: none !important;
 }
@@ -1185,11 +1185,6 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     transition: filter 0.2s;
 }
 
-@keyframes pulse-danger {
-    0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-    50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
-}
-
 
 #dialogue-box {
     position: absolute;
@@ -1214,12 +1209,12 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     border-radius: 8px;
     flex-shrink: 0;
 }
-.dialogue-avatar-container img { 
-    width: 60px; 
-    height: 60px; 
-    object-fit: cover; 
-    border: 2px solid #ef4444; 
-    border-radius: 8px; 
+.dialogue-avatar-container img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border: 2px solid #ef4444;
+    border-radius: 8px;
 }
 .dialogue-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 #dialogue-name { font-family: var(--font-display); font-size: 0.6rem; color: #ef4444; margin-bottom: 5px; }

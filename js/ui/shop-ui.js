@@ -129,7 +129,7 @@ function populateShopTab(categoryKey) {
             btn.addEventListener('click', () => equipShopItem(categoryKey, item.id));
         } else {
             btn.classList.add('shop-card__btn--buy');
-            btn.innerHTML = `<img src="assets/chemi_coin.png" class="w-3 h-3 inline object-contain mr-1" style="vertical-align: text-top;"> ${item.price}`;
+            btn.innerHTML = `<img src="assets/chemi_coin.png" alt="" class="w-3 h-3 inline object-contain mr-1" style="vertical-align: text-top;"> ${item.price}`;
             btn.addEventListener('click', () => buyShopItem(categoryKey, item.id));
         }
 

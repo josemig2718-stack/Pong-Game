@@ -42,7 +42,7 @@ export function updateProgressionDisplay() {
             gameOverProgression.classList.remove('hidden');
 
             document.getElementById('game-over-xp').textContent = `+${sessionXPGained} XP`;
-            document.getElementById('game-over-coins').innerHTML = `+${sessionCoinsGained} <img src="assets/chemi_coin.png" class="w-4 h-4 inline object-contain" style="vertical-align: text-top;">`;
+            document.getElementById('game-over-coins').innerHTML = `+${sessionCoinsGained} <img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain" style="vertical-align: text-top;">`;
 
             const alertEl = document.getElementById('level-up-alert');
             if (sessionLeveledUp) {
@@ -66,7 +66,7 @@ export function updateCoinDisplay() {
         const display = document.getElementById(id);
         if (display) {
             const size = id === 'shop-coin-display' ? 'w-6 h-6' : 'w-4 h-4';
-            display.innerHTML = `<img src="assets/chemi_coin.png" class="${size} inline object-contain mr-1" style="vertical-align: text-top;"> ${playerProgression.chemiCoins}`;
+            display.innerHTML = `<img src="assets/chemi_coin.png" alt="" class="${size} inline object-contain mr-1" style="vertical-align: text-top;"> ${playerProgression.chemiCoins}`;
         }
     });
 }
