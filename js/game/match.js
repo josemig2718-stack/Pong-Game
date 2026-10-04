@@ -23,6 +23,7 @@ function startGame(mode) {
     state.mode = mode;
     state.p1Score = 0;
     state.p2Score = 0;
+    state.goTextMs = 0;
     state.particles = [];
 
     // Restaurar geometría original de las paletas. Hay que reponer también

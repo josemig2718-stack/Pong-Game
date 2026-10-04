@@ -67,6 +67,7 @@
  * @property {number} p2Score  contra el Creador cuenta los fallos del jugador, no puntos del rival
  * @property {number} frameCount
  * @property {number} serveCountdownMs
+ * @property {number} goTextMs  tras el saque, tiempo que queda mostrando "¡YA!" (ms)
  * @property {number} shakeIntensity
  * @property {number} shakeTimeMs
  * @property {Ball[]} balls
@@ -84,6 +85,8 @@ const state = {
     frameCount: 0,
     /** Cuenta regresiva antes de que la bola se mueva (ms). 0 = bola en juego. */
     serveCountdownMs: 0,
+    /** Tras el saque, tiempo que queda mostrando "¡YA!" (ms). */
+    goTextMs: 0,
     /** Vibración de pantalla: amplitud en px y tiempo restante en ms. */
     shakeIntensity: 0,
     shakeTimeMs: 0,

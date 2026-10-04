@@ -18,6 +18,9 @@
 // Puntos que guarda la estela de cada bola
 const MAX_TRAIL = 25;
 
+// Cuánto se ve "¡YA!" al terminar la cuenta regresiva (ms)
+const GO_TEXT_MS = 600;
+
 /**
  * Avanza la partida un paso.
  * @param {number} dt tiempo transcurrido en fotogramas de 60 FPS
@@ -68,6 +71,7 @@ function update(dt) {
     updateVFX(dt);
     updateParticles(dt);
     updateShake(dt);
+    if (state.goTextMs > 0) state.goTextMs = Math.max(0, state.goTextMs - dt * MS_PER_FRAME);
 }
 
 // ------------------------------------------------------------------
@@ -137,6 +141,7 @@ function tickServeCountdown(dt) {
     }
     if (state.serveCountdownMs <= 0) {
         soundEffects.go();
+        state.goTextMs = GO_TEXT_MS;
     }
 }
 

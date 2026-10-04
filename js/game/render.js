@@ -166,14 +166,17 @@ function render() {
     // Efectos de gol VFX (flash, confeti, shockwave)
     renderGoalVFX(ctx);
 
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): solo se dibujan los segundos: el "¡YA!"
-    // del saque nunca llega a verse.
-    // Cuenta regresiva de saque + previsualización de trayectoria
+    // Cuenta regresiva de saque + previsualización de trayectoria, y "¡YA!"
+    // al sacar (se desvanece en sus últimos 300 ms)
     if (state.serveCountdownMs > 0) {
         const secs = Math.ceil(state.serveCountdownMs / 1000);
         drawTrajectoryPreview(themeColor);
         ctx.globalAlpha = 0.9;
         drawText(String(secs), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
+        ctx.globalAlpha = 1;
+    } else if (state.goTextMs > 0) {
+        ctx.globalAlpha = 0.9 * Math.min(1, state.goTextMs / 300);
+        drawText('¡YA!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
         ctx.globalAlpha = 1;
     }
 
