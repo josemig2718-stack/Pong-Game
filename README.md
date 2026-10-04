@@ -70,7 +70,7 @@ pong-game/
 │   └── ui/               # Pantallas, botones (data-action), configuración, stats, tienda
 ├── tests/                # Tests de regresión (una página web) y su servidor de desarrollo
 ├── docs/
-│   └── bugs-conocidos.md # Fallos conocidos que se conservan a propósito
+│   └── bugs-conocidos.md # Registro de los bugs encontrados en la refactorización y su arreglo
 ├── assets/
 │   ├── audio/            # Música de menú, de partida y el rap de los Hachepes
 │   ├── images/           # Retratos de los seis Hachepes
@@ -114,7 +114,7 @@ No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes
 - **La caché se invalida a mano, con un solo número.** Cada `<script>` de `index.html` y el `<link>` del CSS llevan el mismo `?v=N`. **Después de editar cualquier JS o CSS hay que subir N en todos**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un archivo nuevo de `js/` hay que añadirlo a la lista, en su capa.
 - **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> → *Ejecutar todos*. Reproduce partidas deterministas fotograma a fotograma, compara los estilos de cada pantalla en cuatro tamaños de ventana y comprueba la lista de scripts, todo contra referencias grabadas. Tarda unos 5 minutos. Ver `tests/README.md`.
 - **Tipos sin compilar.** `jsconfig.json` activa la comprobación de tipos de los editores a partir de los comentarios JSDoc. Para revisarla entera: `npx -y -p typescript@5 tsc -p jsconfig.json` (debe dar cero errores).
-- **Bugs conocidos.** `docs/bugs-conocidos.md` recoge fallos que se conservaron a propósito durante la refactorización; cada uno está marcado en el código con `BUG conocido (conservado)`.
+- **Bugs conocidos.** `docs/bugs-conocidos.md` registra los fallos que encontró la refactorización y cómo se arreglaron. Un arreglo cambia el comportamiento: va en su propio commit, regrabando solo las referencias de los tests que explica.
 
 `CLAUDE.md` recoge la arquitectura en detalle: las capas, el estado compartido, la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
 

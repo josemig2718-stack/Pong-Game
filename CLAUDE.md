@@ -116,9 +116,9 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 - `game/powerups.js` — one power-up on the field and one active effect at a time; `revertPowerup()` restores `originalValues`. Effects resize paddles, so `startGame`/`quitGame`/`checkWin` restore paddle sizes defensively. `startGame()` restores `width`, `height` **and** `x` (the rotated arena reshapes `p1`).
 - `systems/achievements.js` — `unlockAchievement(id)` is idempotent and queues toasts; it does nothing visible for an id missing from `data/achievements.js`. `secret: true` entries show as `????` and are excluded from `getVisibleAchievementsTotal()`.
 
-## Known bugs are preserved
+## Behaviour changes and goldens
 
-`docs/bugs-conocidos.md` lists bugs found during the 2026 refactor that were **kept on purpose** (the refactor promised no behaviour change). Each is marked in code with `BUG conocido (conservado)`. Fixing one is a behaviour change: do it in its own commit, and expect to re-record the affected goldens. Don't fix one silently — e.g. never add `data-category` to the shop tabs.
+`docs/bugs-conocidos.md` records the bugs found during the 2026 refactor and how each was later fixed. A refactor must not change behaviour; a bug fix is a behaviour change. Do it in its own commit, run the suite, check that **only** the sections the fix explains differ (the failure messages name them: `storage`, `dom`, `canvas`…), re-record just those scenarios (`?only=…&nodownload`, `window.__tests.record()`) and say why in the commit. If a bug must be kept for now, mark it in code with `BUG conocido (conservado)` and list it in that file.
 
 ## Repo notes
 
@@ -131,7 +131,7 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 ## Verifying changes
 
 1. **Types:** `npx -y -p typescript@5 tsc -p jsconfig.json` must report **zero** errors (JSDoc `@typedef`s for `Ball`, `Paddle`, `GameState`, `BossMechanics`, `PowerupType`, `ShopItem`… live next to the code they describe).
-2. **Regression suite:** `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It checks the script list, the computed styles of every screen at four viewport sizes, and replays deterministic matches frame by frame against `tests/golden/`. A refactor must stay green **without re-recording**; re-recording a golden means accepting a behaviour change and belongs in a commit that says why. `tests/README.md` explains the harness. Never edit files while a run is in progress: each scenario reloads the game.
+2. **Regression suite:** `python tests/serve.py`, open `http://127.0.0.1:8000/tests/` (in a browser at its native display scale: canvas and computed-style hashes depend on `devicePixelRatio`, so **never call `setViewportSize` in the browser that runs the suite**; use a separate context for manual checks), press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It checks the script list, the computed styles of every screen at four viewport sizes, and replays deterministic matches frame by frame against `tests/golden/`. A refactor must stay green **without re-recording**; re-recording a golden means accepting a behaviour change and belongs in a commit that says why. `tests/README.md` explains the harness. Never edit files while a run is in progress: each scenario reloads the game.
 3. **Open `index.html` directly** (`file://`) after any change to loading, and check the console.
 
 Everything is global, so Playwright MCP's `browser_evaluate` can drive the real game directly:
