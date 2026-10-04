@@ -101,13 +101,9 @@ function pathOf(el, root) {
  * @param {CSSStyleDeclaration} cs
  */
 function hashStyle(cs) {
-    const out = [];
-    for (let i = 0; i < cs.length; i++) {
-        const prop = cs[i];
-        if (SKIPPED.test(prop)) continue;
-        out.push(prop, cs.getPropertyValue(prop));
-    }
-    return fnv(canonical(out));
+    // Como objeto, no como lista: canonical() ordena las claves. El orden
+    // en que el navegador enumera las propiedades cambia entre arranques.
+    return fnv(canonical(readableStyle(cs)));
 }
 
 /**
