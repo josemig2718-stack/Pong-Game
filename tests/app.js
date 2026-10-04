@@ -12,6 +12,7 @@ import { SCENARIOS } from './scenarios.js';
 import { runScenario, compare } from './runner.js';
 import { canonical } from './lib/canonical.js';
 import { checkImportMap } from './lib/importmap.js';
+import { captureStyles, compareStyles, inspectStyle } from './styles.js';
 
 const stage = /** @type {HTMLElement} */ (document.getElementById('stage'));
 const tbody = /** @type {HTMLElement} */ (document.getElementById('results'));
@@ -81,6 +82,28 @@ async function runImportMapCheck() {
 }
 
 /**
+ * Estilos computados de cada pantalla y tamaño de ventana (ver styles.js).
+ * @returns {Promise<boolean>}
+ */
+async function runStylesCheck() {
+    const row = { name: 'estilos-computados' };
+    showRow(row, 'warn', 'ejecutando…');
+    try {
+        const [golden, got] = await Promise.all([loadGolden('styles'), captureStyles(stage, (msg) => showRow(row, 'warn', 'ejecutando… ' + msg))]);
+        /** @type {any} */ (window).__lastStyles = got;
+        const { errors, warnings } = compareStyles(golden, got);
+        const ok = errors.length === 0 && !!golden;
+        const states = Object.values(got.styles).reduce((n, s) => n + Object.keys(s).length, 0);
+        showRow(row, ok ? 'ok' : 'bad', ok ? `OK (${states} capturas)` : 'FALLA',
+            [...errors, ...warnings.map((w) => 'aviso: ' + w)].join('\n'));
+        return ok;
+    } catch (err) {
+        showRow(row, 'bad', 'ERROR', String(err && err.stack || err));
+        return false;
+    }
+}
+
+/**
  * @param {(scn:any) => Promise<boolean>} fn
  * @param {boolean} [withChecks] ejecutar antes las comprobaciones estáticas
  */
@@ -93,6 +116,10 @@ async function runEach(fn, withChecks = false) {
     if (withChecks) {
         total++;
         if (await runImportMapCheck()) passed++;
+        if (!only || only.split(',').includes('estilos-computados')) {
+            total++;
+            if (await runStylesCheck()) passed++;
+        }
     }
     total += list.length;
     for (const scn of list) {
@@ -161,5 +188,19 @@ function download(filename, text) {
 document.getElementById('run-all')?.addEventListener('click', runAll);
 document.getElementById('record')?.addEventListener('click', record);
 
+/**
+ * Graba la referencia de estilos: captura dos veces y solo la acepta si
+ * ambas coinciden. Devuelve el JSON (y lo descarga salvo con ?nodownload).
+ */
+async function recordStyles() {
+    const a = await captureStyles(stage);
+    const b = await captureStyles(stage);
+    if (canonical(a.styles) !== canonical(b.styles)) throw new Error('Estilos no deterministas: no se graba');
+    if (a.errors.length) throw new Error('Errores del juego: ' + a.errors.join(' | '));
+    const json = JSON.stringify(a);
+    download('styles.json', json);
+    return json;
+}
+
 /** API para ejecutar desde la consola o desde Playwright. */
-/** @type {any} */ (window).__tests = { runAll, record, SCENARIOS };
+/** @type {any} */ (window).__tests = { runAll, record, recordStyles, inspectStyle: (s, vp, k) => inspectStyle(stage, s, vp, k), SCENARIOS };
