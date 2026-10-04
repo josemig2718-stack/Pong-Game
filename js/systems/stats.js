@@ -163,8 +163,8 @@ function statsOnGameEnd(mode, p1Won, p2FinalScore) {
             gameStats.cpuLosses++;
             gameStats.cpuCurrentStreak = 0;
         }
-    } else {
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): Hachepe y campaña también caen aquí.
+    } else if (mode === 'local') {
+        // Hachepe y campaña solo cuentan en los totales de arriba
         gameStats.localGamesPlayed++;
         if (p1Won) gameStats.localP1Wins++;
         else       gameStats.localP2Wins++;

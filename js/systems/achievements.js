@@ -125,8 +125,6 @@ function checkAllAchievements(mode, p1Won) {
     }
 
     // --- Nuevos (Power-ups) ---
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): totalPowerupsCollected nunca se
-    // incrementa: "Coleccionista" es inalcanzable.
     if (s.totalPowerupsCollected >= 50) {
         unlockAchievement('powerup_collector');
     }

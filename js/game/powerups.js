@@ -156,6 +156,8 @@ function collectPowerup() {
 
     // Actualizar contadores
     powerupsThisGame++;
+    gameStats.totalPowerupsCollected++;   // para el logro "Coleccionista"
+    saveStats();
 
     // Aplicar efecto
     applyPowerup(type, beneficiary);
