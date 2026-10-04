@@ -8,16 +8,17 @@
     <title>Pong Game — Edición Arcade</title>
     <meta name="description"
         content="Un clásico juego de Pong con estética retro CRT, temas de color personalizables, teclas reasignables y modo VS CPU o Local a 2 jugadores.">
-    <meta name="theme-color" content="#05070a">
+    <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=17">
+    <link rel="stylesheet" href="css/style.css?v=18">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
 
     <!-- ============================== MENÚ PRINCIPAL ============================== -->
     <section id="main-menu" class="screen active-screen z-20">
+        <div class="floor" aria-hidden="true"></div>
         <h1 class="title-glow text-4xl md:text-8xl font-bold mb-1 md:mb-4 text-center tracking-widest">PONG</h1>
         <p class="mb-4 md:mb-8 text-[10px] md:text-xs tracking-[6px] text-white/50">EDICIÓN ARCADE</p>
 
@@ -28,15 +29,14 @@
                 <span id="menu-level-title">Nv. 1 — Novato</span>
                 <span id="menu-coins" class="text-yellow-400 drop-shadow-md"><img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> 0</span>
             </div>
-            <div
-                class="w-64 md:w-80 h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50 shadow-inner relative">
-                <div id="menu-xp-bar" class="h-full bg-green-500 rounded-full transition-all duration-500 ease-out"
+            <div class="xp-track w-64 md:w-80">
+                <div id="menu-xp-bar" class="h-full transition-all duration-500 ease-out"
                     style="width: 0%; background-color: var(--primary); box-shadow: 0 0 10px var(--primary);"></div>
             </div>
         </div>
 
         <div class="flex flex-col gap-3 md:gap-5 w-64 md:w-80 text-sm md:text-base text-center">
-            <button class="retro-button" data-action="showScreen" data-arg="mode-select-menu">JUGAR</button>
+            <button class="retro-button retro-button--primary" data-action="showScreen" data-arg="mode-select-menu">JUGAR</button>
             <button class="retro-button" data-action="showScreen" data-arg="shop-menu"
                 style="color: #facc15; border-color: #facc15;">TIENDA <img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain ml-1" style="vertical-align: text-top;"></button>
             <button class="retro-button" data-action="showScreen" data-arg="controls-menu">CONTROLES</button>
@@ -388,18 +388,19 @@
     <section id="pause-menu" class="screen z-30" style="background: rgba(5,7,10,0.85); backdrop-filter: blur(4px);">
         <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-white animate-pulse">PAUSA</h2>
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm md:text-base">
-            <button class="retro-button" data-action="togglePause">CONTINUAR</button>
+            <button class="retro-button retro-button--primary" data-action="togglePause">CONTINUAR</button>
             <button class="retro-button retro-button--danger" data-action="quitGame">RENDIRSE</button>
         </div>
     </section>
 
     <!-- ============================== CONFIRMAR SALIDA ============================== -->
     <section id="exit-menu" class="screen z-50" style="background: rgba(5,7,10,0.95);">
-        <div class="panel text-center max-w-lg mx-4" style="border-width: 3px;">
+        <div class="floor" aria-hidden="true"></div>
+        <div class="panel brk text-center max-w-lg mx-4">
             <h2 class="text-xl md:text-2xl font-bold mb-8 leading-relaxed">¿SEGURO QUE QUIERES<br>SALIR DEL JUEGO?</h2>
             <div class="flex flex-col md:flex-row gap-6 justify-center">
                 <button class="retro-button retro-button--danger" data-action="forceClose">SÍ, SALIR</button>
-                <button class="retro-button" data-action="showScreen" data-arg="main-menu">NO, VOLVER</button>
+                <button class="retro-button retro-button--primary" data-action="showScreen" data-arg="main-menu">NO, VOLVER</button>
             </div>
         </div>
     </section>
@@ -426,7 +427,7 @@
 
         <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm">
             <button id="btn-next-campaign" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);" data-action="nextCampaignLevel">SIGUIENTE HACHEPE</button>
-            <button class="retro-button" data-action="restartCurrentGame">JUGAR DE NUEVO</button>
+            <button class="retro-button retro-button--primary" data-action="restartCurrentGame">JUGAR DE NUEVO</button>
             <button class="retro-button" data-action="quitGame">MENÚ PRINCIPAL</button>
         </div>
     </section>
@@ -509,57 +510,57 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=17"></script>
-    <script src="js/core/storage.js?v=17"></script>
-    <script src="js/core/settings.js?v=17"></script>
-    <script src="js/core/state.js?v=17"></script>
-    <script src="js/data/themes.js?v=17"></script>
-    <script src="js/data/lore.js?v=17"></script>
-    <script src="js/data/achievements.js?v=17"></script>
-    <script src="js/data/shop.js?v=17"></script>
-    <script src="js/data/levels.js?v=17"></script>
-    <script src="js/data/powerups.js?v=17"></script>
-    <script src="js/systems/audio.js?v=17"></script>
-    <script src="js/systems/theme.js?v=17"></script>
-    <script src="js/systems/stats.js?v=17"></script>
-    <script src="js/systems/achievements.js?v=17"></script>
-    <script src="js/systems/progression.js?v=17"></script>
-    <script src="js/systems/input.js?v=17"></script>
-    <script src="js/systems/pointer.js?v=17"></script>
-    <script src="js/game/canvas.js?v=17"></script>
-    <script src="js/game/draw.js?v=17"></script>
-    <script src="js/game/effects.js?v=17"></script>
-    <script src="js/game/balls.js?v=17"></script>
-    <script src="js/game/ai.js?v=17"></script>
-    <script src="js/game/physics.js?v=17"></script>
-    <script src="js/game/match.js?v=17"></script>
-    <script src="js/game/render.js?v=17"></script>
-    <script src="js/game/loop.js?v=17"></script>
-    <script src="js/game/powerups.js?v=17"></script>
-    <script src="js/vfx/trails.js?v=17"></script>
-    <script src="js/vfx/backgrounds.js?v=17"></script>
-    <script src="js/vfx/paddles.js?v=17"></script>
-    <script src="js/vfx/goal-fx.js?v=17"></script>
-    <script src="js/vfx/index.js?v=17"></script>
-    <script src="js/bosses/shared.js?v=17"></script>
-    <script src="js/bosses/chemi.js?v=17"></script>
-    <script src="js/bosses/dani.js?v=17"></script>
-    <script src="js/bosses/duo.js?v=17"></script>
-    <script src="js/bosses/fano.js?v=17"></script>
-    <script src="js/bosses/yisus.js?v=17"></script>
-    <script src="js/bosses/creator.js?v=17"></script>
-    <script src="js/bosses/index.js?v=17"></script>
-    <script src="js/campaign/progress.js?v=17"></script>
-    <script src="js/campaign/menu.js?v=17"></script>
-    <script src="js/campaign/dialogue.js?v=17"></script>
-    <script src="js/campaign/finale.js?v=17"></script>
-    <script src="js/ui/screens.js?v=17"></script>
-    <script src="js/ui/actions.js?v=17"></script>
-    <script src="js/ui/settings-panel.js?v=17"></script>
-    <script src="js/ui/stats-panel.js?v=17"></script>
-    <script src="js/ui/shop-ui.js?v=17"></script>
-    <script src="js/ui/progress-display.js?v=17"></script>
-    <script src="js/main.js?v=17"></script>
+    <script src="js/core/constants.js?v=18"></script>
+    <script src="js/core/storage.js?v=18"></script>
+    <script src="js/core/settings.js?v=18"></script>
+    <script src="js/core/state.js?v=18"></script>
+    <script src="js/data/themes.js?v=18"></script>
+    <script src="js/data/lore.js?v=18"></script>
+    <script src="js/data/achievements.js?v=18"></script>
+    <script src="js/data/shop.js?v=18"></script>
+    <script src="js/data/levels.js?v=18"></script>
+    <script src="js/data/powerups.js?v=18"></script>
+    <script src="js/systems/audio.js?v=18"></script>
+    <script src="js/systems/theme.js?v=18"></script>
+    <script src="js/systems/stats.js?v=18"></script>
+    <script src="js/systems/achievements.js?v=18"></script>
+    <script src="js/systems/progression.js?v=18"></script>
+    <script src="js/systems/input.js?v=18"></script>
+    <script src="js/systems/pointer.js?v=18"></script>
+    <script src="js/game/canvas.js?v=18"></script>
+    <script src="js/game/draw.js?v=18"></script>
+    <script src="js/game/effects.js?v=18"></script>
+    <script src="js/game/balls.js?v=18"></script>
+    <script src="js/game/ai.js?v=18"></script>
+    <script src="js/game/physics.js?v=18"></script>
+    <script src="js/game/match.js?v=18"></script>
+    <script src="js/game/render.js?v=18"></script>
+    <script src="js/game/loop.js?v=18"></script>
+    <script src="js/game/powerups.js?v=18"></script>
+    <script src="js/vfx/trails.js?v=18"></script>
+    <script src="js/vfx/backgrounds.js?v=18"></script>
+    <script src="js/vfx/paddles.js?v=18"></script>
+    <script src="js/vfx/goal-fx.js?v=18"></script>
+    <script src="js/vfx/index.js?v=18"></script>
+    <script src="js/bosses/shared.js?v=18"></script>
+    <script src="js/bosses/chemi.js?v=18"></script>
+    <script src="js/bosses/dani.js?v=18"></script>
+    <script src="js/bosses/duo.js?v=18"></script>
+    <script src="js/bosses/fano.js?v=18"></script>
+    <script src="js/bosses/yisus.js?v=18"></script>
+    <script src="js/bosses/creator.js?v=18"></script>
+    <script src="js/bosses/index.js?v=18"></script>
+    <script src="js/campaign/progress.js?v=18"></script>
+    <script src="js/campaign/menu.js?v=18"></script>
+    <script src="js/campaign/dialogue.js?v=18"></script>
+    <script src="js/campaign/finale.js?v=18"></script>
+    <script src="js/ui/screens.js?v=18"></script>
+    <script src="js/ui/actions.js?v=18"></script>
+    <script src="js/ui/settings-panel.js?v=18"></script>
+    <script src="js/ui/stats-panel.js?v=18"></script>
+    <script src="js/ui/shop-ui.js?v=18"></script>
+    <script src="js/ui/progress-display.js?v=18"></script>
+    <script src="js/main.js?v=18"></script>
 </body>
 
 </html>
