@@ -52,10 +52,16 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         pass  # sin ruido en la consola
 
 
+class Server(http.server.ThreadingHTTPServer):
+    # index.html pide ~50 scripts a la vez: con la cola por defecto (5),
+    # Windows rechaza conexiones y algún script no llega a cargarse.
+    request_queue_size = 256
+
+
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
     handler = functools.partial(NoCacheHandler, directory=str(ROOT))
-    with http.server.ThreadingHTTPServer(('127.0.0.1', port), handler) as server:
+    with Server(('127.0.0.1', port), handler) as server:
         print(f'Sirviendo {ROOT} en http://127.0.0.1:{port} (sin caché)')
         server.serve_forever()
 
