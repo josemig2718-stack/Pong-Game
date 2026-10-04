@@ -13,19 +13,16 @@
  * Actualiza la UI de progresión (barra XP, nivel, y el panel de fin de partida)
  */
 function updateProgressionDisplay() {
-    // 1. Menú principal
-    const titleEl = document.getElementById('menu-level-title');
+    // 1. Menú principal: insignia de nivel, título y XP hacia el siguiente
+    const lvl = getCurrentLevel();
+    const prog = getXPProgress();
+    const isMaxLevel = lvl.level >= LEVELS.length;
+    setMenuText('menu-level-num', String(lvl.level));
+    setMenuText('menu-level-title', lvl.title);
+    setMenuText('menu-xp-text', isMaxLevel ? 'Nivel máximo' : `${prog.current} / ${prog.required} XP`);
+
     const barEl = document.getElementById('menu-xp-bar');
-
-    if (titleEl) {
-        const lvl = getCurrentLevel();
-        titleEl.textContent = `Nv. ${lvl.level} — ${lvl.title}`;
-    }
-
-    if (barEl) {
-        const prog = getXPProgress();
-        barEl.style.width = `${prog.percentage}%`;
-    }
+    if (barEl) barEl.style.width = `${prog.percentage}%`;
 
     // 2. Pantalla de fin de partida
     const gameOverProgression = document.getElementById('game-over-progression');
@@ -47,6 +44,21 @@ function updateProgressionDisplay() {
             gameOverProgression.classList.add('hidden');
         }
     }
+}
+
+/** @param {string} id @param {string} text */
+function setMenuText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
+
+/**
+ * Subtítulos de las tiles del menú principal: cosméticos comprados y
+ * logros desbloqueados (sin delatar los secretos, como en Logros).
+ */
+function updateMenuTiles() {
+    setMenuText('menu-shop-sub', `${getTotalPurchasedItems()} de ${getTotalShopItems()} comprados`);
+    setMenuText('menu-achievements-sub', `${getUnlockedCount()} de ${getVisibleAchievementsTotal()}`);
 }
 
 /**

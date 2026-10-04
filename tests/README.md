@@ -47,7 +47,8 @@ runner lo detecta y falla con un mensaje claro).
    reloj virtual, con sus temporizadores y su `requestAnimationFrame`.
 4. Se maneja como una caja negra: un bot que pulsa teclas reales (o mueve el
    ratón, o arrastra el dedo) y clics sobre botones localizados por su **texto
-   visible**.
+   visible** (o por su `aria-label`, si lo tienen: botones de solo icono y
+   tiles con subtítulo).
 5. En cada fotograma se guarda un hash del estado de la partida; cada 120
    fotogramas, y tras cada acción de interfaz, una instantánea completa:
    estado, almacenamiento, DOM visible, audio y píxeles del canvas.

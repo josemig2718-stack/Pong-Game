@@ -4,7 +4,7 @@
  * Escenarios de regresión. Cada uno parte de un almacenamiento inicial
  * (storage) y una semilla, y describe lo que hace un jugador:
  *
- *   { type: 'click', text }          clic en el control con ese texto visible
+ *   { type: 'click', text }          clic en el control con ese texto visible (o aria-label)
  *   { type: 'clickSel', sel }        clic en un elemento por selector
  *   { type: 'input'|'change', id, value|checked }  mover un control de ajustes
  *   { type: 'key', code }            pulsar y soltar una tecla
@@ -348,7 +348,7 @@ export const SCENARIOS = [
         seed: 402,
         actions: [
             { type: 'click', text: 'SALIR' },
-            { type: 'click', text: 'NO, VOLVER' },
+            { type: 'click', text: 'NO, SEGUIR JUGANDO' },
             { type: 'click', text: 'SALIR' },
             { type: 'click', text: 'SÍ, SALIR' },
             { type: 'steps', n: 10 }

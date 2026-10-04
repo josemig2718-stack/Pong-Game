@@ -371,7 +371,9 @@ function isVisible(el) {
 }
 
 /**
- * Localiza un control por su texto visible dentro de la pantalla activa.
+ * Localiza un control por su nombre dentro de la pantalla activa: su
+ * aria-label si lo tiene (botones de solo icono, tiles con subtítulo) y
+ * si no, su texto visible.
  * @param {Document} doc
  * @param {string} text
  */
@@ -382,11 +384,12 @@ function findByText(doc, text) {
     const found = [];
     for (const root of roots) {
         for (const el of root.querySelectorAll('button, [onclick], [data-action]')) {
-            if (norm(el.textContent || '') === text && isVisible(el)) found.push(el);
+            const name = el.getAttribute('aria-label') ?? el.textContent ?? '';
+            if (norm(name) === text && isVisible(el)) found.push(el);
         }
     }
     if (found.length !== 1) {
-        throw new Error(`Se esperaba 1 control visible con el texto "${text}" y hay ${found.length}`);
+        throw new Error(`Se esperaba 1 control visible con el nombre "${text}" y hay ${found.length}`);
     }
     return /** @type {HTMLElement} */ (found[0]);
 }

@@ -140,6 +140,7 @@ h1, h2, h3 { font-family: var(--font-display); }
     width: 100%;
     min-height: 56px;
     padding: 0 18px;
+    font-size: 12px;
     text-align: left;
 }
 .btn, .retro-button {
@@ -220,8 +221,13 @@ h1, h2, h3 { font-family: var(--font-display); }
 }
 .tile:hover { border-color: var(--primary); }
 .tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #020305; }
-.tile .px { font-size: 11px; }
+.tile > .ico { color: var(--primary); }
+.tile__text { display: flex; flex-direction: column; gap: 4px; }
+.tile .px { font-size: 11px; line-height: 1.3; }
 .tile small { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--muted); }
+.tile--gold { border-color: rgba(250, 204, 21, 0.35); }
+.tile--gold > .ico, .tile--gold .px { color: var(--gold); }
+.tile--gold:hover { border-color: var(--gold); }
 
 /* Chip de monedas: pastilla dorada con la Chemi Coin */
 .chip, #menu-coins, #shop-coin-display {
@@ -240,9 +246,6 @@ h1, h2, h3 { font-family: var(--font-display); }
 }
 .chip img, #menu-coins img, #shop-coin-display img { width: 26px; height: 26px; margin: 0; }
 
-/* Fila nivel + monedas del menú: el chip es más alto que el texto */
-#main-progression > div:first-child { align-items: center; margin-bottom: 10px; }
-
 /* Barra de XP segmentada: la máscara corta la pista en 20 bloques,
    así que el ancho que pone JS en #menu-xp-bar se ve por segmentos. */
 .xp-track {
@@ -252,6 +255,267 @@ h1, h2, h3 { font-family: var(--font-display); }
     background: rgba(255, 255, 255, .08);
     -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 calc(5% - 3px), transparent calc(5% - 3px) 5%);
     mask-image: repeating-linear-gradient(90deg, #000 0 calc(5% - 3px), transparent calc(5% - 3px) 5%);
+}
+.xp-track__fill {
+    height: 100%;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    transition: width 0.5s ease-out;
+}
+
+/* ==================================================================
+   Menú principal
+   ------------------------------------------------------------------
+   Móvil (por defecto): cabecera con nivel y monedas, logo y cancha,
+   JUGAR, tiles 2×2 y Configuración + apagar. El panel usa
+   display: contents para que la progresión pueda subir a la cabecera.
+   Escritorio: logo y cancha a la izquierda, panel a la derecha.
+   ================================================================== */
+.menu-layout {
+    position: relative;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 440px;
+}
+.menu-panel { display: contents; }
+
+.menu-hero {
+    order: 0;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 0;
+}
+.menu-hero__tag { color: var(--primary); letter-spacing: 0.4em; }
+.menu-logo {
+    margin: 0;
+    font-size: clamp(48px, 16vw, 64px);
+    line-height: 1;
+    letter-spacing: 0.04em;
+}
+.menu-hero__prompt {
+    display: none;
+    margin: 0;
+    font-size: 12px;
+    color: var(--text);
+    animation: menu-blink 1.2s steps(2, start) infinite;
+}
+@keyframes menu-blink { to { visibility: hidden; } }
+
+/* Mini cancha: palas y bola animadas solo con CSS */
+.mini-court {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 300 / 124;
+    border: 2px solid rgba(var(--primary-rgb), 0.45);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.18), inset 0 0 30px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.mini-court__net {
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.22) 0 10px, transparent 10px 20px);
+}
+.mini-court__paddle {
+    position: absolute;
+    width: 6px;
+    height: 30%;
+    border-radius: 3px;
+    background: var(--primary);
+    box-shadow: 0 0 14px var(--primary);
+}
+.mini-court__paddle--left { left: 12px; top: 10%; animation: court-paddle-left 2.4s ease-in-out infinite alternate; }
+.mini-court__paddle--right { right: 12px; top: 60%; animation: court-paddle-right 2.4s ease-in-out infinite alternate; }
+.mini-court__ball {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    box-shadow: 0 0 16px #fff;
+    animation: court-ball-x 2.4s linear infinite alternate, court-ball-y 1.7s linear infinite alternate;
+}
+@keyframes court-paddle-left { from { top: 8%; } to { top: 62%; } }
+@keyframes court-paddle-right { from { top: 60%; } to { top: 10%; } }
+@keyframes court-ball-x { from { left: 22px; } to { left: calc(100% - 32px); } }
+@keyframes court-ball-y { from { top: 8px; } to { top: calc(100% - 18px); } }
+
+/* Nivel, XP y monedas (en móvil, cabecera de una sola fila) */
+.menu-progress {
+    order: -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+.menu-progress__level { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.menu-progress__badge {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(var(--primary-rgb), 0.12);
+    border: 1px solid rgba(var(--primary-rgb), 0.5);
+    color: var(--primary);
+    font-size: 13px;
+}
+.menu-progress__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.menu-progress__row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.menu-progress__title { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-progress__xp { margin-left: auto; flex: none; font-size: 12px; font-weight: 500; color: var(--muted); }
+.menu-progress__coins { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.menu-progress__coins .lbl { display: none; }
+
+.menu-play, .menu-tiles, .menu-bottom { order: 1; }
+.menu-play { justify-content: space-between; min-height: 68px; padding: 0 22px; font-size: 16px; }
+.menu-play .ico { width: 24px; height: 24px; fill: currentColor; stroke: none; }
+.menu-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.menu-tiles .tile { min-height: 96px; padding: 14px; }
+.menu-bottom { display: flex; gap: 10px; }
+.menu-bottom .btn:first-child { flex: 1; }
+.menu-bottom .btn:first-child .ico { color: var(--primary); }
+.menu-power { flex: none; width: 56px; padding: 0; justify-content: center; }
+
+#main-menu .watermark { padding-top: 14px; }
+
+/* Ventanas bajas (móvil en horizontal): sin cancha y más compacto */
+@media (max-height: 560px) {
+    .mini-court { display: none; }
+    .menu-hero { gap: 8px; padding: 4px 0; }
+}
+
+/* Escritorio: dos columnas */
+@media (min-width: 1024px) and (min-height: 640px) {
+    .menu-layout {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(48px, 7vw, 96px);
+        max-width: 1120px;
+    }
+    .menu-hero {
+        flex: 0 1 520px;
+        align-items: flex-start;
+        gap: 28px;
+        padding: 0;
+    }
+    .menu-logo { font-size: clamp(88px, 9vw, 120px); }
+    .mini-court { max-width: 480px; aspect-ratio: 480 / 220; }
+    .mini-court__paddle { width: 8px; height: 24%; }
+    .mini-court__paddle--left { left: 16px; }
+    .mini-court__paddle--right { right: 16px; }
+    .mini-court__ball { width: 12px; height: 12px; }
+    .menu-hero__prompt { display: block; }
+
+    .menu-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        flex: 0 0 440px;
+        padding: 24px;
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+    }
+    /* Las esquinas HUD de .brk: la clase no sirve aquí porque en móvil
+       el panel es display: contents y sus pseudo-elementos quedarían sueltos */
+    .menu-panel::before, .menu-panel::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--primary);
+        pointer-events: none;
+    }
+    .menu-panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
+    .menu-panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
+
+    .menu-progress { flex-direction: column; align-items: stretch; gap: 18px; }
+    .menu-progress__badge { width: 52px; height: 52px; font-size: 16px; }
+    .menu-progress__info { gap: 8px; }
+    .menu-progress__title { font-size: 16px; }
+    .menu-progress__coins { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+    .menu-progress__coins .lbl { display: inline; }
+    .menu-play { min-height: 76px; font-size: 18px; padding: 0 24px; }
+    .menu-play .ico { width: 26px; height: 26px; }
+    .menu-tiles { gap: 12px; }
+    .menu-tiles .tile { min-height: 104px; padding: 16px; }
+    .menu-bottom { gap: 12px; }
+}
+
+/* ==================================================================
+   Confirmar salida: hoja inferior (centrada a partir de tablet)
+   ================================================================== */
+#exit-menu { background: rgba(4, 5, 9, 0.7); }
+/* Sin el espaciador inferior de .screen, la hoja baja al fondo */
+#exit-menu::after { content: none; }
+
+/* El menú se intuye detrás, borroso */
+.exit-ghost {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 24%;
+    text-align: center;
+    font-size: 64px;
+    color: var(--primary);
+    opacity: 0.3;
+    filter: blur(3px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.exit-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 28px 22px 22px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+.exit-sheet__icon {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #F87171;
+}
+.exit-sheet__icon .ico { width: 28px; height: 28px; }
+.exit-sheet__title { margin: 0; font-size: 15px; line-height: 1.6; }
+.exit-sheet__text { margin: 0; font-size: 15px; line-height: 1.5; color: #9AA3B5; }
+.exit-sheet__actions { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.exit-sheet__actions .btn { justify-content: center; font-size: 11px; }
+.exit-sheet__actions .btn--danger { background: transparent; box-shadow: none; border-color: rgba(248, 113, 113, 0.45); }
+
+@media (min-width: 768px) {
+    #exit-menu::after { content: ""; }
+    .exit-ghost { top: 18%; font-size: 120px; }
 }
 
 /* ==================================================================
@@ -516,6 +780,7 @@ canvas {
 /* Respeta la preferencia de "menos movimiento" del sistema */
 @media (prefers-reduced-motion: reduce) {
     .btn, .retro-button, .tile, .icon-btn, .key-btn--listening { animation: none; transition: none; }
+    .mini-court__paddle, .mini-court__ball, .menu-hero__prompt { animation: none; }
 }
 
 /* ==================================================================
