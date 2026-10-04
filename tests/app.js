@@ -11,7 +11,7 @@
 import { SCENARIOS } from './scenarios.js';
 import { runScenario, compare } from './runner.js';
 import { canonical } from './lib/canonical.js';
-import { checkImportMap } from './lib/importmap.js';
+import { checkScripts } from './lib/scripts.js';
 import { captureStyles, compareStyles, inspectStyle } from './styles.js';
 
 const stage = /** @type {HTMLElement} */ (document.getElementById('stage'));
@@ -64,16 +64,16 @@ const fingerprint = (r) => canonical({
 });
 
 /**
- * Comprobación estática del mapa de imports de index.html (ver lib/importmap.js).
+ * Comprobación estática de los <script> del juego en index.html (ver lib/scripts.js).
  * @returns {Promise<boolean>}
  */
-async function runImportMapCheck() {
-    const row = { name: 'mapa-de-imports' };
+async function runScriptsCheck() {
+    const row = { name: 'scripts-del-juego' };
     showRow(row, 'warn', 'ejecutando…');
     try {
-        const { errors, version, modules } = await checkImportMap(new URL('../', location.href).href);
+        const { errors, version, scripts } = await checkScripts(new URL('../', location.href).href);
         const ok = errors.length === 0;
-        showRow(row, ok ? 'ok' : 'bad', ok ? `OK (${modules} módulos, v=${version})` : 'FALLA', errors.join('\n'));
+        showRow(row, ok ? 'ok' : 'bad', ok ? `OK (${scripts} scripts, v=${version})` : 'FALLA', errors.join('\n'));
         return ok;
     } catch (err) {
         showRow(row, 'bad', 'ERROR', String(err && err.stack || err));
@@ -115,7 +115,7 @@ async function runEach(fn, withChecks = false) {
     const list = only ? SCENARIOS.filter((s) => only.split(',').includes(s.name)) : SCENARIOS;
     if (withChecks) {
         total++;
-        if (await runImportMapCheck()) passed++;
+        if (await runScriptsCheck()) passed++;
         if (!only || only.split(',').includes('estilos-computados')) {
             total++;
             if (await runStylesCheck()) passed++;

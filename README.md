@@ -2,7 +2,7 @@
 
 Un clásico juego de Pong para navegador, expandido masivamente en una experiencia arcade moderna: un **modo campaña** con seis jefes y su propia historia, partidas contra la CPU o a dos jugadores, progresión con niveles (XP), una tienda de cosméticos (Chemi Coins), power-ups dinámicos, logros y estadísticas detalladas.
 
-Sin instalar nada y sin compilar: basta servir la carpeta como web estática (GitHub Pages o un servidor local).
+Sin instalar nada y sin compilar: basta abrir `index.html` en el navegador, o publicar la carpeta en GitHub Pages.
 
 ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-22c55e) ![Sin dependencias de build](https://img.shields.io/badge/build-no%20requerido-blue) ![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 
@@ -52,11 +52,11 @@ Se puede repetir cualquier jefe ya vencido (con recompensa reducida), y hay un l
 
 ## 📂 Estructura del Proyecto
 
-El código está organizado en módulos ES nativos. No utiliza NPM, Node.js ni bundlers.
+El código está organizado en carpetas por capas, con JavaScript sin dependencias. No utiliza NPM, Node.js ni bundlers.
 
 ```
 pong-game/
-├── index.html            # Pantallas, menús, contenedor del juego y mapa de imports
+├── index.html            # Pantallas, menús, contenedor del juego y lista de scripts
 ├── css/style.css         # Identidad retro/CRT y variables de tema (Tailwind va por CDN)
 ├── js/
 │   ├── main.js           # Punto de entrada: arranca todo en orden
@@ -79,7 +79,7 @@ pong-game/
 └── CLAUDE.md             # Arquitectura en detalle, para agentes de IA
 ```
 
-*`index.html` carga un único módulo, `js/main.js`, que importa el resto a través del mapa de imports. Cada carpeta de `js/` es una capa: las de arriba (`core/`, `data/`) no importan nada de las de abajo.*
+*`index.html` carga los scripts de `js/` en orden de capas (de `core/` a `ui/`) y `js/main.js` el último, que arranca el juego. Son scripts clásicos, no módulos, para que el juego funcione también abriendo el archivo directamente.*
 
 ## 🎮 Controles por Defecto
 
@@ -99,20 +99,20 @@ pong-game/
 - **Ratón**: actívalo en Configuración para mover la paleta siguiendo el cursor.
 
 ## 🚀 Cómo Jugar (Despliegue)
-Es una aplicación 100% frontend (*Static Web App*): no requiere compilación, pero sí servirse por HTTP, porque usa módulos ES nativos y los navegadores no los cargan desde `file://` (abrir `index.html` con doble clic no funciona).
+Es una aplicación 100% frontend (*Static Web App*): no requiere servidor ni compilación.
 1. Clona el repositorio o descarga el código.
-2. Sirve la carpeta: `python tests/serve.py` y abre <http://127.0.0.1:8000/>.
-3. O publícala tal cual en **GitHub Pages**.
+2. Abre `index.html` en cualquier navegador moderno (doble clic).
+3. O publica la carpeta tal cual en **GitHub Pages**.
 
-> `tests/serve.py` es preferible a `python -m http.server`: desactiva la caché (si no, el navegador puede seguir usando JS viejo tras editarlo) y sirve los `.js` con el tipo MIME correcto, que en algunos Windows falla y entonces los módulos no cargan.
+> Para desarrollar y pasar los tests, sirve la carpeta con `python tests/serve.py` (<http://127.0.0.1:8000/>): desactiva la caché, así el navegador nunca usa JS viejo tras editarlo.
 
 ## 🧑‍💻 Notas de desarrollo
 
 No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes de tocar el código:
 
-- **La caché se invalida a mano, con un solo número.** El mapa de imports de `index.html` añade `?v=N` a cada módulo, y el `<link>` del CSS lleva el mismo N. **Después de editar cualquier JS o CSS hay que subir N en todos esos sitios**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un módulo nuevo hay que añadirlo al mapa.
-- **Módulos ES nativos.** Cada archivo de `js/` importa lo que usa; `js/main.js` es el punto de entrada y arranca todo.
-- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> → *Ejecutar todos*. Reproduce 22 partidas deterministas fotograma a fotograma, compara los estilos de cada pantalla en cuatro tamaños de ventana y comprueba el mapa de imports, todo contra referencias grabadas. Tarda unos 5 minutos. Ver `tests/README.md`.
+- **Tiene que funcionar abriendo `index.html`.** Por eso no se usan módulos ES (`import`/`export`), que los navegadores no cargan desde `file://`: cada archivo de `js/` es un script clásico y todos comparten el ámbito global. Los nombres de primer nivel deben ser únicos, y el código que se ejecuta al cargar un archivo solo puede usar lo cargado antes.
+- **La caché se invalida a mano, con un solo número.** Cada `<script>` de `index.html` y el `<link>` del CSS llevan el mismo `?v=N`. **Después de editar cualquier JS o CSS hay que subir N en todos**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un archivo nuevo de `js/` hay que añadirlo a la lista, en su capa.
+- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> → *Ejecutar todos*. Reproduce partidas deterministas fotograma a fotograma, compara los estilos de cada pantalla en cuatro tamaños de ventana y comprueba la lista de scripts, todo contra referencias grabadas. Tarda unos 5 minutos. Ver `tests/README.md`.
 - **Tipos sin compilar.** `jsconfig.json` activa la comprobación de tipos de los editores a partir de los comentarios JSDoc. Para revisarla entera: `npx -y -p typescript@5 tsc -p jsconfig.json` (debe dar cero errores).
 - **Bugs conocidos.** `docs/bugs-conocidos.md` recoge fallos que se conservaron a propósito durante la refactorización; cada uno está marcado en el código con `BUG conocido (conservado)`.
 
@@ -120,7 +120,7 @@ No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes
 
 ## 🛠️ Tecnologías
 - **HTML5 Canvas** y **requestAnimationFrame**.
-- **JavaScript (Vanilla, módulos ES nativos)**, con tipos en JSDoc.
+- **JavaScript (Vanilla, scripts clásicos)**, con tipos en JSDoc.
 - **TailwindCSS** (vía CDN) y animaciones nativas CSS3.
 - **Web Audio API** y etiquetas `<audio>`.
 - **LocalStorage API** (El progreso, compras y configuraciones se guardan localmente en el navegador).

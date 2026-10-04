@@ -11,26 +11,20 @@
  * ------------------------------------------------------------------
  */
 
-import { CAMPAIGN_CREATOR, CAMPAIGN_LAST_BOSS, HACHEPES_LORE } from '../data/lore.js';
-import { unlockAchievement } from '../systems/achievements.js';
-import { soundEffects } from '../systems/audio.js';
-import { playerProgression, saveProgression } from '../systems/progression.js';
-import { startGame } from '../game/match.js';
-import { queueDialogue, stopDialogue } from './dialogue.js';
-import { showScreen } from '../ui/screens.js';
+'use strict';
 
 /** Nivel (jefe) del combate en curso o del último jugado. */
-export let currentCampaignLevel = 1;
+let currentCampaignLevel = 1;
 
 /** true si el jefe en curso ya estaba vencido: paga menos (ver awardGameRewards). */
-export let isReplayingBoss = false;
+let isReplayingBoss = false;
 
 /**
  * Muestra la pantalla VS del jefe y, tras unos segundos, empieza el combate.
  * @param {number} level
  * @param {{slam?: boolean}} [opts] slam: entrada de golpe (tras la revelación del Creador)
  */
-export function prepareCampaignMatch(level, opts) {
+function prepareCampaignMatch(level, opts) {
     currentCampaignLevel = level;
     isReplayingBoss = level < playerProgression.campaignProgress;
     const boss = HACHEPES_LORE[level];
@@ -87,7 +81,7 @@ function startCampaignGame() {
 }
 
 /** Logros de campaña y avance del progreso al vencer a un jefe. */
-export function handleCampaignVictory() {
+function handleCampaignVictory() {
     unlockAchievement('campaign_first');
     if (currentCampaignLevel === CAMPAIGN_LAST_BOSS) unlockAchievement('campaign_clear');
     if (currentCampaignLevel === CAMPAIGN_CREATOR) unlockAchievement('the_creator');
@@ -107,7 +101,7 @@ export function handleCampaignVictory() {
  * Usar el progreso mandaba al Creador nada más repetir un jefe antiguo,
  * saltándose media historia.
  */
-export function getNextCampaignBoss() {
+function getNextCampaignBoss() {
     const next = currentCampaignLevel + 1;
     // Al Creador solo se llega por la secuencia narrativa o por su carta.
     if (next > CAMPAIGN_LAST_BOSS) return null;
@@ -116,7 +110,7 @@ export function getNextCampaignBoss() {
 }
 
 /** Botón "SIGUIENTE HACHEPE" de la pantalla de fin de combate. */
-export function nextCampaignLevel() {
+function nextCampaignLevel() {
     soundEffects.uiClick();
     document.getElementById('game-over-screen').classList.remove('active-screen');
     stopDialogue();

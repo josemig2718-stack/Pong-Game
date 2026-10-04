@@ -4,21 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS (native ES modules), HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no linter.** Regression tests are a web page in `tests/`; editor type checking is `jsconfig.json` + JSDoc.
+Browser Pong "Edición Arcade" — a 100% static frontend app. Vanilla JS (classic scripts sharing the global scope), HTML5 Canvas, TailwindCSS via CDN. **No build step, no npm, no bundler, no linter.** Regression tests are a web page in `tests/`; editor type checking is `jsconfig.json` + JSDoc.
+
+**Hard requirement: the game must work by opening `index.html` directly (`file://`) as well as on GitHub Pages.** That is why the code uses classic `<script>` tags and not ES modules (browsers refuse modules from `file://`). Don't introduce `import`/`export`, `type="module"`, `fetch()` of local files or anything else that needs a server.
 
 Code, comments, UI strings and commit history are in **Spanish**. Keep new code and UI text in Spanish to match.
 
 ## Running
 
-Serve the folder over HTTP: `python tests/serve.py` (port 8000). **Opening `index.html` by double-click (`file://`) does not work** — browsers refuse ES modules from `file://`. Prefer `serve.py` over `python -m http.server`: it sends `Cache-Control: no-store` (otherwise the browser heuristically caches stale JS, and tests end up measuring old code) and forces `text/javascript` for `.js` (some Windows registries map it to `text/plain`, and module scripts then refuse to load).
+Open `index.html` in a browser — that's all the game needs. For development and tests, serve the folder with `python tests/serve.py` (port 8000): it sends `Cache-Control: no-store` (otherwise the browser heuristically caches stale JS and tests end up measuring old code) and exposes the list of `js/` files that the test page checks against `index.html`.
 
 Deployed as a GitHub Pages static site — the repo root is the web root.
 
 ### Cache-busting is manual: one version N
 
-`index.html` has an **import map** that maps every module to itself plus `?v=N`, a single `<script type="module" src="./js/main.js?v=N">`, and `css/style.css?v=N`. `import` statements never carry a version — the map adds it, because nested imports would otherwise be fetched unversioned and GitHub Pages caches for ~10 min.
-
-**After editing any JS or CSS, bump N everywhere** (every map entry, the `main.js` src, the stylesheet). **Adding, moving or deleting a module means updating the map.** The `mapa-de-imports` check in `tests/` fails if a reachable module is missing, an entry is unused, or the N values differ.
+`index.html` loads every file of `js/` with its own `<script src="js/…?v=N">` and the stylesheet as `css/style.css?v=N`, all with the same N. **After editing any JS or CSS, bump N everywhere**, or GitHub Pages (which caches ~10 min) serves stale files. **Adding, moving or deleting a file of `js/` means updating the script list.** The `scripts-del-juego` check in `tests/` fails if a file is missing or extra, versions differ, a tag is a module, or `main.js` isn't last.
 
 ## Architecture
 
@@ -36,22 +36,22 @@ js/campaign/    progress (boss in play, VS, advance), menu (carousel + intro), d
 js/ui/          screens, actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
 ```
 
-The module graph has cycles (e.g. `game` ↔ `bosses` ↔ `campaign`). ES modules handle that as long as **top-level code only uses imports from `core/` and `data/`**, which import nothing above them (`core/constants` and `core/storage` import nothing; `core/state` imports `constants`; `core/settings` imports `storage`). Anything else may only be used inside function bodies, which run after the whole graph is evaluated; breaking the rule throws a TDZ `ReferenceError` at load and every test fails.
+All files are classic scripts: their top-level `const`/`let`/`function` share one global scope, so **every top-level name must be unique across the project and must not collide with a `window` property** (grep before naming). Each file starts with `'use strict'`. Files call each other freely inside function bodies (those run after every script has loaded), but **top-level code may only use what `index.html` loaded before it**. The script list follows the layer order above; within it, the only cross-file top-level dependencies are:
+- `core/state` uses `core/constants`; `core/settings` uses `core/storage`; `systems/audio` reads `settings` when it loads;
+- `bosses/creator` uses `CREATOR_BAND_H` from `bosses/shared`, and `bosses/index` builds `BOSS_MECHANICS` from the six boss files — so `shared` → bosses → `index`.
 
-Two deliberate exceptions, each documented in place:
-- `bosses/index.js` builds `BOSS_MECHANICS` from the boss modules at evaluation, so **only `bosses/index.js` may import a boss file**. Shared boss things go in `bosses/shared.js` (imports only `core/`).
-- Each `vfx/*.js` and `bosses/creator.js` builds its own tables from its own functions or from `bosses/shared.js`.
+Breaking the order throws a `ReferenceError` at load and every test fails.
 
 ### Shared state
 
-- Mutable match state read by several modules lives in the `state` object (`js/core/state.js`, typed `GameState`): `mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `frameCount`, `serveCountdownMs`, shake, `balls`, `particles`. An importer can't reassign an `export let`, so **anything another module must write goes in `state`** (e.g. the campaign sets `state.isPlaying = false`). The paddles `p1`, `p2` and `p2Twin` are stable objects exported next to it.
-- Other `export let` values (`currentCampaignLevel`, `isDialogueActive`, `activePowerup`, `bossState`…) are reassigned only by their own module; importers read them as live bindings. Keep it that way, or add a setter.
+- Mutable match state read by several files lives in the `state` object (`js/core/state.js`, typed `GameState`): `mode`, `isPlaying`, `isPaused`, `p1Score`, `p2Score`, `frameCount`, `serveCountdownMs`, shake, `balls`, `particles`. **Anything another file must write goes in `state`** (e.g. the campaign sets `state.isPlaying = false`). The paddles `p1`, `p2` and `p2Twin` are stable objects declared next to it.
+- Other top-level `let`s (`currentCampaignLevel`, `isDialogueActive`, `activePowerup`, `bossState`…) are reassigned only by the file that declares them; other files only read them. Keep it that way, or add a setter.
 - `state.balls` is replaced wholesale by `resetBall()`, even mid-`update()`: **never keep a reference to the array across calls**; read `state.balls`.
-- Some internals are exported only because `tests/adapters/esm.js` reads them (`bossState`, `carouselIndex`, `goalSlowmoTimer`, …). Keep them exported, or update the adapter.
+- `tests/adapters/globals.js` reads some internals by name (`bossState`, `carouselIndex`, `goalSlowmoTimer`, …). Renaming one means updating the adapter.
 
 ### Boot and events
 
-- No module registers listeners or touches the DOM while being evaluated (reading `localStorage`, creating the three `Audio` objects and looking up the canvas are the only load-time work). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI` in that order. **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
+- No file registers listeners or touches the DOM while loading (reading `localStorage`, creating the three `Audio` objects and looking up the canvas are the only load-time work). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI` in that order. **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
 - The markup has **no inline handlers**. Controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/ui/actions.js` has one registry per event type, named after the functions they call, and three delegated listeners on `document`. Adding a control = adding a registry entry that **converts its argument** (dataset values are strings: `carouselMove("-1")` would concatenate). Unknown actions throw.
 - Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. Entering `main-menu` hides `#game-container` and starts menu music; `shop-menu` and `campaign-menu` re-render. Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
 
@@ -77,7 +77,7 @@ Two deliberate exceptions, each documented in place:
 
 ### Campaign: `campaign/` narrates, `bosses/` fights
 
-`data/lore.js` holds the six Hachepes' story and dialogues; `campaign/` the flow; `bosses/` every fight mechanic. Each boss module exports a `BossMechanics` object (`{ config, init, update, render, renderOverlay, collide, onGoal, hidesBall, freezesPlayer, invertsControls, segmentIsArmored }`, all optional but `config`). `game/` never names a boss: it calls the dispatchers in `bosses/index.js` and reads `bossConfig()` (`targetScore`, `aiSpeed`, `aiError`, `aiBias`, `paddleAxis`, `useHealth`, `hitDamage`). **Add a boss by adding a file and a table entry, never a `currentCampaignLevel === N` branch in `game/`.**
+`data/lore.js` holds the six Hachepes' story and dialogues; `campaign/` the flow; `bosses/` every fight mechanic. Each boss file declares a `BossMechanics` object (`{ config, init, update, render, renderOverlay, collide, onGoal, hidesBall, freezesPlayer, invertsControls, segmentIsArmored }`, all optional but `config`). `game/` never names a boss: it calls the dispatchers in `bosses/index.js` and reads `bossConfig()` (`targetScore`, `aiSpeed`, `aiError`, `aiBias`, `paddleAxis`, `useHealth`, `hitDamage`). **Add a boss by adding a file and a table entry, never a `currentCampaignLevel === N` branch in `game/`.**
 
 Two non-obvious rules learned from bugs:
 
@@ -131,16 +131,14 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 ## Verifying changes
 
 1. **Types:** `npx -y -p typescript@5 tsc -p jsconfig.json` must report **zero** errors (JSDoc `@typedef`s for `Ball`, `Paddle`, `GameState`, `BossMechanics`, `PowerupType`, `ShopItem`… live next to the code they describe).
-2. **Regression suite:** `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It checks the import map, the computed styles of every screen at four viewport sizes, and replays 22 deterministic matches frame by frame against `tests/golden/`. Expect two non-blocking "Diagnóstico interno distinto" warnings (`jefe-3`, `repetir-y-siguiente`): an internal boss field was removed as dead code. A refactor must stay green **without re-recording**; re-recording means accepting a behaviour change. `tests/README.md` explains the harness. Never edit files while a run is in progress: each scenario reloads the game.
+2. **Regression suite:** `python tests/serve.py`, open `http://127.0.0.1:8000/tests/`, press *Ejecutar todos* (or call `window.__tests.runAll()` and poll `window.__done`). It checks the script list, the computed styles of every screen at four viewport sizes, and replays deterministic matches frame by frame against `tests/golden/`. A refactor must stay green **without re-recording**; re-recording a golden means accepting a behaviour change and belongs in a commit that says why. `tests/README.md` explains the harness. Never edit files while a run is in progress: each scenario reloads the game.
+3. **Open `index.html` directly** (`file://`) after any change to loading, and check the console.
 
-To drive the real game with Playwright MCP, import its modules from `browser_evaluate` (the import map resolves them to the same instances the game uses). Exported `let`s can't be assigned from outside, so go through functions:
+Everything is global, so Playwright MCP's `browser_evaluate` can drive the real game directly:
 
 ```js
-const p = await import('./js/campaign/progress.js'), m = await import('./js/game/match.js');
-const d = await import('./js/campaign/dialogue.js'), ph = await import('./js/game/physics.js');
-const { state } = await import('./js/core/state.js');
-p.prepareCampaignMatch(4); m.startGame('campaign'); d.stopDialogue();   // the VS timer will restart it ~3 s later
-for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; ph.update(1); }
+prepareCampaignMatch(4); startGame('campaign'); stopDialogue();   // the VS timer restarts it ~3 s later
+for (let i = 0; i < 3000; i++) { state.serveCountdownMs = 0; update(1); }
 ```
 
 Two habits worth keeping, because both caught real bugs that reading the code did not:

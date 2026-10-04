@@ -12,23 +12,7 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
-import { p1, p2, p2Twin, state } from '../core/state.js';
-import { currentThemeHex } from '../systems/theme.js';
-import { ctx } from './canvas.js';
-import { drawRect, drawText, hexToRgba } from './draw.js';
-import { renderActiveEffectHUD, renderPowerup, renderShield } from './powerups.js';
-import { renderBackground } from '../vfx/backgrounds.js';
-import { renderGoalVFX } from '../vfx/goal-fx.js';
-import { renderPaddleVFX } from '../vfx/paddles.js';
-import { renderBallTrail } from '../vfx/trails.js';
-import {
-    bossConfig,
-    bossHidesBall,
-    bossIsRotatedArena,
-    bossRender,
-    bossRenderOverlay
-} from '../bosses/index.js';
+'use strict';
 
 const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
 
@@ -109,7 +93,7 @@ function drawTrajectoryPreview(themeColor) {
 }
 
 /** Dibuja el fotograma completo. */
-export function render() {
+function render() {
     const themeColor = currentThemeHex();
 
     ctx.save();

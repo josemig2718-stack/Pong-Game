@@ -5,8 +5,10 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /** Niveles por XP acumulada; al alcanzar uno se cobran sus `coinBonus` monedas. */
-export const LEVELS = [
+const LEVELS = [
     { level: 1,  title: 'Novato',        xpRequired: 0,    coinBonus: 0 },
     { level: 2,  title: 'Aprendiz',       xpRequired: 141,  coinBonus: 20 },
     { level: 3,  title: 'Jugador',        xpRequired: 259,  coinBonus: 30 },
@@ -20,7 +22,7 @@ export const LEVELS = [
 ];
 
 /** XP por partida (ver awardGameRewards en systems/progression.js). */
-export const XP_REWARDS = {
+const XP_REWARDS = {
     winCpuEasy: 15,
     winCpuNormal: 25,
     winCpuHard: 40,
@@ -33,7 +35,7 @@ export const XP_REWARDS = {
 };
 
 /** Chemi Coins por partida. El modo local no da monedas, para que no se pueda farmear. */
-export const COIN_REWARDS = {
+const COIN_REWARDS = {
     winCpu: 5,
     winHachepe: 20,
     // NO coins for local mode (user explicitly requested this to prevent exploitation)
@@ -44,4 +46,4 @@ export const COIN_REWARDS = {
 
 // Al repetir un jefe ya vencido solo se recibe esta fracción: evita farmear
 // la campaña, igual que el modo local no da monedas.
-export const CAMPAIGN_REPLAY_FACTOR = 0.25;
+const CAMPAIGN_REPLAY_FACTOR = 0.25;

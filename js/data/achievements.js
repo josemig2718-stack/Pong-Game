@@ -8,6 +8,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /**
  * @typedef {object} Achievement
  * @property {string} id
@@ -18,7 +20,7 @@
  */
 
 /** @type {Achievement[]} */
-export const ACHIEVEMENTS = [
+const ACHIEVEMENTS = [
     // 🏁 Inicio
     { id: 'first_win',      emoji: '🏓', name: 'Primer Victoria',  desc: 'Gana tu primera partida vs CPU' },
     { id: 'first_local',    emoji: '🤝', name: 'En Compañía',      desc: 'Juega tu primera partida local' },

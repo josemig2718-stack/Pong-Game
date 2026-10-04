@@ -15,28 +15,7 @@
  * ------------------------------------------------------------------
  */
 
-import { resetBindings } from '../systems/input.js';
-import { quitGame, restartCurrentGame, startGame, togglePause } from '../game/match.js';
-import { closeFinale } from '../campaign/finale.js';
-import { carouselMove, closeCampaignIntro, replayCampaignIntro } from '../campaign/menu.js';
-import { nextCampaignLevel } from '../campaign/progress.js';
-import { closeGame, forceClose, showScreen } from './screens.js';
-import {
-    resetAllSettings,
-    toggleCrtEffect,
-    toggleMouseControl,
-    toggleMusic,
-    togglePowerups,
-    toggleScreenShake,
-    toggleSfx,
-    updateBallSpeed,
-    updateDifficulty,
-    updateMusicVolume,
-    updateVolume,
-    updateWinningScore
-} from './settings-panel.js';
-import { switchShopTab } from './shop-ui.js';
-import { confirmResetStats, showAchievementsScreen, showStatsScreen } from './stats-panel.js';
+'use strict';
 
 /** @type {Record<string, (el: HTMLElement) => void>} */
 const CLICK_ACTIONS = {
@@ -48,7 +27,7 @@ const CLICK_ACTIONS = {
     forceClose:             () => forceClose(),
 
     // Partida
-    startGame:              (el) => startGame(/** @type {import('../core/state.js').GameMode} */ (el.dataset.arg)),
+    startGame:              (el) => startGame(/** @type {GameMode} */ (el.dataset.arg)),
     togglePause:            () => togglePause(),
     quitGame:               () => quitGame(),
     restartCurrentGame:     () => restartCurrentGame(),
@@ -107,7 +86,7 @@ function delegate(registry, attr) {
 }
 
 /** Registra los tres listeners delegados en el documento. */
-export function initActions() {
+function initActions() {
     document.addEventListener('click', delegate(CLICK_ACTIONS, 'action'));
     document.addEventListener('input', delegate(INPUT_ACTIONS, 'input'));
     document.addEventListener('change', delegate(CHANGE_ACTIONS, 'change'));

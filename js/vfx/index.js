@@ -18,16 +18,15 @@
  * ------------------------------------------------------------------
  */
 
-import { initBackground, updateBackground } from './backgrounds.js';
-import { updateGoalVFX } from './goal-fx.js';
+'use strict';
 
 /** Prepara los efectos al empezar una partida. */
-export function initVFX() {
+function initVFX() {
     initBackground();
 }
 
 /** Avanza los efectos con estado: el fondo y el efecto de gol. */
-export function updateVFX(dt) {
+function updateVFX(dt) {
     updateBackground(dt);
     updateGoalVFX(dt);
 }

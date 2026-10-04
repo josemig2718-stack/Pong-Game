@@ -11,43 +11,13 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p1, p2, p2Twin, state } from '../core/state.js';
-import { CAMPAIGN_CREATOR, CAMPAIGN_LAST_BOSS, HACHEPES_LORE } from '../data/lore.js';
-import { unlockAchievement } from '../systems/achievements.js';
-import {
-    getAudioContext,
-    playGameplayMusic,
-    playMenuMusic,
-    soundEffects,
-    stopGameplayMusic,
-    stopMenuMusic
-} from '../systems/audio.js';
-import { resetTouchHints } from '../systems/pointer.js';
-import { awardGameRewards, resetSessionTrackers } from '../systems/progression.js';
-import { statsOnGameEnd, statsOnGameStart } from '../systems/stats.js';
-import { resetBall } from './balls.js';
-import { resizeCanvas } from './canvas.js';
-import { resumeLoop, startLoop, stopLoop } from './loop.js';
-import { initPowerups } from './powerups.js';
-import { initVFX } from '../vfx/index.js';
-import { bossConfig, bossHealth, bossInit } from '../bosses/index.js';
-import { playBossOutcomeDialogue, resetMidDialogue, stopDialogue } from '../campaign/dialogue.js';
-import { resetMusicRate, runFinaleSequence, runTrueEndingSequence } from '../campaign/finale.js';
-import {
-    currentCampaignLevel,
-    getNextCampaignBoss,
-    handleCampaignVictory
-} from '../campaign/progress.js';
-import { updateCoinDisplay, updateProgressionDisplay } from '../ui/progress-display.js';
-import { showScreen } from '../ui/screens.js';
+'use strict';
 
 /**
  * Empieza una partida.
  * @param {'cpu'|'local'|'hachepe'|'campaign'} mode
  */
-export function startGame(mode) {
+function startGame(mode) {
     getAudioContext();
 
     state.mode = mode;
@@ -124,12 +94,12 @@ export function startGame(mode) {
 }
 
 /** Botón "JUGAR DE NUEVO": repite la partida con el mismo modo. */
-export function restartCurrentGame() {
+function restartCurrentGame() {
     startGame(state.mode);
 }
 
 /** Abandona la partida y vuelve al menú principal. */
-export function quitGame() {
+function quitGame() {
     state.isPlaying = false;
     stopLoop();
 
@@ -156,7 +126,7 @@ export function quitGame() {
 }
 
 /** Pausa o reanuda la partida (ESC, botón de pausa, menú de pausa). */
-export function togglePause() {
+function togglePause() {
     if (!state.isPlaying) return;
     state.isPaused = !state.isPaused;
     if (state.isPaused) {
@@ -172,7 +142,7 @@ export function togglePause() {
  * Comprueba si la partida ha terminado y, si es así, la cierra.
  * @returns {boolean} true si terminó
  */
-export function checkWin() {
+function checkWin() {
     const bcfg = bossConfig();
 
     // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.

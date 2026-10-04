@@ -7,15 +7,17 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /** Niveles con significado propio en la campaña. */
-export const CAMPAIGN_LAST_BOSS = 5;   // últimos Hachepes "normales"
-export const CAMPAIGN_CREATOR = 6;     // nivel secreto
+const CAMPAIGN_LAST_BOSS = 5;   // últimos Hachepes "normales"
+const CAMPAIGN_CREATOR = 6;     // nivel secreto
 
 /**
  * Los seis Hachepes. Los diálogos aceptan strings (habla el jefe) u
  * objetos { t, s } donde `s` elige el avatar ('a' o 'b') — lo usa el dúo.
  */
-export const HACHEPES_LORE = {
+const HACHEPES_LORE = {
     1: {
         name: 'Hachepe Chemi',
         title: 'El Guardián de la Frontera',
@@ -131,7 +133,7 @@ export const HACHEPES_LORE = {
 };
 
 /** Texto de la intro narrativa. */
-export const CAMPAIGN_INTRO_TEXT =
+const CAMPAIGN_INTRO_TEXT =
     'Los Hachepes llegaron sin avisar. Un sindicato de tiranos que quemó tu ciudad, ' +
     'derribó tu casa y esclavizó a todos los que conocías.\n\n' +
     'Montaron sobre las ruinas un torneo enfermo donde perder significa desaparecer.\n\n' +

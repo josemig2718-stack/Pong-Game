@@ -5,18 +5,15 @@
  * La bola desaparece al cruzar la mitad y aparecen señuelos.
  * Difícil, pero no injusto: siempre queda un rastro tenue.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { p1, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { bossState } from './shared.js';
+'use strict';
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossFano = {
+/** @type {BossMechanics} */
+const bossFano = {
     config: { targetScore: 7, aiSpeed: 0.9,  aiError: 12, aiBias: 50 },
 
     init() {

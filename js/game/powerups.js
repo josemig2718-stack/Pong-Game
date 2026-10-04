@@ -13,27 +13,21 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME, paddleHeight } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p1, p2, state } from '../core/state.js';
-import { POWERUP_TYPES } from '../data/powerups.js';
-import { soundEffects } from '../systems/audio.js';
-import { spawnExtraBalls } from './balls.js';
-import { spawnParticles } from './effects.js';
+'use strict';
 
 // Variables de estado del sistema de power-ups
-export let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
-export let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
-export let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
-export let shieldWall = null;          // { x, y, width, height, owner }
-export let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
-export let powerupsThisGame = 0;       // Contador por partida (para logros)
-export let slowmoActive = false;       // Indica si la cámara lenta está activa
+let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
+let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
+let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
+let shieldWall = null;          // { x, y, width, height, owner }
+let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
+let powerupsThisGame = 0;       // Contador por partida (para logros)
+let slowmoActive = false;       // Indica si la cámara lenta está activa
 
 /**
  * Inicializa o reinicia el sistema de power-ups al empezar una partida
  */
-export function initPowerups() {
+function initPowerups() {
     activePowerup = null;
     activeEffect = null;
     shieldWall = null;
@@ -48,7 +42,7 @@ export function initPowerups() {
  * Actualiza la lógica de los power-ups (aparición, expiración, colisiones)
  * @param {number} dt Delta time normalizado a 60 FPS
  */
-export function updatePowerups(dt) {
+function updatePowerups(dt) {
     if (!settings.powerupsEnabled) return;
     if (state.isPaused) return;
     if (!state.isPlaying) return;
@@ -270,7 +264,7 @@ function revertPowerup() {
 /**
  * Fuerza los efectos activos sobre las bolas (útil después de un resetBall)
  */
-export function enforcePowerups() {
+function enforcePowerups() {
     if (!activeEffect) return;
     if (activeEffect.type.id === 'big_ball') {
         state.balls.forEach(b => b.radius = 27);
@@ -281,7 +275,7 @@ export function enforcePowerups() {
  * Establece el último jugador en golpear la pelota
  * @param {string} player 'p1' o 'p2'
  */
-export function setLastHitter(player) {
+function setLastHitter(player) {
     lastHitter = player;
 }
 
@@ -289,7 +283,7 @@ export function setLastHitter(player) {
  * Retorna el multiplicador de tiempo para la cámara lenta
  * @returns {number} 0.5 si está activo, 1.0 si no
  */
-export function getSlowmoMultiplier() {
+function getSlowmoMultiplier() {
     return slowmoActive ? 0.5 : 1.0;
 }
 
@@ -306,7 +300,7 @@ function powerupCollision(bx, by, bradius, px, py, pradius) {
  * Renderiza el power-up en el campo de juego
  * @param {CanvasRenderingContext2D} ctx Contexto 2D del canvas
  */
-export function renderPowerup(ctx) {
+function renderPowerup(ctx) {
     if (!activePowerup) return;
 
     const lifetimeMs = Date.now() - activePowerup.spawnTime;
@@ -368,7 +362,7 @@ export function renderPowerup(ctx) {
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  * @param {number} canvasWidth Ancho del canvas
  */
-export function renderActiveEffectHUD(ctx, canvasWidth) {
+function renderActiveEffectHUD(ctx, canvasWidth) {
     if (!activeEffect || activeEffect.type.duration === 0) return;
 
     const progress = activeEffect.remainingMs / activeEffect.type.duration;
@@ -414,7 +408,7 @@ export function renderActiveEffectHUD(ctx, canvasWidth) {
  * Renderiza el escudo si está activo
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  */
-export function renderShield(ctx) {
+function renderShield(ctx) {
     if (!shieldWall) return;
 
     ctx.save();

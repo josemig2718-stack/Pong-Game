@@ -12,22 +12,7 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
-import { state } from '../core/state.js';
-import { CAMPAIGN_CREATOR } from '../data/lore.js';
-import {
-    gameplayMusic,
-    hachepeMusic,
-    menuMusic,
-    playTone,
-    soundEffects,
-    stopAllMusic
-} from '../systems/audio.js';
-import { playerProgression, saveProgression } from '../systems/progression.js';
-import { triggerGoalConfetti } from '../vfx/goal-fx.js';
-import { clearTypewriter, startTypewriter, stopDialogue } from './dialogue.js';
-import { prepareCampaignMatch } from './progress.js';
-import { showScreen } from '../ui/screens.js';
+'use strict';
 
 /** Overlay negro a pantalla completa. amount: 0 (transparente) a 1 (negro). */
 function setFadeOverlay(amount, ms) {
@@ -63,7 +48,7 @@ function finaleStep(ms, fn) {
 }
 
 /** Cancela los pasos pendientes de cualquier secuencia final. */
-export function clearFinaleTimers() {
+function clearFinaleTimers() {
     finaleTimers.forEach(clearTimeout);
     finaleTimers = [];
 }
@@ -112,7 +97,7 @@ function playCrtShutdownSound() {
  * victoria falsa → la señal se corrompe → apagón CRT → silencio →
  * reencendido en terminal → el ojo → VS El Creador.
  */
-export function runFinaleSequence() {
+function runFinaleSequence() {
     stopDialogue();
     clearFinaleTimers();
     state.isPlaying = false;
@@ -239,7 +224,7 @@ function warpMusic() {
 }
 
 /** Restaura la velocidad normal (al salir de la secuencia). */
-export function resetMusicRate() {
+function resetMusicRate() {
     [menuMusic, gameplayMusic, hachepeMusic].forEach(t => {
         try { t.playbackRate = 1; } catch (err) { /* ignorar */ }
     });
@@ -252,7 +237,7 @@ function playVictoryJingle() {
 }
 
 /** Final verdadero, tras vencer al Creador. */
-export function runTrueEndingSequence() {
+function runTrueEndingSequence() {
     stopDialogue();
     clearFinaleTimers();
     state.isPlaying = false;
@@ -283,7 +268,7 @@ export function runTrueEndingSequence() {
 }
 
 /** Botón "FIN": vuelve al menú de campaña. */
-export function closeFinale() {
+function closeFinale() {
     soundEffects.uiClick();
     hideFinaleText();
     setFadeOverlay(0, 400);

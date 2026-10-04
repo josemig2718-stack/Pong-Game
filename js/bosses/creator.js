@@ -5,18 +5,12 @@
  * Arena rotada, barra de vida y tres fases. Único jefe que se gana
  * vaciando su vida, no por marcador.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { p1, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { spawnExtraBalls } from '../game/balls.js';
-import { drawText } from '../game/draw.js';
-import { spawnParticles, triggerShake } from '../game/effects.js';
-import { bossState, CREATOR_BAND_H } from './shared.js';
+'use strict';
 
 const CREATOR_MAX_HEALTH = 200;
 const CREATOR_EYE_CY = CREATOR_BAND_H / 2 - 6; // centro vertical del ojo
@@ -29,8 +23,8 @@ const CREATOR_TONES = {
     3: { band: '#2a0808', sclera: '#f7e3e3', iris: '#ef4444', lid: '#ef4444' }
 };
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossCreator = {
+/** @type {BossMechanics} */
+const bossCreator = {
     config: {
         targetScore: 8,        // aquí es el nº de fallos permitidos al jugador
         aiSpeed: 1.0,

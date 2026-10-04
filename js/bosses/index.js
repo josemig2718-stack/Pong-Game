@@ -20,15 +20,7 @@
  * ------------------------------------------------------------------
  */
 
-import { state } from '../core/state.js';
-import { bossChemi } from './chemi.js';
-import { bossCreator } from './creator.js';
-import { bossDani } from './dani.js';
-import { bossDuo } from './duo.js';
-import { bossFano } from './fano.js';
-import { bossState, resetBossState } from './shared.js';
-import { bossYisus } from './yisus.js';
-import { currentCampaignLevel } from '../campaign/progress.js';
+'use strict';
 
 /**
  * Parámetros de un jefe. Cada jefe define solo los que cambia.
@@ -50,7 +42,7 @@ import { currentCampaignLevel } from '../campaign/progress.js';
  * @property {(dt: number) => void} [update]              cada paso de física
  * @property {(ctx: CanvasRenderingContext2D) => void} [render]         capa junto al campo
  * @property {(ctx: CanvasRenderingContext2D) => void} [renderOverlay]  capa superior
- * @property {(b: import('../core/state.js').Ball) => boolean} [collide]  obstáculos propios; true si la bola rebotó
+ * @property {(b: Ball) => boolean} [collide]  obstáculos propios; true si la bola rebotó
  * @property {(scorerIsP1: boolean) => void} [onGoal]
  * @property {() => boolean} [hidesBall]
  * @property {() => boolean} [freezesPlayer]
@@ -78,7 +70,7 @@ let bossAimOffset = 0;
  * Renueva el desvío de puntería del jefe (en cada golpe de paleta).
  * Sesgo con forma de campana: los desvíos grandes son menos frecuentes.
  */
-export function bossRefreshAim() {
+function bossRefreshAim() {
     const cfg = bossConfig();
     if (!cfg) { bossAimOffset = 0; return; }
     // Sesgo con forma de campana suave: los desvíos grandes son menos frecuentes
@@ -89,17 +81,16 @@ export function bossRefreshAim() {
 /**
  * @returns {number} desvío actual en píxeles (0 fuera de la campaña)
  */
-export function bossAim() {
+function bossAim() {
     return bossConfig() ? bossAimOffset : 0;
 }
 
 /**
  * Mecánicas de cada jefe, por nivel de campaña.
  *
- * Esta tabla se construye al evaluar el módulo, así que necesita que los
- * archivos de los jefes ya estén evaluados. Lo están porque este es el
- * único módulo que los importa: no los importes desde ningún otro sitio
- * (para algo compartido, usa bosses/shared.js).
+ * Esta tabla se construye al cargar el archivo, así que los archivos de
+ * los jefes tienen que cargarse antes en index.html (para algo que
+ * compartan los jefes, usa bosses/shared.js, que va antes de todos).
  */
 /** @type {Record<number, BossMechanics>} */
 const BOSS_MECHANICS = {
@@ -118,20 +109,20 @@ function currentBoss() {
 }
 
 /** Config del jefe activo (con los valores por defecto rellenados), o null. */
-export function bossConfig() {
+function bossConfig() {
     const boss = currentBoss();
     if (!boss) return null;
     return { ...BOSS_DEFAULT_CONFIG, ...(boss.config || {}) };
 }
 
 /** true si la arena está rotada (paleta del jugador horizontal). */
-export function bossIsRotatedArena() {
+function bossIsRotatedArena() {
     const cfg = bossConfig();
     return !!cfg && cfg.paddleAxis === 'x';
 }
 
 /** Vacía el estado del jefe y arma el del jefe en curso (al empezar la partida). */
-export function bossInit() {
+function bossInit() {
     resetBossState();
     const boss = currentBoss();
     if (boss && boss.init) boss.init();
@@ -141,13 +132,13 @@ export function bossInit() {
  * Avanza las mecánicas del jefe en curso.
  * @param {number} dt
  */
-export function bossUpdate(dt) {
+function bossUpdate(dt) {
     const boss = currentBoss();
     if (boss && boss.update) boss.update(dt);
 }
 
 /** Colisiones extra del jefe (escombros, escudo). true si la bola rebotó. */
-export function bossCollide(b) {
+function bossCollide(b) {
     const boss = currentBoss();
     if (boss && boss.collide) return boss.collide(b);
     return false;
@@ -157,50 +148,50 @@ export function bossCollide(b) {
  * Avisa al jefe de un gol (el dúo retira a Mario al encajarlo).
  * @param {boolean} scorerIsP1
  */
-export function bossOnGoal(scorerIsP1) {
+function bossOnGoal(scorerIsP1) {
     const boss = currentBoss();
     if (boss && boss.onGoal) boss.onGoal(scorerIsP1);
 }
 
 /** Capa que se dibuja junto al campo (debajo de partículas). */
-export function bossRender(ctx) {
+function bossRender(ctx) {
     const boss = currentBoss();
     if (boss && boss.render) boss.render(ctx);
 }
 
 /** Capa por encima de todo (viñetas, tintes, avisos). */
-export function bossRenderOverlay(ctx) {
+function bossRenderOverlay(ctx) {
     const boss = currentBoss();
     if (boss && boss.renderOverlay) boss.renderOverlay(ctx);
 }
 
 /** ¿Este jefe oculta la bola real? (Fano) */
-export function bossHidesBall() {
+function bossHidesBall() {
     const boss = currentBoss();
     return !!(boss && boss.hidesBall && boss.hidesBall());
 }
 
 /** ¿Está congelada la paleta del jugador? (Yisus) */
-export function bossFreezesPlayer() {
+function bossFreezesPlayer() {
     const boss = currentBoss();
     return !!(boss && boss.freezesPlayer && boss.freezesPlayer());
 }
 
 /** ¿Están invertidos los controles? (El Creador, fase 2+) */
-export function bossInvertsControls() {
+function bossInvertsControls() {
     const boss = currentBoss();
     return !!(boss && boss.invertsControls && boss.invertsControls());
 }
 
 /** Aplica daño al jefe con barra de vida. Devuelve la vida restante. */
-export function bossDamage(amount) {
+function bossDamage(amount) {
     if (typeof bossState.health !== 'number') return 0;
     bossState.health = Math.max(0, bossState.health - amount);
     return bossState.health;
 }
 
 /** ¿El tramo del jefe en esa X está blindado? Si lo está, no recibe daño. */
-export function bossSegmentArmored(x) {
+function bossSegmentArmored(x) {
     const boss = currentBoss();
     return !!(boss && boss.segmentIsArmored && boss.segmentIsArmored(x));
 }
@@ -208,6 +199,6 @@ export function bossSegmentArmored(x) {
 /**
  * @returns {number} vida del jefe en curso (0 si no tiene barra de vida)
  */
-export function bossHealth() {
+function bossHealth() {
     return typeof bossState.health === 'number' ? bossState.health : 0;
 }

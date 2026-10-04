@@ -5,11 +5,7 @@
  * ------------------------------------------------------------------
  */
 
-import { MS_PER_FRAME } from '../core/constants.js';
-import { state } from '../core/state.js';
-import { statsFlushTime } from '../systems/stats.js';
-import { update } from './physics.js';
-import { render } from './render.js';
+'use strict';
 
 let animationFrameId;
 let lastTimestamp = 0;
@@ -37,19 +33,19 @@ function gameLoop(timestamp) {
 }
 
 /** Arranca el bucle desde cero (al empezar una partida). */
-export function startLoop() {
+function startLoop() {
     cancelAnimationFrame(animationFrameId);
     lastTimestamp = 0;
     animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 /** Reanuda el bucle tras una pausa, sin contar el tiempo pausado. */
-export function resumeLoop() {
+function resumeLoop() {
     lastTimestamp = 0;
     animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 /** Detiene el bucle (pausa o salida). */
-export function stopLoop() {
+function stopLoop() {
     cancelAnimationFrame(animationFrameId);
 }

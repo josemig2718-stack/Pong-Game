@@ -8,6 +8,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /**
  * Artículo de la tienda (un cosmético).
  * @typedef {object} ShopItem
@@ -21,7 +23,7 @@
 // BUG conocido (conservado, ver docs/bugs-conocidos.md): algunas descripciones no describen lo que se dibuja
 // (p. ej. "Gradiente" dibuja un arcoíris fijo; la estela "Clásica", segmentos).
 /** @type {Record<string, ShopItem[]>} */
-export const SHOP_CATALOG = {
+const SHOP_CATALOG = {
     trails: [
         { id: 'default',  name: 'Clásica',   desc: 'Círculos que se desvanecen',                    price: 0,   preview: '○○○' },
         { id: 'neon',     name: 'Neón',       desc: 'Línea brillante con resplandor intenso',         price: 30,  preview: '═══' },
@@ -54,7 +56,7 @@ export const SHOP_CATALOG = {
  * Pestañas de la tienda: `key` en SHOP_CATALOG ↔ `cosmKey`, la categoría
  * que entiende selectCosmetic().
  */
-export const SHOP_CATEGORIES = [
+const SHOP_CATEGORIES = [
     { key: 'trails',      label: 'Estelas',       cosmKey: 'trail' },
     { key: 'backgrounds', label: 'Fondos',         cosmKey: 'bg' },
     { key: 'paddles',     label: 'Paletas',        cosmKey: 'paddle' },

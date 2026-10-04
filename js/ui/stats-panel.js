@@ -6,14 +6,10 @@
  * ------------------------------------------------------------------
  */
 
-import { ACHIEVEMENTS } from '../data/achievements.js';
-import { getUnlockedCount, getVisibleAchievementsTotal } from '../systems/achievements.js';
-import { soundEffects } from '../systems/audio.js';
-import { formatPlayTime, gameStats, resetStats } from '../systems/stats.js';
-import { showScreen } from './screens.js';
+'use strict';
 
 /** Muestra la pantalla de stats y carga los datos */
-export function showStatsScreen() {
+function showStatsScreen() {
     showScreen('stats-menu');
     populateStatsScreen();
 }
@@ -52,7 +48,7 @@ function populateStatsScreen() {
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */
-export function confirmResetStats() {
+function confirmResetStats() {
     if (confirm('¿Borrar todas las estadísticas? Los logros se mantendrán.')) {
         resetStats();
         populateStatsScreen();
@@ -61,7 +57,7 @@ export function confirmResetStats() {
 }
 
 /** Muestra la pantalla de logros y carga los datos */
-export function showAchievementsScreen() {
+function showAchievementsScreen() {
     showScreen('achievements-menu');
     populateAchievementsGrid();
 

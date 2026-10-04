@@ -7,9 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
-import { playerProgression } from '../systems/progression.js';
-import { currentThemeHex } from '../systems/theme.js';
+'use strict';
 
 /** Fondo activo: se fija al empezar la partida o al equiparlo en la tienda. */
 let currentBgId = 'none';
@@ -161,7 +159,7 @@ const BG_RENDERERS = {
 };
 
 /** Arranca el fondo equipado (al empezar cada partida). */
-export function initBackground() {
+function initBackground() {
     const bgId = playerProgression.selectedBg || 'none';
     currentBgId = bgId;
     if (BG_RENDERERS[bgId]) {
@@ -170,14 +168,14 @@ export function initBackground() {
 }
 
 /** Avanza el fondo activo. */
-export function updateBackground(dt) {
+function updateBackground(dt) {
     if (BG_RENDERERS[currentBgId]) {
         BG_RENDERERS[currentBgId].update(dt);
     }
 }
 
 /** Dibuja el fondo activo. */
-export function renderBackground(ctx) {
+function renderBackground(ctx) {
     if (BG_RENDERERS[currentBgId]) {
         BG_RENDERERS[currentBgId].render(ctx);
     }
@@ -187,7 +185,7 @@ export function renderBackground(ctx) {
  * Cambia el fondo activo (al equiparlo en la tienda). Llama a init(), que
  * consume Math.random: no se puede quitar aunque parezca redundante.
  */
-export function setActiveBg(id) {
+function setActiveBg(id) {
     if (BG_RENDERERS[id]) {
         currentBgId = id;
         BG_RENDERERS[id].init();

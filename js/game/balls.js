@@ -9,12 +9,7 @@
  * ------------------------------------------------------------------
  */
 
-import { BALL_SPEED_PRESETS, ballRadius, GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p1, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { enforcePowerups } from './powerups.js';
-import { bossIsRotatedArena } from '../bosses/index.js';
+'use strict';
 
 // Duración de la cuenta regresiva antes de que la bola se mueva (ms)
 const SERVE_INITIAL = 3000;    // 3 segundos al iniciar partida
@@ -35,7 +30,7 @@ function createBall(x, y, speed, dx, dy) {
  * la cuenta regresiva del saque.
  * @param {boolean} [initialServe] true en el primer saque de la partida
  */
-export function resetBall(initialServe = false) {
+function resetBall(initialServe = false) {
     const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
     const dir = Math.random() > 0.5 ? 1 : -1;
     const speed = speedPreset.base;
@@ -65,7 +60,7 @@ export function resetBall(initialServe = false) {
 }
 
 /** Divide la primera bola en dos o tres (multi-bola). */
-export function spawnExtraBalls() {
+function spawnExtraBalls() {
     if (state.balls.length === 0) return;
     const source = state.balls[0];
     const count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar

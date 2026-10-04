@@ -7,20 +7,12 @@
  * ------------------------------------------------------------------
  */
 
-import {
-    getCurrentLevel,
-    getXPProgress,
-    playerProgression,
-    sessionCoinsGained,
-    sessionLeveledUp,
-    sessionNewTitle,
-    sessionXPGained
-} from '../systems/progression.js';
+'use strict';
 
 /**
  * Actualiza la UI de progresión (barra XP, nivel, y el panel de fin de partida)
  */
-export function updateProgressionDisplay() {
+function updateProgressionDisplay() {
     // 1. Menú principal
     const titleEl = document.getElementById('menu-level-title');
     const barEl = document.getElementById('menu-xp-bar');
@@ -60,7 +52,7 @@ export function updateProgressionDisplay() {
 /**
  * Actualiza la UI de monedas en todas partes
  */
-export function updateCoinDisplay() {
+function updateCoinDisplay() {
     const displays = ['shop-coin-display', 'menu-coins'];
     displays.forEach(id => {
         const display = document.getElementById(id);

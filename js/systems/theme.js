@@ -6,16 +6,14 @@
  * ------------------------------------------------------------------
  */
 
-import { saveSettings, settings } from '../core/settings.js';
-import { THEMES } from '../data/themes.js';
-import { statsTrackTheme } from './stats.js';
+'use strict';
 
 /**
  * Aplica un tema de color (variables CSS --primary), lo guarda y lo
  * cuenta para el logro "Explorador".
  * @param {string} themeKey clave de THEMES
  */
-export function applyTheme(themeKey) {
+function applyTheme(themeKey) {
     const theme = THEMES[themeKey] || THEMES.green;
     const root = document.documentElement;
 
@@ -37,7 +35,7 @@ export function applyTheme(themeKey) {
 /**
  * @returns {string} color principal del tema activo, para dibujar en el canvas
  */
-export function currentThemeHex() {
+function currentThemeHex() {
     return (THEMES[settings.theme] || THEMES.green).hex;
 }
 
@@ -45,7 +43,7 @@ export function currentThemeHex() {
  * Crea un botón por tema en la pantalla de configuración.
  * @param {HTMLElement} container
  */
-export function buildThemeSwatches(container) {
+function buildThemeSwatches(container) {
     container.innerHTML = '';
     Object.entries(THEMES).forEach(([key, theme]) => {
         const btn = document.createElement('button');

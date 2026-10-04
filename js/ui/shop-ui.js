@@ -7,18 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { SHOP_CATALOG, SHOP_CATEGORIES } from '../data/shop.js';
-import { unlockAchievement } from '../systems/achievements.js';
-import { soundEffects } from '../systems/audio.js';
-import {
-    hasItem,
-    isAllItemsPurchased,
-    playerProgression,
-    purchaseItem,
-    saveProgression,
-    selectCosmetic
-} from '../systems/progression.js';
-import { updateCoinDisplay } from './progress-display.js';
+'use strict';
 
 /** Pestaña abierta; se conserva entre visitas a la tienda. */
 let currentShopTab = 'trails';
@@ -26,14 +15,14 @@ let currentShopTab = 'trails';
 /**
  * Muestra la pantalla de la tienda
  */
-export function showShopScreen() {
+function showShopScreen() {
     populateShopTab(currentShopTab);
 }
 
 /**
  * Cambia la pestaña de la tienda
  */
-export function switchShopTab(categoryKey) {
+function switchShopTab(categoryKey) {
     currentShopTab = categoryKey;
 
     // Actualizar botones UI

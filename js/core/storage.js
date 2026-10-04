@@ -7,9 +7,11 @@
  * Solo serializa. Cada sistema combina lo leído con sus propios valores
  * por defecto, porque cada clave tiene reglas distintas.
  *
- * Capa base: no importa nada.
+ * Capa base: no usa nada de otros archivos.
  * ------------------------------------------------------------------
  */
+
+'use strict';
 
 /**
  * Lee y parsea una clave. Devuelve `fallback` si no existe o si falla la
@@ -23,7 +25,7 @@
  * @param {string} warning mensaje de consola si falla
  * @returns {any}
  */
-export function readJSON(key, fallback, warning) {
+function readJSON(key, fallback, warning) {
     try {
         const raw = localStorage.getItem(key);
         if (raw) return JSON.parse(raw);
@@ -39,7 +41,7 @@ export function readJSON(key, fallback, warning) {
  * @param {unknown} value
  * @param {string} warning mensaje de consola si falla
  */
-export function writeJSON(key, value, warning) {
+function writeJSON(key, value, warning) {
     try {
         localStorage.setItem(key, JSON.stringify(value));
     } catch (err) {

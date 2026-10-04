@@ -10,13 +10,13 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH } from '../core/constants.js';
+'use strict';
 
-export const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('pongCanvas'));
-export const ctx = canvas.getContext('2d');
+const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('pongCanvas'));
+const ctx = canvas.getContext('2d');
 
 /** Ajusta el tamaño CSS del canvas al espacio libre, manteniendo 4:3. */
-export function resizeCanvas() {
+function resizeCanvas() {
     const wrapper = document.getElementById('canvas-wrapper');
     const container = document.getElementById('game-container');
     const targetRatio = GAME_WIDTH / GAME_HEIGHT;
@@ -64,6 +64,6 @@ export function resizeCanvas() {
 }
 
 /** Reajusta el canvas cuando cambia el tamaño de la ventana. */
-export function initCanvas() {
+function initCanvas() {
     window.addEventListener('resize', resizeCanvas);
 }

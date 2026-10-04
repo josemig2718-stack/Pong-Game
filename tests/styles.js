@@ -49,51 +49,39 @@ const STORAGE = {
     })
 };
 
-const MODULES = {
-    screens: './js/ui/screens.js',
-    stats: './js/ui/stats-panel.js',
-    match: './js/game/match.js',
-    progress: './js/campaign/progress.js',
-    menu: './js/campaign/menu.js',
-    finale: './js/campaign/finale.js',
-    dialogue: './js/campaign/dialogue.js',
-    achievements: './js/systems/achievements.js',
-    state: './js/core/state.js'
-};
-
 /**
- * Estados a capturar. `run(m)` recibe los módulos del juego ya importados
- * y se ejecuta como código del juego (generador aleatorio del juego).
- * @type {Array<{name: string, storage?: object, run: (m: any) => void}>}
+ * Estados a capturar. `run(g)` recibe los globales del juego (ver
+ * gameGlobals) y se ejecuta como código del juego (su generador aleatorio).
+ * @type {Array<{name: string, storage?: object, run: (g: any) => void}>}
  */
 export const STYLE_STATES = [
     { name: 'menu-principal', run: () => {} },
-    { name: 'modo', run: (m) => m.screens.showScreen('mode-select-menu') },
-    { name: 'campana', run: (m) => m.screens.showScreen('campaign-menu') },
-    { name: 'campana-intro', run: (m) => { m.screens.showScreen('campaign-menu'); m.menu.replayCampaignIntro(); } },
-    { name: 'vs', run: (m) => m.progress.prepareCampaignMatch(3) },
-    { name: 'controles', run: (m) => m.screens.showScreen('controls-menu') },
-    { name: 'estadisticas', run: (m) => m.stats.showStatsScreen() },
-    { name: 'logros', run: (m) => m.stats.showAchievementsScreen() },
-    { name: 'configuracion', run: (m) => m.screens.showScreen('settings-menu') },
-    { name: 'tienda', run: (m) => m.screens.showScreen('shop-menu') },
-    { name: 'salir', run: (m) => m.screens.showScreen('exit-menu') },
-    { name: 'partida', run: (m) => m.match.startGame('cpu') },
-    { name: 'pausa', run: (m) => { m.match.startGame('cpu'); m.match.togglePause(); } },
+    { name: 'modo', run: (g) => g.showScreen('mode-select-menu') },
+    { name: 'campana', run: (g) => g.showScreen('campaign-menu') },
+    { name: 'campana-intro', run: (g) => { g.showScreen('campaign-menu'); g.replayCampaignIntro(); } },
+    { name: 'vs', run: (g) => g.prepareCampaignMatch(3) },
+    { name: 'controles', run: (g) => g.showScreen('controls-menu') },
+    { name: 'estadisticas', run: (g) => g.showStatsScreen() },
+    { name: 'logros', run: (g) => g.showAchievementsScreen() },
+    { name: 'configuracion', run: (g) => g.showScreen('settings-menu') },
+    { name: 'tienda', run: (g) => g.showScreen('shop-menu') },
+    { name: 'salir', run: (g) => g.showScreen('exit-menu') },
+    { name: 'partida', run: (g) => g.startGame('cpu') },
+    { name: 'pausa', run: (g) => { g.startGame('cpu'); g.togglePause(); } },
     {
         name: 'fin-de-partida',
-        run: (m) => { m.match.startGame('cpu'); m.state.state.p1Score = 5; m.match.checkWin(); }
+        run: (g) => { g.startGame('cpu'); g.state.p1Score = 5; g.checkWin(); }
     },
     {
         name: 'dialogo',
-        run: (m) => {
-            m.progress.prepareCampaignMatch(2);
-            m.match.startGame('campaign');
-            m.dialogue.queueDialogue([{ t: 'Línea de prueba', s: 'a' }]);
+        run: (g) => {
+            g.prepareCampaignMatch(2);
+            g.startGame('campaign');
+            g.queueDialogue([{ t: 'Línea de prueba', s: 'a' }]);
         }
     },
-    { name: 'aviso-logro', run: (m) => m.achievements.unlockAchievement('streak_3') },
-    { name: 'final-falso', run: (m) => { m.finale.runFinaleSequence(); m.dialogue.stopDialogue(); } }
+    { name: 'aviso-logro', run: (g) => g.unlockAchievement('streak_3') },
+    { name: 'final-falso', run: (g) => { g.runFinaleSequence(); g.stopDialogue(); } }
 ];
 
 /**
@@ -123,6 +111,17 @@ function hashStyle(cs) {
 }
 
 /**
+ * Todas las propiedades calculadas, legibles (sin las que fija el test).
+ * @param {CSSStyleDeclaration} cs
+ */
+function readableStyle(cs) {
+    /** @type {Record<string, string>} */
+    const out = {};
+    for (let i = 0; i < cs.length; i++) if (!SKIPPED.test(cs[i])) out[cs[i]] = cs.getPropertyValue(cs[i]);
+    return out;
+}
+
+/**
  * Hash de estilos de cada elemento del documento.
  * @param {any} win
  * @param {Document} doc
@@ -146,23 +145,14 @@ function snapshot(win, doc) {
 const realWait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Importa los módulos del juego DENTRO del iframe, con un <script
- * type="module"> propio: así se resuelven con el mapa de imports del
- * juego y son las mismas instancias que usa la partida.
+ * Acceso a los globales del juego dentro del iframe. Las funciones son
+ * propiedades de window, pero las `const`/`let` de primer nivel (como
+ * `state`) no: por eso se leen con eval, que ve todo el ámbito global.
  * @param {any} win
- * @param {Document} doc
- * @returns {Promise<Record<string, any>>}
+ * @returns {any}
  */
-async function importGameModules(win, doc) {
-    const names = Object.keys(MODULES);
-    const script = doc.createElement('script');
-    script.type = 'module';
-    script.textContent = names.map((n, i) => `import * as m${i} from ${JSON.stringify(MODULES[n])};`).join('\n')
-        + `\nwindow.__styleModules = { ${names.map((n, i) => `${n}: m${i}`).join(', ')} };`;
-    doc.body.appendChild(script);
-    for (let i = 0; i < 200 && !win.__styleModules; i++) await realWait(10);
-    if (!win.__styleModules) throw new Error('No se pudieron importar los módulos del juego');
-    return win.__styleModules;
+function gameGlobals(win) {
+    return new Proxy({}, { get: (_, name) => win.eval(String(name)) });
 }
 
 /**
@@ -179,8 +169,8 @@ async function captureOne(host, st, vp) {
         freeze.textContent = FREEZE_CSS;
         doc.head.appendChild(freeze);
 
-        const m = await importGameModules(win, doc);
-        win.__harness.inGame(() => st.run(m));
+        const g = gameGlobals(win);
+        win.__harness.inGame(() => st.run(g));
 
         // Tailwind (CDN) genera las clases nuevas al observar el DOM: se le
         // da tiempo y se exige que dos capturas seguidas coincidan.
@@ -189,7 +179,13 @@ async function captureOne(host, st, vp) {
         await realWait(120);
         const b = snapshot(win, doc);
         if (canonical(a) !== canonical(b)) throw new Error(`estilos inestables en ${st.name} @ ${vp.join('x')}`);
-        return { styles: a, errors: [...win.__harness.errors] };
+        // Muestra legible para diagnosticar: si TODO cambia de golpe (otro
+        // tema del sistema, otra versión del navegador…), estas propiedades
+        // dicen qué.
+        const sample = st.name === STYLE_STATES[0].name
+            ? { html: readableStyle(win.getComputedStyle(doc.documentElement)), body: readableStyle(win.getComputedStyle(doc.body)) }
+            : null;
+        return { styles: a, sample, errors: [...win.__harness.errors] };
     } finally {
         game.iframe.remove();
     }
@@ -203,18 +199,21 @@ async function captureOne(host, st, vp) {
 export async function captureStyles(host, progress = () => {}) {
     /** @type {Record<string, Record<string, Record<string, string>>>} */
     const result = {};
+    /** @type {Record<string, any>} */
+    const samples = {};
     const errors = [];
     for (const vp of STYLE_VIEWPORTS) {
         const vpKey = vp.join('x');
         result[vpKey] = {};
         for (const st of STYLE_STATES) {
             progress(`${st.name} @ ${vpKey}`);
-            const { styles, errors: errs } = await captureOne(host, st, vp);
+            const { styles, sample, errors: errs } = await captureOne(host, st, vp);
             result[vpKey][st.name] = styles;
+            if (sample) samples[vpKey] = sample;
             errs.forEach((e) => errors.push(`${st.name} @ ${vpKey}: ${e}`));
         }
     }
-    return { format: 1, ua: navigator.userAgent, dpr: window.devicePixelRatio, styles: result, errors };
+    return { format: 1, ua: navigator.userAgent, dpr: window.devicePixelRatio, styles: result, samples, errors };
 }
 
 /**
@@ -242,6 +241,16 @@ export function compareStyles(golden, got) {
             if (diffs.length) errors.push(`${st} @ ${vp}: ${diffs.length} elementos con estilo distinto: ${diffs.slice(0, 8).join(', ')}`);
         }
     }
+    // Diagnóstico de <html> y <body> en la primera pantalla
+    for (const vp of Object.keys(golden.samples || {})) {
+        for (const el of ['html', 'body']) {
+            const g = golden.samples[vp][el] || {};
+            const c = ((got.samples || {})[vp] || {})[el] || {};
+            const changed = [...new Set([...Object.keys(g), ...Object.keys(c)])]
+                .filter((k) => g[k] !== c[k]).map((k) => `${k}: ${g[k]} → ${c[k]}`);
+            if (changed.length) errors.push(`<${el}> @ ${vp}: ${changed.slice(0, 6).join('; ')}`);
+        }
+    }
     return { errors, warnings };
 }
 
@@ -261,8 +270,8 @@ export async function inspectStyle(host, stateName, vpKey, key) {
         const freeze = doc.createElement('style');
         freeze.textContent = FREEZE_CSS;
         doc.head.appendChild(freeze);
-        const m = await importGameModules(win, doc);
-        win.__harness.inGame(() => st.run(m));
+        const g = gameGlobals(win);
+        win.__harness.inGame(() => st.run(g));
         await realWait(120);
         /** @type {Element} */
         let el = doc.documentElement;

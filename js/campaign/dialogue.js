@@ -10,16 +10,12 @@
  * ------------------------------------------------------------------
  */
 
-import { state } from '../core/state.js';
-import { CAMPAIGN_CREATOR, CAMPAIGN_LAST_BOSS, HACHEPES_LORE } from '../data/lore.js';
-import { soundEffects } from '../systems/audio.js';
-import { clearFinaleTimers } from './finale.js';
-import { currentCampaignLevel } from './progress.js';
+'use strict';
 
 let dialogueQueue = [];
 
 /** Mientras es true, update() no avanza: es la "pausa" de la campaña. */
-export let isDialogueActive = false;
+let isDialogueActive = false;
 
 let dialogueCallback = null;
 
@@ -32,12 +28,12 @@ let typewriterTimer = null;
 let dialogueAdvanceTimer = null;
 
 /** Corta la máquina de escribir en curso, sea cual sea. */
-export function clearTypewriter() {
+function clearTypewriter() {
     clearInterval(typewriterTimer);
 }
 
 /** Arranca una máquina de escribir; sustituye a la anterior como "la actual". */
-export function startTypewriter(tick, ms) {
+function startTypewriter(tick, ms) {
     typewriterTimer = setInterval(tick, ms);
 }
 
@@ -46,7 +42,7 @@ export function startTypewriter(tick, ms) {
  * @param {Array} texts
  * @param {Function} [onComplete] callback al vaciarse la cola
  */
-export function queueDialogue(texts, onComplete) {
+function queueDialogue(texts, onComplete) {
     if (!texts || texts.length === 0) {
         if (onComplete) onComplete();
         return;
@@ -138,7 +134,7 @@ function showNextDialogue() {
 }
 
 /** Corta cualquier diálogo en curso (al salir de la partida). */
-export function stopDialogue() {
+function stopDialogue() {
     clearInterval(typewriterTimer);
     clearFinaleTimers();
     clearTimeout(dialogueAdvanceTimer);
@@ -153,10 +149,10 @@ export function stopDialogue() {
 }
 
 /** Diálogo de "voy ganando": salta una sola vez, al ir perdiendo por 2. */
-export let midDialogueShown = false;
+let midDialogueShown = false;
 
 /** Diálogo "voy ganando": salta una sola vez por partida, al ir perdiendo de 2. */
-export function checkMidDialogue() {
+function checkMidDialogue() {
     if (state.mode !== 'campaign' || midDialogueShown) return;
     if (state.p2Score - state.p1Score < 2) return;
     const boss = HACHEPES_LORE[currentCampaignLevel];
@@ -166,12 +162,12 @@ export function checkMidDialogue() {
 }
 
 /** Permite que el diálogo de mitad de combate vuelva a salir (nueva partida). */
-export function resetMidDialogue() {
+function resetMidDialogue() {
     midDialogueShown = false;
 }
 
 /** Diálogo final del jefe, mostrado sobre la pantalla de fin de combate. */
-export function playBossOutcomeDialogue(p1Won) {
+function playBossOutcomeDialogue(p1Won) {
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!boss) return;
     // Al vencer a Yisus o al Creador manda la secuencia narrativa, no esto.

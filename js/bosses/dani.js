@@ -5,19 +5,15 @@
  * Escudo telegrafiado (2 impactos) y teletransporte a la posición
  * prevista de la bola. Escudo propio, aislado de los power-ups.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { p2, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { spawnParticles, triggerShake } from '../game/effects.js';
-import { bossState } from './shared.js';
+'use strict';
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossDani = {
+/** @type {BossMechanics} */
+const bossDani = {
     config: { targetScore: 6, aiSpeed: 0.85, aiError: 16, aiBias: 66 },
 
     init() {

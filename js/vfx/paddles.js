@@ -7,7 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { playerProgression } from '../systems/progression.js';
+'use strict';
 
 /** Abre un trazado con un rectángulo redondeado (con alternativa si el navegador no tiene roundRect). */
 function roundRectHelper(ctx, x, y, w, h, r) {
@@ -113,7 +113,7 @@ const PADDLE_RENDERERS = {
 };
 
 /** Dibuja una paleta con el estilo equipado (o el clásico si el id guardado no existe). */
-export function renderPaddleVFX(ctx, x, y, w, h, color) {
+function renderPaddleVFX(ctx, x, y, w, h, color) {
     const paddleId = playerProgression.selectedPaddle || 'classic';
 
     if (PADDLE_RENDERERS[paddleId]) {

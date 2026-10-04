@@ -5,14 +5,14 @@
  * `settings` activo durante toda la sesión, persistido en localStorage
  * (clave pongGame.settings.v1).
  *
- * Capa base: solo importa core/storage.js.
+ * Capa base: solo usa core/storage.js, que se carga antes.
  * ------------------------------------------------------------------
  */
 
-import { readJSON, writeJSON } from './storage.js';
+'use strict';
 
 // --- Combinaciones de teclas por defecto ---------------------------
-export const DEFAULT_BINDINGS = {
+const DEFAULT_BINDINGS = {
     p1Up:   'KeyW',
     p1Down: 'KeyS',
     p2Up:   'ArrowUp',
@@ -33,7 +33,7 @@ const KEY_LABELS = {
  * @param {string|null} code
  * @returns {string}
  */
-export function keyLabel(code) {
+function keyLabel(code) {
     if (!code) return '---';
     if (KEY_LABELS[code]) return KEY_LABELS[code];
     if (code.startsWith('Key')) return code.replace('Key', '');
@@ -42,7 +42,7 @@ export function keyLabel(code) {
 }
 
 // --- Configuración por defecto (se combina con lo guardado en localStorage) ---
-export const DEFAULT_SETTINGS = {
+const DEFAULT_SETTINGS = {
     theme:        'green',
     difficulty:   2,       // 1 Fácil, 2 Normal, 3 Imposible
     volume:       50,      // 0-100 (SFX)
@@ -77,10 +77,10 @@ function loadSettings() {
 }
 
 /** Guarda `settings` en localStorage. */
-export function saveSettings() {
+function saveSettings() {
     writeJSON(SETTINGS_STORAGE_KEY, settings, 'No se pudo guardar la configuración:');
 }
 
 // Objeto de configuración activo durante toda la sesión.
-export const settings = loadSettings();
+const settings = loadSettings();
 

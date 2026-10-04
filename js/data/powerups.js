@@ -6,6 +6,8 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 /**
  * @typedef {object} PowerupType
  * @property {string} id
@@ -16,7 +18,7 @@
  */
 
 /** @type {PowerupType[]} */
-export const POWERUP_TYPES = [
+const POWERUP_TYPES = [
     { id: 'paddle_xl',    emoji: '⬆️', color: '#22c55e', duration: 8000,  weight: 20 },
     { id: 'paddle_mini',  emoji: '⬇️', color: '#a855f7', duration: 8000,  weight: 20 },
     { id: 'big_ball',     emoji: '🔴', color: '#ef4444', duration: 6000,  weight: 15 },

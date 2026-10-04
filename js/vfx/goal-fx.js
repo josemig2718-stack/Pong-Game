@@ -7,14 +7,13 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { playerProgression } from '../systems/progression.js';
+'use strict';
 
 // Estado de los efectos de gol
 let goalFlashAlpha = 0;
-export let goalSlowmoTimer = 0;
-export let confettiParticles = [];
-export let shockwave = null; // { x, y, radius, maxRadius, alpha }
+let goalSlowmoTimer = 0;
+let confettiParticles = [];
+let shockwave = null; // { x, y, radius, maxRadius, alpha }
 
 function triggerGoalFlash(goalX, goalY) {
     goalFlashAlpha = 0.3;
@@ -31,7 +30,7 @@ function renderGoalFlash(ctx) {
 }
 
 /** Confeti: también lo usa la secuencia del falso final de la campaña. */
-export function triggerGoalConfetti(goalX, goalY) {
+function triggerGoalConfetti(goalX, goalY) {
     confettiParticles = [];
     const colors = ['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff','#ffffff'];
     for (let i = 0; i < 50; i++) {
@@ -123,7 +122,7 @@ const GOAL_FX = {
 };
 
 /** Lanza el efecto de gol equipado en la posición del gol. */
-export function triggerGoalVFX(goalX, goalY) {
+function triggerGoalVFX(goalX, goalY) {
     const fxId = playerProgression.selectedGoalFx || 'classic';
 
     if (GOAL_FX[fxId]) {
@@ -135,7 +134,7 @@ export function triggerGoalVFX(goalX, goalY) {
  * Avanza el efecto de gol equipado y los temporizadores comunes.
  * @param {number} dt
  */
-export function updateGoalVFX(dt) {
+function updateGoalVFX(dt) {
     const fxId = playerProgression.selectedGoalFx || 'classic';
 
     if (GOAL_FX[fxId]) {
@@ -158,7 +157,7 @@ export function updateGoalVFX(dt) {
  * Dibuja el efecto de gol equipado.
  * @param {CanvasRenderingContext2D} ctx
  */
-export function renderGoalVFX(ctx) {
+function renderGoalVFX(ctx) {
     const fxId = playerProgression.selectedGoalFx || 'classic';
 
     if (GOAL_FX[fxId]) {
@@ -167,6 +166,6 @@ export function renderGoalVFX(ctx) {
 }
 
 /** Multiplicador de dt: 0.3 mientras dura la cámara lenta del destello épico. */
-export function getGoalSlowmo() {
+function getGoalSlowmo() {
     return goalSlowmoTimer > 0 ? 0.3 : 1.0;
 }

@@ -5,20 +5,15 @@
  * Telekinesis sobre la bola y parada de tiempo sobre tu paleta.
  * El muro final antes del giro.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { p2, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { drawText } from '../game/draw.js';
-import { triggerShake } from '../game/effects.js';
-import { bossState } from './shared.js';
+'use strict';
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossYisus = {
+/** @type {BossMechanics} */
+const bossYisus = {
     config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48 },
 
     init() {

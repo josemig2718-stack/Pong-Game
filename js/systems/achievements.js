@@ -6,13 +6,7 @@
  * ------------------------------------------------------------------
  */
 
-import { BALL_SPEED_PRESETS } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { ACHIEVEMENTS } from '../data/achievements.js';
-import { THEMES } from '../data/themes.js';
-import { soundEffects } from './audio.js';
-import { gameStats, maxDeficit, saveStats } from './stats.js';
-import { powerupsThisGame } from '../game/powerups.js';
+'use strict';
 
 /** Cola de notificaciones de logros pendientes */
 const achievementQueue = [];
@@ -22,7 +16,7 @@ let isShowingAchievement = false;
  * Desbloquea un logro si no estaba ya desbloqueado.
  * @returns {boolean} true si se desbloqueó ahora
  */
-export function unlockAchievement(id) {
+function unlockAchievement(id) {
     if (gameStats.achievements[id]) return false; // ya desbloqueado
 
     gameStats.achievements[id] = new Date().toISOString();
@@ -82,7 +76,7 @@ function showAchievementToast(achievement) {
  * Verifica todas las condiciones de logros.
  * Se llama al terminar una partida y al cambiar tema.
  */
-export function checkAllAchievements(mode, p1Won) {
+function checkAllAchievements(mode, p1Won) {
     const s = gameStats;
 
     // --- Inicio ---
@@ -148,13 +142,13 @@ export function checkAllAchievements(mode, p1Won) {
  * Total de logros a efectos de contador. Un secreto aún bloqueado no se
  * cuenta: si no, el marcador delataría que existe algo escondido.
  */
-export function getVisibleAchievementsTotal() {
+function getVisibleAchievementsTotal() {
     return ACHIEVEMENTS.filter(a => !a.secret || gameStats.achievements[a.id]).length;
 }
 
 /**
  * @returns {number} logros desbloqueados, secretos incluidos
  */
-export function getUnlockedCount() {
+function getUnlockedCount() {
     return Object.keys(gameStats.achievements).length;
 }

@@ -13,40 +13,7 @@
  * ------------------------------------------------------------------
  */
 
-import {
-    BALL_SPEED_PRESETS,
-    GAME_HEIGHT,
-    GAME_WIDTH,
-    MS_PER_FRAME,
-    paddleSpeed
-} from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p1, p2, p2Twin, state } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { isActionPressed } from '../systems/input.js';
-import { statsOnPaddleHit, statsOnScore } from '../systems/stats.js';
-import { currentThemeHex } from '../systems/theme.js';
-import { moveCpu } from './ai.js';
-import { resetBall } from './balls.js';
-import { spawnParticles, triggerShake, updateParticles, updateShake } from './effects.js';
-import { checkWin } from './match.js';
-import { getSlowmoMultiplier, setLastHitter, updatePowerups } from './powerups.js';
-import { getGoalSlowmo, triggerGoalVFX } from '../vfx/goal-fx.js';
-import { updateVFX } from '../vfx/index.js';
-import {
-    bossCollide,
-    bossConfig,
-    bossDamage,
-    bossFreezesPlayer,
-    bossHealth,
-    bossInvertsControls,
-    bossOnGoal,
-    bossRefreshAim,
-    bossSegmentArmored,
-    bossUpdate
-} from '../bosses/index.js';
-import { CREATOR_BAND_H } from '../bosses/shared.js';
-import { checkMidDialogue, isDialogueActive } from '../campaign/dialogue.js';
+'use strict';
 
 // Puntos que guarda la estela de cada bola
 const MAX_TRAIL = 25;
@@ -55,7 +22,7 @@ const MAX_TRAIL = 25;
  * Avanza la partida un paso.
  * @param {number} dt tiempo transcurrido en fotogramas de 60 FPS
  */
-export function update(dt) {
+function update(dt) {
     // Un diálogo de campaña congela la partida por completo
     if (isDialogueActive) return;
 
@@ -268,7 +235,7 @@ function collision(b, p) {
 
 /** Golpe de paleta: el ángulo de salida depende de dónde toca la bola. */
 function hitPaddles(b, rotatedArena, maxBallSpeed) {
-    /** @type {import('../core/state.js').Paddle} */
+    /** @type {Paddle} */
     let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
     if (rotatedArena) targetPaddle = p1; // En la arena rotada solo existe p1 (abajo)
 

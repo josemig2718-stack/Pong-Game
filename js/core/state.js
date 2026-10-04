@@ -1,21 +1,21 @@
 /**
  * core/state.js
  * ------------------------------------------------------------------
- * Estado de la partida en curso, compartido por todos los módulos.
+ * Estado de la partida en curso, compartido por todos los archivos.
  *
  * Todo lo que cambia durante una partida y se lee desde más de un
- * módulo vive en el objeto `state`: así cualquier sistema puede
- * escribirlo (p. ej. la campaña detiene la partida al lanzar el final).
- * Un `export let` no serviría: quien lo importa no puede reasignarlo.
+ * archivo vive en el objeto `state`: así cualquier sistema puede
+ * escribirlo (p. ej. la campaña detiene la partida al lanzar el final)
+ * sin reasignar variables declaradas en otro archivo.
  *
  * Las paletas son objetos estables: se mutan sus propiedades, nunca se
  * sustituyen, así que se declaran aparte como constantes.
  *
- * Capa base: solo importa core/constants.js.
+ * Capa base: solo usa core/constants.js, que se carga antes.
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './constants.js';
+'use strict';
 
 /** @typedef {'cpu' | 'local' | 'hachepe' | 'campaign'} GameMode */
 
@@ -58,7 +58,7 @@ import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './constants.
  */
 
 /**
- * Estado mutable de la partida (ver el comentario del módulo).
+ * Estado mutable de la partida (ver el comentario del archivo).
  * @typedef {object} GameState
  * @property {GameMode} mode
  * @property {boolean} isPlaying
@@ -74,7 +74,7 @@ import { GAME_HEIGHT, GAME_WIDTH, paddleHeight, paddleWidth } from './constants.
  */
 
 /** @type {GameState} */
-export const state = {
+const state = {
     mode: 'cpu',
     isPlaying: false,
     isPaused: false,
@@ -99,9 +99,9 @@ export const state = {
 
 // --- Paletas ---
 /** @type {Paddle} */
-export const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 /** @type {Paddle} */
-export const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
 
 /**
  * Paleta gemela del rival (Mario, en el combate del dúo). Las mecánicas
@@ -109,4 +109,4 @@ export const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddl
  * golpean game/ai.js y game/physics.js.
  * @type {Paddle & {active: boolean, retreatMs: number}}
  */
-export const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };
+const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };

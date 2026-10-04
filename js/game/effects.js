@@ -6,12 +6,10 @@
  * ------------------------------------------------------------------
  */
 
-import { MS_PER_FRAME } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { state } from '../core/state.js';
+'use strict';
 
 /** Lanza `count` partículas en todas direcciones desde (x, y). */
-export function spawnParticles(x, y, color, count = 14) {
+function spawnParticles(x, y, color, count = 14) {
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 2 + Math.random() * 4;
@@ -26,14 +24,14 @@ export function spawnParticles(x, y, color, count = 14) {
 }
 
 /** Hace vibrar la pantalla (si el jugador no lo ha desactivado). */
-export function triggerShake(intensity = 8, durationMs = 200) {
+function triggerShake(intensity = 8, durationMs = 200) {
     if (!settings.screenShake) return;
     state.shakeIntensity = intensity;
     state.shakeTimeMs = durationMs;
 }
 
 /** Física simple de las partículas: se mueven y se desvanecen. */
-export function updateParticles(dt) {
+function updateParticles(dt) {
     state.particles.forEach(p => {
         p.x += p.dx * dt;
         p.y += p.dy * dt;
@@ -43,7 +41,7 @@ export function updateParticles(dt) {
 }
 
 /** Consume el tiempo de vibración (basado en tiempo, no en fotogramas). */
-export function updateShake(dt) {
+function updateShake(dt) {
     if (state.shakeTimeMs > 0) {
         state.shakeTimeMs -= dt * MS_PER_FRAME;
         if (state.shakeTimeMs < 0) state.shakeTimeMs = 0;

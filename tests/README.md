@@ -15,7 +15,7 @@ python tests/serve.py
 Abre <http://127.0.0.1:8000/tests/> y pulsa **Ejecutar todos** (unos 5
 minutos). Con `?only=jefe-3,pausa` se ejecutan solo esos escenarios; el test
 de estilos solo corre con `?only=` si se incluye `estilos-computados`. La
-comprobación del mapa de imports corre siempre.
+comprobación de los scripts corre siempre (necesita `serve.py`).
 
 Desde Playwright o la consola: `window.__tests.runAll()` y esperar a
 `window.__done` (`{ passed, total }`); los resultados quedan en
@@ -34,9 +34,9 @@ runner lo detecta y falla con un mensaje claro).
 
 1. `runner.js` descarga `index.html` y lo carga en un iframe (`srcdoc`)
    inyectando dos scripts: `harness/install.js` **antes** que cualquier script
-   del juego y el adaptador de lectura (`adapters/esm.js`) **después**. El
-   adaptador importa los módulos del juego por las mismas rutas, que el mapa
-   de imports resuelve a las mismas URL: lee las instancias reales.
+   del juego y el adaptador de lectura (`adapters/globals.js`) **después**.
+   El juego son scripts clásicos que comparten el ámbito global, así que el
+   adaptador lee su estado directamente.
 2. `harness/install.js` sustituye todo lo que no es determinista:
    - `Math.random` por un generador con semilla;
    - `Date` y `performance.now` por un reloj virtual;
@@ -85,14 +85,15 @@ El hash del canvas **solo vale en el navegador donde se grabó**: otro
 navegador antialiasa distinto. Si cambia el navegador, el runner lo avisa e
 ignora los píxeles; el resto de secciones se sigue comparando.
 
-### El mapa de imports
+### Los scripts del juego
 
 Antes de los escenarios se ejecuta una comprobación estática,
-`mapa-de-imports` (`lib/importmap.js`): todo módulo alcanzable desde
-`js/main.js` está en el mapa de `index.html` con el mismo `?v=N`, ningún
-`import` lleva versión, no sobra ninguna entrada y `style.css` usa el mismo N.
-Un módulo olvidado en el mapa funcionaría en local pero GitHub Pages podría
-servir una copia vieja.
+`scripts-del-juego` (`lib/scripts.js`): cada archivo de `js/` se carga
+exactamente una vez desde `index.html` (la lista de archivos existentes la da
+`serve.py` en `/tests/js-files`), ninguno es un módulo (no cargaría desde
+`file://`), todos llevan el mismo `?v=N` que `style.css` y `main.js` va el
+último. El orden entre capas lo vigilan los escenarios: un script cargado
+antes de lo que necesita rompe la carga y fallan todos.
 
 ### Estilos computados
 
@@ -139,6 +140,6 @@ el test lo detecta aunque el estado coincida.
 | `styles.js` | el test de estilos computados |
 | `serve.py` | servidor de desarrollo sin caché (también para jugar) |
 | `harness/install.js` | sustituciones deterministas dentro del iframe |
-| `adapters/esm.js` | lectura del estado del juego (lo único que conoce sus módulos) |
-| `lib/` | JSON canónico, hashes, serialización del DOM y comprobación del mapa de imports |
+| `adapters/globals.js` | lectura del estado del juego (lo único que conoce sus nombres internos) |
+| `lib/` | JSON canónico, hashes, serialización del DOM y comprobación de los scripts |
 | `golden/` | referencias grabadas |

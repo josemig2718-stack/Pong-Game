@@ -1,9 +1,9 @@
 /**
  * main.js
  * ------------------------------------------------------------------
- * Punto de entrada (el único <script type="module"> de index.html).
- * Ningún otro módulo registra listeners ni toca el DOM al evaluarse:
- * todo arranca desde aquí, en este orden.
+ * Punto de entrada: el último script de index.html. Ningún otro archivo
+ * registra listeners ni toca el DOM al cargarse: todo arranca desde
+ * aquí, en este orden.
  *
  * El orden importa. Varios listeners comparten objetivo y tipo de
  * evento (p. ej. keydown en window: primero el desbloqueo del audio,
@@ -12,13 +12,7 @@
  * ------------------------------------------------------------------
  */
 
-import { initAudio } from './systems/audio.js';
-import { initInput } from './systems/input.js';
-import { initPointer } from './systems/pointer.js';
-import { initCanvas } from './game/canvas.js';
-import { initCarouselControls } from './campaign/menu.js';
-import { initActions } from './ui/actions.js';
-import { initUI } from './ui/screens.js';
+'use strict';
 
 initAudio();             // desbloqueo del audio con la primera interacción
 initInput();             // teclado de juego y reasignación de teclas

@@ -5,18 +5,15 @@
  * Dos paletas repartiéndose el campo. Al encajar gol, una se
  * retira unos segundos: esa es la ventana del jugador.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { p2Twin } from '../core/state.js';
-import { soundEffects } from '../systems/audio.js';
-import { drawText } from '../game/draw.js';
+'use strict';
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossDuo = {
+/** @type {BossMechanics} */
+const bossDuo = {
     config: { targetScore: 6, aiSpeed: 0.9,  aiError: 14, aiBias: 58 },
 
     init() {

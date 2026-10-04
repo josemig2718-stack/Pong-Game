@@ -7,9 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { state } from '../core/state.js';
-import { playerProgression } from '../systems/progression.js';
-import { currentThemeHex } from '../systems/theme.js';
+'use strict';
 
 /** Clásica: segmentos que se estrechan y desvanecen hacia la cola. */
 function drawTrailDefault(ctx, trail, radius, color) {
@@ -168,7 +166,7 @@ const TRAIL_RENDERERS = {
  * Dibuja la estela de una bola con la estela equipada (o la clásica si el
  * id guardado no existe).
  */
-export function renderBallTrail(ctx, trail, radius) {
+function renderBallTrail(ctx, trail, radius) {
     const color = currentThemeHex();
     const trailId = playerProgression.selectedTrail || 'default';
 

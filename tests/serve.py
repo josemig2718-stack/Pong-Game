@@ -8,10 +8,14 @@ Servidor de desarrollo sin caché.
 caché heurística: tras editar un archivo puede seguir sirviendo la versión
 anterior, y los tests pasarían midiendo código viejo. Este servidor responde
 siempre con `Cache-Control: no-store` y fuerza el tipo MIME de los .js (en
-algunos Windows el registro los asocia a text/plain y los módulos no cargan).
+algunos Windows el registro los asocia a text/plain). Además sirve en
+/tests/js-files la lista de scripts de js/, que usa tests/lib/scripts.js.
+
+Para jugar no hace falta: basta abrir index.html.
 """
 import functools
 import http.server
+import json
 import pathlib
 import sys
 
@@ -29,6 +33,20 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
         super().end_headers()
+
+    def do_GET(self):
+        # Lista de los scripts de js/, para que los tests comprueben que
+        # index.html los carga todos (ver tests/lib/scripts.js).
+        if self.path.split('?')[0] == '/tests/js-files':
+            files = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'js').rglob('*.js'))
+            body = json.dumps(files).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
 
     def log_message(self, *args):
         pass  # sin ruido en la consola

@@ -11,17 +11,14 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, paddleSpeed } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p2, p2Twin, state } from '../core/state.js';
-import { bossAim } from '../bosses/index.js';
+'use strict';
 
 /**
  * Mueve la paleta de la CPU (p2) y, en el combate del dúo, la gemela.
  * @param {number} dt
  * @param {object|null} bcfg config del jefe en curso (bossConfig())
  */
-export function moveCpu(dt, bcfg) {
+function moveCpu(dt, bcfg) {
     let aiSpeed = paddleSpeed, errorMargin = 0;
     if (bcfg) {
         // Cada jefe de campaña tiene su propia habilidad: esa es la curva

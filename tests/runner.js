@@ -39,13 +39,13 @@ const EPOCH_MS = Date.UTC(2026, 0, 15, 12, 0, 0);
  */
 export async function loadGame(host, opts) {
     const html = await (await fetch(GAME_ROOT + 'index.html', { cache: 'no-store' })).text();
-    const adapter = 'esm';
+    const adapter = 'globals';
 
     const config = { seed: opts.seed, storage: opts.storage || {}, epochMs: EPOCH_MS, traceRandom: opts.traceRandom || 0 };
     const head = `<base href="${GAME_ROOT}">`
         + `<script>window.__HARNESS_CONFIG__ = ${JSON.stringify(config)};<\/script>`
         + `<script src="tests/harness/install.js"><\/script>`;
-    const adapterTag = '<script type="module" src="tests/adapters/esm.js"><\/script>';
+    const adapterTag = '<script src="tests/adapters/globals.js"><\/script>';
     const srcdoc = html
         .replace(/<head>/i, '<head>' + head)
         .replace(/<\/body>/i, adapterTag + '</body>');

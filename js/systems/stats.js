@@ -6,10 +6,7 @@
  * ------------------------------------------------------------------
  */
 
-import { settings } from '../core/settings.js';
-import { state } from '../core/state.js';
-import { readJSON, writeJSON } from '../core/storage.js';
-import { checkAllAchievements } from './achievements.js';
+'use strict';
 
 const STATS_STORAGE_KEY = 'pongGame.stats.v1';
 
@@ -64,12 +61,12 @@ function loadStats() {
 }
 
 /** Guarda `gameStats` en localStorage. */
-export function saveStats() {
+function saveStats() {
     writeJSON(STATS_STORAGE_KEY, gameStats, 'No se pudieron guardar las estadísticas:');
 }
 
 /** Borra solo las estadísticas numéricas, manteniendo los logros intactos */
-export function resetStats() {
+function resetStats() {
     const preserved = { ...gameStats.achievements };
     // BUG conocido (conservado, ver docs/bugs-conocidos.md): copia la referencia de
     // DEFAULT_STATS.themesUsed: los temas que se prueben después la modifican.
@@ -79,27 +76,27 @@ export function resetStats() {
 }
 
 // Estadísticas activas durante la sesión
-export const gameStats = loadStats();
+const gameStats = loadStats();
 
 // --- Variables de tracking en tiempo real (durante una partida) ---
-export let currentRally    = 0;   // golpes consecutivos en la ronda actual
-export let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
+let currentRally    = 0;   // golpes consecutivos en la ronda actual
+let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
 let gameStartTimeMs = 0;   // timestamp de inicio de partida (para tiempo jugado)
 
 /** Llamar al iniciar una nueva partida */
-export function statsOnGameStart() {
+function statsOnGameStart() {
     currentRally    = 0;
     maxDeficit      = 0;
     gameStartTimeMs = performance.now();
 }
 
 /** Llamar cuando la bola golpea una paleta */
-export function statsOnPaddleHit() {
+function statsOnPaddleHit() {
     currentRally++;
 }
 
 /** Llamar cuando se anota un punto (antes de resetBall) */
-export function statsOnScore(scorerIsP1) {
+function statsOnScore(scorerIsP1) {
     // Actualizar rally más largo
     if (currentRally > gameStats.longestRally) {
         gameStats.longestRally = currentRally;
@@ -132,7 +129,7 @@ export function statsOnScore(scorerIsP1) {
  * @param {boolean} p1Won
  * @param {number} p2FinalScore puntos del rival (0 = juego perfecto)
  */
-export function statsOnGameEnd(mode, p1Won, p2FinalScore) {
+function statsOnGameEnd(mode, p1Won, p2FinalScore) {
     gameStats.totalGamesPlayed++;
 
     // Tiempo jugado
@@ -183,7 +180,7 @@ export function statsOnGameEnd(mode, p1Won, p2FinalScore) {
 }
 
 /** Registrar que se usó un tema (para logro Explorador) */
-export function statsTrackTheme(themeKey) {
+function statsTrackTheme(themeKey) {
     if (!gameStats.themesUsed.includes(themeKey)) {
         gameStats.themesUsed.push(themeKey);
         saveStats();
@@ -193,7 +190,7 @@ export function statsTrackTheme(themeKey) {
 }
 
 /** Guarda el tiempo acumulado (llamar periódicamente durante gameplay) */
-export function statsFlushTime() {
+function statsFlushTime() {
     if (gameStartTimeMs > 0) {
         const now = performance.now();
         gameStats.totalTimePlayedMs += (now - gameStartTimeMs);
@@ -203,7 +200,7 @@ export function statsFlushTime() {
 }
 
 /** Formatea milisegundos a texto legible "Xh Ym" */
-export function formatPlayTime(ms) {
+function formatPlayTime(ms) {
     const totalSecs = Math.floor(ms / 1000);
     const hours     = Math.floor(totalSecs / 3600);
     const minutes   = Math.floor((totalSecs % 3600) / 60);

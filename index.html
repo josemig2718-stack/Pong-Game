@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#05070a">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=16">
+    <link rel="stylesheet" href="css/style.css?v=17">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -504,68 +504,62 @@
         </div>
     </div>
 
-    <!-- Módulos del juego. Los import no llevan versión: este mapa añade
-         ?v=N a cada módulo para que GitHub Pages no sirva copias viejas.
-         Al cambiar cualquier JS o CSS, sube N en todas las entradas, en el
-         src de main.js y en el enlace a style.css (tests/ lo comprueba). -->
-    <script type="importmap">
-    {
-        "imports": {
-            "./js/bosses/chemi.js": "./js/bosses/chemi.js?v=16",
-            "./js/bosses/creator.js": "./js/bosses/creator.js?v=16",
-            "./js/bosses/dani.js": "./js/bosses/dani.js?v=16",
-            "./js/bosses/duo.js": "./js/bosses/duo.js?v=16",
-            "./js/bosses/fano.js": "./js/bosses/fano.js?v=16",
-            "./js/bosses/index.js": "./js/bosses/index.js?v=16",
-            "./js/bosses/shared.js": "./js/bosses/shared.js?v=16",
-            "./js/bosses/yisus.js": "./js/bosses/yisus.js?v=16",
-            "./js/campaign/dialogue.js": "./js/campaign/dialogue.js?v=16",
-            "./js/campaign/finale.js": "./js/campaign/finale.js?v=16",
-            "./js/campaign/menu.js": "./js/campaign/menu.js?v=16",
-            "./js/campaign/progress.js": "./js/campaign/progress.js?v=16",
-            "./js/core/constants.js": "./js/core/constants.js?v=16",
-            "./js/core/settings.js": "./js/core/settings.js?v=16",
-            "./js/core/state.js": "./js/core/state.js?v=16",
-            "./js/core/storage.js": "./js/core/storage.js?v=16",
-            "./js/data/achievements.js": "./js/data/achievements.js?v=16",
-            "./js/data/levels.js": "./js/data/levels.js?v=16",
-            "./js/data/lore.js": "./js/data/lore.js?v=16",
-            "./js/data/powerups.js": "./js/data/powerups.js?v=16",
-            "./js/data/shop.js": "./js/data/shop.js?v=16",
-            "./js/data/themes.js": "./js/data/themes.js?v=16",
-            "./js/game/ai.js": "./js/game/ai.js?v=16",
-            "./js/game/balls.js": "./js/game/balls.js?v=16",
-            "./js/game/canvas.js": "./js/game/canvas.js?v=16",
-            "./js/game/draw.js": "./js/game/draw.js?v=16",
-            "./js/game/effects.js": "./js/game/effects.js?v=16",
-            "./js/game/loop.js": "./js/game/loop.js?v=16",
-            "./js/game/match.js": "./js/game/match.js?v=16",
-            "./js/game/physics.js": "./js/game/physics.js?v=16",
-            "./js/game/powerups.js": "./js/game/powerups.js?v=16",
-            "./js/game/render.js": "./js/game/render.js?v=16",
-            "./js/main.js": "./js/main.js?v=16",
-            "./js/systems/achievements.js": "./js/systems/achievements.js?v=16",
-            "./js/systems/audio.js": "./js/systems/audio.js?v=16",
-            "./js/systems/input.js": "./js/systems/input.js?v=16",
-            "./js/systems/pointer.js": "./js/systems/pointer.js?v=16",
-            "./js/systems/progression.js": "./js/systems/progression.js?v=16",
-            "./js/systems/stats.js": "./js/systems/stats.js?v=16",
-            "./js/systems/theme.js": "./js/systems/theme.js?v=16",
-            "./js/ui/actions.js": "./js/ui/actions.js?v=16",
-            "./js/ui/progress-display.js": "./js/ui/progress-display.js?v=16",
-            "./js/ui/screens.js": "./js/ui/screens.js?v=16",
-            "./js/ui/settings-panel.js": "./js/ui/settings-panel.js?v=16",
-            "./js/ui/shop-ui.js": "./js/ui/shop-ui.js?v=16",
-            "./js/ui/stats-panel.js": "./js/ui/stats-panel.js?v=16",
-            "./js/vfx/backgrounds.js": "./js/vfx/backgrounds.js?v=16",
-            "./js/vfx/goal-fx.js": "./js/vfx/goal-fx.js?v=16",
-            "./js/vfx/index.js": "./js/vfx/index.js?v=16",
-            "./js/vfx/paddles.js": "./js/vfx/paddles.js?v=16",
-            "./js/vfx/trails.js": "./js/vfx/trails.js?v=16"
-        }
-    }
-    </script>
-    <script type="module" src="./js/main.js?v=16"></script>
+    <!-- Scripts del juego, en orden de capas: el código de primer nivel de
+         cada archivo solo puede usar lo que se ha cargado antes. Son scripts
+         clásicos (no módulos) para que el juego funcione también abriendo
+         index.html directamente (file://). Al cambiar cualquier JS o CSS,
+         sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
+    <script src="js/core/constants.js?v=17"></script>
+    <script src="js/core/storage.js?v=17"></script>
+    <script src="js/core/settings.js?v=17"></script>
+    <script src="js/core/state.js?v=17"></script>
+    <script src="js/data/themes.js?v=17"></script>
+    <script src="js/data/lore.js?v=17"></script>
+    <script src="js/data/achievements.js?v=17"></script>
+    <script src="js/data/shop.js?v=17"></script>
+    <script src="js/data/levels.js?v=17"></script>
+    <script src="js/data/powerups.js?v=17"></script>
+    <script src="js/systems/audio.js?v=17"></script>
+    <script src="js/systems/theme.js?v=17"></script>
+    <script src="js/systems/stats.js?v=17"></script>
+    <script src="js/systems/achievements.js?v=17"></script>
+    <script src="js/systems/progression.js?v=17"></script>
+    <script src="js/systems/input.js?v=17"></script>
+    <script src="js/systems/pointer.js?v=17"></script>
+    <script src="js/game/canvas.js?v=17"></script>
+    <script src="js/game/draw.js?v=17"></script>
+    <script src="js/game/effects.js?v=17"></script>
+    <script src="js/game/balls.js?v=17"></script>
+    <script src="js/game/ai.js?v=17"></script>
+    <script src="js/game/physics.js?v=17"></script>
+    <script src="js/game/match.js?v=17"></script>
+    <script src="js/game/render.js?v=17"></script>
+    <script src="js/game/loop.js?v=17"></script>
+    <script src="js/game/powerups.js?v=17"></script>
+    <script src="js/vfx/trails.js?v=17"></script>
+    <script src="js/vfx/backgrounds.js?v=17"></script>
+    <script src="js/vfx/paddles.js?v=17"></script>
+    <script src="js/vfx/goal-fx.js?v=17"></script>
+    <script src="js/vfx/index.js?v=17"></script>
+    <script src="js/bosses/shared.js?v=17"></script>
+    <script src="js/bosses/chemi.js?v=17"></script>
+    <script src="js/bosses/dani.js?v=17"></script>
+    <script src="js/bosses/duo.js?v=17"></script>
+    <script src="js/bosses/fano.js?v=17"></script>
+    <script src="js/bosses/yisus.js?v=17"></script>
+    <script src="js/bosses/creator.js?v=17"></script>
+    <script src="js/bosses/index.js?v=17"></script>
+    <script src="js/campaign/progress.js?v=17"></script>
+    <script src="js/campaign/menu.js?v=17"></script>
+    <script src="js/campaign/dialogue.js?v=17"></script>
+    <script src="js/campaign/finale.js?v=17"></script>
+    <script src="js/ui/screens.js?v=17"></script>
+    <script src="js/ui/actions.js?v=17"></script>
+    <script src="js/ui/settings-panel.js?v=17"></script>
+    <script src="js/ui/stats-panel.js?v=17"></script>
+    <script src="js/ui/shop-ui.js?v=17"></script>
+    <script src="js/ui/progress-display.js?v=17"></script>
+    <script src="js/main.js?v=17"></script>
 </body>
 
 </html>

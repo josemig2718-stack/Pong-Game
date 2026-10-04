@@ -11,13 +11,9 @@
  * ------------------------------------------------------------------
  */
 
-import { CAMPAIGN_CREATOR, CAMPAIGN_INTRO_TEXT, HACHEPES_LORE } from '../data/lore.js';
-import { soundEffects } from '../systems/audio.js';
-import { playerProgression, saveProgression } from '../systems/progression.js';
-import { clearTypewriter, isDialogueActive } from './dialogue.js';
-import { prepareCampaignMatch } from './progress.js';
+'use strict';
 
-export let carouselIndex = 0;      // carta centrada
+let carouselIndex = 0;      // carta centrada
 
 let carouselCards = [];     // niveles disponibles, en orden
 
@@ -29,7 +25,7 @@ function getCarouselLevels() {
 }
 
 /** Construye el carrusel de jefes (al entrar en el menú de campaña). */
-export function renderCampaignMap() {
+function renderCampaignMap() {
     const track = document.getElementById('campaign-nodes');
     if (!track) return;
 
@@ -145,7 +141,7 @@ function updateCarousel() {
 }
 
 /** Mueve el carrusel `paso` cartas (flechas en pantalla y teclado). */
-export function carouselMove(paso) {
+function carouselMove(paso) {
     const nuevo = carouselIndex + paso;
     if (nuevo < 0 || nuevo >= carouselCards.length) return;
     carouselIndex = nuevo;
@@ -154,7 +150,7 @@ export function carouselMove(paso) {
 }
 
 /** Teclado y deslizamiento: el carrusel se maneja sin ratón. */
-export function initCarouselControls() {
+function initCarouselControls() {
     const menu = document.getElementById('campaign-menu');
     if (!menu) return;
 
@@ -217,7 +213,7 @@ function showCampaignIntro() {
 }
 
 /** Botón "ACEPTAR MI DESTINO": cierra la intro y la marca como vista. */
-export function closeCampaignIntro() {
+function closeCampaignIntro() {
     const overlay = document.getElementById('campaign-intro-overlay');
     if (overlay) overlay.classList.add('hidden');
     playerProgression.campaignIntroSeen = true;
@@ -226,7 +222,7 @@ export function closeCampaignIntro() {
 }
 
 /** Botón "Ver Historia": vuelve a mostrar la intro. */
-export function replayCampaignIntro() {
+function replayCampaignIntro() {
     soundEffects.uiClick();
     showCampaignIntro();
 }

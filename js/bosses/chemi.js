@@ -5,18 +5,15 @@
  * Escombros fijos en el centro: la primera lección de que los
  * Hachepes no juegan al Pong limpio.
  *
- * Lo registra bosses/index.js en BOSS_MECHANICS; ningún otro módulo debe
- * importarlo (ver el comentario de esa tabla).
+ * Lo registra bosses/index.js en BOSS_MECHANICS, que se carga después
+ * (ver el comentario de esa tabla).
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, MS_PER_FRAME } from '../core/constants.js';
-import { soundEffects } from '../systems/audio.js';
-import { spawnParticles } from '../game/effects.js';
-import { bossState } from './shared.js';
+'use strict';
 
-/** @type {import('./index.js').BossMechanics} */
-export const bossChemi = {
+/** @type {BossMechanics} */
+const bossChemi = {
     config: { targetScore: 5, aiSpeed: 0.7,  aiError: 26, aiBias: 78 },
 
     init() {

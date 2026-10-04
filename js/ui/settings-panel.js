@@ -7,27 +7,12 @@
  * ------------------------------------------------------------------
  */
 
-import { DEFAULT_BINDINGS, DEFAULT_SETTINGS, saveSettings, settings } from '../core/settings.js';
-import { state } from '../core/state.js';
-import {
-    getAudioContext,
-    playGameplayMusic,
-    playMenuMusic,
-    playTone,
-    setMasterVolume,
-    setMusicEnabled,
-    setMusicVolume,
-    setSfxEnabled,
-    stopAllMusic
-} from '../systems/audio.js';
-import { refreshBindingButtons } from '../systems/input.js';
-import { clearMouseControl } from '../systems/pointer.js';
-import { applyTheme } from '../systems/theme.js';
+'use strict';
 
 /**
  * @param {string} val 1 Fácil, 2 Normal, 3 Imposible
  */
-export function updateDifficulty(val) {
+function updateDifficulty(val) {
     settings.difficulty = parseInt(val, 10);
     saveSettings();
 }
@@ -36,7 +21,7 @@ export function updateDifficulty(val) {
  * Slider de volumen de efectos: aplica, muestra el % y suena una muestra.
  * @param {string} val de 0 a 100
  */
-export function updateVolume(val) {
+function updateVolume(val) {
     setMasterVolume(parseInt(val, 10));
     document.getElementById('vol-display').textContent = `${val}%`;
     getAudioContext();
@@ -46,7 +31,7 @@ export function updateVolume(val) {
 /**
  * @param {string} val de 0 a 100
  */
-export function updateMusicVolume(val) {
+function updateMusicVolume(val) {
     setMusicVolume(parseInt(val, 10));
     document.getElementById('music-vol-display').textContent = `${val}%`;
 }
@@ -55,7 +40,7 @@ export function updateMusicVolume(val) {
  * Activa o desactiva la música; al activarla suena la que toca ahora.
  * @param {boolean} enabled
  */
-export function toggleMusic(enabled) {
+function toggleMusic(enabled) {
     setMusicEnabled(enabled);
     if (enabled) {
         // Reanudar la música que corresponda según el estado actual
@@ -73,7 +58,7 @@ export function toggleMusic(enabled) {
  * Puntos para ganar; resalta la opción elegida.
  * @param {number|string} val
  */
-export function updateWinningScore(val) {
+function updateWinningScore(val) {
     settings.winningScore = parseInt(String(val), 10);
     saveSettings();
     /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-winning-score]')).forEach(btn => {
@@ -85,7 +70,7 @@ export function updateWinningScore(val) {
  * Velocidad de la bola (1 a 3); resalta la opción elegida.
  * @param {number|string} val
  */
-export function updateBallSpeed(val) {
+function updateBallSpeed(val) {
     settings.ballSpeed = parseInt(String(val), 10);
     saveSettings();
     /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-ball-speed]')).forEach(btn => {
@@ -96,7 +81,7 @@ export function updateBallSpeed(val) {
 /**
  * @param {boolean} enabled
  */
-export function toggleSfx(enabled) {
+function toggleSfx(enabled) {
     setSfxEnabled(enabled);
     if (enabled) playTone(500, 'triangle', 0.05);
 }
@@ -104,7 +89,7 @@ export function toggleSfx(enabled) {
 /**
  * @param {boolean} enabled
  */
-export function toggleCrtEffect(enabled) {
+function toggleCrtEffect(enabled) {
     settings.crtEffect = enabled;
     saveSettings();
     document.body.classList.toggle('crt-effect', enabled);
@@ -113,7 +98,7 @@ export function toggleCrtEffect(enabled) {
 /**
  * @param {boolean} enabled
  */
-export function toggleScreenShake(enabled) {
+function toggleScreenShake(enabled) {
     settings.screenShake = enabled;
     saveSettings();
 }
@@ -122,7 +107,7 @@ export function toggleScreenShake(enabled) {
  * Al desactivarlo suelta la paleta, para que vuelva a mandar el teclado.
  * @param {boolean} enabled
  */
-export function toggleMouseControl(enabled) {
+function toggleMouseControl(enabled) {
     settings.mouseControl = enabled;
     saveSettings();
     if (!enabled) {
@@ -133,13 +118,13 @@ export function toggleMouseControl(enabled) {
 /**
  * @param {boolean} enabled
  */
-export function togglePowerups(enabled) {
+function togglePowerups(enabled) {
     settings.powerupsEnabled = enabled;
     saveSettings();
 }
 
 /** Botón "RESTABLECER TODO": vuelve a la configuración por defecto. */
-export function resetAllSettings() {
+function resetAllSettings() {
     // BUG conocido (conservado, ver docs/bugs-conocidos.md): no actualiza masterVolume (systems/audio.js):
     // los efectos suenan con el volumen anterior hasta mover el slider.
     Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
@@ -151,7 +136,7 @@ export function resetAllSettings() {
 }
 
 /** Sincroniza todos los controles del menú de configuración con `settings` al iniciar */
-export function populateSettingsUI() {
+function populateSettingsUI() {
     /** @param {string} id */
     const input = (id) => /** @type {HTMLInputElement} */ (document.getElementById(id));
     input('difficulty-slider').value      = String(settings.difficulty);

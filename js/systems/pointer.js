@@ -15,12 +15,7 @@
  * ------------------------------------------------------------------
  */
 
-import { GAME_HEIGHT, GAME_WIDTH, paddleHeight } from '../core/constants.js';
-import { settings } from '../core/settings.js';
-import { p1, p2, state } from '../core/state.js';
-import { canvas } from '../game/canvas.js';
-import { togglePause } from '../game/match.js';
-import { bossIsRotatedArena } from '../bosses/index.js';
+'use strict';
 
 /** Heurística estándar para saber si el dispositivo es "táctil primario" */
 function isTouchDevice() {
@@ -120,7 +115,7 @@ function hideTouchHint(target) {
 }
 
 /** Vuelve a mostrar los avisos de "toca y arrastra" (nueva partida). */
-export function resetTouchHints() {
+function resetTouchHints() {
     document.querySelectorAll('.touch-hint').forEach(hint => hint.classList.remove('touch-hint--gone'));
 }
 
@@ -167,7 +162,7 @@ function handleMouseMove(e) {
 
 // Al desactivar el mouse control, soltar la paleta en ambos ejes: dejar
 // touchX puesto la mantendría pegada e ignoraría el teclado.
-export function clearMouseControl() {
+function clearMouseControl() {
     if (mouseActive) {
         p1.touchY = null;
         p1.touchX = null;
@@ -175,7 +170,7 @@ export function clearMouseControl() {
 }
 
 /** Registra el ratón y el táctil sobre el canvas, el botón de pausa y el aviso de orientación. */
-export function initPointer() {
+function initPointer() {
     canvas.addEventListener('mouseenter', () => { mouseActive = true; });
     canvas.addEventListener('mouseleave', () => {
         mouseActive = false;

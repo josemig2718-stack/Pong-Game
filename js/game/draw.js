@@ -6,16 +6,16 @@
  * ------------------------------------------------------------------
  */
 
-import { ctx } from './canvas.js';
+'use strict';
 
 /** Rectángulo relleno. */
-export function drawRect(x, y, w, h, color) {
+function drawRect(x, y, w, h, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h);
 }
 
 /** Texto centrado con la fuente arcade del juego. */
-export function drawText(text, x, y, color, size) {
+function drawText(text, x, y, color, size) {
     ctx.fillStyle = color;
     ctx.font = `${size}px "Press Start 2P", cursive`;
     ctx.textAlign = 'center';
@@ -23,7 +23,7 @@ export function drawText(text, x, y, color, size) {
 }
 
 /** '#rrggbb' + alfa → 'rgba(r, g, b, a)'. */
-export function hexToRgba(hex, alpha) {
+function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);

@@ -5,11 +5,13 @@
  * ------------------------------------------------------------------
  */
 
+'use strict';
+
 // --- Catálogo de temas de color -----------------------------------
 // Cada tema define el color "primario" (paletas, HUD, marcador). Se
 // aplica como variables CSS (--primary / --primary-rgb) y también se usa
 // directamente al dibujar en el <canvas>, a través de currentThemeHex().
-export const THEMES = {
+const THEMES = {
     green:  { label: 'Verde',    hex: '#22c55e', rgb: '34, 197, 94' },
     purple: { label: 'Morado',   hex: '#a855f7', rgb: '168, 85, 247' },
     blue:   { label: 'Azul',     hex: '#3b82f6', rgb: '59, 130, 246' },

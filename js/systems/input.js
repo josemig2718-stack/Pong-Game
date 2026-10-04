@@ -7,9 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { DEFAULT_BINDINGS, keyLabel, saveSettings, settings } from '../core/settings.js';
-import { state } from '../core/state.js';
-import { togglePause } from '../game/match.js';
+'use strict';
 
 // Estado de teclas presionadas en este instante (se llena dinámicamente
 // según las combinaciones configuradas en `settings.bindings`).
@@ -42,7 +40,7 @@ function handleKeyDown(e) {
 }
 
 /** Registra el teclado de juego y de reasignación. */
-export function initInput() {
+function initInput() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', (e) => {
         keysDown.delete(e.code);
@@ -54,7 +52,7 @@ export function initInput() {
  * @param {string} action p1Up, p1Down, p2Up, p2Down o pause
  * @returns {boolean}
  */
-export function isActionPressed(action) {
+function isActionPressed(action) {
     return keysDown.has(settings.bindings[action]);
 }
 
@@ -73,20 +71,20 @@ function assignBinding(action, code) {
  * La próxima tecla pulsada se asignará a esta acción.
  * @param {string} action
  */
-export function startListeningFor(action) {
+function startListeningFor(action) {
     listeningForAction = action;
     refreshBindingButtons();
 }
 
 /** Vuelve a las teclas por defecto. */
-export function resetBindings() {
+function resetBindings() {
     settings.bindings = { ...DEFAULT_BINDINGS };
     saveSettings();
     refreshBindingButtons();
 }
 
 /** Actualiza el texto de los botones de reasignación en el menú de Controles */
-export function refreshBindingButtons() {
+function refreshBindingButtons() {
     /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-binding-action]')).forEach(btn => {
         const action = btn.dataset.bindingAction;
         if (listeningForAction === action) {

@@ -7,9 +7,7 @@
  * ------------------------------------------------------------------
  */
 
-import { saveSettings, settings } from '../core/settings.js';
-import { CAMPAIGN_CREATOR } from '../data/lore.js';
-import { currentCampaignLevel } from '../campaign/progress.js';
+'use strict';
 
 let audioCtx = null;
 let masterVolume = settings.volume / 100;
@@ -18,7 +16,7 @@ let masterVolume = settings.volume / 100;
  * Crea el AudioContext la primera vez y lo reanuda si el navegador lo suspendió.
  * @returns {AudioContext}
  */
-export function getAudioContext() {
+function getAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
     }
@@ -32,7 +30,7 @@ export function getAudioContext() {
  * @param {OscillatorType} [type]
  * @param {number} [duration] segundos
  */
-export function playTone(freq, type = 'square', duration = 0.1) {
+function playTone(freq, type = 'square', duration = 0.1) {
     if (!settings.sfxEnabled || masterVolume === 0) return;
     const ctx = getAudioContext();
     const oscillator = ctx.createOscillator();
@@ -51,7 +49,7 @@ export function playTone(freq, type = 'square', duration = 0.1) {
     oscillator.stop(ctx.currentTime + duration);
 }
 
-export const soundEffects = {
+const soundEffects = {
     paddleHit:  () => playTone(600, 'square', 0.1),
     wallHit:    () => playTone(300, 'square', 0.1),
     score:      () => {
@@ -109,7 +107,7 @@ export const soundEffects = {
  * Volumen de los efectos, de 0 a 100. Lo guarda en `settings`.
  * @param {number} val
  */
-export function setMasterVolume(val) {
+function setMasterVolume(val) {
     masterVolume = val / 100;
     settings.volume = val;
     saveSettings();
@@ -118,7 +116,7 @@ export function setMasterVolume(val) {
 /**
  * @param {boolean} enabled
  */
-export function setSfxEnabled(enabled) {
+function setSfxEnabled(enabled) {
     settings.sfxEnabled = enabled;
     saveSettings();
 }
@@ -126,9 +124,9 @@ export function setSfxEnabled(enabled) {
 // =================================================================
 //  Música de fondo (HTML5 Audio)
 // =================================================================
-export const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
-export const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
-export const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
+const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
+const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
+const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
 
 menuMusic.loop     = true;
 gameplayMusic.loop = true;
@@ -140,7 +138,7 @@ gameplayMusic.volume = settings.musicVolume / 100;
 hachepeMusic.volume  = settings.musicVolume / 100;
 
 /** Para la música de partida y pone la del menú (si la música está activada). */
-export function playMenuMusic() {
+function playMenuMusic() {
     if (!settings.musicEnabled) return;
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
@@ -151,7 +149,7 @@ export function playMenuMusic() {
 }
 
 /** Para la música del menú y la rebobina. */
-export function stopMenuMusic() {
+function stopMenuMusic() {
     menuMusic.pause();
     menuMusic.currentTime = 0;
 }
@@ -161,7 +159,7 @@ export function stopMenuMusic() {
  * campaña, silencio contra el Creador y la pista normal en el resto.
  * @param {string} [mode]
  */
-export function playGameplayMusic(mode = 'cpu') {
+function playGameplayMusic(mode = 'cpu') {
     if (!settings.musicEnabled) return;
     menuMusic.pause();
     menuMusic.currentTime = 0;
@@ -191,7 +189,7 @@ export function playGameplayMusic(mode = 'cpu') {
 }
 
 /** Para las pistas de partida y las rebobina. */
-export function stopGameplayMusic() {
+function stopGameplayMusic() {
     gameplayMusic.pause();
     gameplayMusic.currentTime = 0;
     hachepeMusic.pause();
@@ -199,7 +197,7 @@ export function stopGameplayMusic() {
 }
 
 /** Para toda la música. */
-export function stopAllMusic() {
+function stopAllMusic() {
     stopMenuMusic();
     stopGameplayMusic();
 }
@@ -208,7 +206,7 @@ export function stopAllMusic() {
  * Volumen de la música, de 0 a 100. Lo aplica a las tres pistas y lo guarda.
  * @param {number} val
  */
-export function setMusicVolume(val) {
+function setMusicVolume(val) {
     settings.musicVolume = val;
     menuMusic.volume     = val / 100;
     gameplayMusic.volume = val / 100;
@@ -220,7 +218,7 @@ export function setMusicVolume(val) {
  * Activa o desactiva la música (al desactivarla, la para).
  * @param {boolean} enabled
  */
-export function setMusicEnabled(enabled) {
+function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
     saveSettings();
     if (!enabled) {
@@ -241,7 +239,7 @@ function onFirstInteraction() {
 }
 
 /** Registra el desbloqueo del audio. Debe ir antes que initInput(). */
-export function initAudio() {
+function initAudio() {
     window.addEventListener('click', onFirstInteraction);
     window.addEventListener('keydown', onFirstInteraction);
     window.addEventListener('touchstart', onFirstInteraction);

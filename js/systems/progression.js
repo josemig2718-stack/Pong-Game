@@ -9,15 +9,7 @@
  * ------------------------------------------------------------------
  */
 
-import { settings } from '../core/settings.js';
-import { writeJSON } from '../core/storage.js';
-import { CAMPAIGN_REPLAY_FACTOR, COIN_REWARDS, LEVELS, XP_REWARDS } from '../data/levels.js';
-import { CAMPAIGN_CREATOR } from '../data/lore.js';
-import { SHOP_CATALOG } from '../data/shop.js';
-import { unlockAchievement } from './achievements.js';
-import { soundEffects } from './audio.js';
-import { setActiveBg } from '../vfx/backgrounds.js';
-import { currentCampaignLevel, isReplayingBoss } from '../campaign/progress.js';
+'use strict';
 
 const PROG_STORAGE_KEY = 'pongGame.progression.v1';
 
@@ -34,13 +26,13 @@ const DEFAULT_PROGRESSION = {
     campaignIntroSeen: false // Si ya vio la historia inicial
 };
 
-export const playerProgression = loadProgression();
+const playerProgression = loadProgression();
 
 // Session trackers for end-of-game summary
-export let sessionXPGained = 0;
-export let sessionCoinsGained = 0;
-export let sessionLeveledUp = false;
-export let sessionNewTitle = '';
+let sessionXPGained = 0;
+let sessionCoinsGained = 0;
+let sessionLeveledUp = false;
+let sessionNewTitle = '';
 
 /**
  * Carga la progresión desde localStorage y combina con los valores por defecto.
@@ -66,14 +58,14 @@ function loadProgression() {
 /**
  * Guarda la progresión en localStorage
  */
-export function saveProgression() {
+function saveProgression() {
     writeJSON(PROG_STORAGE_KEY, playerProgression, 'Error guardando progresión:');
 }
 
 /**
  * Reinicia las variables de sesión
  */
-export function resetSessionTrackers() {
+function resetSessionTrackers() {
     sessionXPGained = 0;
     sessionCoinsGained = 0;
     sessionLeveledUp = false;
@@ -144,7 +136,7 @@ function checkLevelUp() {
 /**
  * Devuelve el objeto del nivel actual
  */
-export function getCurrentLevel() {
+function getCurrentLevel() {
     let current = LEVELS[0];
     for (let i = 0; i < LEVELS.length; i++) {
         if (playerProgression.totalXP >= LEVELS[i].xpRequired) {
@@ -159,7 +151,7 @@ export function getCurrentLevel() {
 /**
  * Calcula el progreso hacia el siguiente nivel
  */
-export function getXPProgress() {
+function getXPProgress() {
     let currentLvl = getCurrentLevel();
     let nextLvlIndex = currentLvl.level; // porque el index es nivel-1
 
@@ -182,14 +174,14 @@ export function getXPProgress() {
 /**
  * Comprueba si tiene un objeto
  */
-export function hasItem(itemId) {
+function hasItem(itemId) {
     return playerProgression.purchasedItems.includes(itemId);
 }
 
 /**
  * Compra un objeto de la tienda
  */
-export function purchaseItem(itemId, cost) {
+function purchaseItem(itemId, cost) {
     if (spendCoins(cost)) {
         playerProgression.purchasedItems.push(itemId);
         saveProgression();
@@ -207,7 +199,7 @@ export function purchaseItem(itemId, cost) {
 /**
  * Selecciona un cosmético para usar
  */
-export function selectCosmetic(category, id) {
+function selectCosmetic(category, id) {
     switch (category) {
         case 'trail':
             playerProgression.selectedTrail = id;
@@ -229,7 +221,7 @@ export function selectCosmetic(category, id) {
 /**
  * Entrega recompensas de final de partida
  */
-export function awardGameRewards(mode, p1Won, p1Score, p2Score) {
+function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     addXP(p1Score * XP_REWARDS.scorePoint);
 
     if (mode === 'cpu' && p1Won) {
@@ -301,7 +293,7 @@ function getTotalPurchasedItems() {
 /**
  * Determina si todos los objetos han sido comprados
  */
-export function isAllItemsPurchased() {
+function isAllItemsPurchased() {
     const total = getTotalShopItems();
     const purchased = getTotalPurchasedItems();
     return total > 0 && purchased >= total;
