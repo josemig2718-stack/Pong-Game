@@ -79,7 +79,7 @@
             return {
                 field: activePowerup && {
                     type: activePowerup.type.id, x: activePowerup.x, y: activePowerup.y,
-                    spawnTime: activePowerup.spawnTime, maxLifetime: activePowerup.maxLifetime
+                    ageMs: activePowerup.ageMs, maxLifetime: activePowerup.maxLifetime
                 },
                 effect: activeEffect && {
                     type: activeEffect.type.id, target: activeEffect.target,

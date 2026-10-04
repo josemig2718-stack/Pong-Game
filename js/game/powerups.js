@@ -16,7 +16,7 @@
 'use strict';
 
 // Variables de estado del sistema de power-ups
-let activePowerup = null;       // { type, x, y, spawnTime, maxLifetime }
+let activePowerup = null;       // { type, x, y, ageMs, maxLifetime }
 let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
 let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
 let shieldWall = null;          // { x, y, width, height, owner }
@@ -48,9 +48,6 @@ function updatePowerups(dt) {
     if (!state.isPlaying) return;
 
     const dtMs = dt * MS_PER_FRAME;
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): la vida del power-up en el campo se mide
-    // con el reloj real (sigue corriendo en pausa); la del efecto, con dt.
-    const timeNow = Date.now();
 
     // 1. Manejo del cooldown y aparición
     if (!activePowerup && !activeEffect) {
@@ -63,7 +60,9 @@ function updatePowerups(dt) {
     // 2. Lógica del power-up en el campo
     if (activePowerup) {
         // Verificar si ha expirado
-        if (timeNow - activePowerup.spawnTime > activePowerup.maxLifetime) {
+        // Su vida se mide en tiempo de juego: no corre en pausa ni en el saque
+        activePowerup.ageMs += dtMs;
+        if (activePowerup.ageMs > activePowerup.maxLifetime) {
             activePowerup = null;
             // Nuevo cooldown tras desaparecer
             powerupCooldownMs = 8000 + Math.random() * 7000;
@@ -134,7 +133,7 @@ function spawnPowerup() {
         type: selectedType,
         x: 200 + Math.random() * 400, // Entre 200 y 600
         y: 100 + Math.random() * 400, // Entre 100 y 500
-        spawnTime: Date.now(),
+        ageMs: 0,
         maxLifetime: 12000 // 12 segundos antes de desaparecer
     };
 
@@ -305,8 +304,7 @@ function powerupCollision(bx, by, bradius, px, py, pradius) {
 function renderPowerup(ctx) {
     if (!activePowerup) return;
 
-    const lifetimeMs = Date.now() - activePowerup.spawnTime;
-    const remainingTime = activePowerup.maxLifetime - lifetimeMs;
+    const remainingTime = activePowerup.maxLifetime - activePowerup.ageMs;
 
     // Parpadeo cuando queda poco tiempo (< 2000ms)
     if (remainingTime < 2000 && Math.floor(Date.now() / 200) % 2 === 0) {
