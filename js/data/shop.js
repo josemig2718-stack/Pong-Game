@@ -20,12 +20,10 @@
  * @property {string} preview  emoji o texto si la imagen no carga
  */
 
-// BUG conocido (conservado, ver docs/bugs-conocidos.md): algunas descripciones no describen lo que se dibuja
-// (p. ej. "Gradiente" dibuja un arcoíris fijo; la estela "Clásica", segmentos).
 /** @type {Record<string, ShopItem[]>} */
 const SHOP_CATALOG = {
     trails: [
-        { id: 'default',  name: 'Clásica',   desc: 'Círculos que se desvanecen',                    price: 0,   preview: '○○○' },
+        { id: 'default',  name: 'Clásica',   desc: 'Trazo que se estrecha y se desvanece',          price: 0,   preview: '○○○' },
         { id: 'neon',     name: 'Neón',       desc: 'Línea brillante con resplandor intenso',         price: 30,  preview: '═══' },
         { id: 'fire',     name: 'Fuego',      desc: 'Partículas de llamas ardientes',                 price: 60,  preview: '🔥' },
         { id: 'ice',      name: 'Hielo',      desc: 'Destellos celestes cristalinos',                 price: 60,  preview: '❄️' },
@@ -39,8 +37,8 @@ const SHOP_CATALOG = {
     ],
     paddles: [
         { id: 'classic',      name: 'Clásica',      desc: 'Rectángulo redondeado sólido',             price: 0,   preview: '▐' },
-        { id: 'pixel',        name: 'Pixel',         desc: 'Bordes rectos, estilo 8-bit puro',         price: 25,  preview: '█' },
-        { id: 'gradient',     name: 'Gradiente',     desc: 'Degradado del tema al blanco',             price: 50,  preview: '▓' },
+        { id: 'pixel',        name: 'Pixel',         desc: 'Bloques de 8 bits en damero',              price: 25,  preview: '█' },
+        { id: 'gradient',     name: 'Gradiente',     desc: 'Degradado arcoíris fijo',                  price: 50,  preview: '▓' },
         { id: 'neon_paddle',  name: 'Neón',          desc: 'Paleta con resplandor pulsante',           price: 70,  preview: '║' },
         { id: 'slim',         name: 'Delgada Pro',   desc: 'Visualmente delgada, mismo golpe',         price: 45,  preview: '│' }
     ],

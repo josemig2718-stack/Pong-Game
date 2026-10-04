@@ -28,9 +28,7 @@ function switchShopTab(categoryKey) {
     // Actualizar botones UI
     const tabButtons = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.shop-tab-btn'));
     tabButtons.forEach(btn => {
-        // BUG conocido (conservado, ver docs/bugs-conocidos.md): los botones no tienen data-category: tras el
-        // primer clic ninguna pestaña queda resaltada.
-        if (btn.dataset.category === categoryKey) {
+        if (btn.dataset.arg === categoryKey) {
             btn.classList.add('active');
         } else {
             btn.classList.remove('active');

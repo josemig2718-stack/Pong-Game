@@ -123,10 +123,9 @@ function togglePowerups(enabled) {
 
 /** Botón "RESTABLECER TODO": vuelve a la configuración por defecto. */
 function resetAllSettings() {
-    // BUG conocido (conservado, ver docs/bugs-conocidos.md): no actualiza masterVolume (systems/audio.js):
-    // los efectos suenan con el volumen anterior hasta mover el slider.
     Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
     saveSettings();
+    setMasterVolume(settings.volume);   // el volumen de efectos vive aparte, en systems/audio.js
     populateSettingsUI();
     applyTheme(settings.theme);
     stopAllMusic();
