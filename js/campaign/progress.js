@@ -32,23 +32,17 @@ function prepareCampaignMatch(level, opts) {
 
     document.getElementById('vs-boss-name').textContent = boss.name;
     document.getElementById('vs-boss-title').textContent = boss.title;
-    document.getElementById('vs-boss-danger').textContent = 'Peligro: ' + boss.danger;
+    document.getElementById('vs-boss-danger').innerHTML = dangerStarsHTML(boss.danger) + '<span class="px">PELIGRO</span>';
+    document.getElementById('vs-player-level').textContent = String(getCurrentLevel().level);
+    document.getElementById('vs-level').textContent = 'NIVEL ' + (isCreator ? '??' : level);
 
     const avatar = /** @type {HTMLImageElement} */ (document.getElementById('vs-boss-avatar'));
     const avatar2 = /** @type {HTMLImageElement} */ (document.getElementById('vs-boss-avatar2'));
 
     avatar.src = boss.image;
     avatar.classList.toggle('avatar-corrupted', isCreator);
-    if (boss.image2) {
-        avatar.classList.replace('w-full', 'w-1/2');
-        avatar2.src = boss.image2;
-        avatar2.classList.remove('hidden');
-        avatar2.classList.add('w-1/2');
-    } else {
-        avatar.classList.remove('w-1/2');
-        avatar.classList.add('w-full');
-        avatar2.classList.add('hidden');
-    }
+    if (boss.image2) avatar2.src = boss.image2;
+    avatar2.classList.toggle('hidden', !boss.image2);
 
     document.getElementById('vs-screen-container').classList.toggle('glitch-mode', isCreator);
 

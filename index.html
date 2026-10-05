@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=20">
+    <link rel="stylesheet" href="css/style.css?v=21">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -97,77 +97,203 @@
     </section>
 
     <!-- ============================== SELECCIÓN DE MODO ============================== -->
+    <!-- Cuatro tarjetas: fila en escritorio; en móvil, la campaña destacada
+         y el resto como filas. Cada tarjeta es un único botón (su nombre
+         accesible es el aria-label) y updateModeCards() rellena sus datos. -->
     <section id="mode-select-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-12 text-center">MODO DE JUEGO</h2>
+        <div class="mode-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <span class="lbl screen-head__step">Paso 1 de 2</span>
+                    <h2 class="px screen-head__title">ELIGE TU MODO</h2>
+                </div>
+                <span id="mode-coins" class="chip screen-head__end"><img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> 0</span>
+            </header>
 
-        <div class="flex flex-col gap-6 w-64 md:w-96 text-center text-sm md:text-base">
-            <button class="retro-button" data-action="showScreen" data-arg="campaign-menu" style="color: #ef4444; border-color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);">CAMPAÑA</button>
-            <button class="retro-button" data-action="startGame" data-arg="cpu">VS CPU</button>
-            <button class="retro-button" data-action="startGame" data-arg="hachepe"
-                style="color: #facc15; border-color: #facc15; text-shadow: 0 0 10px rgba(250,204,21,0.5);">MODO
-                HACHEPE</button>
-            <button class="retro-button" data-action="startGame" data-arg="local">LOCAL (2 JUGADORES)</button>
-            <button class="retro-button mt-8" style="border-style: dashed;"
-                data-action="showScreen" data-arg="main-menu">VOLVER</button>
+            <div class="mode-grid">
+                <button class="mode-card mode-card--campaign" aria-label="CAMPAÑA" aria-describedby="mode-campaign-desc" data-action="showScreen" data-arg="campaign-menu">
+                    <span class="mode-card__art" aria-hidden="true">
+                        <svg viewBox="0 0 260 200" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="mode-art-campaign" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B0A0E"/><stop offset="1" stop-color="#0A0507"/></linearGradient></defs><rect width="260" height="200" fill="url(#mode-art-campaign)"/><circle cx="186" cy="84" r="38" fill="#EF4444"/><g fill="#22070B"><rect x="140" y="92" width="96" height="3"/><rect x="140" y="102" width="96" height="4"/><rect x="140" y="112" width="96" height="6"/></g><path d="M0 200V148h18v-20h14v28h10v-40h20v30h12v-14h16v34h10v-52h22v42h14v-24h12v30h18v-18h16v26h12v-46h20v40h16v-12H260V200Z" fill="#120406"/><g fill="#EF4444" opacity=".7"><rect x="46" y="124" width="3" height="3"/><rect x="54" y="132" width="3" height="3"/><rect x="108" y="116" width="3" height="3"/><rect x="116" y="130" width="3" height="3"/><rect x="216" y="132" width="3" height="3"/><rect x="224" y="140" width="3" height="3"/></g></svg>
+                        <span class="px mode-card__badge">RECOMENDADO</span>
+                        <span class="px mode-card__art-tag">HISTORIA · 5 RIVALES</span>
+                    </span>
+                    <span class="mode-card__body">
+                        <span class="mode-card__tag">Historia · 5 rivales</span>
+                        <span class="mode-card__head">
+                            <span class="px mode-card__title">CAMPAÑA</span>
+                            <span id="mode-campaign-count-m" class="px mode-card__count">0 / 5</span>
+                        </span>
+                        <span id="mode-campaign-desc" class="mode-card__desc">Derrota a los Hachepes, uno por uno, para recuperar tu ciudad.</span>
+                        <span class="mode-card__progress">
+                            <span class="mode-card__meta mode-card__progress-row"><span>Progreso</span><span id="mode-campaign-count" class="px mode-card__count">0 / 5</span></span>
+                            <span class="mode-card__bar"><span id="mode-campaign-bar" style="width: 0%;"></span></span>
+                        </span>
+                        <span class="mode-card__cta"><span id="mode-campaign-cta">EMPEZAR</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+                    </span>
+                </button>
+
+                <button class="mode-card mode-card--cpu" aria-label="VS CPU" aria-describedby="mode-cpu-desc" data-action="startGame" data-arg="cpu">
+                    <span class="mode-card__art" aria-hidden="true">
+                        <svg viewBox="0 0 260 200" preserveAspectRatio="xMidYMid slice"><rect width="260" height="200" fill="#070B10"/><path d="M130 14V186" stroke="#fff" stroke-opacity=".18" stroke-width="2" stroke-dasharray="8 8"/><rect x="26" y="72" width="8" height="52" rx="3" style="fill: var(--primary)"/><rect x="226" y="92" width="8" height="52" rx="3" fill="#94A3B8"/><path d="M118 78L196 40L226 112" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/><circle cx="118" cy="78" r="7" fill="#fff"/><g transform="translate(200 150)" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><rect x="0" y="0" width="28" height="28" rx="4"/><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M8 -6v6M20 -6v6M8 28v6M20 28v6M-6 8h6M-6 20h6M28 8h6M28 20h6"/></g></svg>
+                    </span>
+                    <span class="mode-card__icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span>
+                    <span class="mode-card__body">
+                        <span class="mode-card__tag">Partida rápida</span>
+                        <span class="mode-card__head"><span class="px mode-card__title">VS CPU</span></span>
+                        <span id="mode-cpu-desc" class="mode-card__desc">Un rival controlado por la máquina. Gana quien llegue antes a <span id="mode-cpu-target">5</span> puntos.</span>
+                        <span class="mode-card__sub">Partida rápida · <span id="mode-cpu-sub">Normal</span></span>
+                        <span class="mode-card__meta">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                            <span>Dificultad: <b id="mode-cpu-difficulty">Normal</b></span>
+                        </span>
+                        <span class="mode-card__cta"><span>JUGAR</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+                    </span>
+                    <svg class="ico mode-card__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <button class="mode-card mode-card--hachepe" aria-label="MODO HACHEPE" aria-describedby="mode-hachepe-desc" data-action="startGame" data-arg="hachepe">
+                    <span class="mode-card__art" aria-hidden="true">
+                        <svg viewBox="0 0 260 200" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="mode-art-hachepe" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#3A2A05"/><stop offset="1" stop-color="#0A0803"/></radialGradient></defs><rect width="260" height="200" fill="url(#mode-art-hachepe)"/><g stroke="#FACC15" stroke-opacity=".18" stroke-width="10"><path d="M130 100L130 -20M130 100L250 30M130 100L280 130M130 100L230 230M130 100L30 230M130 100L-20 130M130 100L10 30"/></g><path d="M86 128L74 66L108 90L130 50L152 90L186 66L174 128Z" fill="#FACC15" stroke="#FEF08A" stroke-width="3" stroke-linejoin="round"/><rect x="84" y="134" width="92" height="12" rx="3" fill="#EAB308"/><circle cx="130" cy="104" r="7" fill="#EF4444"/><circle cx="104" cy="112" r="5" fill="#38BDF8"/><circle cx="156" cy="112" r="5" fill="#38BDF8"/><text x="130" y="182" text-anchor="middle" font-family="'Press Start 2P', monospace" font-size="12" fill="#FDE68A">A 10 PUNTOS</text></svg>
+                    </span>
+                    <span class="mode-card__icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg></span>
+                    <span class="mode-card__body">
+                        <span class="mode-card__tag">Reto extremo</span>
+                        <span class="mode-card__head"><span class="px mode-card__title">MODO HACHEPE</span></span>
+                        <span id="mode-hachepe-desc" class="mode-card__desc">Una IA rapidísima y casi perfecta, a 10 puntos. Solo para leyendas.</span>
+                        <span class="mode-card__sub">IA casi perfecta · a 10</span>
+                        <span class="mode-card__meta">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M12 13v4M8 21h8M10 17h4v4h-4z"/></svg>
+                            <span id="mode-hachepe-record">Récord: aún sin victorias</span>
+                        </span>
+                        <span class="mode-card__cta"><span>ACEPTAR RETO</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+                    </span>
+                    <svg class="ico mode-card__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <button class="mode-card mode-card--local" aria-label="LOCAL (2 JUGADORES)" aria-describedby="mode-local-desc" data-action="startGame" data-arg="local">
+                    <span class="mode-card__art" aria-hidden="true">
+                        <svg viewBox="0 0 260 200" preserveAspectRatio="xMidYMid slice"><rect width="260" height="200" fill="#060A12"/><rect width="130" height="200" style="fill: var(--primary)" opacity=".07"/><rect x="130" width="130" height="200" fill="#38BDF8" opacity=".07"/><path d="M130 14V186" stroke="#fff" stroke-opacity=".18" stroke-width="2" stroke-dasharray="8 8"/><rect x="26" y="52" width="8" height="52" rx="3" style="fill: var(--primary)"/><rect x="226" y="80" width="8" height="52" rx="3" fill="#38BDF8"/><circle cx="160" cy="74" r="7" fill="#fff"/><g font-family="'Press Start 2P', monospace" font-size="10" text-anchor="middle"><rect x="30" y="140" width="30" height="30" rx="5" fill="#121621" style="stroke: var(--primary)"/><text x="45" y="160" style="fill: var(--primary)">W</text><rect x="66" y="140" width="30" height="30" rx="5" fill="#121621" style="stroke: var(--primary)"/><text x="81" y="160" style="fill: var(--primary)">S</text><rect x="164" y="140" width="30" height="30" rx="5" fill="#121621" stroke="#38BDF8"/><text x="179" y="160" fill="#38BDF8">↑</text><rect x="200" y="140" width="30" height="30" rx="5" fill="#121621" stroke="#38BDF8"/><text x="215" y="160" fill="#38BDF8">↓</text></g></svg>
+                    </span>
+                    <span class="mode-card__icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14a5 5 0 0 1 5 5"/></svg></span>
+                    <span class="mode-card__body">
+                        <span class="mode-card__tag">2 jugadores</span>
+                        <span class="mode-card__head"><span class="px mode-card__title">LOCAL</span></span>
+                        <span id="mode-local-desc" class="mode-card__desc">Mismo teclado o la misma pantalla táctil, cada uno en su mitad.</span>
+                        <span class="mode-card__sub">2 jugadores, misma pantalla</span>
+                        <span class="mode-card__meta">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14a5 5 0 0 1 5 5"/></svg>
+                            <span>Da XP, no da monedas</span>
+                        </span>
+                        <span class="mode-card__cta"><span>JUGAR</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+                    </span>
+                    <svg class="ico mode-card__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+
+            <p class="mode-note">
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                La dificultad de la CPU se cambia en Configuración.
+            </p>
         </div>
-        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </section>
 
     <!-- ============================== MAPA DE CAMPAÑA ============================== -->
     <section id="campaign-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-4 text-center text-red-500" style="text-shadow: 0 0 15px rgba(239,68,68,0.6);">LA VENGANZA</h2>
-        <p class="text-xs mb-8 text-center max-w-lg text-white/70">Derrota a los Hachepes para recuperar tu ciudad.</p>
-        
-        <div class="boss-carousel">
-            <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" data-action="carouselMove" data-arg="-1">&lsaquo;</button>
-            <div class="carousel-viewport">
-                <div id="campaign-nodes" class="carousel-track">
-                    <!-- Cartas de jefe generadas por JS -->
+        <svg class="campaign-skyline" viewBox="0 0 1280 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 200V120h40v-30h30v50h26v-80h44v60h20v-34h36v64h22v-100h52v80h30v-50h26v60h40v-40h34v54h26v-90h44v80h34v-30h22v60h52v-70h30v40h44v-90h40v70h26v-40h44v60h36v-80h30v50h40v-30h44v70h30v-50h40v30h34v-60h44v80h30v-40h52V200Z"/></svg>
+
+        <div class="campaign-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="mode-select-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title campaign-title">LA VENGANZA</h2>
+                    <p class="campaign-subtitle"><span class="campaign-subtitle__long">Derrota a los Hachepes para recuperar tu ciudad.</span><span class="campaign-subtitle__short">Recupera tu ciudad</span></p>
                 </div>
+                <button class="icon-btn screen-head__back screen-head__end" aria-label="VER HISTORIA" data-action="replayCampaignIntro">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>
+                    <span class="px screen-head__back-text">VER HISTORIA</span>
+                </button>
+            </header>
+
+            <div class="boss-carousel">
+                <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" data-action="carouselMove" data-arg="-1">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                </button>
+                <div class="carousel-viewport">
+                    <div id="campaign-nodes" class="carousel-track">
+                        <!-- Cartas de jefe generadas por JS -->
+                    </div>
+                </div>
+                <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" data-action="carouselMove" data-arg="1">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
             </div>
-            <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" data-action="carouselMove" data-arg="1">&rsaquo;</button>
+
+            <!-- Camino de nodos: también sirve para saltar a un rival -->
+            <div class="campaign-path">
+                <div class="campaign-path__labels">
+                    <span class="lbl">Progreso</span>
+                    <span class="lbl campaign-path__hint">Desliza para ver rivales</span>
+                </div>
+                <nav id="carousel-dots" class="carousel-dots" aria-label="Progreso de campaña"></nav>
+            </div>
         </div>
-        <div id="carousel-dots" class="carousel-dots"></div>
-
-        <button class="retro-button mt-8" style="border-style: dashed;" data-action="showScreen" data-arg="mode-select-menu">VOLVER</button>
-
-        <button data-action="replayCampaignIntro" class="absolute bottom-4 right-4 text-[10px] md:text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer border border-white/20 px-3 py-1 rounded bg-black/50">
-            📖 Ver Historia
-        </button>
 
         <!-- Overlay de Historia Inicial -->
-        <div id="campaign-intro-overlay" class="hidden absolute inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-8 text-center">
-            <h2 class="text-red-500 text-2xl md:text-4xl mb-6 font-bold">TU CIUDAD ESTÁ EN RUINAS</h2>
-            <p id="campaign-intro-text" class="text-white/80 text-sm md:text-base max-w-2xl leading-relaxed mb-10 min-h-[100px]"></p>
-            <button id="campaign-intro-btn" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444;" data-action="closeCampaignIntro">ACEPTAR MI DESTINO</button>
+        <div id="campaign-intro-overlay" class="hidden campaign-intro">
+            <h2 class="px campaign-intro__title">TU CIUDAD ESTÁ EN RUINAS</h2>
+            <p id="campaign-intro-text" class="campaign-intro__text"></p>
+            <button id="campaign-intro-btn" class="btn btn-p campaign-intro__btn hidden" data-action="closeCampaignIntro">ACEPTAR MI DESTINO</button>
         </div>
     </section>
 
     <!-- ============================== PANTALLA VS ============================== -->
-    <section id="vs-screen" class="screen z-30" style="background: #000;">
-        <div id="vs-screen-container" class="w-full h-full flex flex-col justify-center items-center">
-            <h1 class="text-5xl md:text-7xl italic font-bold mb-8 text-red-500 animate-pulse">VS</h1>
-            
-            <div class="flex items-center justify-between w-full max-w-2xl px-8">
-                <!-- Jugador -->
-                <div class="flex flex-col items-center">
-                    <div class="w-24 h-24 md:w-32 md:h-32 bg-slate-800 border-4 rounded-full overflow-hidden mb-4 shadow-[0_0_20px_var(--primary)] flex justify-center items-center">
-                        <span class="text-4xl">👤</span>
+    <!-- Diagonal partida: jugador arriba (color del tema) y jefe abajo (rojo);
+         en horizontal, izquierda y derecha. prepareCampaignMatch() la rellena. -->
+    <section id="vs-screen" class="screen z-30">
+        <div id="vs-screen-container" class="vs">
+            <div class="vs__half vs__half--player" aria-hidden="true"></div>
+            <div class="vs__half vs__half--boss" aria-hidden="true"></div>
+            <svg class="vs__line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <g class="vs__line-portrait"><line class="vs__line-glow" x1="0" y1="52" x2="100" y2="40"/><line x1="0" y1="52" x2="100" y2="40"/></g>
+                <g class="vs__line-landscape"><line class="vs__line-glow" x1="55" y1="0" x2="45" y2="100"/><line x1="55" y1="0" x2="45" y2="100"/></g>
+            </svg>
+
+            <div class="vs__player">
+                <span class="lbl vs__label">Jugador</span>
+                <div class="vs__player-row">
+                    <div class="vs__avatar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h2v6h-2v2H9v-2H7V5h2zM5 15h14v2h2v4H3v-4h2z"/></svg>
                     </div>
-                    <span class="font-bold text-lg">TÚ</span>
-                    <span class="text-xs">El Desconocido</span>
-                </div>
-                
-                <!-- Jefe -->
-                <div class="flex flex-col items-center">
-                    <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-900 border-4 border-red-500 rounded-lg overflow-hidden mb-4 shadow-[0_0_30px_#ef4444] relative flex">
-                        <img id="vs-boss-avatar" src="" alt="" class="w-full h-full object-cover">
-                        <img id="vs-boss-avatar2" src="" alt="" class="w-full h-full object-cover hidden">
+                    <div class="vs__player-info">
+                        <span class="px vs__player-name">TÚ</span>
+                        <span class="vs__player-title">El Desconocido</span>
+                        <span class="px vs__player-level">NV. <span id="vs-player-level">1</span></span>
                     </div>
-                    <span id="vs-boss-name" class="font-bold text-xl text-red-500">Nombre</span>
-                    <span id="vs-boss-title" class="text-xs text-red-400 mb-1">Título</span>
-                    <span id="vs-boss-danger" class="text-[10px] text-yellow-500">Peligro: ⭐</span>
                 </div>
+            </div>
+
+            <h1 class="px vs__title">VS</h1>
+
+            <div class="vs__boss">
+                <div class="vs__sprites">
+                    <img id="vs-boss-avatar" src="" alt="" class="vs__sprite">
+                    <img id="vs-boss-avatar2" src="" alt="" class="vs__sprite hidden">
+                </div>
+                <span id="vs-boss-name" class="px vs__boss-name">Nombre</span>
+                <span id="vs-boss-title" class="vs__boss-title">Título</span>
+                <span id="vs-boss-danger" class="vs__danger"></span>
+            </div>
+
+            <div class="vs__loading">
+                <div class="vs__loading-row"><span class="px">PREPARANDO ARENA</span><span id="vs-level" class="px vs__loading-level">NIVEL 1</span></div>
+                <div class="vs__loading-bar"><span></span></div>
             </div>
         </div>
     </section>
@@ -562,57 +688,57 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=20"></script>
-    <script src="js/core/storage.js?v=20"></script>
-    <script src="js/core/settings.js?v=20"></script>
-    <script src="js/core/state.js?v=20"></script>
-    <script src="js/data/themes.js?v=20"></script>
-    <script src="js/data/lore.js?v=20"></script>
-    <script src="js/data/achievements.js?v=20"></script>
-    <script src="js/data/shop.js?v=20"></script>
-    <script src="js/data/levels.js?v=20"></script>
-    <script src="js/data/powerups.js?v=20"></script>
-    <script src="js/systems/audio.js?v=20"></script>
-    <script src="js/systems/theme.js?v=20"></script>
-    <script src="js/systems/stats.js?v=20"></script>
-    <script src="js/systems/achievements.js?v=20"></script>
-    <script src="js/systems/progression.js?v=20"></script>
-    <script src="js/systems/input.js?v=20"></script>
-    <script src="js/systems/pointer.js?v=20"></script>
-    <script src="js/game/canvas.js?v=20"></script>
-    <script src="js/game/draw.js?v=20"></script>
-    <script src="js/game/effects.js?v=20"></script>
-    <script src="js/game/balls.js?v=20"></script>
-    <script src="js/game/ai.js?v=20"></script>
-    <script src="js/game/physics.js?v=20"></script>
-    <script src="js/game/match.js?v=20"></script>
-    <script src="js/game/render.js?v=20"></script>
-    <script src="js/game/loop.js?v=20"></script>
-    <script src="js/game/powerups.js?v=20"></script>
-    <script src="js/vfx/trails.js?v=20"></script>
-    <script src="js/vfx/backgrounds.js?v=20"></script>
-    <script src="js/vfx/paddles.js?v=20"></script>
-    <script src="js/vfx/goal-fx.js?v=20"></script>
-    <script src="js/vfx/index.js?v=20"></script>
-    <script src="js/bosses/shared.js?v=20"></script>
-    <script src="js/bosses/chemi.js?v=20"></script>
-    <script src="js/bosses/dani.js?v=20"></script>
-    <script src="js/bosses/duo.js?v=20"></script>
-    <script src="js/bosses/fano.js?v=20"></script>
-    <script src="js/bosses/yisus.js?v=20"></script>
-    <script src="js/bosses/creator.js?v=20"></script>
-    <script src="js/bosses/index.js?v=20"></script>
-    <script src="js/campaign/progress.js?v=20"></script>
-    <script src="js/campaign/menu.js?v=20"></script>
-    <script src="js/campaign/dialogue.js?v=20"></script>
-    <script src="js/campaign/finale.js?v=20"></script>
-    <script src="js/ui/screens.js?v=20"></script>
-    <script src="js/ui/actions.js?v=20"></script>
-    <script src="js/ui/settings-panel.js?v=20"></script>
-    <script src="js/ui/stats-panel.js?v=20"></script>
-    <script src="js/ui/shop-ui.js?v=20"></script>
-    <script src="js/ui/progress-display.js?v=20"></script>
-    <script src="js/main.js?v=20"></script>
+    <script src="js/core/constants.js?v=21"></script>
+    <script src="js/core/storage.js?v=21"></script>
+    <script src="js/core/settings.js?v=21"></script>
+    <script src="js/core/state.js?v=21"></script>
+    <script src="js/data/themes.js?v=21"></script>
+    <script src="js/data/lore.js?v=21"></script>
+    <script src="js/data/achievements.js?v=21"></script>
+    <script src="js/data/shop.js?v=21"></script>
+    <script src="js/data/levels.js?v=21"></script>
+    <script src="js/data/powerups.js?v=21"></script>
+    <script src="js/systems/audio.js?v=21"></script>
+    <script src="js/systems/theme.js?v=21"></script>
+    <script src="js/systems/stats.js?v=21"></script>
+    <script src="js/systems/achievements.js?v=21"></script>
+    <script src="js/systems/progression.js?v=21"></script>
+    <script src="js/systems/input.js?v=21"></script>
+    <script src="js/systems/pointer.js?v=21"></script>
+    <script src="js/game/canvas.js?v=21"></script>
+    <script src="js/game/draw.js?v=21"></script>
+    <script src="js/game/effects.js?v=21"></script>
+    <script src="js/game/balls.js?v=21"></script>
+    <script src="js/game/ai.js?v=21"></script>
+    <script src="js/game/physics.js?v=21"></script>
+    <script src="js/game/match.js?v=21"></script>
+    <script src="js/game/render.js?v=21"></script>
+    <script src="js/game/loop.js?v=21"></script>
+    <script src="js/game/powerups.js?v=21"></script>
+    <script src="js/vfx/trails.js?v=21"></script>
+    <script src="js/vfx/backgrounds.js?v=21"></script>
+    <script src="js/vfx/paddles.js?v=21"></script>
+    <script src="js/vfx/goal-fx.js?v=21"></script>
+    <script src="js/vfx/index.js?v=21"></script>
+    <script src="js/bosses/shared.js?v=21"></script>
+    <script src="js/bosses/chemi.js?v=21"></script>
+    <script src="js/bosses/dani.js?v=21"></script>
+    <script src="js/bosses/duo.js?v=21"></script>
+    <script src="js/bosses/fano.js?v=21"></script>
+    <script src="js/bosses/yisus.js?v=21"></script>
+    <script src="js/bosses/creator.js?v=21"></script>
+    <script src="js/bosses/index.js?v=21"></script>
+    <script src="js/campaign/progress.js?v=21"></script>
+    <script src="js/campaign/menu.js?v=21"></script>
+    <script src="js/campaign/dialogue.js?v=21"></script>
+    <script src="js/campaign/finale.js?v=21"></script>
+    <script src="js/ui/screens.js?v=21"></script>
+    <script src="js/ui/actions.js?v=21"></script>
+    <script src="js/ui/settings-panel.js?v=21"></script>
+    <script src="js/ui/stats-panel.js?v=21"></script>
+    <script src="js/ui/shop-ui.js?v=21"></script>
+    <script src="js/ui/progress-display.js?v=21"></script>
+    <script src="js/main.js?v=21"></script>
 </body>
 
 </html>

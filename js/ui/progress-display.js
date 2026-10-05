@@ -2,8 +2,8 @@
  * ui/progress-display.js
  * ------------------------------------------------------------------
  * Marcadores de progreso: nivel y barra de XP del menú principal,
- * monedas (menú y tienda) y el resumen de recompensas al terminar una
- * partida.
+ * monedas (menú, modo y tienda), los datos de las tarjetas de modo y
+ * el resumen de recompensas al terminar una partida.
  * ------------------------------------------------------------------
  */
 
@@ -61,11 +61,37 @@ function updateMenuTiles() {
     setMenuText('menu-achievements-sub', `${getUnlockedCount()} de ${getVisibleAchievementsTotal()}`);
 }
 
+/** Nombres de settings.difficulty, como en Configuración. */
+const DIFFICULTY_NAMES = { 1: 'Fácil', 2: 'Normal', 3: 'Imposible' };
+
+/**
+ * Datos de las tarjetas de Selección de modo. La campaña cuenta solo
+ * los cinco Hachepes ("X / 5"): el Creador no existe hasta que la
+ * historia lo revela.
+ */
+function updateModeCards() {
+    const vencidos = Math.min(playerProgression.campaignProgress - 1, CAMPAIGN_LAST_BOSS);
+    const cuenta = `${vencidos} / ${CAMPAIGN_LAST_BOSS}`;
+    setMenuText('mode-campaign-count', cuenta);
+    setMenuText('mode-campaign-count-m', cuenta);
+    const bar = document.getElementById('mode-campaign-bar');
+    if (bar) bar.style.width = `${Math.round(vencidos / CAMPAIGN_LAST_BOSS * 100)}%`;
+    setMenuText('mode-campaign-cta', playerProgression.campaignProgress > 1 ? 'CONTINUAR' : 'EMPEZAR');
+
+    const dificultad = DIFFICULTY_NAMES[settings.difficulty] || DIFFICULTY_NAMES[2];
+    setMenuText('mode-cpu-difficulty', dificultad);
+    setMenuText('mode-cpu-sub', dificultad);
+    setMenuText('mode-cpu-target', String(settings.winningScore));
+    setMenuText('mode-hachepe-record', gameStats.achievements.beat_hachepe
+        ? 'Récord: ya lo has vencido'
+        : 'Récord: aún sin victorias');
+}
+
 /**
  * Actualiza la UI de monedas en todas partes
  */
 function updateCoinDisplay() {
-    const displays = ['shop-coin-display', 'menu-coins'];
+    const displays = ['shop-coin-display', 'menu-coins', 'mode-coins'];
     displays.forEach(id => {
         const display = document.getElementById(id);
         if (display) {

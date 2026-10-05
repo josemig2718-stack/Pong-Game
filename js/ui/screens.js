@@ -15,7 +15,8 @@
 /**
  * Muestra una pantalla (un div.screen) y oculta las demás. Algunas
  * pantallas hacen algo al entrar: el menú principal oculta el juego,
- * refresca sus tiles y pone su música, y la tienda y la campaña se redibujan.
+ * refresca sus tiles y pone su música, la selección de modo refresca sus
+ * tarjetas, y la tienda y la campaña se redibujan.
  */
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
@@ -29,6 +30,8 @@ function showScreen(screenId) {
 
         // Música del menú principal
         playMenuMusic();
+    } else if (screenId === 'mode-select-menu') {
+        updateModeCards();
     } else if (screenId === 'shop-menu') {
         showShopScreen();
     } else if (screenId === 'campaign-menu') {

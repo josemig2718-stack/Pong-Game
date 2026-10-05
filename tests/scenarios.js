@@ -263,7 +263,7 @@ export const SCENARIOS = [
             { type: 'clickSel', sel: '#carousel-next' },
             { type: 'clickSel', sel: '.carousel-dot:nth-child(4)' },
             { type: 'clickSel', sel: '.carousel-dot:nth-child(2)' },
-            { type: 'click', text: '📖 Ver Historia' },
+            { type: 'click', text: 'VER HISTORIA' },
             { type: 'steps', n: 900 },
             { type: 'click', text: 'ACEPTAR MI DESTINO' },
             { type: 'key', code: 'Enter' },
