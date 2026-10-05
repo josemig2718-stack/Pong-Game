@@ -10,7 +10,7 @@
  *
  * Cada archivo tiene una tabla id → renderizador. Añadir un cosmético es
  * añadir su renderizador a la tabla, su entrada en data/shop.js con el
- * mismo `id` y su imagen en assets/shop/. Los renderizadores leen lo
+ * mismo `id` y su icono SVG en assets/shop/. Los renderizadores leen lo
  * equipado (playerProgression.selected*) en cada fotograma.
  *
  * Este archivo solo agrupa lo que game/ llama cada partida y cada

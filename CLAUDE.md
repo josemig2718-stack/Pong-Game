@@ -106,7 +106,7 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 
 ### Cosmetics: shop → progression → vfx
 
-`SHOP_CATALOG` (`data/shop.js`) has 4 categories `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps them to `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping `selectCosmetic`, which writes `playerProgression.selected*`. The `vfx/` renderers read `playerProgression.selected*` **every frame** through their id → renderer tables. Adding a cosmetic = a renderer in the right `vfx/` table + a catalogue entry with the same `id` + a preview PNG in `assets/shop/`. Backgrounds are the only stateful ones (`init/update/render`); `setActiveBg()` calls `init()`, which consumes `Math.random`.
+`SHOP_CATALOG` (`data/shop.js`) has 4 categories `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps them to `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping `selectCosmetic`, which writes `playerProgression.selected*`. The `vfx/` renderers read `playerProgression.selected*` **every frame** through their id → renderer tables. Adding a cosmetic = a renderer in the right `vfx/` table + a catalogue entry with the same `id` + an SVG icon in `assets/shop/` (`<prefix><id>.svg`; if it uses `var(--primary)`, also inline it in `SHOP_ICONS`, because an `<img>` doesn't inherit CSS variables). Rarity is derived from the price (`shopRarity()`), not stored. Backgrounds are the only stateful ones (`init/update/render`); `setActiveBg()` calls `init()`, which consumes `Math.random`.
 
 ### Other subsystems
 

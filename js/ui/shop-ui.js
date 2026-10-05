@@ -1,9 +1,11 @@
 /**
  * ui/shop-ui.js
  * ------------------------------------------------------------------
- * Pantalla de la tienda: pestañas por categoría, tarjetas de cada
- * artículo y los botones de comprar y equipar. El catálogo está en
- * data/shop.js y las compras se registran en systems/progression.js.
+ * Pantalla de la tienda: pestañas por categoría (con cuántos objetos
+ * tienes de cada una), tarjetas de cada artículo con su icono y su
+ * rareza, el contador de la colección y, en escritorio, la vista previa
+ * del artículo elegido. El catálogo y los iconos están en data/shop.js
+ * y las compras se registran en systems/progression.js.
  * ------------------------------------------------------------------
  */
 
@@ -11,6 +13,18 @@
 
 /** Pestaña abierta; se conserva entre visitas a la tienda. */
 let currentShopTab = 'trails';
+
+/** Artículo de la vista previa (escritorio); null = el equipado de la pestaña. */
+let shopPreviewId = null;
+
+/** Contador para que los id de los iconos en línea no se repitan. */
+let shopIconUid = 0;
+
+/** Nombre en singular de lo que vende cada pestaña (vista previa). */
+const SHOP_ITEM_KIND = { trails: 'Estela', backgrounds: 'Fondo', paddles: 'Paleta', goalEffects: 'Efecto de gol' };
+
+const SHOP_COIN_IMG = '<img src="assets/chemi_coin.png" alt="" class="shop-coin">';
+const SHOP_CHECK_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
 
 /**
  * Muestra la pantalla de la tienda
@@ -24,6 +38,7 @@ function showShopScreen() {
  */
 function switchShopTab(categoryKey) {
     currentShopTab = categoryKey;
+    shopPreviewId = null;
 
     // Actualizar botones UI
     const tabButtons = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.shop-tab-btn'));
@@ -38,6 +53,61 @@ function switchShopTab(categoryKey) {
     populateShopTab(currentShopTab);
 }
 
+/** ¿El jugador tiene este artículo? Los gratuitos son de todos. */
+function shopOwns(item) {
+    return item.price === 0 || hasItem(item.id);
+}
+
+/** Id del artículo equipado en una pestaña. */
+function shopEquippedId(categoryKey) {
+    const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
+    switch (categoryInfo && categoryInfo.cosmKey) {
+        case 'trail':  return playerProgression.selectedTrail;
+        case 'bg':     return playerProgression.selectedBg;
+        case 'paddle': return playerProgression.selectedPaddle;
+        case 'goalFx': return playerProgression.selectedGoalFx;
+    }
+    return '';
+}
+
+/**
+ * Icono de un artículo: en línea si toma el color del tema (SHOP_ICONS),
+ * si no, el SVG de assets/shop/.
+ */
+function shopIconHTML(categoryKey, item) {
+    const name = SHOP_ICON_PREFIX[categoryKey] + item.id;
+    const inline = SHOP_ICONS[name];
+    if (inline) return inline.replace(/\{uid\}/g, `${name}-${++shopIconUid}`);
+    return `<img src="assets/shop/${name}.svg" alt="">`;
+}
+
+/**
+ * Botón de acción de un artículo: EQUIPADO (deshabilitado), USAR o
+ * comprar con su precio.
+ * @param {string} className
+ */
+function shopActionButton(categoryKey, item, className) {
+    const owned = shopOwns(item);
+    const equipped = owned && shopEquippedId(categoryKey) === item.id;
+    const btn = document.createElement('button');
+    btn.className = className;
+
+    if (equipped) {
+        btn.classList.add(`${className}--equipped`);
+        btn.textContent = 'EQUIPADO';
+        btn.disabled = true;
+    } else if (owned) {
+        btn.classList.add(`${className}--use`);
+        btn.textContent = 'USAR';
+        btn.addEventListener('click', () => equipShopItem(categoryKey, item.id));
+    } else {
+        btn.classList.add(`${className}--buy`);
+        btn.innerHTML = `${SHOP_COIN_IMG}${item.price}`;
+        btn.addEventListener('click', () => buyShopItem(categoryKey, item.id));
+    }
+    return btn;
+}
+
 /**
  * Muestra los artículos de una categoría específica
  */
@@ -47,83 +117,119 @@ function populateShopTab(categoryKey) {
 
     grid.innerHTML = '';
     const items = SHOP_CATALOG[categoryKey];
-
-    const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
-    if (!categoryInfo) return;
-    const cosmKey = categoryInfo.cosmKey;
-
-    let equippedId = '';
-    switch (cosmKey) {
-        case 'trail':  equippedId = playerProgression.selectedTrail; break;
-        case 'bg':     equippedId = playerProgression.selectedBg; break;
-        case 'paddle': equippedId = playerProgression.selectedPaddle; break;
-        case 'goalFx': equippedId = playerProgression.selectedGoalFx; break;
-    }
+    if (!items) return;
+    const equippedId = shopEquippedId(categoryKey);
 
     items.forEach(item => {
-        const isOwned = hasItem(item.id) || item.price === 0;
+        const isOwned = shopOwns(item);
         const isEquipped = isOwned && equippedId === item.id;
+        const rarity = shopRarity(item.price);
 
         const card = document.createElement('div');
         card.className = 'shop-card';
         if (isEquipped) card.classList.add('shop-card--equipped');
         else if (isOwned) card.classList.add('shop-card--owned');
+        card.dataset.id = item.id;
 
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'shop-card__preview relative flex justify-center items-center overflow-hidden';
+        card.innerHTML = `
+            <div class="shop-card__tile shop-card__tile--${rarity.key}">${shopIconHTML(categoryKey, item)}</div>
+            ${isEquipped ? `<span class="shop-card__tag">${SHOP_CHECK_ICON}EN USO</span>` : ''}
+            <div class="shop-card__head">
+                <span class="shop-card__name">${item.name}</span>
+                <span class="shop-card__rarity shop-card__rarity--${rarity.key}">${rarity.label.toUpperCase()}</span>
+            </div>
+            <p class="shop-card__desc">${item.desc}</p>`;
+        card.appendChild(shopActionButton(categoryKey, item, 'shop-card__btn'));
 
-        let prefix = '';
-        if (categoryKey === 'trails') prefix = 'trail_';
-        else if (categoryKey === 'backgrounds') prefix = 'bg_';
-        else if (categoryKey === 'paddles') prefix = 'paddle_';
-        else if (categoryKey === 'goalEffects') prefix = 'goal_';
-
-        const imgName = prefix + item.id + '.png';
-        const imgSrc = 'assets/shop/' + imgName;
-
-        // Cargar imagen de icono o mostrar el emoji si falla
-        previewDiv.innerHTML = `
-            <img src="${imgSrc}" class="w-full h-full object-contain z-10" alt="${item.name}">
-            <span class="hidden absolute inset-0 flex items-center justify-center text-3xl z-0">${item.preview}</span>
-        `;
-        const img = previewDiv.querySelector('img');
-        img.addEventListener('error', () => {
-            img.style.display = 'none';
-            /** @type {HTMLElement} */ (img.nextElementSibling).style.display = 'flex';
+        // Tocar la tarjeta (fuera del botón) la lleva a la vista previa
+        card.addEventListener('click', (e) => {
+            if (/** @type {HTMLElement} */ (e.target).closest('button')) return;
+            shopPreviewId = item.id;
+            renderShopPreview();
         });
-
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'shop-card__name';
-        nameDiv.textContent = item.name;
-
-        const descDiv = document.createElement('div');
-        descDiv.className = 'shop-card__desc';
-        descDiv.textContent = item.desc;
-
-        const btn = document.createElement('button');
-        btn.className = 'shop-card__btn';
-
-        if (isEquipped) {
-            btn.classList.add('shop-card__btn--equipped');
-            btn.textContent = 'EQUIPADO';
-            btn.disabled = true;
-        } else if (isOwned) {
-            btn.classList.add('shop-card__btn--use');
-            btn.textContent = 'USAR';
-            btn.addEventListener('click', () => equipShopItem(categoryKey, item.id));
-        } else {
-            btn.classList.add('shop-card__btn--buy');
-            btn.innerHTML = `<img src="assets/chemi_coin.png" alt="" class="w-3 h-3 inline object-contain mr-1" style="vertical-align: text-top;"> ${item.price}`;
-            btn.addEventListener('click', () => buyShopItem(categoryKey, item.id));
-        }
-
-        card.appendChild(previewDiv);
-        card.appendChild(nameDiv);
-        card.appendChild(descDiv);
-        card.appendChild(btn);
 
         grid.appendChild(card);
     });
+
+    updateShopMeta(categoryKey);
+    renderShopPreview();
+}
+
+/**
+ * Contadores: cuántos objetos tienes de cada pestaña, el título de la
+ * sección (móvil) y la colección completa. La colección cuenta los 18
+ * artículos; el logro Fashionista pide comprar todos los de pago.
+ */
+function updateShopMeta(categoryKey) {
+    let owned = 0, total = 0;
+    SHOP_CATEGORIES.forEach(cat => {
+        const items = SHOP_CATALOG[cat.key];
+        const mine = items.filter(shopOwns).length;
+        owned += mine;
+        total += items.length;
+        const counter = document.querySelector(`.shop-tab-btn[data-arg="${cat.key}"] [data-tab-count]`);
+        if (counter) counter.textContent = `${mine}/${items.length}`;
+        if (cat.key === categoryKey) {
+            setMenuText('shop-section-title', `${cat.label} · ${mine} de ${items.length}`);
+        }
+    });
+
+    const complete = isAllItemsPurchased();
+    const collectionHTML = `
+            <span class="lbl shop-collection__label">Colección</span>
+            <span class="px shop-collection__count">${owned} / ${total}</span>
+            <span class="shop-collection__bar"><span style="width: ${Math.round(owned / total * 100)}%;"></span></span>
+            <span class="shop-collection__text">${complete ? '¡Colección completa!' : 'Cómpralo todo para el logro Fashionista.'}</span>`;
+
+    const navBox = document.getElementById('shop-collection');
+    if (navBox) navBox.innerHTML = collectionHTML;
+
+    // En móvil y tablet la colección es una casilla más, al final de la cuadrícula
+    const grid = document.getElementById('shop-grid');
+    if (grid) {
+        const old = grid.querySelector('.shop-collection--inline');
+        if (old) old.remove();
+        const inline = document.createElement('div');
+        inline.className = 'shop-collection shop-collection--inline';
+        inline.innerHTML = collectionHTML;
+        grid.appendChild(inline);
+    }
+}
+
+/** Vista previa (escritorio): el artículo elegido, o el equipado. */
+function renderShopPreview() {
+    const box = document.getElementById('shop-preview-body');
+    const actions = document.getElementById('shop-preview-actions');
+    if (!box || !actions) return;
+
+    const items = SHOP_CATALOG[currentShopTab];
+    const id = shopPreviewId || shopEquippedId(currentShopTab);
+    const item = items.find(i => i.id === id) || items[0];
+    const rarity = shopRarity(item.price);
+
+    document.querySelectorAll('#shop-grid .shop-card').forEach(card => {
+        card.classList.toggle('shop-card--selected', /** @type {HTMLElement} */ (card).dataset.id === item.id);
+    });
+    document.getElementById('shop-preview').dataset.rarity = rarity.key;
+
+    box.innerHTML = `
+        <div class="shop-preview__tile shop-card__tile--${rarity.key}">${shopIconHTML(currentShopTab, item)}</div>
+        <div class="shop-preview__info">
+            <span class="shop-card__rarity shop-card__rarity--${rarity.key}">${rarity.label.toUpperCase()} · ${SHOP_ITEM_KIND[currentShopTab].toUpperCase()}</span>
+            <span class="px shop-preview__name">${item.name}</span>
+            <p class="shop-preview__desc">${item.desc}</p>
+        </div>`;
+
+    actions.innerHTML = '';
+    if (!shopOwns(item) && playerProgression.chemiCoins >= item.price) {
+        const rest = document.createElement('div');
+        rest.className = 'shop-preview__rest';
+        rest.innerHTML = `<span>Te quedarán</span><span>${playerProgression.chemiCoins - item.price} monedas</span>`;
+        actions.appendChild(rest);
+    }
+    const btn = shopActionButton(currentShopTab, item, 'shop-preview__btn');
+    if (!shopOwns(item)) btn.innerHTML = `${SHOP_COIN_IMG}COMPRAR · ${item.price}`;
+    actions.appendChild(btn);
 }
 
 /**
