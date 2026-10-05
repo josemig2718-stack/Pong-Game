@@ -308,8 +308,16 @@ h1, h2, h3 { font-family: var(--font-display); }
 }
 @keyframes menu-blink { to { visibility: hidden; } }
 
-/* Mini cancha: palas y bola animadas solo con CSS */
+/* Mini cancha: una jugada coreografiada solo con CSS. La bola recorre
+   un circuito fijo (pala izquierda → pared → pala derecha → pared…) y
+   cada pala llega a su punto de golpe en el mismo porcentaje del ciclo
+   que la bola, así que parece una partida de verdad. Si se cambia un
+   golpe en court-ball, hay que cambiar el mismo porcentaje en la pala. */
 .mini-court {
+    --pad-x: 12px;              /* separación de la pala al borde */
+    --pad-w: 6px;               /* grosor de la pala */
+    --ball: 10px;               /* lado de la bola */
+    --court-loop: 5.6s;
     position: relative;
     width: 100%;
     max-width: 300px;
@@ -331,26 +339,53 @@ h1, h2, h3 { font-family: var(--font-display); }
 }
 .mini-court__paddle {
     position: absolute;
-    width: 6px;
+    width: var(--pad-w);
     height: 30%;
     border-radius: 3px;
     background: var(--primary);
     box-shadow: 0 0 14px var(--primary);
+    transform: translateY(-50%);   /* top = centro de la pala */
+    animation: var(--court-loop) ease-in-out infinite;
 }
-.mini-court__paddle--left { left: 12px; top: 10%; animation: court-paddle-left 2.4s ease-in-out infinite alternate; }
-.mini-court__paddle--right { right: 12px; top: 60%; animation: court-paddle-right 2.4s ease-in-out infinite alternate; }
+.mini-court__paddle--left { left: var(--pad-x); top: 35%; animation-name: court-paddle-left; }
+.mini-court__paddle--right { right: var(--pad-x); top: 50%; animation-name: court-paddle-right; }
 .mini-court__ball {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: var(--ball);
+    height: var(--ball);
     background: #fff;
     box-shadow: 0 0 16px #fff;
-    animation: court-ball-x 2.4s linear infinite alternate, court-ball-y 1.7s linear infinite alternate;
+    transform: translate(-50%, -50%);   /* left/top = centro de la bola */
+    animation: court-ball var(--court-loop) linear infinite;
 }
-@keyframes court-paddle-left { from { top: 8%; } to { top: 62%; } }
-@keyframes court-paddle-right { from { top: 60%; } to { top: 10%; } }
-@keyframes court-ball-x { from { left: 22px; } to { left: calc(100% - 32px); } }
-@keyframes court-ball-y { from { top: 8px; } to { top: calc(100% - 18px); } }
+
+/* Golpes: izquierda al 0 % (y 35 %) y al 51 % (y 45 %);
+   derecha al 26 % (y 70 %) y al 76 % (y 50 %) */
+@keyframes court-ball {
+    0%   { left: calc(var(--pad-x) + var(--pad-w) + var(--ball) / 2); top: 35%; }
+    11%  { left: 45%; top: calc(var(--ball) / 2); }
+    26%  { left: calc(100% - var(--pad-x) - var(--pad-w) - var(--ball) / 2); top: 70%; }
+    34%  { left: 70%; top: calc(100% - var(--ball) / 2); }
+    51%  { left: calc(var(--pad-x) + var(--pad-w) + var(--ball) / 2); top: 45%; }
+    63%  { left: 45%; top: calc(var(--ball) / 2); }
+    76%  { left: calc(100% - var(--pad-x) - var(--pad-w) - var(--ball) / 2); top: 50%; }
+    100% { left: calc(var(--pad-x) + var(--pad-w) + var(--ball) / 2); top: 35%; }
+}
+@keyframes court-paddle-left {
+    0%, 100% { top: 35%; }
+    22%      { top: 55%; }
+    38%      { top: 62%; }
+    51%      { top: 45%; }
+    72%      { top: 30%; }
+}
+@keyframes court-paddle-right {
+    0%, 100% { top: 50%; }
+    14%      { top: 58%; }
+    26%      { top: 70%; }
+    44%      { top: 50%; }
+    60%      { top: 38%; }
+    76%      { top: 50%; }
+}
 
 /* Nivel, XP y monedas (en móvil, cabecera de una sola fila) */
 .menu-progress {
@@ -415,11 +450,8 @@ h1, h2, h3 { font-family: var(--font-display); }
         padding: 0;
     }
     .menu-logo { font-size: clamp(88px, 9vw, 120px); }
-    .mini-court { max-width: 480px; aspect-ratio: 480 / 220; }
-    .mini-court__paddle { width: 8px; height: 24%; }
-    .mini-court__paddle--left { left: 16px; }
-    .mini-court__paddle--right { right: 16px; }
-    .mini-court__ball { width: 12px; height: 12px; }
+    .mini-court { --pad-x: 16px; --pad-w: 8px; --ball: 12px; max-width: 480px; aspect-ratio: 480 / 220; }
+    .mini-court__paddle { height: 24%; }
     .menu-hero__prompt { display: block; }
 
     .menu-panel {
@@ -780,7 +812,9 @@ canvas {
 /* Respeta la preferencia de "menos movimiento" del sistema */
 @media (prefers-reduced-motion: reduce) {
     .btn, .retro-button, .tile, .icon-btn, .key-btn--listening { animation: none; transition: none; }
-    .mini-court__paddle, .mini-court__ball, .menu-hero__prompt { animation: none; }
+    /* La mini cancha sigue animada: es el centro del menú y se mueve
+       despacio, sin destellos. El texto parpadeante sí se para. */
+    .menu-hero__prompt { animation: none; }
 }
 
 /* ==================================================================
