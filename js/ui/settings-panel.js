@@ -15,6 +15,14 @@
 function updateDifficulty(val) {
     settings.difficulty = parseInt(val, 10);
     saveSettings();
+    markDifficultyLabel();
+}
+
+/** Resalta bajo el slider la etiqueta de la dificultad elegida. */
+function markDifficultyLabel() {
+    /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-difficulty-label]')).forEach(label => {
+        label.classList.toggle('is-active', Number(label.dataset.difficultyLabel) === settings.difficulty);
+    });
 }
 
 /**
@@ -137,6 +145,7 @@ function populateSettingsUI() {
     /** @param {string} id */
     const input = (id) => /** @type {HTMLInputElement} */ (document.getElementById(id));
     input('difficulty-slider').value      = String(settings.difficulty);
+    markDifficultyLabel();
     input('volume-slider').value          = String(settings.volume);
     document.getElementById('vol-display').textContent      = `${settings.volume}%`;
     input('sfx-toggle').checked           = settings.sfxEnabled;

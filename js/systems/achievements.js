@@ -13,6 +13,83 @@ const achievementQueue = [];
 let isShowingAchievement = false;
 
 /**
+ * Metas de los logros que se consiguen acumulando algo. La misma tabla
+ * decide el desbloqueo (achievementGoalMet) y pinta la barra de progreso
+ * (getAchievementProgress), para que nunca usen números distintos.
+ * Las metas que dependen de otro catálogo se calculan al pedirlas.
+ * @type {Record<string, {target: number | (() => number), value: () => number}>}
+ */
+const ACHIEVEMENT_GOALS = {
+    // Vale la racha actual o la mejor: basta con haberla alcanzado alguna vez
+    streak_3:          { target: 3,   value: () => Math.max(gameStats.cpuCurrentStreak, gameStats.cpuBestStreak) },
+    streak_5:          { target: 5,   value: () => Math.max(gameStats.cpuCurrentStreak, gameStats.cpuBestStreak) },
+    streak_10:         { target: 10,  value: () => Math.max(gameStats.cpuCurrentStreak, gameStats.cpuBestStreak) },
+    perfect_3:         { target: 3,   value: () => gameStats.cpuPerfectGames },
+    rally_15:          { target: 15,  value: () => gameStats.longestRally },
+    rally_30:          { target: 30,  value: () => gameStats.longestRally },
+    games_10:          { target: 10,  value: () => gameStats.totalGamesPlayed },
+    games_50:          { target: 50,  value: () => gameStats.totalGamesPlayed },
+    games_100:         { target: 100, value: () => gameStats.totalGamesPlayed },
+    points_100:        { target: 100, value: () => gameStats.totalPointsScored },
+    points_500:        { target: 500, value: () => gameStats.totalPointsScored },
+    time_1h:           { target: 60,  value: () => Math.floor(gameStats.totalTimePlayedMs / 60000) },   // minutos
+    win_all_diff:      { target: 3,   value: () => [gameStats.cpuWinsEasy, gameStats.cpuWinsNormal, gameStats.cpuWinsHard].filter(n => n > 0).length },
+    explorer:          { target: () => Object.keys(THEMES).length, value: () => gameStats.themesUsed.length },
+    powerup_collector: { target: 50,  value: () => gameStats.totalPowerupsCollected },
+    reach_level_5:     { target: 5,   value: () => playerProgression.level },
+    reach_level_10:    { target: 10,  value: () => playerProgression.level },
+    fashionista:       { target: () => getTotalShopItems(), value: () => getTotalPurchasedItems() }
+};
+
+/** Meta numérica de un logro acumulativo. */
+function achievementGoalTarget(id) {
+    const target = ACHIEVEMENT_GOALS[id].target;
+    return typeof target === 'function' ? target() : target;
+}
+
+/** ¿Se ha alcanzado ya la meta de este logro? */
+function achievementGoalMet(id) {
+    return ACHIEVEMENT_GOALS[id].value() >= achievementGoalTarget(id);
+}
+
+/**
+ * Progreso hacia un logro acumulativo, o null si es de una sola vez.
+ * @returns {{current: number, target: number} | null}
+ */
+function getAchievementProgress(id) {
+    const goal = ACHIEVEMENT_GOALS[id];
+    if (!goal) return null;
+    const target = achievementGoalTarget(id);
+    return { current: Math.min(goal.value(), target), target };
+}
+
+/**
+ * Estado de un logro para la pantalla: desbloqueado, en progreso (algo
+ * avanzado), bloqueado, o secreto (bloqueado y sin revelar nada).
+ * @param {Achievement} ach
+ * @returns {'unlocked'|'progress'|'locked'|'secret'}
+ */
+function getAchievementState(ach) {
+    if (gameStats.achievements[ach.id]) return 'unlocked';
+    if (ach.secret) return 'secret';
+    const progress = getAchievementProgress(ach.id);
+    return progress && progress.current > 0 ? 'progress' : 'locked';
+}
+
+/**
+ * El último logro desbloqueado (la fecha más reciente), o null.
+ * @returns {Achievement | null}
+ */
+function getLastUnlockedAchievement() {
+    let last = null, lastDate = '';
+    ACHIEVEMENTS.forEach(ach => {
+        const date = gameStats.achievements[ach.id];
+        if (date && date >= lastDate) { last = ach; lastDate = date; }
+    });
+    return last;
+}
+
+/**
  * Desbloquea un logro si no estaba ya desbloqueado.
  * @returns {boolean} true si se desbloqueó ahora
  */
@@ -45,11 +122,12 @@ function showAchievementToast(achievement) {
     const toast = document.getElementById('achievement-toast');
     if (!toast) { isShowingAchievement = false; return; }
 
-    const emojiEl = toast.querySelector('.achievement-toast__emoji');
+    const medalEl = toast.querySelector('.achievement-toast__medal');
     const nameEl  = toast.querySelector('.achievement-toast__name');
     const descEl  = toast.querySelector('.achievement-toast__desc');
 
-    emojiEl.textContent = achievement.emoji;
+    medalEl.innerHTML = achievementMedalSVG(achievement, 'unlocked');
+    toast.style.setProperty('--ach-color', achievementColor(achievement));
     nameEl.textContent  = achievement.name;
     descEl.textContent  = achievement.desc;
 
@@ -84,27 +162,27 @@ function checkAllAchievements(mode, p1Won) {
     if (s.localGamesPlayed >= 1)                           unlockAchievement('first_local');
 
     // --- Rachas ---
-    if (s.cpuCurrentStreak >= 3 || s.cpuBestStreak >= 3)   unlockAchievement('streak_3');
-    if (s.cpuCurrentStreak >= 5 || s.cpuBestStreak >= 5)   unlockAchievement('streak_5');
-    if (s.cpuCurrentStreak >= 10 || s.cpuBestStreak >= 10) unlockAchievement('streak_10');
+    if (achievementGoalMet('streak_3'))                    unlockAchievement('streak_3');
+    if (achievementGoalMet('streak_5'))                    unlockAchievement('streak_5');
+    if (achievementGoalMet('streak_10'))                   unlockAchievement('streak_10');
 
     // --- Habilidad ---
     if (s.cpuPerfectGames >= 1)                            unlockAchievement('perfect_game');
-    if (s.cpuPerfectGames >= 3)                            unlockAchievement('perfect_3');
+    if (achievementGoalMet('perfect_3'))                   unlockAchievement('perfect_3');
     if (s.cpuWinsHard >= 1)                                unlockAchievement('beat_impossible');
-    if (s.longestRally >= 15)                              unlockAchievement('rally_15');
-    if (s.longestRally >= 30)                              unlockAchievement('rally_30');
+    if (achievementGoalMet('rally_15'))                    unlockAchievement('rally_15');
+    if (achievementGoalMet('rally_30'))                    unlockAchievement('rally_30');
 
     // --- Veteranía ---
-    if (s.totalGamesPlayed >= 10)                          unlockAchievement('games_10');
-    if (s.totalGamesPlayed >= 50)                          unlockAchievement('games_50');
-    if (s.totalGamesPlayed >= 100)                         unlockAchievement('games_100');
-    if (s.totalPointsScored >= 100)                        unlockAchievement('points_100');
-    if (s.totalPointsScored >= 500)                        unlockAchievement('points_500');
-    if (s.totalTimePlayedMs >= 3600000)                    unlockAchievement('time_1h');
+    if (achievementGoalMet('games_10'))                    unlockAchievement('games_10');
+    if (achievementGoalMet('games_50'))                    unlockAchievement('games_50');
+    if (achievementGoalMet('games_100'))                   unlockAchievement('games_100');
+    if (achievementGoalMet('points_100'))                  unlockAchievement('points_100');
+    if (achievementGoalMet('points_500'))                  unlockAchievement('points_500');
+    if (achievementGoalMet('time_1h'))                     unlockAchievement('time_1h');
 
     // --- Especiales ---
-    if (s.cpuWinsEasy >= 1 && s.cpuWinsNormal >= 1 && s.cpuWinsHard >= 1) {
+    if (achievementGoalMet('win_all_diff')) {
         unlockAchievement('win_all_diff');
     }
 
@@ -120,12 +198,12 @@ function checkAllAchievements(mode, p1Won) {
     }
 
     // Explorador: todos los temas probados
-    if (s.themesUsed.length >= Object.keys(THEMES).length) {
+    if (achievementGoalMet('explorer')) {
         unlockAchievement('explorer');
     }
 
     // --- Nuevos (Power-ups) ---
-    if (s.totalPowerupsCollected >= 50) {
+    if (achievementGoalMet('powerup_collector')) {
         unlockAchievement('powerup_collector');
     }
     

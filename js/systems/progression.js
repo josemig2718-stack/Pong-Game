@@ -133,8 +133,8 @@ function checkLevelUp() {
         soundEffects.levelUp();
 
         // Los ids del catálogo son reach_level_*, no level_*
-        if (playerProgression.level >= 5) unlockAchievement('reach_level_5');
-        if (playerProgression.level >= 10) unlockAchievement('reach_level_10');
+        if (achievementGoalMet('reach_level_5')) unlockAchievement('reach_level_5');
+        if (achievementGoalMet('reach_level_10')) unlockAchievement('reach_level_10');
     }
 }
 

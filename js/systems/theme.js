@@ -24,6 +24,8 @@ function applyTheme(themeKey) {
     /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.theme-swatch')).forEach(btn => {
         btn.classList.toggle('theme-swatch--active', btn.dataset.theme === themeKey);
     });
+    const currentName = document.getElementById('theme-current');
+    if (currentName) currentName.textContent = theme.label;
 
     settings.theme = themeKey;
     saveSettings();
@@ -52,7 +54,7 @@ function buildThemeSwatches(container) {
         btn.dataset.theme = key;
         btn.title = theme.label;
         btn.style.setProperty('--swatch-color', theme.hex);
-        btn.innerHTML = `<span class="theme-swatch__dot"></span><span class="theme-swatch__label">${theme.label}</span>`;
+        btn.innerHTML = `<span class="theme-swatch__dot"></span><span class="theme-swatch__label sr-only">${theme.label}</span>`;
         btn.addEventListener('click', () => applyTheme(key));
         container.appendChild(btn);
     });

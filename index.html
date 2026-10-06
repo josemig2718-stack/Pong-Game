@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=22">
+    <link rel="stylesheet" href="css/style.css?v=23">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -319,216 +319,292 @@
 
     <!-- ============================== CONTROLES ============================== -->
     <section id="controls-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-10 text-center">CONTROLES</h2>
+        <div class="sub-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title">CONTROLES</h2>
+                </div>
+            </header>
 
-        <div class="grid gap-6 md:grid-cols-2 w-full max-w-3xl px-4 text-xs md:text-sm">
-            <div class="panel">
-                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">
-                    JUGADOR 1 (IZQ)</h3>
-                <div class="binding-row">
-                    <span>MOVER ARRIBA</span>
-                    <button class="key-btn" data-binding-action="p1Up">W</button>
+            <div class="sub-cols">
+                <div class="sub-col">
+                    <section class="sub-panel touch-card">
+                        <div class="touch-card__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4 14a2 2 0 0 1 3.2-2.3L9 14"/></svg>
+                            <h3 class="lbl">Pantalla táctil</h3>
+                        </div>
+                        <div class="touch-card__court" aria-hidden="true">
+                            <div class="touch-card__half touch-card__half--p1">
+                                <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>
+                                <span class="px">JUGADOR 1</span>
+                            </div>
+                            <div class="touch-card__half touch-card__half--p2">
+                                <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>
+                                <span class="px">JUGADOR 2</span>
+                            </div>
+                        </div>
+                        <p class="sub-note">Toca y arrastra en tu mitad de la pantalla. En VS CPU puedes usar toda la pantalla.</p>
+                    </section>
                 </div>
-                <div class="binding-row">
-                    <span>MOVER ABAJO</span>
-                    <button class="key-btn" data-binding-action="p1Down">S</button>
-                </div>
-            </div>
 
-            <div class="panel">
-                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">
-                    JUGADOR 2 (DER)</h3>
-                <div class="binding-row">
-                    <span>MOVER ARRIBA</span>
-                    <button class="key-btn" data-binding-action="p2Up">↑</button>
-                </div>
-                <div class="binding-row">
-                    <span>MOVER ABAJO</span>
-                    <button class="key-btn" data-binding-action="p2Down">↓</button>
-                </div>
-                <p class="mt-4 text-[10px] opacity-70">(Solo se usa en modo Local)</p>
-            </div>
+                <div class="sub-col">
+                    <section class="sub-panel bind-panel">
+                        <h3 class="px bind-who bind-who--p1"><i></i>JUGADOR 1 · IZQUIERDA</h3>
+                        <div class="bind-row">
+                            <span>Mover arriba</span>
+                            <button class="key-btn" data-binding-action="p1Up">W</button>
+                        </div>
+                        <div class="bind-row">
+                            <span>Mover abajo</span>
+                            <button class="key-btn" data-binding-action="p1Down">S</button>
+                        </div>
 
-            <div class="panel md:col-span-2">
-                <h3 class="text-base md:text-lg mb-4 text-center pb-2" style="border-bottom: 2px solid var(--primary)">
-                    SISTEMA</h3>
-                <div class="binding-row">
-                    <span>PAUSAR / VOLVER</span>
-                    <button class="key-btn" data-binding-action="pause">ESC</button>
+                        <h3 class="px bind-who bind-who--p2"><i></i>JUGADOR 2 · DERECHA<small>Solo en modo Local</small></h3>
+                        <div class="bind-row">
+                            <span>Mover arriba</span>
+                            <button class="key-btn" data-binding-action="p2Up">↑</button>
+                        </div>
+                        <div class="bind-row">
+                            <span>Mover abajo</span>
+                            <button class="key-btn" data-binding-action="p2Down">↓</button>
+                        </div>
+
+                        <h3 class="px bind-who bind-who--sys"><i></i>SISTEMA</h3>
+                        <div class="bind-row">
+                            <span>Pausar / volver</span>
+                            <button class="key-btn" data-binding-action="pause">ESC</button>
+                        </div>
+                        <p class="sub-note">Toca una tecla y pulsa la nueva. Dos acciones no pueden compartir la misma tecla.</p>
+                    </section>
+
+                    <button class="key-btn sub-ghost-btn" data-action="resetBindings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/></svg>RESTAURAR TECLAS POR DEFECTO</button>
                 </div>
-                <p class="mt-3 text-[10px] opacity-70">Haz clic en un botón y presiona la tecla que quieras asignar. Dos
-                    acciones no pueden compartir la misma tecla.</p>
             </div>
         </div>
-
-        <div class="flex flex-col md:flex-row gap-4 mt-10">
-            <button class="key-btn" style="min-width: 220px; padding: 12px 20px;" data-action="resetBindings">RESTAURAR
-                TECLAS POR DEFECTO</button>
-            <button class="retro-button text-sm" data-action="showScreen" data-arg="main-menu">VOLVER</button>
-        </div>
-        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </section>
 
     <!-- ============================== ESTADÍSTICAS ============================== -->
     <section id="stats-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">ESTADÍSTICAS</h2>
+        <div class="sub-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title">ESTADÍSTICAS</h2>
+                </div>
+            </header>
 
-        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
-            <div class="panel">
-                <h3 class="stat-section-title">GENERAL</h3>
-                <div class="stat-row"><span>Partidas jugadas</span><span id="stat-total-games">0</span></div>
-                <div class="stat-row"><span>Tiempo total jugado</span><span id="stat-total-time">0s</span></div>
-                <div class="stat-row"><span>Puntos anotados</span><span id="stat-total-scored">0</span></div>
-                <div class="stat-row"><span>Puntos recibidos</span><span id="stat-total-conceded">0</span></div>
+            <div class="sub-cols">
+                <div class="sub-col">
+                    <section class="sub-panel stats-cpu">
+                        <div id="stat-cpu-ring" class="pct-ring" style="--pct: 0;">
+                            <div class="pct-ring__inner">
+                                <span id="stat-cpu-winrate" class="px pct-ring__value">0%</span>
+                                <span class="pct-ring__label">VICTORIAS</span>
+                            </div>
+                        </div>
+                        <div class="stats-cpu__info">
+                            <h3 class="lbl stats-cpu__title">VS CPU</h3>
+                            <div class="stats-cpu__wl">
+                                <span><b id="stat-cpu-wins" class="stats-cpu__win">0</b> V</span>
+                                <span><b id="stat-cpu-losses" class="stats-cpu__loss">0</b> D</span>
+                            </div>
+                            <div class="stats-cpu__streak">
+                                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>
+                                <span>Racha actual: <span id="stat-cpu-streak">0</span></span>
+                            </div>
+                            <div class="stats-cpu__best">Mejor racha: <span id="stat-cpu-best">0</span> · Perfectos: <span id="stat-cpu-perfect">0</span></div>
+                        </div>
+                    </section>
+
+                    <div class="stats-tiles">
+                        <div class="stats-tile">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="16" cy="11.5" r=".8"/><circle cx="18" cy="13.5" r=".8"/></svg>
+                            <b id="stat-total-games" class="px">0</b>
+                            <span>Partidas jugadas</span>
+                        </div>
+                        <div class="stats-tile">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            <b id="stat-total-time" class="px">0s</b>
+                            <span>Tiempo total</span>
+                        </div>
+                        <div class="stats-tile">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+                            <b id="stat-total-scored" class="px">0</b>
+                            <span>Puntos anotados</span>
+                        </div>
+                        <div class="stats-tile stats-tile--against">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                            <b id="stat-total-conceded" class="px">0</b>
+                            <span>Puntos recibidos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-col">
+                    <section class="sub-panel stats-records">
+                        <h3 class="lbl">Récords</h3>
+                        <div class="stats-records__row">
+                            <div class="stats-record stats-record--rally">
+                                <span id="stat-longest-rally" class="px">0</span>
+                                <span>Rally más largo</span>
+                            </div>
+                            <div class="stats-record stats-record--speed">
+                                <span id="stat-max-speed" class="px">—</span>
+                                <span>Velocidad máx.</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="sub-panel stats-local">
+                        <div class="stats-kv"><span>Local · partidas</span><b id="stat-local-games" class="px">0</b></div>
+                        <div class="stats-kv"><span>Victorias J1 / J2</span><b id="stat-local-wins" class="px">0 / 0</b></div>
+                    </section>
+
+                    <button class="key-btn sub-ghost-btn sub-ghost-btn--danger" data-action="confirmResetStats">BORRAR ESTADÍSTICAS</button>
+                </div>
             </div>
-
-            <div class="panel">
-                <h3 class="stat-section-title">VS CPU</h3>
-                <div class="stat-row"><span>Victorias / Derrotas</span><span id="stat-cpu-wins">0 / 0</span></div>
-                <div class="stat-row"><span>Tasa de victoria</span><span id="stat-cpu-winrate">0%</span></div>
-                <div class="stat-row"><span>Racha actual</span><span id="stat-cpu-streak">0</span></div>
-                <div class="stat-row"><span>Mejor racha</span><span id="stat-cpu-best">0</span></div>
-                <div class="stat-row"><span>Juegos perfectos</span><span id="stat-cpu-perfect">0</span></div>
-            </div>
-
-            <div class="panel">
-                <h3 class="stat-section-title">LOCAL</h3>
-                <div class="stat-row"><span>Partidas jugadas</span><span id="stat-local-games">0</span></div>
-                <div class="stat-row"><span>Victorias J1 / J2</span><span id="stat-local-wins">0 / 0</span></div>
-            </div>
-
-            <div class="panel">
-                <h3 class="stat-section-title">RÉCORDS</h3>
-                <div class="stat-row"><span>Rally más largo</span><span id="stat-longest-rally">0 golpes</span></div>
-                <div class="stat-row"><span>Mayor velocidad bola</span><span id="stat-max-speed">—</span></div>
-            </div>
-
-            <button class="key-btn self-center" style="padding: 10px 24px;" data-action="confirmResetStats">BORRAR
-                ESTADÍSTICAS</button>
         </div>
-
-        <button class="retro-button w-64 settings-back-btn mt-6" data-action="showScreen" data-arg="main-menu">VOLVER</button>
-        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </section>
 
     <!-- ============================== LOGROS ============================== -->
     <section id="achievements-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-6 text-center settings-title">LOGROS</h2>
+        <div class="ach-layout">
+            <header class="screen-head ach-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title">LOGROS</h2>
+                    <span class="ach-head__sub">Tus hazañas en la cancha, la tienda y la campaña.</span>
+                </div>
+                <span id="achievements-count" class="px ach-head__count">0 / 0</span>
+                <span id="achievements-last" class="ach-last hidden"></span>
+            </header>
 
-        <div class="flex flex-col gap-6 w-full max-w-2xl px-4">
-            <p id="achievements-count" class="text-center text-xs opacity-70" style="font-family: var(--font-body)">0 /
-                21 desbloqueados</p>
-            <div id="achievements-grid" class="achievements-grid"></div>
+            <aside class="ach-side">
+                <div id="achievements-summary" class="ach-summary"></div>
+                <nav id="achievements-cats" class="ach-cats" aria-label="Categorías"></nav>
+            </aside>
+
+            <div id="achievements-grid" class="ach-list"></div>
         </div>
-
-        <button class="retro-button w-64 settings-back-btn mt-6" data-action="showScreen" data-arg="main-menu">VOLVER</button>
-        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </section>
 
     <!-- ============================== CONFIGURACIÓN ============================== -->
     <section id="settings-menu" class="screen z-20">
-        <h2 class="text-2xl md:text-4xl font-bold mb-8 text-center settings-title">CONFIGURACIÓN</h2>
+        <div class="sub-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title">CONFIGURACIÓN</h2>
+                </div>
+            </header>
 
-        <div class="flex flex-col gap-6 w-full max-w-xl px-4 text-xs md:text-sm settings-body">
+            <div class="set-grid">
+                <section class="set-sec set-sec--look">
+                    <h3 class="lbl set-sec__title"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Apariencia</h3>
+                    <div class="sub-panel set-panel">
+                        <div class="set-item">
+                            <div class="set-item__head">Color del juego<small id="theme-current">Verde</small></div>
+                            <div id="theme-swatches"></div>
+                        </div>
+                        <label class="set-item set-item__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 10h18M3 14h18M3 18h18"/></svg>
+                            Efecto monitor CRT
+                            <input type="checkbox" class="tgl" id="crt-toggle" aria-label="Efecto de monitor CRT" checked data-change="toggleCrtEffect">
+                        </label>
+                        <label class="set-item set-item__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 8v8M21 8v8"/></svg>
+                            Vibración de pantalla
+                            <input type="checkbox" class="tgl" id="shake-toggle" aria-label="Vibración de pantalla" checked data-change="toggleScreenShake">
+                        </label>
+                    </div>
+                </section>
 
-            <div class="panel">
-                <label class="block mb-4 text-center">COLOR DEL JUEGO</label>
-                <div id="theme-swatches"></div>
+                <section class="set-sec set-sec--game">
+                    <h3 class="lbl set-sec__title"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3"/></svg>Partida</h3>
+                    <div class="sub-panel set-panel">
+                        <div class="set-item">
+                            <div class="set-item__head">Dificultad de la CPU</div>
+                            <input type="range" id="difficulty-slider" class="diff-range" aria-label="Dificultad de la CPU" min="1" max="3" value="2" data-change="updateDifficulty">
+                            <div class="diff-labels" aria-hidden="true">
+                                <span data-difficulty-label="1">FÁCIL</span>
+                                <span data-difficulty-label="2">NORMAL</span>
+                                <span data-difficulty-label="3">IMPOSIBLE</span>
+                            </div>
+                        </div>
+                        <div class="set-item">
+                            <div class="set-item__head">Puntos para ganar</div>
+                            <div class="option-pill-group">
+                                <button class="option-pill" data-winning-score="3" data-action="updateWinningScore">3</button>
+                                <button class="option-pill" data-winning-score="5" data-action="updateWinningScore">5</button>
+                                <button class="option-pill" data-winning-score="7" data-action="updateWinningScore">7</button>
+                                <button class="option-pill" data-winning-score="11" data-action="updateWinningScore">11</button>
+                            </div>
+                        </div>
+                        <div class="set-item">
+                            <div class="set-item__head">Velocidad de la bola</div>
+                            <div class="option-pill-group">
+                                <button class="option-pill" data-ball-speed="1" data-action="updateBallSpeed">LENTA</button>
+                                <button class="option-pill" data-ball-speed="2" data-action="updateBallSpeed">NORMAL</button>
+                                <button class="option-pill" data-ball-speed="3" data-action="updateBallSpeed">RÁPIDA</button>
+                            </div>
+                        </div>
+                        <label class="set-item set-item__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/></svg>
+                            Power-ups en partida
+                            <input type="checkbox" class="tgl" id="powerups-toggle" aria-label="Power-ups en partida" checked data-change="togglePowerups">
+                        </label>
+                        <label class="set-item set-item__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>
+                            Controlar con mouse
+                            <input type="checkbox" class="tgl" id="mouse-toggle" aria-label="Controlar con el ratón" data-change="toggleMouseControl">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="set-sec set-sec--audio">
+                    <h3 class="lbl set-sec__title"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Audio</h3>
+                    <div class="sub-panel set-panel">
+                        <div class="set-item">
+                            <label class="set-item__head">
+                                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                Música
+                                <input type="checkbox" class="tgl" id="music-toggle" aria-label="Música" checked data-change="toggleMusic">
+                            </label>
+                            <div class="set-range">
+                                <input type="range" id="music-volume-slider" aria-label="Volumen de la música" min="0" max="100" value="50" data-input="updateMusicVolume">
+                                <span id="music-vol-display" class="px">50%</span>
+                            </div>
+                        </div>
+                        <div class="set-item">
+                            <label class="set-item__head">
+                                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>
+                                Efectos de sonido
+                                <input type="checkbox" class="tgl" id="sfx-toggle" aria-label="Efectos de sonido" checked data-change="toggleSfx">
+                            </label>
+                            <div class="set-range">
+                                <input type="range" id="volume-slider" aria-label="Volumen de los efectos de sonido" min="0" max="100" value="50" data-input="updateVolume">
+                                <span id="vol-display" class="px">50%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <button class="key-btn sub-ghost-btn set-reset" data-action="resetAllSettings">RESTABLECER TODO</button>
             </div>
-
-            <div class="panel">
-                <label class="block mb-4 text-center">DIFICULTAD DE LA CPU</label>
-                <div class="flex justify-between mb-2 text-[10px] font-body opacity-80"
-                    style="font-family: var(--font-body)">
-                    <span>FÁCIL</span>
-                    <span>NORMAL</span>
-                    <span>IMPOSIBLE</span>
-                </div>
-                <input type="range" id="difficulty-slider" aria-label="Dificultad de la CPU" min="1" max="3" value="2"
-                    data-change="updateDifficulty">
-            </div>
-
-            <div class="panel">
-                <label class="block mb-4 text-center">VOLUMEN SFX <span id="vol-display">50%</span></label>
-                <input type="range" id="volume-slider" aria-label="Volumen de los efectos de sonido" min="0" max="100" value="50" data-input="updateVolume">
-            </div>
-
-            <div class="panel">
-                <label class="block mb-4 text-center">VOLUMEN MÚSICA <span id="music-vol-display">50%</span></label>
-                <input type="range" id="music-volume-slider" aria-label="Volumen de la música" min="0" max="100" value="50"
-                    data-input="updateMusicVolume">
-            </div>
-
-            <div class="panel">
-                <label class="block mb-4 text-center">PUNTOS PARA GANAR</label>
-                <div class="option-pill-group">
-                    <button class="option-pill" data-winning-score="3" data-action="updateWinningScore">3</button>
-                    <button class="option-pill" data-winning-score="5" data-action="updateWinningScore">5</button>
-                    <button class="option-pill" data-winning-score="7" data-action="updateWinningScore">7</button>
-                    <button class="option-pill" data-winning-score="11" data-action="updateWinningScore">11</button>
-                </div>
-            </div>
-
-            <div class="panel">
-                <label class="block mb-4 text-center">VELOCIDAD DE LA BOLA</label>
-                <div class="option-pill-group">
-                    <button class="option-pill" data-ball-speed="1" data-action="updateBallSpeed">LENTA</button>
-                    <button class="option-pill" data-ball-speed="2" data-action="updateBallSpeed">NORMAL</button>
-                    <button class="option-pill" data-ball-speed="3" data-action="updateBallSpeed">RÁPIDA</button>
-                </div>
-            </div>
-
-            <div class="panel flex flex-col gap-4">
-                <div class="setting-row">
-                    <span>MÚSICA</span>
-                    <label class="switch">
-                        <input type="checkbox" id="music-toggle" aria-label="Música" checked data-change="toggleMusic">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <span>EFECTOS DE SONIDO</span>
-                    <label class="switch">
-                        <input type="checkbox" id="sfx-toggle" aria-label="Efectos de sonido" checked data-change="toggleSfx">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <span>EFECTO DE MONITOR CRT</span>
-                    <label class="switch">
-                        <input type="checkbox" id="crt-toggle" aria-label="Efecto de monitor CRT" checked data-change="toggleCrtEffect">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <span>VIBRACIÓN DE PANTALLA</span>
-                    <label class="switch">
-                        <input type="checkbox" id="shake-toggle" aria-label="Vibración de pantalla" checked data-change="toggleScreenShake">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <span>CONTROLAR CON MOUSE</span>
-                    <label class="switch">
-                        <input type="checkbox" id="mouse-toggle" aria-label="Controlar con el ratón" data-change="toggleMouseControl">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <span>POWER-UPS (EN PARTIDA)</span>
-                    <label class="switch">
-                        <input type="checkbox" id="powerups-toggle" aria-label="Power-ups en partida" checked data-change="togglePowerups">
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-            </div>
-
-            <button class="key-btn self-center" style="padding: 10px 24px;" data-action="resetAllSettings">RESTABLECER
-                TODO</button>
         </div>
-
-        <button class="retro-button w-64 settings-back-btn" data-action="showScreen" data-arg="main-menu">VOLVER</button>
-        <div class="watermark">&copy; 2026 Pong Game — Edición Arcade</div>
     </section>
 
     <!-- ============================== TIENDA ============================== -->
@@ -706,7 +782,7 @@
 
     <!-- ============================== TOAST DE LOGRO ============================== -->
     <div id="achievement-toast" class="achievement-toast achievement-toast--hidden" role="status" aria-live="polite">
-        <span class="achievement-toast__emoji">🏓</span>
+        <span class="achievement-toast__medal" aria-hidden="true"></span>
         <div class="achievement-toast__text">
             <span class="achievement-toast__title">¡LOGRO DESBLOQUEADO!</span>
             <span class="achievement-toast__name">Primer Victoria</span>
@@ -719,57 +795,57 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=22"></script>
-    <script src="js/core/storage.js?v=22"></script>
-    <script src="js/core/settings.js?v=22"></script>
-    <script src="js/core/state.js?v=22"></script>
-    <script src="js/data/themes.js?v=22"></script>
-    <script src="js/data/lore.js?v=22"></script>
-    <script src="js/data/achievements.js?v=22"></script>
-    <script src="js/data/shop.js?v=22"></script>
-    <script src="js/data/levels.js?v=22"></script>
-    <script src="js/data/powerups.js?v=22"></script>
-    <script src="js/systems/audio.js?v=22"></script>
-    <script src="js/systems/theme.js?v=22"></script>
-    <script src="js/systems/stats.js?v=22"></script>
-    <script src="js/systems/achievements.js?v=22"></script>
-    <script src="js/systems/progression.js?v=22"></script>
-    <script src="js/systems/input.js?v=22"></script>
-    <script src="js/systems/pointer.js?v=22"></script>
-    <script src="js/game/canvas.js?v=22"></script>
-    <script src="js/game/draw.js?v=22"></script>
-    <script src="js/game/effects.js?v=22"></script>
-    <script src="js/game/balls.js?v=22"></script>
-    <script src="js/game/ai.js?v=22"></script>
-    <script src="js/game/physics.js?v=22"></script>
-    <script src="js/game/match.js?v=22"></script>
-    <script src="js/game/render.js?v=22"></script>
-    <script src="js/game/loop.js?v=22"></script>
-    <script src="js/game/powerups.js?v=22"></script>
-    <script src="js/vfx/trails.js?v=22"></script>
-    <script src="js/vfx/backgrounds.js?v=22"></script>
-    <script src="js/vfx/paddles.js?v=22"></script>
-    <script src="js/vfx/goal-fx.js?v=22"></script>
-    <script src="js/vfx/index.js?v=22"></script>
-    <script src="js/bosses/shared.js?v=22"></script>
-    <script src="js/bosses/chemi.js?v=22"></script>
-    <script src="js/bosses/dani.js?v=22"></script>
-    <script src="js/bosses/duo.js?v=22"></script>
-    <script src="js/bosses/fano.js?v=22"></script>
-    <script src="js/bosses/yisus.js?v=22"></script>
-    <script src="js/bosses/creator.js?v=22"></script>
-    <script src="js/bosses/index.js?v=22"></script>
-    <script src="js/campaign/progress.js?v=22"></script>
-    <script src="js/campaign/menu.js?v=22"></script>
-    <script src="js/campaign/dialogue.js?v=22"></script>
-    <script src="js/campaign/finale.js?v=22"></script>
-    <script src="js/ui/screens.js?v=22"></script>
-    <script src="js/ui/actions.js?v=22"></script>
-    <script src="js/ui/settings-panel.js?v=22"></script>
-    <script src="js/ui/stats-panel.js?v=22"></script>
-    <script src="js/ui/shop-ui.js?v=22"></script>
-    <script src="js/ui/progress-display.js?v=22"></script>
-    <script src="js/main.js?v=22"></script>
+    <script src="js/core/constants.js?v=23"></script>
+    <script src="js/core/storage.js?v=23"></script>
+    <script src="js/core/settings.js?v=23"></script>
+    <script src="js/core/state.js?v=23"></script>
+    <script src="js/data/themes.js?v=23"></script>
+    <script src="js/data/lore.js?v=23"></script>
+    <script src="js/data/achievements.js?v=23"></script>
+    <script src="js/data/shop.js?v=23"></script>
+    <script src="js/data/levels.js?v=23"></script>
+    <script src="js/data/powerups.js?v=23"></script>
+    <script src="js/systems/audio.js?v=23"></script>
+    <script src="js/systems/theme.js?v=23"></script>
+    <script src="js/systems/stats.js?v=23"></script>
+    <script src="js/systems/achievements.js?v=23"></script>
+    <script src="js/systems/progression.js?v=23"></script>
+    <script src="js/systems/input.js?v=23"></script>
+    <script src="js/systems/pointer.js?v=23"></script>
+    <script src="js/game/canvas.js?v=23"></script>
+    <script src="js/game/draw.js?v=23"></script>
+    <script src="js/game/effects.js?v=23"></script>
+    <script src="js/game/balls.js?v=23"></script>
+    <script src="js/game/ai.js?v=23"></script>
+    <script src="js/game/physics.js?v=23"></script>
+    <script src="js/game/match.js?v=23"></script>
+    <script src="js/game/render.js?v=23"></script>
+    <script src="js/game/loop.js?v=23"></script>
+    <script src="js/game/powerups.js?v=23"></script>
+    <script src="js/vfx/trails.js?v=23"></script>
+    <script src="js/vfx/backgrounds.js?v=23"></script>
+    <script src="js/vfx/paddles.js?v=23"></script>
+    <script src="js/vfx/goal-fx.js?v=23"></script>
+    <script src="js/vfx/index.js?v=23"></script>
+    <script src="js/bosses/shared.js?v=23"></script>
+    <script src="js/bosses/chemi.js?v=23"></script>
+    <script src="js/bosses/dani.js?v=23"></script>
+    <script src="js/bosses/duo.js?v=23"></script>
+    <script src="js/bosses/fano.js?v=23"></script>
+    <script src="js/bosses/yisus.js?v=23"></script>
+    <script src="js/bosses/creator.js?v=23"></script>
+    <script src="js/bosses/index.js?v=23"></script>
+    <script src="js/campaign/progress.js?v=23"></script>
+    <script src="js/campaign/menu.js?v=23"></script>
+    <script src="js/campaign/dialogue.js?v=23"></script>
+    <script src="js/campaign/finale.js?v=23"></script>
+    <script src="js/ui/screens.js?v=23"></script>
+    <script src="js/ui/actions.js?v=23"></script>
+    <script src="js/ui/settings-panel.js?v=23"></script>
+    <script src="js/ui/stats-panel.js?v=23"></script>
+    <script src="js/ui/shop-ui.js?v=23"></script>
+    <script src="js/ui/progress-display.js?v=23"></script>
+    <script src="js/main.js?v=23"></script>
 </body>
 
 </html>

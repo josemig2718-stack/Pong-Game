@@ -45,6 +45,7 @@ const CLICK_ACTIONS = {
     resetAllSettings:       () => resetAllSettings(),
     resetBindings:          () => resetBindings(),
     confirmResetStats:      () => confirmResetStats(),
+    filterAchievements:     (el) => filterAchievements(el.dataset.arg),
 
     // Tienda
     switchShopTab:          (el) => switchShopTab(el.dataset.arg)
