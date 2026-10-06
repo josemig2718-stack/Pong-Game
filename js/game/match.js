@@ -50,11 +50,11 @@ function matchInfoText(withTarget) {
     return parts.join(' · ');
 }
 
-/** Nombres de los dos lados del marcador. */
+/** Nombres de los dos lados del marcador (el jefe, sin "Hachepe": "Dani"). */
 function matchSideNames() {
     if (state.mode === 'local') return ['J1', 'J2'];
     if (state.mode === 'hachepe') return ['TÚ', 'HACHEPE'];
-    if (state.mode === 'campaign') return ['TÚ', HACHEPES_LORE[currentCampaignLevel].name];
+    if (state.mode === 'campaign') return ['TÚ', HACHEPES_LORE[currentCampaignLevel].name.replace(/^Hachepe /, '')];
     return ['TÚ', 'CPU'];
 }
 
@@ -71,6 +71,31 @@ function fillMatchScore(prefix) {
     document.getElementById(`${prefix}-score-p2`).textContent = String(state.p2Score);
     const bcfg = bossConfig();
     document.getElementById(`${prefix}-score`).classList.toggle('hidden', !!(bcfg && bcfg.useHealth));
+}
+
+/**
+ * Tiempo de partida como "mm:ss".
+ * @param {number} ms
+ */
+function formatMatchTime(ms) {
+    const secs = Math.floor(ms / 1000);
+    return `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+}
+
+/** Rally máximo, duración y power-ups recogidos, en el fin de partida. */
+function fillMatchStats() {
+    document.getElementById('go-stat-rally').textContent = String(matchBestRally);
+    document.getElementById('go-stat-time').textContent = formatMatchTime(matchElapsedMs);
+    document.getElementById('go-stat-powerups').textContent = String(powerupsThisGame);
+}
+
+/**
+ * body.has-result mientras se ve la pausa o el fin de partida: el aviso
+ * de logro baja a una esquina para no tapar el título.
+ */
+function syncResultClass() {
+    const shown = (id) => document.getElementById(id).classList.contains('active-screen');
+    document.body.classList.toggle('has-result', shown('pause-menu') || shown('game-over-screen'));
 }
 
 /**
@@ -115,6 +140,7 @@ function startGame(mode) {
     resetMidDialogue();
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+    syncResultClass();
 
     const container = document.getElementById('game-container');
     container.classList.remove('hidden');
@@ -199,6 +225,7 @@ function togglePause() {
         document.getElementById('pause-menu').classList.remove('active-screen');
         resumeLoop();
     }
+    syncResultClass();
 }
 
 /**
@@ -258,7 +285,7 @@ function checkWin() {
             }
         }
     } else if (state.mode === 'cpu' || state.mode === 'hachepe') {
-        winnerText.textContent = p1Won ? '¡GANASTE!' : 'CPU GANA :(';
+        winnerText.textContent = p1Won ? '¡GANASTE!' : 'DERROTA';
         p1Won ? soundEffects.win() : soundEffects.lose();
     } else {
         winnerText.textContent = p1Won ? 'JUGADOR 1 GANA' : 'JUGADOR 2 GANA';
@@ -266,14 +293,22 @@ function checkWin() {
     }
 
     fillMatchScore('final');
+    fillMatchStats();
     document.getElementById('game-over-mode').textContent = matchInfoText(false);
     // En local siempre gana alguien: se celebra igual
-    const celebrate = p1Won || state.mode === 'local';
-    gameOverScreen.classList.toggle('is-win', celebrate);
-    gameOverScreen.classList.toggle('is-defeat', !celebrate);
-    gameOverScreen.classList.toggle('is-p2-won', !p1Won);
+    gameOverScreen.dataset.result = (p1Won || state.mode === 'local') ? 'win' : 'loss';
+    gameOverScreen.dataset.winner = p1Won ? 'p1' : 'p2';
+    // Derrota en campaña: el jefe junto al marcador
+    const bossSprite = /** @type {HTMLImageElement} */ (document.getElementById('final-boss-sprite'));
+    const showBoss = state.mode === 'campaign' && !p1Won && !(bcfg && bcfg.useHealth);
+    if (showBoss) {
+        bossSprite.src = HACHEPES_LORE[currentCampaignLevel].image;
+        bossSprite.alt = HACHEPES_LORE[currentCampaignLevel].name;
+    }
+    bossSprite.classList.toggle('hidden', !showBoss);
     // En los desenlaces narrados, la pantalla de fin se salta por completo
     if (!narrativeEnding) gameOverScreen.classList.add('active-screen');
+    syncResultClass();
 
     // Estadísticas y logros
     statsOnGameEnd(state.mode, p1Won, state.p2Score);

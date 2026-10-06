@@ -32,6 +32,8 @@ function updateProgressionDisplay() {
 
             setMenuText('game-over-xp', `+${sessionXPGained}`);
             setMenuText('game-over-coins', `+${sessionCoinsGained}`);
+            // Sin monedas (derrotas, modo local) solo queda la XP
+            document.getElementById('game-over-coins-chip').classList.toggle('hidden', sessionCoinsGained === 0);
 
             // Nivel tras la partida, con los mismos datos que el menú
             setMenuText('game-over-level', `Nivel ${lvl.level} · ${lvl.title}`);

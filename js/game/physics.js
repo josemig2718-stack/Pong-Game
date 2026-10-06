@@ -29,6 +29,9 @@ function update(dt) {
     // Un diálogo de campaña congela la partida por completo
     if (isDialogueActive) return;
 
+    // El reloj de la partida cuenta tiempo real, sin la cámara lenta
+    const realDt = dt;
+
     // Cámara lenta: manda la más lenta entre la del power-up y la del gol épico
     let slowmo = 1.0;
     slowmo = Math.min(slowmo, getSlowmoMultiplier());
@@ -62,6 +65,9 @@ function update(dt) {
         updateVFX(dt);
         return;
     }
+
+    // Antes de las bolas: el fotograma del gol que cierra la partida cuenta
+    statsTickMatchClock(realDt * MS_PER_FRAME);
 
     // Si un gol termina la partida en multi-bola, el resto del paso no se
     // ejecuta (con una sola bola sí: ver onBallOut).

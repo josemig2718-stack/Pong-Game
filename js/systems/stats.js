@@ -79,17 +79,30 @@ const gameStats = loadStats();
 let currentRally    = 0;   // golpes consecutivos en la ronda actual
 let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
 let gameStartTimeMs = 0;   // timestamp de inicio de partida (para tiempo jugado)
+let matchElapsedMs  = 0;   // tiempo jugado en la partida (sin pausas, diálogos ni saques)
+let matchBestRally  = 0;   // rally más largo de la partida
 
 /** Llamar al iniciar una nueva partida */
 function statsOnGameStart() {
     currentRally    = 0;
     maxDeficit      = 0;
     gameStartTimeMs = performance.now();
+    matchElapsedMs  = 0;
+    matchBestRally  = 0;
+}
+
+/**
+ * Suma tiempo de juego al reloj de la partida (HUD y fin de partida).
+ * @param {number} ms
+ */
+function statsTickMatchClock(ms) {
+    matchElapsedMs += ms;
 }
 
 /** Llamar cuando la bola golpea una paleta */
 function statsOnPaddleHit() {
     currentRally++;
+    if (currentRally > matchBestRally) matchBestRally = currentRally;
 }
 
 /** Llamar cuando se anota un punto (antes de resetBall) */

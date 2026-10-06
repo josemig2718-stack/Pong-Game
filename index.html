@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=25">
+    <link rel="stylesheet" href="css/style.css?v=26">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -720,48 +720,70 @@
         <!-- Confeti de la victoria: posiciones fijas, nada aleatorio -->
         <div class="go-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
+        <!-- Escritorio: dos columnas (resultado | recompensas y botones).
+             Móvil: las columnas no generan caja y todo va en una. -->
         <div class="go-layout">
-            <header class="go-head">
-                <span id="game-over-mode" class="lbl go-head__mode">VS CPU</span>
-                <h2 id="winner-text" class="px go-head__title">¡GANASTE!</h2>
-            </header>
+            <div class="go-col go-col--main">
+                <header class="go-head">
+                    <span id="game-over-mode" class="lbl go-head__mode">VS CPU</span>
+                    <h2 id="winner-text" class="px go-head__title">¡GANASTE!</h2>
+                </header>
 
-            <section id="final-score" class="panel go-score">
-                <div class="go-score__side">
-                    <span id="final-name-p1" class="px go-score__name">TÚ</span>
-                    <span id="final-score-p1" class="px go-score__num go-score__num--p1">0</span>
-                </div>
-                <span class="px go-score__dash" aria-hidden="true">—</span>
-                <div class="go-score__side">
-                    <span id="final-name-p2" class="px go-score__name">CPU</span>
-                    <span id="final-score-p2" class="px go-score__num">0</span>
-                </div>
-            </section>
-
-            <!-- Resumen de progresión -->
-            <section id="game-over-progression" class="panel go-rewards hidden">
-                <span class="lbl">Recompensas</span>
-                <div class="go-rewards__chips">
-                    <div class="go-chip go-chip--xp"><span class="px go-chip__tag">XP</span><span id="game-over-xp" class="px">+0</span></div>
-                    <div class="go-chip go-chip--coins"><img src="assets/chemi_coin.png" alt="" class="go-chip__coin"><span id="game-over-coins" class="px">+0</span></div>
-                </div>
-                <div class="go-level">
-                    <div class="go-level__text"><span id="game-over-level">Nivel 1 · Novato</span><span id="game-over-xp-text">0 / 100</span></div>
-                    <div class="go-level__track"><i id="game-over-xp-bar" style="width: 0%;"></i></div>
-                </div>
-                <div id="level-up-alert" class="go-levelup hidden">
-                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    <div class="go-levelup__text">
-                        <span class="px go-levelup__title">¡SUBISTE DE NIVEL!</span>
-                        <span id="level-up-text">Nuevo Título</span>
+                <section class="go-score">
+                    <div id="final-score" class="go-score__board">
+                        <img id="final-boss-sprite" class="go-score__sprite hidden" src="assets/images/hachepe_chemi.png" alt="">
+                        <div class="go-score__nums">
+                            <div class="go-score__side">
+                                <span id="final-name-p1" class="px go-score__name">TÚ</span>
+                                <span id="final-score-p1" class="px go-score__num go-score__num--p1">0</span>
+                            </div>
+                            <span class="px go-score__dash" aria-hidden="true">—</span>
+                            <div class="go-score__side">
+                                <span id="final-name-p2" class="px go-score__name go-score__name--p2">CPU</span>
+                                <span id="final-score-p2" class="px go-score__num go-score__num--p2">0</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                    <div id="game-over-stats" class="go-stats">
+                        <div class="go-stat go-stat--rally"><b id="go-stat-rally" class="px">0</b><span>Rally máx.</span></div>
+                        <div class="go-stat"><b id="go-stat-time" class="px">00:00</b><span>Duración</span></div>
+                        <div class="go-stat go-stat--powerups"><b id="go-stat-powerups" class="px">0</b><span>Power-ups</span></div>
+                    </div>
+                </section>
 
-            <div class="go-actions">
-                <button id="btn-next-campaign" class="btn btn--danger hidden" data-action="nextCampaignLevel">SIGUIENTE HACHEPE<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-                <button class="btn btn-p" data-action="restartCurrentGame">JUGAR DE NUEVO<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/></svg></button>
-                <button class="btn" data-action="quitGame">MENÚ PRINCIPAL<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></button>
+                <!-- Solo en las derrotas (CSS): un consejo genérico, sin mecánicas de jefes -->
+                <p class="go-tip">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                    <span>Consejo: golpea la bola con el borde de la paleta para sacar más ángulo.</span>
+                </p>
+            </div>
+
+            <div class="go-col go-col--side">
+                <!-- Resumen de progresión -->
+                <section id="game-over-progression" class="panel go-rewards hidden">
+                    <span class="lbl">Recompensas</span>
+                    <div class="go-rewards__chips">
+                        <div class="go-chip go-chip--xp"><span class="px go-chip__tag">XP</span><span id="game-over-xp" class="px">+0</span><span class="go-chip__note">por puntos anotados</span></div>
+                        <div id="game-over-coins-chip" class="go-chip go-chip--coins"><img src="assets/chemi_coin.png" alt="" class="go-chip__coin"><span id="game-over-coins" class="px">+0</span></div>
+                    </div>
+                    <div class="go-level">
+                        <div class="go-level__text"><span id="game-over-level">Nivel 1 · Novato</span><span id="game-over-xp-text">0 / 100</span></div>
+                        <div class="go-level__track"><i id="game-over-xp-bar" style="width: 0%;"></i></div>
+                    </div>
+                    <div id="level-up-alert" class="go-levelup hidden">
+                        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        <div class="go-levelup__text">
+                            <span class="px go-levelup__title">¡SUBISTE DE NIVEL!</span>
+                            <span id="level-up-text">Nuevo Título</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="go-actions">
+                    <button id="btn-next-campaign" class="btn btn--danger hidden" data-action="nextCampaignLevel">SIGUIENTE HACHEPE<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                    <button class="btn btn-p" data-action="restartCurrentGame">JUGAR DE NUEVO<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/></svg></button>
+                    <button class="btn" data-action="quitGame">MENÚ PRINCIPAL<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></button>
+                </div>
             </div>
         </div>
     </section>
@@ -854,57 +876,57 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=25"></script>
-    <script src="js/core/storage.js?v=25"></script>
-    <script src="js/core/settings.js?v=25"></script>
-    <script src="js/core/state.js?v=25"></script>
-    <script src="js/data/themes.js?v=25"></script>
-    <script src="js/data/lore.js?v=25"></script>
-    <script src="js/data/achievements.js?v=25"></script>
-    <script src="js/data/shop.js?v=25"></script>
-    <script src="js/data/levels.js?v=25"></script>
-    <script src="js/data/powerups.js?v=25"></script>
-    <script src="js/systems/audio.js?v=25"></script>
-    <script src="js/systems/theme.js?v=25"></script>
-    <script src="js/systems/stats.js?v=25"></script>
-    <script src="js/systems/achievements.js?v=25"></script>
-    <script src="js/systems/progression.js?v=25"></script>
-    <script src="js/systems/input.js?v=25"></script>
-    <script src="js/systems/pointer.js?v=25"></script>
-    <script src="js/game/canvas.js?v=25"></script>
-    <script src="js/game/draw.js?v=25"></script>
-    <script src="js/game/effects.js?v=25"></script>
-    <script src="js/game/balls.js?v=25"></script>
-    <script src="js/game/ai.js?v=25"></script>
-    <script src="js/game/physics.js?v=25"></script>
-    <script src="js/game/match.js?v=25"></script>
-    <script src="js/game/render.js?v=25"></script>
-    <script src="js/game/loop.js?v=25"></script>
-    <script src="js/game/powerups.js?v=25"></script>
-    <script src="js/vfx/trails.js?v=25"></script>
-    <script src="js/vfx/backgrounds.js?v=25"></script>
-    <script src="js/vfx/paddles.js?v=25"></script>
-    <script src="js/vfx/goal-fx.js?v=25"></script>
-    <script src="js/vfx/index.js?v=25"></script>
-    <script src="js/bosses/shared.js?v=25"></script>
-    <script src="js/bosses/chemi.js?v=25"></script>
-    <script src="js/bosses/dani.js?v=25"></script>
-    <script src="js/bosses/duo.js?v=25"></script>
-    <script src="js/bosses/fano.js?v=25"></script>
-    <script src="js/bosses/yisus.js?v=25"></script>
-    <script src="js/bosses/creator.js?v=25"></script>
-    <script src="js/bosses/index.js?v=25"></script>
-    <script src="js/campaign/progress.js?v=25"></script>
-    <script src="js/campaign/menu.js?v=25"></script>
-    <script src="js/campaign/dialogue.js?v=25"></script>
-    <script src="js/campaign/finale.js?v=25"></script>
-    <script src="js/ui/screens.js?v=25"></script>
-    <script src="js/ui/actions.js?v=25"></script>
-    <script src="js/ui/settings-panel.js?v=25"></script>
-    <script src="js/ui/stats-panel.js?v=25"></script>
-    <script src="js/ui/shop-ui.js?v=25"></script>
-    <script src="js/ui/progress-display.js?v=25"></script>
-    <script src="js/main.js?v=25"></script>
+    <script src="js/core/constants.js?v=26"></script>
+    <script src="js/core/storage.js?v=26"></script>
+    <script src="js/core/settings.js?v=26"></script>
+    <script src="js/core/state.js?v=26"></script>
+    <script src="js/data/themes.js?v=26"></script>
+    <script src="js/data/lore.js?v=26"></script>
+    <script src="js/data/achievements.js?v=26"></script>
+    <script src="js/data/shop.js?v=26"></script>
+    <script src="js/data/levels.js?v=26"></script>
+    <script src="js/data/powerups.js?v=26"></script>
+    <script src="js/systems/audio.js?v=26"></script>
+    <script src="js/systems/theme.js?v=26"></script>
+    <script src="js/systems/stats.js?v=26"></script>
+    <script src="js/systems/achievements.js?v=26"></script>
+    <script src="js/systems/progression.js?v=26"></script>
+    <script src="js/systems/input.js?v=26"></script>
+    <script src="js/systems/pointer.js?v=26"></script>
+    <script src="js/game/canvas.js?v=26"></script>
+    <script src="js/game/draw.js?v=26"></script>
+    <script src="js/game/effects.js?v=26"></script>
+    <script src="js/game/balls.js?v=26"></script>
+    <script src="js/game/ai.js?v=26"></script>
+    <script src="js/game/physics.js?v=26"></script>
+    <script src="js/game/match.js?v=26"></script>
+    <script src="js/game/render.js?v=26"></script>
+    <script src="js/game/loop.js?v=26"></script>
+    <script src="js/game/powerups.js?v=26"></script>
+    <script src="js/vfx/trails.js?v=26"></script>
+    <script src="js/vfx/backgrounds.js?v=26"></script>
+    <script src="js/vfx/paddles.js?v=26"></script>
+    <script src="js/vfx/goal-fx.js?v=26"></script>
+    <script src="js/vfx/index.js?v=26"></script>
+    <script src="js/bosses/shared.js?v=26"></script>
+    <script src="js/bosses/chemi.js?v=26"></script>
+    <script src="js/bosses/dani.js?v=26"></script>
+    <script src="js/bosses/duo.js?v=26"></script>
+    <script src="js/bosses/fano.js?v=26"></script>
+    <script src="js/bosses/yisus.js?v=26"></script>
+    <script src="js/bosses/creator.js?v=26"></script>
+    <script src="js/bosses/index.js?v=26"></script>
+    <script src="js/campaign/progress.js?v=26"></script>
+    <script src="js/campaign/menu.js?v=26"></script>
+    <script src="js/campaign/dialogue.js?v=26"></script>
+    <script src="js/campaign/finale.js?v=26"></script>
+    <script src="js/ui/screens.js?v=26"></script>
+    <script src="js/ui/actions.js?v=26"></script>
+    <script src="js/ui/settings-panel.js?v=26"></script>
+    <script src="js/ui/stats-panel.js?v=26"></script>
+    <script src="js/ui/shop-ui.js?v=26"></script>
+    <script src="js/ui/progress-display.js?v=26"></script>
+    <script src="js/main.js?v=26"></script>
 </body>
 
 </html>

@@ -22,6 +22,7 @@ function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
     const requested = document.getElementById(screenId);
     if (requested) requested.classList.add('active-screen');
+    syncResultClass();
 
     if (screenId === 'main-menu') {
         document.getElementById('game-container').classList.add('hidden');

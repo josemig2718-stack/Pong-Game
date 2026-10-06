@@ -107,6 +107,7 @@ function getNextCampaignBoss() {
 function nextCampaignLevel() {
     soundEffects.uiClick();
     document.getElementById('game-over-screen').classList.remove('active-screen');
+    syncResultClass();
     stopDialogue();
     const next = getNextCampaignBoss();
     if (next) {
