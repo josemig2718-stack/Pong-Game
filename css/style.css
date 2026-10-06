@@ -932,16 +932,24 @@ canvas {
     background: #000;
 }
 
+/* Insignia del modo sobre el canvas. resizeCanvas() resta su altura:
+   borde de 1px, 6px de relleno y 18px de línea dan la misma caja que
+   tenía antes del rediseño, así que el canvas no cambia de tamaño. */
 .mode-badge {
-    font-family: var(--font-body);
-    font-weight: 600;
-    letter-spacing: 2px;
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.7);
-    background: rgba(var(--primary-rgb), 0.12);
-    border: 1px solid rgba(var(--primary-rgb), 0.4);
-    border-radius: 999px;
-    padding: 6px 16px;
+    font-family: var(--font-display);
+    font-size: 9px;
+    line-height: 18px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    color: var(--primary);
+    background: rgba(6, 7, 12, 0.8);
+    border: 1px solid rgba(var(--primary-rgb), 0.35);
+    border-radius: 6px;
+    padding: 6px 12px;
 }
 
 /* ==================================================================
@@ -1133,22 +1141,30 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid var(--primary);
-    background: rgba(5, 7, 10, 0.65);
-    color: var(--primary);
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(18, 22, 33, 0.85);
+    color: var(--text);
     cursor: pointer;
     z-index: 10;
-    transition: all 0.15s ease;
+    box-shadow: 0 3px 0 #020305;
+    transition: border-color .15s ease;
 }
-#mobile-pause-btn:hover { background: var(--primary); color: var(--on-primary); }
-#mobile-pause-btn:active { transform: scale(0.92); }
+#mobile-pause-btn:hover { border-color: var(--primary); }
+#mobile-pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #020305; }
+#mobile-pause-btn .ico { width: 18px; height: 18px; stroke-width: 2.5; }
+/* Con margen a los lados (pantalla apaisada) sale del campo, a la
+   derecha: arriba en escritorio, abajo en el móvil horizontal. */
+@media (min-aspect-ratio: 3/2) {
+    #mobile-pause-btn { right: auto; left: calc(100% + 16px); top: 0; width: 52px; height: 52px; border-radius: 12px; }
+}
+@media (min-aspect-ratio: 3/2) and (max-height: 500px) {
+    #mobile-pause-btn { top: auto; bottom: 0; }
+}
 
 /* Aviso de "gira tu dispositivo": solo en pantallas táctiles y estrechas
    en orientación vertical. No bloquea el juego, solo sugiere. */
@@ -1707,6 +1723,217 @@ label.set-item__head { cursor: pointer; }
     .achievement-card { gap: 14px; min-height: 86px; padding: 12px; }
     .ach-medal { width: 54px; height: 54px; }
     .achievement-card__desc { line-height: 1.35; }
+}
+
+/* ==================================================================
+   Pausa: panel sobre la partida borrosa, con el marcador, CONTINUAR,
+   RENDIRSE e interruptores rápidos de música y efectos
+   ================================================================== */
+#pause-menu { background: rgba(4, 5, 9, 0.72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.ico--solid { fill: currentColor; stroke: none; }
+
+.pause-panel {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 28px 22px 22px;
+    border-radius: 18px;
+    background: rgba(14, 17, 26, 0.94);
+    border: 1px solid rgba(var(--primary-rgb), 0.4);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.pause-panel__head { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.pause-panel__icon {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(var(--primary-rgb), 0.16);
+    color: var(--primary);
+}
+.pause-panel__icon .ico { width: 26px; height: 26px; stroke-width: 3; }
+.pause-panel__title { margin: 0; font-size: 28px; line-height: 1.1; animation: pause-blink 1.2s steps(2, start) infinite; }
+@keyframes pause-blink { to { visibility: hidden; } }
+
+.pause-score { display: flex; align-items: center; justify-content: center; gap: 18px; max-width: 100%; }
+.pause-score__name { font-size: 9px; color: var(--muted); line-height: 1.5; }
+.pause-score__nums { font-size: 22px; white-space: nowrap; }
+.pause-score__p1 { color: var(--primary); }
+.pause-score__dash { color: #5B6478; }
+
+.pause-panel__actions { display: flex; flex-direction: column; gap: 12px; }
+.pause-panel__actions .btn { justify-content: space-between; min-height: 58px; }
+.pause-panel__actions .btn--danger { background: transparent; box-shadow: none; border-color: rgba(248, 113, 113, 0.45); }
+
+.pause-panel__quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pause-quick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px 10px;
+    border-radius: 10px;
+    background: #0B0E15;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.pause-quick span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pause-quick .tgl { margin-left: auto; }
+.pause-quick__ico { color: var(--muted); }
+.pause-quick:has(.tgl:checked) .pause-quick__ico { color: var(--primary); }
+
+@media (max-height: 500px) {
+    .pause-panel { gap: 14px; padding: 18px 18px 16px; }
+    .pause-panel__head { gap: 10px; }
+    .pause-panel__icon { display: none; }
+    .pause-panel__title { font-size: 20px; }
+    .pause-panel__actions .btn { min-height: 48px; }
+}
+
+/* ==================================================================
+   Fin de partida: título animado, marcador grande y recompensas
+   (XP, monedas, barra de nivel y subida de nivel). En móvil los
+   botones van abajo; en escritorio todo centrado en una columna.
+   ================================================================== */
+#game-over-screen {
+    background:
+        radial-gradient(100% 45% at 50% 0%, rgba(var(--primary-rgb), 0.28), transparent 70%),
+        rgba(6, 7, 12, 0.94);
+}
+#game-over-screen.is-defeat {
+    background:
+        radial-gradient(100% 45% at 50% 0%, rgba(239, 68, 68, 0.2), transparent 70%),
+        rgba(6, 7, 12, 0.94);
+}
+
+.go-layout {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.go-head { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 10px; text-align: center; }
+.go-head__mode { color: var(--primary); }
+.go-head__title {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.3;
+    color: var(--primary);
+    text-shadow: 4px 4px 0 rgba(var(--primary-rgb), 0.35), 0 0 36px rgba(var(--primary-rgb), 0.6);
+    animation: go-pop .6s ease-out both;
+}
+.is-defeat .go-head__mode { color: #F87171; }
+.is-defeat .go-head__title { color: #F87171; text-shadow: 4px 4px 0 rgba(239, 68, 68, 0.3), 0 0 36px rgba(239, 68, 68, 0.45); }
+@keyframes go-pop {
+    0% { transform: scale(.6); opacity: 0; }
+    70% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.go-score { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 20px; }
+.go-score__side { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+.go-score__name { font-size: 9px; color: var(--muted); line-height: 1.5; text-align: center; }
+.go-score__num { font-size: 44px; line-height: 1; color: #64748B; }
+.go-score__num--p1 { color: var(--primary); }
+/* Gana el lado derecho: en local, el azul del J2; contra la máquina, rojo */
+.is-p2-won .go-score__num--p1 { color: #64748B; }
+.is-p2-won .go-score__side:last-child .go-score__num { color: var(--p2); }
+.is-defeat .go-score__side:last-child .go-score__num { color: #F87171; }
+.go-score__dash { font-size: 20px; color: #3A4150; }
+
+.go-rewards { display: flex; flex-direction: column; gap: 14px; padding: 18px; }
+.go-rewards__chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.go-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+.go-chip--xp { background: rgba(var(--primary-rgb), 0.1); border: 1px solid rgba(var(--primary-rgb), 0.35); color: var(--primary); }
+.go-chip--coins { background: rgba(250, 204, 21, 0.08); border: 1px solid rgba(250, 204, 21, 0.35); color: var(--gold); padding-left: 8px; }
+.go-chip__tag { font-size: 9px; padding: 6px; border-radius: 5px; background: var(--primary); color: var(--on-primary); }
+.go-chip__coin { width: 34px; height: 34px; object-fit: contain; }
+
+.go-level { display: flex; flex-direction: column; gap: 8px; }
+.go-level__text { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); }
+.go-level__track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.go-level__track i { display: block; height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: width .8s ease-out; }
+
+.go-levelup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px dashed rgba(250, 204, 21, 0.45);
+    color: var(--gold);
+}
+.go-levelup__text { display: flex; flex-direction: column; gap: 4px; }
+.go-levelup__title { font-size: 8px; line-height: 1.5; }
+#level-up-text { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.go-actions { display: flex; flex-direction: column; gap: 12px; }
+.go-actions .btn { justify-content: space-between; }
+.go-actions .btn--danger { border-color: rgba(248, 113, 113, 0.45); }
+
+/* Confeti de la victoria: ocho piezas en posiciones fijas que caen
+   despacio (sin Math.random, que comparte generador con la física) */
+.go-confetti { display: none; position: absolute; inset: 0 0 auto; height: 220px; overflow: hidden; pointer-events: none; }
+.is-win .go-confetti { display: block; }
+.go-confetti i { position: absolute; top: 0; width: 8px; height: 4px; border-radius: 1px; animation: go-confetti 5s linear infinite; }
+.go-confetti i:nth-child(1) { left: 10%; background: #F472B6; animation-delay: -0.4s; }
+.go-confetti i:nth-child(2) { left: 23%; background: #FACC15; animation-delay: -2.1s; }
+.go-confetti i:nth-child(3) { left: 36%; background: #22D3EE; animation-delay: -3.6s; }
+.go-confetti i:nth-child(4) { left: 52%; background: #FB923C; animation-delay: -1.2s; }
+.go-confetti i:nth-child(5) { left: 64%; background: #A78BFA; animation-delay: -4.4s; }
+.go-confetti i:nth-child(6) { left: 77%; background: #A3E635; animation-delay: -2.8s; }
+.go-confetti i:nth-child(7) { left: 88%; background: #F472B6; animation-delay: -0.9s; }
+.go-confetti i:nth-child(8) { left: 45%; background: #22D3EE; animation-delay: -3.1s; }
+@keyframes go-confetti {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(210px) rotate(320deg); opacity: 0; }
+}
+
+/* Móvil vertical: los botones bajan al pie de la pantalla */
+@media (max-width: 767px) and (min-height: 640px) {
+    #game-over-screen::before, #game-over-screen::after { content: none; }
+    .go-layout { flex: 1 0 auto; }
+    .go-actions { margin-top: auto; }
+}
+/* Altura baja (móvil horizontal): dos columnas */
+@media (max-height: 500px) {
+    .go-layout { max-width: 720px; display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px 16px; }
+    .go-head { grid-column: 1 / -1; gap: 8px; padding-top: 0; }
+    .go-head__title { font-size: 20px; }
+    .go-score { padding: 14px; }
+    .go-score__num { font-size: 32px; }
+    .go-rewards { padding: 14px; gap: 10px; }
+    .go-actions .btn { min-height: 46px; }
+}
+@media (min-width: 768px) and (min-height: 501px) {
+    .go-head__title { font-size: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pause-panel__title, .go-head__title { animation: none; }
+    .go-confetti i { animation: none; opacity: 1; transform: translateY(var(--go-y, 40px)) rotate(35deg); }
+    .go-confetti i:nth-child(odd) { --go-y: 90px; }
+    .go-confetti i:nth-child(3n) { --go-y: 20px; }
+    .go-level__track i { transition: none; }
 }
 
 /* ==================================================================

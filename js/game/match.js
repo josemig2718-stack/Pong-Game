@@ -14,6 +14,66 @@
 'use strict';
 
 /**
+ * Puntos para ganar la partida en curso: el marcador del jefe, 10 en el
+ * Modo Hachepe o el de Configuración. En los jefes con barra de vida son
+ * los fallos que se le permiten al jugador.
+ * @returns {number}
+ */
+function matchTargetScore() {
+    const bcfg = bossConfig();
+    if (bcfg) return bcfg.targetScore;
+    if (state.mode === 'hachepe') return 10;
+    return settings.winningScore;
+}
+
+/** Nombre del modo en curso, como en la insignia y en la pausa. */
+function matchModeLabel() {
+    if (state.mode === 'hachepe') return 'Modo Hachepe';
+    if (state.mode === 'local') return 'Local';
+    if (state.mode === 'campaign') return 'Campaña · ' + HACHEPES_LORE[currentCampaignLevel].name;
+    return 'VS CPU';
+}
+
+/**
+ * Modo de la partida, con la dificultad en VS CPU y, si se pide, la
+ * meta ("VS CPU · Normal · a 5 puntos").
+ * @param {boolean} withTarget
+ */
+function matchInfoText(withTarget) {
+    const parts = [matchModeLabel()];
+    if (state.mode === 'cpu') parts.push(DIFFICULTY_NAMES[settings.difficulty] || DIFFICULTY_NAMES[2]);
+    if (withTarget) {
+        const bcfg = bossConfig();
+        const target = matchTargetScore();
+        parts.push(bcfg && bcfg.useHealth ? `${target} fallos` : `a ${target} puntos`);
+    }
+    return parts.join(' · ');
+}
+
+/** Nombres de los dos lados del marcador. */
+function matchSideNames() {
+    if (state.mode === 'local') return ['J1', 'J2'];
+    if (state.mode === 'hachepe') return ['TÚ', 'HACHEPE'];
+    if (state.mode === 'campaign') return ['TÚ', HACHEPES_LORE[currentCampaignLevel].name];
+    return ['TÚ', 'CPU'];
+}
+
+/**
+ * Pone el marcador en una pantalla (pausa o fin). Los jefes con barra de
+ * vida no tienen marcador de puntos: ahí p2Score son fallos.
+ * @param {string} prefix 'pause' o 'final'
+ */
+function fillMatchScore(prefix) {
+    const [name1, name2] = matchSideNames();
+    document.getElementById(`${prefix}-name-p1`).textContent = name1;
+    document.getElementById(`${prefix}-name-p2`).textContent = name2;
+    document.getElementById(`${prefix}-score-p1`).textContent = String(state.p1Score);
+    document.getElementById(`${prefix}-score-p2`).textContent = String(state.p2Score);
+    const bcfg = bossConfig();
+    document.getElementById(`${prefix}-score`).classList.toggle('hidden', !!(bcfg && bcfg.useHealth));
+}
+
+/**
  * Empieza una partida.
  * @param {'cpu'|'local'|'hachepe'|'campaign'} mode
  */
@@ -60,11 +120,10 @@ function startGame(mode) {
     container.classList.remove('hidden');
     container.classList.add('flex');
 
-    let badgeText = 'VS CPU';
-    if (mode === 'hachepe') badgeText = 'HACHEPE';
-    if (mode === 'local') badgeText = 'LOCAL · 2 JUGADORES';
-    if (mode === 'campaign') badgeText = 'CAMPAÑA: ' + HACHEPES_LORE[currentCampaignLevel].name;
-    document.getElementById('mode-badge').textContent = badgeText;
+    const badgeCfg = bossConfig();
+    document.getElementById('mode-badge').textContent = badgeCfg && badgeCfg.useHealth
+        ? matchModeLabel()
+        : `${matchModeLabel()} · a ${matchTargetScore()}`;
     document.body.dataset.gameMode = mode;
 
     const hachepeChars = document.getElementById('hachepe-characters');
@@ -131,6 +190,9 @@ function togglePause() {
     if (!state.isPlaying) return;
     state.isPaused = !state.isPaused;
     if (state.isPaused) {
+        fillMatchScore('pause');
+        document.getElementById('pause-info').textContent = matchInfoText(true);
+        syncAudioToggles();
         document.getElementById('pause-menu').classList.add('active-screen');
         stopLoop();
     } else {
@@ -147,9 +209,7 @@ function checkWin() {
     const bcfg = bossConfig();
 
     // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.
-    let target = settings.winningScore;
-    if (bcfg) target = bcfg.targetScore;
-    else if (state.mode === 'hachepe') target = 10;
+    const target = matchTargetScore();
 
     // Los jefes con barra de vida se ganan vaciándola, no por marcador: aquí
     // state.p2Score cuenta los fallos del jugador, no los puntos del rival.
@@ -169,7 +229,6 @@ function checkWin() {
 
     const gameOverScreen = document.getElementById('game-over-screen');
     const winnerText = document.getElementById('winner-text');
-    const scoreText = document.getElementById('final-score');
 
     const btnNextCampaign = document.getElementById('btn-next-campaign');
     if (btnNextCampaign) btnNextCampaign.classList.add('hidden'); // Ocultar por defecto
@@ -206,7 +265,13 @@ function checkWin() {
         soundEffects.win();
     }
 
-    scoreText.textContent = `${state.p1Score} - ${state.p2Score}`;
+    fillMatchScore('final');
+    document.getElementById('game-over-mode').textContent = matchInfoText(false);
+    // En local siempre gana alguien: se celebra igual
+    const celebrate = p1Won || state.mode === 'local';
+    gameOverScreen.classList.toggle('is-win', celebrate);
+    gameOverScreen.classList.toggle('is-defeat', !celebrate);
+    gameOverScreen.classList.toggle('is-p2-won', !p1Won);
     // En los desenlaces narrados, la pantalla de fin se salta por completo
     if (!narrativeEnding) gameOverScreen.classList.add('active-screen');
 

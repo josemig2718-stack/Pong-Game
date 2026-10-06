@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=23">
+    <link rel="stylesheet" href="css/style.css?v=24">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -666,11 +666,36 @@
     </section>
 
     <!-- ============================== PAUSA ============================== -->
-    <section id="pause-menu" class="screen z-30" style="background: rgba(5,7,10,0.85); backdrop-filter: blur(4px);">
-        <h2 class="text-3xl md:text-5xl font-bold mb-12 text-center text-white animate-pulse">PAUSA</h2>
-        <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm md:text-base">
-            <button class="retro-button retro-button--primary" data-action="togglePause">CONTINUAR</button>
-            <button class="retro-button retro-button--danger" data-action="quitGame">RENDIRSE</button>
+    <section id="pause-menu" class="screen z-30">
+        <div class="pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+            <div class="pause-panel__head">
+                <span class="pause-panel__icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></span>
+                <h2 id="pause-title" class="px pause-panel__title">PAUSA</h2>
+                <div id="pause-score" class="pause-score">
+                    <span id="pause-name-p1" class="px pause-score__name">TÚ</span>
+                    <span class="px pause-score__nums"><span id="pause-score-p1" class="pause-score__p1">0</span> <span class="pause-score__dash">—</span> <span id="pause-score-p2">0</span></span>
+                    <span id="pause-name-p2" class="px pause-score__name">CPU</span>
+                </div>
+                <span id="pause-info" class="lbl">VS CPU</span>
+            </div>
+
+            <div class="pause-panel__actions">
+                <button class="btn btn-p" data-action="togglePause">CONTINUAR<svg class="ico ico--solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></button>
+                <button class="btn btn--danger" data-action="quitGame">RENDIRSE<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></button>
+            </div>
+
+            <div class="pause-panel__quick">
+                <label class="pause-quick">
+                    <svg class="ico pause-quick__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    <span>Música</span>
+                    <input type="checkbox" class="tgl" id="pause-music-toggle" aria-label="Música" data-change="toggleMusic">
+                </label>
+                <label class="pause-quick">
+                    <svg class="ico pause-quick__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>
+                    <span>Efectos</span>
+                    <input type="checkbox" class="tgl" id="pause-sfx-toggle" aria-label="Efectos" data-change="toggleSfx">
+                </label>
+            </div>
         </div>
     </section>
 
@@ -692,28 +717,52 @@
 
     <!-- ============================== FIN DE PARTIDA ============================== -->
     <section id="game-over-screen" class="screen z-30">
-        <h2 id="winner-text" class="text-3xl md:text-5xl font-bold mb-4 text-center title-glow">¡GANASTE!</h2>
-        <p id="final-score" class="text-lg md:text-2xl mb-8 text-white" style="font-family: var(--font-body)">0 - 0</p>
+        <!-- Confeti de la victoria: posiciones fijas, nada aleatorio -->
+        <div class="go-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
-        <!-- Resumen de Progresión -->
-        <div id="game-over-progression"
-            class="panel text-center max-w-sm mb-10 mx-4 p-4 border border-[var(--primary)] bg-black/50 hidden">
-            <h3 class="text-xs tracking-[4px] mb-3 text-white/70">RECOMPENSAS</h3>
-            <div class="flex justify-around font-bold text-sm mb-2" style="font-family: var(--font-body)">
-                <span id="game-over-xp" class="text-green-400 drop-shadow">+0 XP</span>
-                <span id="game-over-coins" class="text-yellow-400 drop-shadow">+0 <img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain ml-1" style="vertical-align: text-top;"></span>
-            </div>
-            <div id="level-up-alert"
-                class="hidden mt-4 text-xs p-2 bg-yellow-500/20 border border-yellow-500/50 rounded animate-pulse">
-                <span class="block text-yellow-300 font-bold mb-1">¡SUBISTE DE NIVEL!</span>
-                <span id="level-up-text" class="text-white">Nuevo Título</span>
-            </div>
-        </div>
+        <div class="go-layout">
+            <header class="go-head">
+                <span id="game-over-mode" class="lbl go-head__mode">VS CPU</span>
+                <h2 id="winner-text" class="px go-head__title">¡GANASTE!</h2>
+            </header>
 
-        <div class="flex flex-col gap-6 w-64 md:w-80 text-center text-sm">
-            <button id="btn-next-campaign" class="retro-button hidden" style="border-color: #ef4444; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);" data-action="nextCampaignLevel">SIGUIENTE HACHEPE</button>
-            <button class="retro-button retro-button--primary" data-action="restartCurrentGame">JUGAR DE NUEVO</button>
-            <button class="retro-button" data-action="quitGame">MENÚ PRINCIPAL</button>
+            <section id="final-score" class="panel go-score">
+                <div class="go-score__side">
+                    <span id="final-name-p1" class="px go-score__name">TÚ</span>
+                    <span id="final-score-p1" class="px go-score__num go-score__num--p1">0</span>
+                </div>
+                <span class="px go-score__dash" aria-hidden="true">—</span>
+                <div class="go-score__side">
+                    <span id="final-name-p2" class="px go-score__name">CPU</span>
+                    <span id="final-score-p2" class="px go-score__num">0</span>
+                </div>
+            </section>
+
+            <!-- Resumen de progresión -->
+            <section id="game-over-progression" class="panel go-rewards hidden">
+                <span class="lbl">Recompensas</span>
+                <div class="go-rewards__chips">
+                    <div class="go-chip go-chip--xp"><span class="px go-chip__tag">XP</span><span id="game-over-xp" class="px">+0</span></div>
+                    <div class="go-chip go-chip--coins"><img src="assets/chemi_coin.png" alt="" class="go-chip__coin"><span id="game-over-coins" class="px">+0</span></div>
+                </div>
+                <div class="go-level">
+                    <div class="go-level__text"><span id="game-over-level">Nivel 1 · Novato</span><span id="game-over-xp-text">0 / 100</span></div>
+                    <div class="go-level__track"><i id="game-over-xp-bar" style="width: 0%;"></i></div>
+                </div>
+                <div id="level-up-alert" class="go-levelup hidden">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                    <div class="go-levelup__text">
+                        <span class="px go-levelup__title">¡SUBISTE DE NIVEL!</span>
+                        <span id="level-up-text">Nuevo Título</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="go-actions">
+                <button id="btn-next-campaign" class="btn btn--danger hidden" data-action="nextCampaignLevel">SIGUIENTE HACHEPE<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                <button class="btn btn-p" data-action="restartCurrentGame">JUGAR DE NUEVO<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/></svg></button>
+                <button class="btn" data-action="quitGame">MENÚ PRINCIPAL<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></button>
+            </div>
         </div>
     </section>
 
@@ -767,7 +816,7 @@
             </div>
 
             <!-- Botón de pausa en pantalla (necesario en móvil; también útil con mouse) -->
-            <button type="button" id="mobile-pause-btn" class="hidden" aria-label="Pausar">⏸</button>
+            <button type="button" id="mobile-pause-btn" class="hidden" aria-label="Pausar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg></button>
         </div>
     </div>
 
@@ -795,57 +844,57 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=23"></script>
-    <script src="js/core/storage.js?v=23"></script>
-    <script src="js/core/settings.js?v=23"></script>
-    <script src="js/core/state.js?v=23"></script>
-    <script src="js/data/themes.js?v=23"></script>
-    <script src="js/data/lore.js?v=23"></script>
-    <script src="js/data/achievements.js?v=23"></script>
-    <script src="js/data/shop.js?v=23"></script>
-    <script src="js/data/levels.js?v=23"></script>
-    <script src="js/data/powerups.js?v=23"></script>
-    <script src="js/systems/audio.js?v=23"></script>
-    <script src="js/systems/theme.js?v=23"></script>
-    <script src="js/systems/stats.js?v=23"></script>
-    <script src="js/systems/achievements.js?v=23"></script>
-    <script src="js/systems/progression.js?v=23"></script>
-    <script src="js/systems/input.js?v=23"></script>
-    <script src="js/systems/pointer.js?v=23"></script>
-    <script src="js/game/canvas.js?v=23"></script>
-    <script src="js/game/draw.js?v=23"></script>
-    <script src="js/game/effects.js?v=23"></script>
-    <script src="js/game/balls.js?v=23"></script>
-    <script src="js/game/ai.js?v=23"></script>
-    <script src="js/game/physics.js?v=23"></script>
-    <script src="js/game/match.js?v=23"></script>
-    <script src="js/game/render.js?v=23"></script>
-    <script src="js/game/loop.js?v=23"></script>
-    <script src="js/game/powerups.js?v=23"></script>
-    <script src="js/vfx/trails.js?v=23"></script>
-    <script src="js/vfx/backgrounds.js?v=23"></script>
-    <script src="js/vfx/paddles.js?v=23"></script>
-    <script src="js/vfx/goal-fx.js?v=23"></script>
-    <script src="js/vfx/index.js?v=23"></script>
-    <script src="js/bosses/shared.js?v=23"></script>
-    <script src="js/bosses/chemi.js?v=23"></script>
-    <script src="js/bosses/dani.js?v=23"></script>
-    <script src="js/bosses/duo.js?v=23"></script>
-    <script src="js/bosses/fano.js?v=23"></script>
-    <script src="js/bosses/yisus.js?v=23"></script>
-    <script src="js/bosses/creator.js?v=23"></script>
-    <script src="js/bosses/index.js?v=23"></script>
-    <script src="js/campaign/progress.js?v=23"></script>
-    <script src="js/campaign/menu.js?v=23"></script>
-    <script src="js/campaign/dialogue.js?v=23"></script>
-    <script src="js/campaign/finale.js?v=23"></script>
-    <script src="js/ui/screens.js?v=23"></script>
-    <script src="js/ui/actions.js?v=23"></script>
-    <script src="js/ui/settings-panel.js?v=23"></script>
-    <script src="js/ui/stats-panel.js?v=23"></script>
-    <script src="js/ui/shop-ui.js?v=23"></script>
-    <script src="js/ui/progress-display.js?v=23"></script>
-    <script src="js/main.js?v=23"></script>
+    <script src="js/core/constants.js?v=24"></script>
+    <script src="js/core/storage.js?v=24"></script>
+    <script src="js/core/settings.js?v=24"></script>
+    <script src="js/core/state.js?v=24"></script>
+    <script src="js/data/themes.js?v=24"></script>
+    <script src="js/data/lore.js?v=24"></script>
+    <script src="js/data/achievements.js?v=24"></script>
+    <script src="js/data/shop.js?v=24"></script>
+    <script src="js/data/levels.js?v=24"></script>
+    <script src="js/data/powerups.js?v=24"></script>
+    <script src="js/systems/audio.js?v=24"></script>
+    <script src="js/systems/theme.js?v=24"></script>
+    <script src="js/systems/stats.js?v=24"></script>
+    <script src="js/systems/achievements.js?v=24"></script>
+    <script src="js/systems/progression.js?v=24"></script>
+    <script src="js/systems/input.js?v=24"></script>
+    <script src="js/systems/pointer.js?v=24"></script>
+    <script src="js/game/canvas.js?v=24"></script>
+    <script src="js/game/draw.js?v=24"></script>
+    <script src="js/game/effects.js?v=24"></script>
+    <script src="js/game/balls.js?v=24"></script>
+    <script src="js/game/ai.js?v=24"></script>
+    <script src="js/game/physics.js?v=24"></script>
+    <script src="js/game/match.js?v=24"></script>
+    <script src="js/game/render.js?v=24"></script>
+    <script src="js/game/loop.js?v=24"></script>
+    <script src="js/game/powerups.js?v=24"></script>
+    <script src="js/vfx/trails.js?v=24"></script>
+    <script src="js/vfx/backgrounds.js?v=24"></script>
+    <script src="js/vfx/paddles.js?v=24"></script>
+    <script src="js/vfx/goal-fx.js?v=24"></script>
+    <script src="js/vfx/index.js?v=24"></script>
+    <script src="js/bosses/shared.js?v=24"></script>
+    <script src="js/bosses/chemi.js?v=24"></script>
+    <script src="js/bosses/dani.js?v=24"></script>
+    <script src="js/bosses/duo.js?v=24"></script>
+    <script src="js/bosses/fano.js?v=24"></script>
+    <script src="js/bosses/yisus.js?v=24"></script>
+    <script src="js/bosses/creator.js?v=24"></script>
+    <script src="js/bosses/index.js?v=24"></script>
+    <script src="js/campaign/progress.js?v=24"></script>
+    <script src="js/campaign/menu.js?v=24"></script>
+    <script src="js/campaign/dialogue.js?v=24"></script>
+    <script src="js/campaign/finale.js?v=24"></script>
+    <script src="js/ui/screens.js?v=24"></script>
+    <script src="js/ui/actions.js?v=24"></script>
+    <script src="js/ui/settings-panel.js?v=24"></script>
+    <script src="js/ui/stats-panel.js?v=24"></script>
+    <script src="js/ui/shop-ui.js?v=24"></script>
+    <script src="js/ui/progress-display.js?v=24"></script>
+    <script src="js/main.js?v=24"></script>
 </body>
 
 </html>

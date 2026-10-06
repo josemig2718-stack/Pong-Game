@@ -50,6 +50,7 @@ function updateMusicVolume(val) {
  */
 function toggleMusic(enabled) {
     setMusicEnabled(enabled);
+    syncAudioToggles();
     if (enabled) {
         // Reanudar la música que corresponda según el estado actual
         if (state.isPlaying) {
@@ -89,7 +90,23 @@ function updateBallSpeed(val) {
  */
 function toggleSfx(enabled) {
     setSfxEnabled(enabled);
+    syncAudioToggles();
     if (enabled) playTone(500, 'triangle', 0.05);
+}
+
+/**
+ * Música y efectos tienen interruptor en Configuración y en la pausa:
+ * los dos llaman a las mismas funciones y aquí se igualan.
+ */
+function syncAudioToggles() {
+    ['music-toggle', 'pause-music-toggle'].forEach(id => {
+        const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+        if (el) el.checked = settings.musicEnabled;
+    });
+    ['sfx-toggle', 'pause-sfx-toggle'].forEach(id => {
+        const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+        if (el) el.checked = settings.sfxEnabled;
+    });
 }
 
 /**
@@ -148,10 +165,9 @@ function populateSettingsUI() {
     markDifficultyLabel();
     input('volume-slider').value          = String(settings.volume);
     document.getElementById('vol-display').textContent      = `${settings.volume}%`;
-    input('sfx-toggle').checked           = settings.sfxEnabled;
+    syncAudioToggles();
     input('crt-toggle').checked           = settings.crtEffect;
     input('shake-toggle').checked         = settings.screenShake;
-    input('music-toggle').checked         = settings.musicEnabled;
     input('music-volume-slider').value    = String(settings.musicVolume);
     document.getElementById('music-vol-display').textContent = `${settings.musicVolume}%`;
     input('mouse-toggle').checked         = settings.mouseControl;

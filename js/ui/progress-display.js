@@ -30,8 +30,14 @@ function updateProgressionDisplay() {
         if (sessionXPGained > 0 || sessionCoinsGained > 0) {
             gameOverProgression.classList.remove('hidden');
 
-            document.getElementById('game-over-xp').textContent = `+${sessionXPGained} XP`;
-            document.getElementById('game-over-coins').innerHTML = `+${sessionCoinsGained} <img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain" style="vertical-align: text-top;">`;
+            setMenuText('game-over-xp', `+${sessionXPGained}`);
+            setMenuText('game-over-coins', `+${sessionCoinsGained}`);
+
+            // Nivel tras la partida, con los mismos datos que el menú
+            setMenuText('game-over-level', `Nivel ${lvl.level} · ${lvl.title}`);
+            setMenuText('game-over-xp-text', isMaxLevel ? 'Nivel máximo' : `${prog.current} / ${prog.required}`);
+            const goBar = document.getElementById('game-over-xp-bar');
+            if (goBar) goBar.style.width = `${prog.percentage}%`;
 
             const alertEl = document.getElementById('level-up-alert');
             if (sessionLeveledUp) {
