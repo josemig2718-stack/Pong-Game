@@ -1166,6 +1166,50 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
     #mobile-pause-btn { top: auto; bottom: 0; }
 }
 
+/* Píldora del power-up activo: abajo, en el lado del jugador afectado.
+   --pu-color y data-side los pone updatePowerupPill(). En pantallas
+   pequeñas se queda en icono, barra y segundos. */
+.powerup-pill {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100% - 24px);
+    padding: 8px 14px 8px 8px;
+    border-radius: 10px;
+    background: rgba(6, 7, 12, 0.8);
+    border: 1px solid color-mix(in srgb, var(--pu-color, #38BDF8) 50%, transparent);
+    line-height: normal;
+    pointer-events: none;
+}
+.powerup-pill[data-side="p2"] { left: auto; right: 12px; }
+.powerup-pill__icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--pu-color, #38BDF8);
+    color: #06070C;
+}
+.powerup-pill__icon .ico { width: 16px; height: 16px; }
+.powerup-pill__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.powerup-pill__name { font-size: 9px; text-transform: uppercase; white-space: nowrap; color: color-mix(in srgb, var(--pu-color, #38BDF8) 40%, #fff); }
+.powerup-pill__bar { display: block; width: 120px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.powerup-pill__bar i { display: block; height: 100%; border-radius: 2px; background: var(--pu-color, #38BDF8); }
+.powerup-pill__secs { font-size: 10px; color: color-mix(in srgb, var(--pu-color, #38BDF8) 40%, #fff); }
+@media (max-width: 600px), (max-height: 500px) {
+    .powerup-pill { left: 6px; bottom: 6px; gap: 8px; padding: 5px 10px 5px 5px; }
+    .powerup-pill[data-side="p2"] { right: 6px; }
+    .powerup-pill__icon { width: 24px; height: 24px; border-radius: 6px; }
+    .powerup-pill__name { display: none; }
+    .powerup-pill__bar { width: 60px; }
+}
+
 /* Aviso de "gira tu dispositivo": solo en pantallas táctiles y estrechas
    en orientación vertical. No bloquea el juego, solo sugiere. */
 #orientation-hint {

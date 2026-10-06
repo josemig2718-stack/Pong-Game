@@ -36,6 +36,7 @@ function initPowerups() {
     powerupsThisGame = 0;
     // Tiempo inicial aleatorio entre 8 y 15 segundos
     powerupCooldownMs = 8000 + Math.random() * 7000;
+    updatePowerupPill();   // la de la partida anterior no sigue a la vista
 }
 
 /**
@@ -357,51 +358,41 @@ function renderPowerup(ctx) {
     ctx.restore();
 }
 
+/** Lo último que se pintó en la píldora, para tocar el DOM solo si cambia. */
+let powerupPillKey = '';
+
 /**
- * Renderiza el indicador de efecto activo en la interfaz
- * @param {CanvasRenderingContext2D} ctx Contexto 2D
- * @param {number} canvasWidth Ancho del canvas
+ * Píldora del efecto activo (#powerup-pill, sobre el campo y en el lado
+ * del jugador afectado): icono, nombre, barra y segundos restantes. Los
+ * efectos instantáneos no tienen píldora.
  */
-function renderActiveEffectHUD(ctx, canvasWidth) {
-    if (!activeEffect || activeEffect.type.duration === 0) return;
-
-    const progress = activeEffect.remainingMs / activeEffect.type.duration;
-    const width = 80;
-    const height = 20;
-    const padding = 20;
-
-    // Determinar posición (izquierda p1, derecha p2)
-    let x, y = padding;
-    if (activeEffect.target === 'p1') {
-        x = padding;
-    } else {
-        x = canvasWidth - width - padding;
+function updatePowerupPill() {
+    const pill = document.getElementById('powerup-pill');
+    if (!pill) return;
+    if (!activeEffect || activeEffect.type.duration === 0) {
+        if (powerupPillKey) pill.classList.add('hidden');
+        powerupPillKey = '';
+        return;
     }
 
-    ctx.save();
+    const type = activeEffect.type;
+    const pct = Math.max(0, Math.round(activeEffect.remainingMs / type.duration * 100));
+    const secs = Math.max(0, Math.ceil(activeEffect.remainingMs / 1000));
+    const who = `${type.id}|${activeEffect.target}`;
+    const key = `${who}|${pct}|${secs}`;
+    if (key === powerupPillKey) return;
 
-    // Fondo de la barra
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(x, y, width, height);
-
-    // Relleno de la barra (progreso)
-    ctx.fillStyle = activeEffect.type.color;
-    ctx.fillRect(x, y, width * progress, height);
-
-    // Borde
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, width, height);
-
-    // Emoji
-    ctx.font = '16px Arial';
-    ctx.textAlign = activeEffect.target === 'p1' ? 'left' : 'right';
-    ctx.textBaseline = 'middle';
-
-    const emojiX = activeEffect.target === 'p1' ? x + width + 5 : x - 5;
-    ctx.fillText(activeEffect.type.emoji, emojiX, y + height / 2);
-
-    ctx.restore();
+    if (!powerupPillKey.startsWith(who + '|')) {
+        pill.style.setProperty('--pu-color', type.color);
+        pill.dataset.side = activeEffect.target;
+        pill.querySelector('.powerup-pill__icon').innerHTML =
+            `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${type.icon}"/></svg>`;
+        pill.querySelector('.powerup-pill__name').textContent = type.name;
+        pill.classList.remove('hidden');
+    }
+    /** @type {HTMLElement} */ (pill.querySelector('.powerup-pill__bar i')).style.width = `${pct}%`;
+    pill.querySelector('.powerup-pill__secs').textContent = `${secs}s`;
+    powerupPillKey = key;
 }
 
 /**
