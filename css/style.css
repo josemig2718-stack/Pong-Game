@@ -917,41 +917,6 @@ input[type=range] {
     padding: 22px 24px;
 }
 
-/* Canvas del juego — tamaño fijo controlado por JS, sin auto-grow */
-#game-container {
-    touch-action: none;
-}
-canvas {
-    display: block;
-    margin: 0 auto;
-    border: 2px solid rgba(var(--primary-rgb), 0.5);
-    border-radius: 10px;
-    box-shadow: 0 0 40px rgba(var(--primary-rgb), 0.18), inset 0 0 30px rgba(0, 0, 0, 0.6);
-    max-width: 100%;
-    height: auto;
-    background: #000;
-}
-
-/* Insignia del modo sobre el canvas. resizeCanvas() resta su altura:
-   borde de 1px, 6px de relleno y 18px de línea dan la misma caja que
-   tenía antes del rediseño, así que el canvas no cambia de tamaño. */
-.mode-badge {
-    font-family: var(--font-display);
-    font-size: 9px;
-    line-height: 18px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    color: var(--primary);
-    background: rgba(6, 7, 12, 0.8);
-    border: 1px solid rgba(var(--primary-rgb), 0.35);
-    border-radius: 6px;
-    padding: 6px 12px;
-}
-
 /* ==================================================================
    Estructura general de pantallas
    ================================================================== */
@@ -1037,68 +1002,187 @@ canvas {
 .gap-6 { gap: 24px; }
 
 /* ==================================================================
-   Controles táctiles (móvil)
+   Partida: el HUD va en el DOM, fuera del campo
    ------------------------------------------------------------------
-   El esquema de teclado no cambia en absoluto; esto solo añade una
-   capa adicional de control por arrastre que convive con él.
+   resizeCanvas() (game/canvas.js) elige la disposición y la marca en
+   data-layout. Con data-measuring, la celda del campo ocupa todo el
+   sitio libre para medirla; después, las pistas miden exactamente el
+   campo (--field-w / --field-h) y el HUD queda pegado a él.
+     top   escritorio y tablet: J1 · modo y tiempo · rival · pausa / campo
+     sides horizontal bajo:     columna J1 | campo | columna rival
+     stack vertical:            modo + pausa / tarjetas / campo / tiempo /
+                                píldora / aviso de girar el teléfono
+   El contenedor no lleva position ni z-index: el diálogo de campaña
+   (z-index 50) tiene que poder quedar por encima del fin de partida.
    ================================================================== */
+#game-container {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    gap: 14px;
+    padding: 20px;
+    justify-content: center;
+    align-content: center;
+    touch-action: none;
+    font-family: var(--font-body);
+    color: var(--text);
+}
 
-/* Envoltorio relativo para poder posicionar indicadores y botones
-   encima del <canvas> sin afectar su tamaño ni su posición. */
+/* El campo. Su tamaño CSS lo pone resizeCanvas(); el lienzo es siempre
+   de 800×600. El wrapper mide lo mismo que el canvas, así el diálogo y
+   los avisos táctiles se colocan sobre el campo. */
 #canvas-wrapper {
+    grid-area: field;
+    place-self: center;
     position: relative;
-    display: inline-block;
     line-height: 0;
+    min-width: 0;
+    min-height: 0;
+}
+#game-container[data-measuring] #canvas-wrapper { place-self: stretch; }
+#canvas-wrapper canvas {
+    display: block;
+    touch-action: none;
+    border: 2px solid rgba(var(--primary-rgb), 0.55);
+    border-radius: 8px;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.02), 0 0 60px rgba(var(--primary-rgb), 0.2);
+    background: #000;
+}
+
+/* --- Piezas del HUD ---------------------------------------------- */
+.hud-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
     max-width: 100%;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(14, 17, 26, 0.88);
+    color: #B6BDCC;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-#canvas-wrapper canvas { touch-action: none; }
+.hud-chip .ico { width: 14px; height: 14px; }
+.hud-chip--mode { grid-area: mode; justify-self: center; display: block; line-height: 28px; color: var(--primary); border-color: rgba(var(--primary-rgb), 0.45); }
+.hud-chip--rally { color: #FB923C; border-color: rgba(251, 146, 60, 0.4); }
+.hud-stats { grid-area: stats; display: flex; justify-content: center; gap: 8px; min-width: 0; }
 
-/* Contenedor de personajes Modo Hachepe */
-#hachepe-characters {
-    position: absolute;
-    bottom: 100%; /* Exactamente sobre el borde superior del canvas */
-    left: 10px;
-    right: 10px;
+.hud-card {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end; /* Alinear abajo para que pisen el borde */
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    height: 76px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: rgba(14, 17, 26, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    --hud-color: #CBD5E1;
+}
+.hud-card--p1 { grid-area: p1; --hud-color: var(--primary); border-color: rgba(var(--primary-rgb), 0.35); }
+.hud-card--p2 { grid-area: p2; flex-direction: row-reverse; }
+body[data-game-mode="local"] .hud-card--p2 { --hud-color: var(--p2); }
+#game-container[data-health] .hud-card { display: none; }
+
+.hud-card__badge {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--hud-color);
+    background: #121621;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+.hud-card--p1 .hud-card__badge { background: rgba(var(--primary-rgb), 0.16); border-color: rgba(var(--primary-rgb), 0.5); }
+.hud-card__badge .ico { width: 20px; height: 20px; }
+.hud-card__badge img { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+
+.hud-card__who { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
+.hud-card--p2 .hud-card__who { align-items: flex-end; }
+.hud-card__name { font-size: 11px; line-height: 1.3; color: var(--hud-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hud-card--p1 .hud-card__name { color: var(--text); }
+.hud-card__score { font-size: 36px; line-height: 1; color: var(--hud-color); }
+.hud-card--p1 .hud-card__score { text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.6); }
+
+/* Una marca por punto necesario: encogen si hay muchas (Hachepe: 10) */
+.hud-pips { display: flex; gap: 4px; width: 100%; max-width: 100%; }
+.hud-card--p2 .hud-pips { justify-content: flex-end; }
+.hud-pips i { flex: 0 1 16px; min-width: 3px; height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+.hud-pips i.is-on { background: var(--hud-color); }
+.hud-card--p1 .hud-pips i.is-on { box-shadow: 0 0 6px var(--hud-color); }
+
+/* Modo Hachepe: los seis personajes, tres en cada tarjeta */
+.hud-crew { display: none; flex: none; gap: 2px; align-items: flex-end; }
+.hud-crew img { width: 28px; height: 28px; object-fit: contain; image-rendering: pixelated; }
+body[data-game-mode="hachepe"] .hud-crew { display: flex; }
+body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
+
+#mobile-pause-btn {
+    grid-area: pause;
+    align-self: center;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #121621;
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 3px 0 #020305;
+    transition: border-color .15s ease;
+}
+#mobile-pause-btn.hidden { display: none; }
+#mobile-pause-btn:hover { border-color: var(--primary); }
+#mobile-pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #020305; }
+#mobile-pause-btn .ico { width: 20px; height: 20px; }
+
+/* Píldora del power-up activo. --pu-color y data-side los pone
+   updatePowerupPill(). */
+.powerup-pill {
+    grid-area: pill;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 14px 8px 8px;
+    border-radius: 10px;
+    background: rgba(6, 10, 20, 0.82);
+    border: 1px solid color-mix(in srgb, var(--pu-color, #38BDF8) 55%, transparent);
+    line-height: normal;
     pointer-events: none;
-    z-index: 5;
-    margin-bottom: -2px; /* Para superponerse justo en el borde de 2px del canvas */
 }
-
-/* .hidden (Tailwind) pierde contra el display:flex del id: esta regla lo restablece */
-#hachepe-characters.hidden {
-    display: none !important;
+.powerup-pill__icon {
+    width: 30px;
+    height: 30px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--pu-color, #38BDF8);
+    color: #06101F;
 }
+.powerup-pill__icon .ico { width: 18px; height: 18px; stroke-width: 2.4; }
+.powerup-pill__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.powerup-pill__name, .powerup-pill__secs { color: color-mix(in srgb, var(--pu-color, #38BDF8) 40%, #fff); white-space: nowrap; }
+.powerup-pill__name { font-size: 9px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+.powerup-pill__secs { font-size: 10px; }
+.powerup-pill__bar { display: block; width: 120px; max-width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.powerup-pill__bar i { display: block; height: 100%; border-radius: 2px; background: var(--pu-color, #38BDF8); }
 
-.hachepe-group {
-    display: flex;
-    gap: 5px; /* Reducido para que quepan mejor en celular */
-    align-items: flex-end;
-}
-
-.hachepe-group img {
-    height: 10vh; /* Altura responsiva basada en la pantalla */
-    max-height: 70px;
-    min-height: 35px;
-    width: auto;
-    object-fit: contain;
-}
-
-/* Escalado para móviles pequeños para que no se monten */
-@media (max-width: 600px) {
-    #hachepe-characters {
-        left: 0;
-        right: 0;
-    }
-    .hachepe-group { gap: 0px; }
-}
-
-/* Indicaciones de "toca y arrastra" que se muestran al iniciar la
-   partida y desaparecen en cuanto el jugador correspondiente toca
-   la pantalla por primera vez. Solo tienen sentido en dispositivos
-   táctiles; en escritorio permanecen ocultas. */
+/* Indicaciones de "toca y arrastra": solo en táctil, desaparecen en
+   cuanto ese jugador toca la pantalla. En VS CPU no hay jugador 2. */
 .touch-hint {
     display: none;
     position: absolute;
@@ -1107,140 +1191,174 @@ canvas {
     width: 50%;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 18%;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
     pointer-events: none;
-    color: rgba(255, 255, 255, 0.55);
-    font-family: var(--font-body);
+    color: #5B6478;
+    font-size: 11px;
     font-weight: 600;
-    font-size: 0.65rem;
-    letter-spacing: 1px;
+    letter-spacing: .14em;
+    line-height: 1.4;
     opacity: 1;
     transition: opacity 0.4s ease;
 }
-.touch-hint span { font-size: 1.6rem; animation: hint-bounce 1.4s ease-in-out infinite; }
-.touch-hint p { margin: 0; padding: 0 6px; text-align: center; font-size: 0.6rem; }
+.touch-hint .ico { width: 22px; height: 22px; color: rgba(255, 255, 255, 0.45); animation: hint-bounce 1.4s ease-in-out infinite; }
+.touch-hint p { margin: 0; padding: 0 8px; text-align: center; }
 .touch-hint--left { left: 0; }
 .touch-hint--right { right: 0; }
 .touch-hint--gone { opacity: 0; }
-
 @keyframes hint-bounce {
     0%, 100% { transform: translateY(-6px); }
     50% { transform: translateY(6px); }
 }
-
 body.touch-device .touch-hint { display: flex; }
-/* En modo VS CPU no existe P2 humano: el hint derecho no aplica */
-body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
+body.touch-device:not([data-game-mode="local"]) .touch-hint--right { display: none; }
 
-/* Botón de pausa flotante sobre el canvas. Se muestra siempre que hay
-   una partida en curso (útil también con mouse/trackpad), pero es
-   indispensable en móvil, donde no existe la tecla ESC. */
-#mobile-pause-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, .12);
-    background: rgba(18, 22, 33, 0.85);
-    color: var(--text);
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 3px 0 #020305;
-    transition: border-color .15s ease;
-}
-#mobile-pause-btn:hover { border-color: var(--primary); }
-#mobile-pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #020305; }
-#mobile-pause-btn .ico { width: 18px; height: 18px; stroke-width: 2.5; }
-/* Con margen a los lados (pantalla apaisada) sale del campo, a la
-   derecha: arriba en escritorio, abajo en el móvil horizontal. */
-@media (min-aspect-ratio: 3/2) {
-    #mobile-pause-btn { right: auto; left: calc(100% + 16px); top: 0; width: 52px; height: 52px; border-radius: 12px; }
-}
-@media (min-aspect-ratio: 3/2) and (max-height: 500px) {
-    #mobile-pause-btn { top: auto; bottom: 0; }
-}
-
-/* Píldora del power-up activo: abajo, en el lado del jugador afectado.
-   --pu-color y data-side los pone updatePowerupPill(). En pantallas
-   pequeñas se queda en icono, barra y segundos. */
-.powerup-pill {
-    position: absolute;
-    left: 12px;
-    bottom: 12px;
-    z-index: 6;
-    display: flex;
+/* Aviso de girar el teléfono: solo en vertical y en pantallas táctiles */
+#orientation-hint {
+    grid-area: hint;
+    display: none;
     align-items: center;
     gap: 12px;
-    max-width: calc(100% - 24px);
-    padding: 8px 14px 8px 8px;
-    border-radius: 10px;
-    background: rgba(6, 7, 12, 0.8);
-    border: 1px solid color-mix(in srgb, var(--pu-color, #38BDF8) 50%, transparent);
-    line-height: normal;
-    pointer-events: none;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(14, 17, 26, 0.88);
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    font-size: 13px;
+    line-height: 1.4;
+    color: #B6BDCC;
 }
-.powerup-pill[data-side="p2"] { left: auto; right: 12px; }
-.powerup-pill__icon {
+#orientation-hint > .ico { color: var(--primary); }
+#orientation-hint span { flex: 1; }
+#orientation-hint-close {
     width: 32px;
     height: 32px;
     flex: none;
     display: grid;
     place-items: center;
+    border: 0;
     border-radius: 8px;
-    background: var(--pu-color, #38BDF8);
-    color: #06070C;
-}
-.powerup-pill__icon .ico { width: 16px; height: 16px; }
-.powerup-pill__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.powerup-pill__name { font-size: 9px; text-transform: uppercase; white-space: nowrap; color: color-mix(in srgb, var(--pu-color, #38BDF8) 40%, #fff); }
-.powerup-pill__bar { display: block; width: 120px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.powerup-pill__bar i { display: block; height: 100%; border-radius: 2px; background: var(--pu-color, #38BDF8); }
-.powerup-pill__secs { font-size: 10px; color: color-mix(in srgb, var(--pu-color, #38BDF8) 40%, #fff); }
-@media (max-width: 600px), (max-height: 500px) {
-    .powerup-pill { left: 6px; bottom: 6px; gap: 8px; padding: 5px 10px 5px 5px; }
-    .powerup-pill[data-side="p2"] { right: 6px; }
-    .powerup-pill__icon { width: 24px; height: 24px; border-radius: 6px; }
-    .powerup-pill__name { display: none; }
-    .powerup-pill__bar { width: 60px; }
-}
-
-/* Aviso de "gira tu dispositivo": solo en pantallas táctiles y estrechas
-   en orientación vertical. No bloquea el juego, solo sugiere. */
-#orientation-hint {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    max-width: 480px;
-    font-family: var(--font-body);
-    font-size: 0.75rem;
-    background: rgba(var(--primary-rgb), 0.12);
-    border: 1px solid rgba(var(--primary-rgb), 0.4);
-    border-radius: 10px;
-    padding: 8px 14px;
-    color: var(--text);
-}
-#orientation-hint-close {
-    background: none;
-    border: none;
-    color: inherit;
-    font-size: 0.9rem;
+    background: transparent;
+    color: var(--muted);
     cursor: pointer;
-    opacity: 0.7;
 }
-#orientation-hint-close:hover { opacity: 1; }
+#orientation-hint-close .ico { width: 16px; height: 16px; }
+#orientation-hint-close:hover { color: var(--text); }
+body.touch-device #game-container[data-layout="stack"] #orientation-hint { display: flex; }
 #orientation-hint.orientation-hint--dismissed { display: none !important; }
 
-@media (pointer: coarse) and (orientation: portrait) and (max-width: 900px) {
-    body.touch-device #orientation-hint { display: flex; }
+/* --- top: escritorio y tablet ------------------------------------- */
+#game-container[data-layout="top"] {
+    width: min(100%, calc(var(--field-w, 100vw) + 40px));
+    margin: 0 auto;
+    justify-content: stretch;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto var(--field-h, minmax(0, 1fr));
+    grid-template-areas:
+        "p1 mode p2 pause"
+        "p1 stats p2 pause"
+        "field field field field";
+    column-gap: 16px;
+    row-gap: 8px;
 }
+#game-container[data-layout="top"][data-measuring] { width: 100%; grid-template-rows: auto auto minmax(0, 1fr); }
+#game-container[data-layout="top"] #canvas-wrapper { margin-top: 6px; }
+#game-container[data-layout="top"] .hud-card { grid-row: 1 / 3; }
+#game-container[data-layout="top"] #mobile-pause-btn { grid-row: 1 / 3; }
+#game-container[data-layout="top"] .powerup-pill { grid-area: field; align-self: end; justify-self: start; margin: 16px; }
+#game-container[data-layout="top"] .powerup-pill[data-side="p2"] { justify-self: end; }
+/* Sin la pelea con barra de vida, el centro no se queda solo */
+#game-container[data-layout="top"][data-health] { grid-template-areas: "mode mode mode pause" "stats stats stats pause" "field field field field"; }
+@media (max-width: 900px) {
+    #game-container[data-layout="top"] { column-gap: 10px; }
+    #game-container[data-layout="top"] .hud-card { gap: 10px; padding: 0 12px; height: 64px; }
+    #game-container[data-layout="top"] .hud-card__badge { display: none; }
+    #game-container[data-layout="top"] .hud-card__score { font-size: 28px; }
+    #game-container[data-layout="top"] .hud-crew img { width: 22px; height: 22px; }
+    #game-container[data-layout="top"] .hud-mode__diff { display: none; }
+}
+
+/* --- sides: horizontal con poca altura ----------------------------- */
+#game-container[data-layout="sides"] {
+    padding: 6px 0;
+    column-gap: 0;
+    row-gap: 10px;
+    justify-content: stretch;
+    align-content: stretch;
+    grid-template-columns: clamp(130px, 21vw, 200px) minmax(0, 1fr) clamp(130px, 21vw, 200px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "mode field stats"
+        "p1 field p2"
+        "pill field pause";
+}
+#game-container[data-layout="sides"] .hud-mode__diff,
+#game-container[data-layout="sides"] .hud-chip--time,
+#game-container[data-layout="sides"] .hud-card__badge { display: none; }
+#game-container[data-layout="sides"] .hud-chip { height: 26px; padding: 0 10px; font-size: 11px; }
+#game-container[data-layout="sides"] .hud-chip--mode { line-height: 24px; align-self: start; margin-top: 8px; }
+#game-container[data-layout="sides"] .hud-stats { align-self: start; margin-top: 8px; }
+#game-container[data-layout="sides"] .hud-card {
+    align-self: center;
+    flex-direction: column;
+    gap: 8px;
+    height: auto;
+    margin: 0 12px;
+    padding: 12px 8px;
+}
+#game-container[data-layout="sides"] .hud-card__who { display: contents; }
+#game-container[data-layout="sides"] .hud-card__name { order: 1; font-size: 9px; }
+#game-container[data-layout="sides"] .hud-card__score { order: 2; font-size: 38px; }
+#game-container[data-layout="sides"] .hud-crew { order: 3; }
+#game-container[data-layout="sides"] .hud-crew img { width: 24px; height: 24px; }
+#game-container[data-layout="sides"] .hud-pips { order: 4; gap: 3px; justify-content: center; }
+#game-container[data-layout="sides"] .hud-pips i { flex-basis: 12px; height: 5px; }
+#game-container[data-layout="sides"] #mobile-pause-btn { align-self: end; justify-self: center; margin-bottom: 8px; border-radius: 14px; }
+#game-container[data-layout="sides"] .powerup-pill { align-self: end; margin: 0 12px 8px; gap: 8px; padding: 7px 10px 7px 7px; }
+#game-container[data-layout="sides"] .powerup-pill__icon { width: 26px; height: 26px; border-radius: 7px; }
+#game-container[data-layout="sides"] .powerup-pill__icon .ico { width: 16px; height: 16px; }
+#game-container[data-layout="sides"] .powerup-pill__body { flex: 1; }
+#game-container[data-layout="sides"] .powerup-pill__name { font-size: 7px; }
+#game-container[data-layout="sides"] .powerup-pill__bar { width: 100%; }
+#game-container[data-layout="sides"] .powerup-pill__secs { font-size: 8px; }
+
+/* --- stack: vertical ----------------------------------------------- */
+#game-container[data-layout="stack"] {
+    padding: 22px 16px;
+    justify-content: stretch;
+    align-content: stretch;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) var(--field-h, auto) auto 48px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "mode pause"
+        "p1 p2"
+        ". ."
+        "field field"
+        "stats stats"
+        "pill pill"
+        ". ."
+        "hint hint";
+    column-gap: 10px;
+    row-gap: 14px;
+}
+#game-container[data-layout="stack"][data-measuring] { grid-template-rows: auto auto 0 minmax(0, 1fr) auto 48px 0 auto; }
+#game-container[data-layout="stack"] .hud-chip--mode { justify-self: start; align-self: center; height: 28px; line-height: 26px; padding: 0 11px; }
+#game-container[data-layout="stack"] .hud-mode__diff,
+#game-container[data-layout="stack"] .hud-card__badge { display: none; }
+#game-container[data-layout="stack"] #mobile-pause-btn { justify-self: end; width: 48px; height: 48px; }
+#game-container[data-layout="stack"] .hud-card { gap: 10px; height: auto; padding: 12px; }
+#game-container[data-layout="stack"] .hud-card__score { font-size: 30px; }
+#game-container[data-layout="stack"] .hud-pips { gap: 3px; }
+#game-container[data-layout="stack"] .hud-pips i { flex-basis: 11px; height: 5px; }
+/* Modo Hachepe: los personajes en su propia fila, sobre el nombre */
+#game-container[data-layout="stack"] .hud-card { flex-wrap: wrap; row-gap: 6px; }
+#game-container[data-layout="stack"] .hud-crew { order: -1; flex-basis: 100%; }
+#game-container[data-layout="stack"] .hud-card--p2 .hud-crew { justify-content: flex-end; }
+#game-container[data-layout="stack"] .hud-crew img { width: 22px; height: 22px; }
+#game-container[data-layout="stack"] .hud-chip { height: 28px; padding: 0 11px; }
+#game-container[data-layout="stack"] .powerup-pill { align-self: center; padding-right: 12px; }
+#game-container[data-layout="stack"] .powerup-pill__body { flex: 1; }
+#game-container[data-layout="stack"] .powerup-pill__bar { width: 100%; }
 
 /* ==================================================================
    Responsive para pantallas pequeñas (móvil)
@@ -1282,12 +1400,6 @@ body.touch-device[data-game-mode="cpu"] .touch-hint--right { display: none; }
         padding: 12px 16px;
         font-size: 0.7rem !important;
     }
-}
-
-/* Game container: forzar tamaño basado en viewport, no en contenido */
-#game-container {
-    max-height: 100vh;
-    max-height: 100dvh;
 }
 
 /* ==================================================================

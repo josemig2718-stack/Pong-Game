@@ -216,6 +216,7 @@ function render() {
     renderPowerup(ctx);
     renderShield(ctx);
     updatePowerupPill();   // el efecto activo se muestra en el DOM, no en el canvas
+    updateHud();           // marcador, tiempo y rally del HUD (DOM)
 
     drawParticles();
 

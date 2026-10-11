@@ -26,7 +26,6 @@ function showScreen(screenId) {
 
     if (screenId === 'main-menu') {
         document.getElementById('game-container').classList.add('hidden');
-        document.getElementById('game-container').classList.remove('flex');
         updateMenuTiles();
 
         // Música del menú principal

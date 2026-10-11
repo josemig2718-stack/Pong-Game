@@ -142,21 +142,9 @@ function startGame(mode) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
     syncResultClass();
 
-    const container = document.getElementById('game-container');
-    container.classList.remove('hidden');
-    container.classList.add('flex');
-
-    const badgeCfg = bossConfig();
-    document.getElementById('mode-badge').textContent = badgeCfg && badgeCfg.useHealth
-        ? matchModeLabel()
-        : `${matchModeLabel()} · a ${matchTargetScore()}`;
+    document.getElementById('game-container').classList.remove('hidden');
+    // Los personajes del Modo Hachepe y los colores del HUD salen de aquí (CSS)
     document.body.dataset.gameMode = mode;
-
-    const hachepeChars = document.getElementById('hachepe-characters');
-    if (hachepeChars) {
-        if (mode === 'hachepe') hachepeChars.classList.remove('hidden');
-        else hachepeChars.classList.add('hidden');
-    }
 
     // Resetear mecánicas de jefes: siempre se apaga todo, y el jefe en
     // curso (si lo hay) arma lo suyo en bossInit().
@@ -164,6 +152,7 @@ function startGame(mode) {
     p2Twin.retreatMs = 0;
     bossInit();
 
+    setupHud();
     resizeCanvas();
     resetBall(true);
 
@@ -204,9 +193,6 @@ function quitGame() {
     // Música
     stopGameplayMusic();
     playMenuMusic();
-
-    const hachepeChars = document.getElementById('hachepe-characters');
-    if (hachepeChars) hachepeChars.classList.add('hidden');
 
     showScreen('main-menu');
 }
