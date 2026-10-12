@@ -2,9 +2,10 @@
  * game/render.js
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
- * fondo → red (o los corazones de la arena rotada) → jefe → estelas y
- * bolas → paletas → power-ups → partículas → capa superior del jefe →
- * efecto de gol → cuenta regresiva → scanlines. El marcador, el tiempo,
+ * fondo → red (o los corazones de la arena rotada) → jefe → estelas, aura
+ * de la bola gigante, líneas de velocidad y bolas → paletas → power-ups y
+ * sus estallidos → partículas → viñeta de cámara lenta → capa superior del
+ * jefe → efecto de gol → cuenta atrás o "¡YA!" → scanlines. El marcador, el tiempo,
  * el rally y el efecto activo no se dibujan aquí: son el HUD del DOM
  * (updateHud y updatePowerupPill).
  *
@@ -16,14 +17,85 @@
 
 'use strict';
 
-const net = { x: GAME_WIDTH / 2 - 2, width: 4, height: 16 };
-
-/** La red central. Avanza el contador de fotogramas, que la anima. */
+/**
+ * La red central: segmentos de 14 px con el brillo del tema. Avanza el
+ * contador de fotogramas, que la desplaza.
+ */
 function drawNet(color) {
     state.frameCount++;
-    for (let i = 0; i <= GAME_HEIGHT; i += 30) {
-        drawRect(net.x, i + (state.frameCount % 30), net.width, net.height, color);
+    ctx.save();
+    ctx.fillStyle = hexToRgba(color, 0.55);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
+    for (let y = -30; y <= GAME_HEIGHT; y += 30) {
+        ctx.fillRect(GAME_WIDTH / 2 - 2, y + (state.frameCount % 30), 4, 14);
     }
+    ctx.restore();
+}
+
+/** Bola blanca con el brillo del tema. */
+function drawBall(b, color) {
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+/**
+ * Cuenta atrás del saque: el número dentro de un anillo que se vacía cada
+ * segundo, con un pequeño golpe al cambiar de número.
+ * @param {number} msLeft state.serveCountdownMs
+ * @param {number} total  duración total de la cuenta atrás (ms)
+ */
+function drawCountdown(msLeft, total, color) {
+    const secs = Math.ceil(msLeft / 1000);
+    const frac = (msLeft % 1000) / 1000 || 1;   // fracción del segundo actual
+    const cx = GAME_WIDTH / 2, cy = 260;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath(); ctx.arc(cx, cy, 46, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = hexToRgba(color, 0.2);
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(cx, cy, 46, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); ctx.stroke();
+    ctx.shadowBlur = 0;
+    const s = 1 + 0.25 * Math.max(0, frac - 0.8) / 0.2;
+    ctx.translate(cx, cy + 2);
+    ctx.scale(s, s);
+    ctx.font = '36px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(String(secs), 2, 2);
+    ctx.restore();
+}
+
+/** "¡YA!": entra grande y se encoge mientras se desvanece (msLeft: GO_TEXT_MS → 0). */
+function drawGoText(msLeft, color) {
+    const k = msLeft / GO_TEXT_MS;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, msLeft / 300);
+    ctx.translate(GAME_WIDTH / 2, 262);
+    const s = 0.9 + 0.5 * k;
+    ctx.scale(s, s);
+    ctx.font = '40px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillText('¡YA!', 4, 4);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.fillText('¡YA!', 0, 0);
+    ctx.restore();
 }
 
 function drawBallTrail() {
@@ -142,13 +214,7 @@ function render() {
 
         if (bigBall) drawBigBallAura(ctx, b);
         drawSpeedLines(ctx, b, Math.hypot(b.dx, b.dy) / speedMax);
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = themeColor;
-        ctx.shadowBlur = 18;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        drawBall(b, themeColor);
     }
 
     // Paletas: el jugador en el color del tema; el rival gris (CPU, Hachepe
@@ -173,18 +239,13 @@ function render() {
     // Efectos de gol VFX (flash, confeti, shockwave)
     renderGoalVFX(ctx);
 
-    // Cuenta regresiva de saque + previsualización de trayectoria, y "¡YA!"
+    // Cuenta atrás del saque + previsualización de trayectoria, y "¡YA!"
     // al sacar (se desvanece en sus últimos 300 ms)
     if (state.serveCountdownMs > 0) {
-        const secs = Math.ceil(state.serveCountdownMs / 1000);
         drawTrajectoryPreview(themeColor);
-        ctx.globalAlpha = 0.9;
-        drawText(String(secs), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
-        ctx.globalAlpha = 1;
+        drawCountdown(state.serveCountdownMs, SERVE_INITIAL, themeColor);
     } else if (state.goTextMs > 0) {
-        ctx.globalAlpha = 0.9 * Math.min(1, state.goTextMs / 300);
-        drawText('¡YA!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, themeColor, 48);
-        ctx.globalAlpha = 1;
+        drawGoText(state.goTextMs, themeColor);
     }
 
     // Scanlines
