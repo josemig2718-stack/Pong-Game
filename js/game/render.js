@@ -2,10 +2,11 @@
  * game/render.js
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
- * fondo → red/marcador (con sus marcas y el rally) → jefe → estelas y
+ * fondo → red (o los corazones de la arena rotada) → jefe → estelas y
  * bolas → paletas → power-ups → partículas → capa superior del jefe →
- * efecto de gol → cuenta regresiva → scanlines. El efecto activo no se
- * dibuja aquí: es la píldora #powerup-pill del DOM (updatePowerupPill).
+ * efecto de gol → cuenta regresiva → scanlines. El marcador, el tiempo,
+ * el rally y el efecto activo no se dibujan aquí: son el HUD del DOM
+ * (updateHud y updatePowerupPill).
  *
  * Varios renderizadores consumen Math.random (vibración, estelas de
  * fuego/hielo, glitch del Creador), que comparte generador con la
@@ -36,61 +37,6 @@ function drawParticles() {
         ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     });
     ctx.globalAlpha = 1;
-}
-
-/**
- * Una marca por punto necesario para ganar, bajo el marcador de un lado:
- * llenas las conseguidas.
- * @param {number} score
- * @param {number} cx centro del marcador
- * @param {string} color
- */
-function drawScorePips(score, cx, color) {
-    const target = matchTargetScore();
-    const gap = 4;
-    const w = Math.min(14, (GAME_WIDTH / 4 - gap * (target - 1)) / target);
-    let x = cx - (target * w + (target - 1) * gap) / 2;
-    ctx.save();
-    for (let i = 0; i < target; i++) {
-        drawRect(x, 98, w, 6, i < score ? color : 'rgba(255, 255, 255, 0.1)');
-        x += w + gap;
-    }
-    ctx.restore();
-}
-
-const RALLY_ICON = new Path2D('M13 2L4 14h7l-1 8 9-12h-7z');
-
-/**
- * "Rally N" arriba en el centro, desde el segundo golpe seguido. Guarda y
- * repone el estado del contexto: lo que se dibuja después (jefes, VFX)
- * sigue viendo la fuente y los trazos que dejaba el marcador.
- */
-function drawRallyCounter() {
-    if (currentRally < 2) return;
-    const text = `RALLY ${currentRally}`;
-    ctx.save();
-    ctx.font = '12px "Press Start 2P", cursive';
-    const textW = ctx.measureText(text).width;
-    const w = textW + 44;
-    const x = GAME_WIDTH / 2 - w / 2;
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(x, 12, w, 28);
-    ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x + 0.5, 12.5, w - 1, 27);
-
-    ctx.save();
-    ctx.translate(x + 10, 16);
-    ctx.scale(0.83, 0.83);
-    ctx.strokeStyle = '#FB923C';
-    ctx.lineWidth = 2.4;
-    ctx.lineJoin = 'round';
-    ctx.stroke(RALLY_ICON);
-    ctx.restore();
-
-    drawText(text, x + 34 + textW / 2, 32, '#FB923C', 12);
-    ctx.restore();
 }
 
 /** Línea discontinua con la trayectoria de la primera bola (durante el saque). */
@@ -175,13 +121,7 @@ function render() {
     const rotatedArena = bossIsRotatedArena();
 
     if (!rotatedArena) {
-        drawNet(themeColor);
-        // Marcador, sus marcas de puntos y el rally en curso
-        drawText(state.p1Score, GAME_WIDTH / 4, 80, themeColor, 60);
-        drawText(state.p2Score, 3 * GAME_WIDTH / 4, 80, themeColor, 60);
-        drawScorePips(state.p1Score, GAME_WIDTH / 4, themeColor);
-        drawScorePips(state.p2Score, 3 * GAME_WIDTH / 4, '#CBD5E1');
-        drawRallyCounter();
+        drawNet(themeColor);   // el marcador va en el HUD del DOM (game/hud.js)
     } else {
         // Arena rotada: abajo se muestran los fallos restantes del jugador
         const bcfg = bossConfig();
