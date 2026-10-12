@@ -2,7 +2,9 @@
  * data/powerups.js
  * ------------------------------------------------------------------
  * Tipos de power-up. `duration` 0 = efecto instantáneo; `weight` es la
- * probabilidad relativa de aparición.
+ * probabilidad relativa de aparición. Cada tipo tiene un color propio,
+ * distinto de los temas, para reconocerlo de un vistazo, y un glifo que
+ * comparten el orbe del campo y la píldora del efecto activo.
  * ------------------------------------------------------------------
  */
 
@@ -12,20 +14,19 @@
  * @typedef {object} PowerupType
  * @property {string} id
  * @property {string} name      nombre en la píldora del efecto activo
- * @property {string} icon      `d` de un glifo de 24×24 para la píldora
- * @property {string} emoji     icono del power-up en el campo (canvas)
- * @property {string} color     '#rrggbb' (se le añade alfa en hex al dibujar)
+ * @property {string} icon      `d` de un glifo de trazo de 24×24 (orbe del campo y píldora)
+ * @property {string} color     '#rrggbb' del orbe, su estallido, sus partículas y la píldora
  * @property {number} duration  ms; 0 = efecto instantáneo
  * @property {number} weight    probabilidad relativa de aparición
  */
 
 /** @type {PowerupType[]} */
 const POWERUP_TYPES = [
-    { id: 'paddle_xl',   name: 'Paleta grande', icon: 'M11 3h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 8l-2 4 2 4M20 8l2 4-2 4', emoji: '⬆️', color: '#22c55e', duration: 8000, weight: 20 },
-    { id: 'paddle_mini', name: 'Paleta mini',   icon: 'M11 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2zM3 9l3 3-3 3M21 9l-3 3 3 3', emoji: '⬇️', color: '#a855f7', duration: 8000, weight: 20 },
-    { id: 'big_ball',    name: 'Bola gigante',  icon: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12a4 4 0 0 1 4-4', emoji: '🔴', color: '#ef4444', duration: 6000, weight: 15 },
-    { id: 'turbo',       name: 'Turbo',         icon: 'M13 2L4 14h7l-1 8 9-12h-7z', emoji: '⚡', color: '#eab308', duration: 0, weight: 15 },
-    { id: 'shield',      name: 'Escudo',        icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', emoji: '🛡️', color: '#3b82f6', duration: 5000, weight: 10 },
-    { id: 'slowmo',      name: 'Cámara lenta',  icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2', emoji: '🌀', color: '#f97316', duration: 4000, weight: 10 },
-    { id: 'multi_ball',  name: 'Multibola',     icon: 'M4 15a3 3 0 1 0 6 0a3 3 0 1 0-6 0M14 15a3 3 0 1 0 6 0a3 3 0 1 0-6 0M9 7a3 3 0 1 0 6 0a3 3 0 1 0-6 0', emoji: '✨', color: '#ffffff', duration: 0, weight: 10 }
+    { id: 'paddle_xl',   name: 'Paleta grande', icon: 'M10 7h4v10h-4zM12 1.5v3M9.8 3.3L12 1.2l2.2 2.1M12 22.5v-3M9.8 20.7L12 22.8l2.2-2.1', color: '#4ADE80', duration: 8000, weight: 20 },
+    { id: 'paddle_mini', name: 'Paleta mini',   icon: 'M10 9.5h4v5h-4zM12 2v5M9.8 4.8L12 7l2.2-2.2M12 22v-5M9.8 19.2L12 17l2.2 2.2', color: '#C084FC', duration: 8000, weight: 20 },
+    { id: 'big_ball',    name: 'Bola gigante',  icon: 'M6 12a6 6 0 1 0 12 0a6 6 0 1 0-12 0M2.5 2.5l3 3M21.5 2.5l-3 3M2.5 21.5l3-3M21.5 21.5l-3-3', color: '#F87171', duration: 6000, weight: 15 },
+    { id: 'turbo',       name: 'Turbo',         icon: 'M14 2L6.5 13h5.5l-1 9 7.5-11.5H13zM1.5 8.5h3M1 12.5h3.5M1.5 16.5h3', color: '#FACC15', duration: 0, weight: 15 },
+    { id: 'shield',      name: 'Escudo',        icon: 'M12 2.5l7.5 3v5.8c0 5-3.3 8.8-7.5 10.2-4.2-1.4-7.5-5.2-7.5-10.2V5.5zM8.6 12l2.4 2.4 4.4-4.6', color: '#60A5FA', duration: 5000, weight: 10 },
+    { id: 'slowmo',      name: 'Cámara lenta',  icon: 'M6.5 2.5h11M6.5 21.5h11M7.5 2.5v3l4.5 6.5-4.5 6.5v3M16.5 2.5v3L12 12l4.5 6.5v3M10 18.5h4', color: '#FB923C', duration: 4000, weight: 10 },
+    { id: 'multi_ball',  name: 'Multibola',     icon: 'M4 15.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0M14 15.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0M9 7a3 3 0 1 0 6 0a3 3 0 1 0-6 0', color: '#F472B6', duration: 0, weight: 10 }
 ];

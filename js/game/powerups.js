@@ -9,7 +9,10 @@
  * restaura; por eso startGame/quitGame/checkWin también reponen el
  * tamaño de las paletas por si una partida acaba con un efecto activo.
  *
- * Los tipos están en data/powerups.js.
+ * Los tipos están en data/powerups.js. El orbe del campo, el estallido
+ * al recogerlo y el dibujo de los efectos (escudo, aura de la bola
+ * gigante, cámara lenta, líneas de velocidad) están al final; su azar
+ * sale de vfxRandom, nunca de Math.random.
  * ------------------------------------------------------------------
  */
 
@@ -34,6 +37,7 @@ function initPowerups() {
     slowmoActive = false;
     lastHitter = 'p1';
     powerupsThisGame = 0;
+    powerupBursts = [];
     // Tiempo inicial aleatorio entre 8 y 15 segundos
     powerupCooldownMs = 8000 + Math.random() * 7000;
     updatePowerupPill();   // la de la partida anterior no sigue a la vista
@@ -150,8 +154,9 @@ function collectPowerup() {
     const type = activePowerup.type;
     const beneficiary = lastHitter; // 'p1' o 'p2'
 
-    // Partículas y sonido
+    // Partículas, estallido y sonido
     spawnParticles(activePowerup.x, activePowerup.y, type.color, 20);
+    triggerPowerupBurst(activePowerup.x, activePowerup.y, type.color);
     soundEffects.powerupCollect();
 
     // Actualizar contadores
@@ -299,63 +304,13 @@ function powerupCollision(bx, by, bradius, px, py, pradius) {
 }
 
 /**
- * Renderiza el power-up en el campo de juego
+ * Dibuja el power-up del campo: un orbe con el glifo de su tipo y un arco
+ * con la vida que le queda.
  * @param {CanvasRenderingContext2D} ctx Contexto 2D del canvas
  */
 function renderPowerup(ctx) {
     if (!activePowerup) return;
-
-    const remainingTime = activePowerup.maxLifetime - activePowerup.ageMs;
-
-    // Parpadeo cuando queda poco tiempo (< 2000ms)
-    if (remainingTime < 2000 && Math.floor(Date.now() / 200) % 2 === 0) {
-        return;
-    }
-
-    const x = activePowerup.x;
-    const y = activePowerup.y;
-    const radius = 22;
-    const type = activePowerup.type;
-
-    ctx.save();
-
-    // Efecto de pulso en la escala
-    const scale = 1.0 + 0.1 * Math.sin(Date.now() / 300);
-    ctx.translate(x, y);
-    ctx.scale(scale, scale);
-
-    // Configurar resplandor
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = type.color;
-
-    // Dibujar hexágono
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - (Math.PI / 6);
-        const hx = radius * Math.cos(angle);
-        const hy = radius * Math.sin(angle);
-        if (i === 0) ctx.moveTo(hx, hy);
-        else ctx.lineTo(hx, hy);
-    }
-    ctx.closePath();
-
-    // Relleno al 20% de opacidad
-    ctx.fillStyle = type.color + '33'; // 33 en hex es ~20%
-    ctx.fill();
-
-    // Borde al 80% de opacidad
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = type.color + 'CC'; // CC en hex es ~80%
-    ctx.stroke();
-
-    // Dibujar emoji
-    ctx.shadowBlur = 0; // Quitar resplandor para el texto
-    ctx.font = '18px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(type.emoji, 0, 0);
-
-    ctx.restore();
+    drawPowerupOrb(ctx, activePowerup.type, activePowerup.x, activePowerup.y, activePowerup.ageMs, activePowerup.maxLifetime);
 }
 
 /** Lo último que se pintó en la píldora, para tocar el DOM solo si cambia. */
@@ -401,18 +356,204 @@ function updatePowerupPill() {
  */
 function renderShield(ctx) {
     if (!shieldWall) return;
+    drawShieldWall(ctx, shieldWall);
+}
 
+// ------------------------------------------------------------------
+//  Dibujo de los power-ups y de sus efectos (azar: vfxRandom)
+// ------------------------------------------------------------------
+
+/** Color del escudo, el mismo que su orbe y su píldora. */
+const SHIELD_COLOR = POWERUP_TYPES.find((t) => t.id === 'shield').color;
+/** Color del aura de la bola gigante. */
+const BIG_BALL_COLOR = POWERUP_TYPES.find((t) => t.id === 'big_ball').color;
+
+/**
+ * Orbe del power-up en el campo: núcleo oscuro, anillo de color, órbita
+ * punteada que gira, arco de vida restante (parpadea los últimos 2 s) y el
+ * glifo del tipo, el mismo de la píldora. Flota y entra con un rebote.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {PowerupType} type
+ */
+function drawPowerupOrb(ctx, type, x, y, ageMs, maxLifetime) {
+    const now = performance.now();
+    const life = Math.max(0, 1 - ageMs / maxLifetime);
+    const appear = Math.min(1, ageMs / 260);
+    const pop = appear < 1 ? 0.6 + 0.4 * appear + Math.sin(appear * Math.PI) * 0.15 : 1;
+    const bob = Math.sin(now / 420) * 3;
+    const c = type.color;
     ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(pop, pop);
+    // Halo
+    const g = ctx.createRadialGradient(0, 0, 8, 0, 0, 44);
+    g.addColorStop(0, hexToRgba(c, 0.32));
+    g.addColorStop(1, hexToRgba(c, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(-44, -44, 88, 88);
+    // Núcleo
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(11, 15, 23, 0.94)';
+    ctx.fill();
+    ctx.fillStyle = hexToRgba(c, 0.14);
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = c;
+    ctx.stroke();
+    // Órbita punteada que gira
+    ctx.setLineDash([3, 6]);
+    ctx.lineDashOffset = -now / 28;
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = hexToRgba(c, 0.5);
+    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    // Arco de vida: se vacía; en los últimos 2 s parpadea
+    const warn = maxLifetime - ageMs < 2000;
+    ctx.globalAlpha = warn ? 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now / 70)) : 1;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = c;
+    ctx.beginPath(); ctx.arc(0, 0, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * life); ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Glifo
+    ctx.scale(1.12, 1.12);
+    ctx.translate(-12, -12);
+    ctx.lineWidth = 2.1;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = c;
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 8;
+    ctx.stroke(vfxPath(type.icon));
+    ctx.restore();
+}
 
-    // Resplandor
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#3b82f6'; // Color del escudo
+/** Estallidos al recoger un power-up: anillo y 10 chispas en su color. */
+let powerupBursts = [];
+function triggerPowerupBurst(x, y, color) {
+    powerupBursts.push({
+        x, y, color, r: 18, life: 1,
+        sparks: Array.from({ length: 10 }, (_, i) => ({ a: (i / 10) * Math.PI * 2 + vfxRandom() * 0.3, d: 20, v: 3 + vfxRandom() * 2 }))
+    });
+}
+/** Avanza los estallidos (desde updateVFX, también durante el saque). */
+function updatePowerupBursts(dt) {
+    for (const b of powerupBursts) {
+        b.r += 4 * dt;
+        b.life -= 0.045 * dt;
+        for (const s of b.sparks) { s.d += s.v * dt; s.v *= Math.pow(0.92, dt); }
+    }
+    powerupBursts = powerupBursts.filter((b) => b.life > 0);
+}
+function renderPowerupBursts(ctx) {
+    if (powerupBursts.length === 0) return;
+    ctx.save();
+    for (const b of powerupBursts) {
+        ctx.globalAlpha = b.life;
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = b.color;
+        for (const s of b.sparks) {
+            ctx.save();
+            ctx.translate(b.x + Math.cos(s.a) * s.d, b.y + Math.sin(s.a) * s.d);
+            ctx.rotate(s.a);
+            ctx.fillRect(-4, -1, 8, 2);
+            ctx.restore();
+        }
+    }
+    ctx.restore();
+}
 
-    // Relleno con transparencia y posible animación de pulso sutil
-    const opacity = 0.3 + 0.05 * Math.sin(Date.now() / 150);
-    ctx.fillStyle = `rgba(59, 130, 246, ${opacity})`;
+/** Escudo: muro de energía con panal hexagonal y bordes que laten. */
+function drawShieldWall(ctx, wall) {
+    const now = performance.now();
+    const pulse = 0.5 + 0.5 * Math.sin(now / 160);
+    const c = SHIELD_COLOR;
+    ctx.save();
+    const g = ctx.createLinearGradient(wall.x, 0, wall.x + wall.width, 0);
+    g.addColorStop(0, hexToRgba(c, 0.1));
+    g.addColorStop(0.5, hexToRgba(c, 0.32 + 0.1 * pulse));
+    g.addColorStop(1, hexToRgba(c, 0.1));
+    ctx.fillStyle = g;
+    ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+    // Panal
+    ctx.beginPath();
+    ctx.rect(wall.x, wall.y, wall.width, wall.height);
+    ctx.clip();
+    ctx.strokeStyle = hexToRgba(c, 0.35);
+    ctx.lineWidth = 1;
+    const s = 7, off = (now / 40) % (s * 3);
+    for (let yy = wall.y - s * 3 + off; yy < wall.y + wall.height + s * 3; yy += s * 3) {
+        for (let k = 0; k < 2; k++) {
+            const cx = wall.x + wall.width / 2 + (k ? s * 0.9 : -s * 0.9);
+            const cy = yy + (k ? s * 1.5 : 0);
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const a = Math.PI / 3 * i;
+                const px = cx + Math.cos(a) * s, py = cy + Math.sin(a) * s;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+    // Bordes que laten
+    ctx.save();
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 12 + 8 * pulse;
+    ctx.fillStyle = hexToRgba(c, 0.85);
+    ctx.fillRect(wall.x, wall.y, 2, wall.height);
+    ctx.fillRect(wall.x + wall.width - 2, wall.y, 2, wall.height);
+    ctx.restore();
+}
 
-    ctx.fillRect(shieldWall.x, shieldWall.y, shieldWall.width, shieldWall.height);
+/** Bola gigante: anillo rojo que late alrededor de la bola. */
+function drawBigBallAura(ctx, b) {
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 140);
+    ctx.save();
+    ctx.strokeStyle = hexToRgba(BIG_BALL_COLOR, 0.35 + 0.35 * pulse);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + 6 + 3 * pulse, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+}
 
+/** Cámara lenta: viñeta naranja en los bordes y líneas de escaneo que bajan despacio. */
+function drawSlowmoOverlay(ctx) {
+    const now = performance.now();
+    ctx.save();
+    const g = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 220, GAME_WIDTH / 2, GAME_HEIGHT / 2, 520);
+    g.addColorStop(0, 'rgba(251, 146, 60, 0)');
+    g.addColorStop(1, 'rgba(251, 146, 60, 0.16)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    ctx.fillStyle = 'rgba(251, 146, 60, 0.05)';
+    const off = (now / 30) % 24;
+    for (let y = -24 + off; y < GAME_HEIGHT; y += 24) ctx.fillRect(0, y, GAME_WIDTH, 2);
+    ctx.restore();
+}
+
+/**
+ * Líneas de velocidad detrás de la bola cuando va a más del 80% de su
+ * máximo (el turbo las hace evidentes).
+ * @param {number} speedRatio velocidad actual / máxima del preset
+ */
+function drawSpeedLines(ctx, b, speedRatio) {
+    if (speedRatio < 0.8) return;
+    const k = Math.min(1, (speedRatio - 0.8) / 0.2);
+    const sp = Math.hypot(b.dx, b.dy) || 1;
+    const ux = -b.dx / sp, uy = -b.dy / sp;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.35 * k})`;
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    for (let o = -1; o <= 1; o++) {
+        const nx = -uy * o * (b.radius + 3), ny = ux * o * (b.radius + 3);
+        const len = (o === 0 ? 46 : 30) * k;
+        ctx.beginPath();
+        ctx.moveTo(b.x + nx + ux * (b.radius + 4), b.y + ny + uy * (b.radius + 4));
+        ctx.lineTo(b.x + nx + ux * (b.radius + 4 + len), b.y + ny + uy * (b.radius + 4 + len));
+        ctx.stroke();
+    }
     ctx.restore();
 }

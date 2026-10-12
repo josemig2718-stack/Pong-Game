@@ -26,8 +26,9 @@ function initVFX() {
     initBackground();
 }
 
-/** Avanza los efectos con estado: el fondo y el efecto de gol. */
+/** Avanza los efectos con estado: el fondo, el efecto de gol y los estallidos de los power-ups. */
 function updateVFX(dt) {
     updateBackground(dt);
     updateGoalVFX(dt);
+    updatePowerupBursts(dt);
 }

@@ -135,9 +135,13 @@ function render() {
     // Estelas + bolas
     const hideBall = bossHidesBall();
     if (!hideBall) drawBallTrail();
+    const speedMax = (BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2]).max;
+    const bigBall = !!activeEffect && activeEffect.type.id === 'big_ball';
     for (const b of state.balls) {
         if (hideBall) continue; // Fano oculta la bola real
 
+        if (bigBall) drawBigBallAura(ctx, b);
+        drawSpeedLines(ctx, b, Math.hypot(b.dx, b.dy) / speedMax);
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
@@ -156,10 +160,12 @@ function render() {
     // Power-ups
     renderPowerup(ctx);
     renderShield(ctx);
+    renderPowerupBursts(ctx);
     updatePowerupPill();   // el efecto activo se muestra en el DOM, no en el canvas
     updateHud();           // marcador, tiempo y rally del HUD (DOM)
 
     drawParticles();
+    if (slowmoActive) drawSlowmoOverlay(ctx);
 
     // Capa superior del jefe: viñetas, tintes, avisos y glitch
     bossRenderOverlay(ctx);
