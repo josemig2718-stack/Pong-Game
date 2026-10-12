@@ -22,11 +22,11 @@ function initStars() {
     bgStars = [];
     for (let i = 0; i < 80; i++) {
         bgStars.push({
-            x: Math.random() * GAME_WIDTH,
-            y: Math.random() * GAME_HEIGHT,
-            phase: Math.random() * Math.PI * 2,
-            freq: 0.5 + Math.random() * 1.5,
-            baseAlpha: 0.2 + Math.random() * 0.4
+            x: vfxRandom() * GAME_WIDTH,
+            y: vfxRandom() * GAME_HEIGHT,
+            phase: vfxRandom() * Math.PI * 2,
+            freq: 0.5 + vfxRandom() * 1.5,
+            baseAlpha: 0.2 + vfxRandom() * 0.4
         });
     }
 }
@@ -50,9 +50,9 @@ function initRain() {
     const colSpacing = GAME_WIDTH / numColumns;
     for (let i = 0; i < numColumns; i++) {
         bgRainColumns.push({
-            x: (i * colSpacing) + Math.random() * 20,
+            x: (i * colSpacing) + vfxRandom() * 20,
             chars: [],
-            speed: 2 + Math.random() * 3,
+            speed: 2 + vfxRandom() * 3,
             nextCharTimer: 0
         });
     }
@@ -76,9 +76,9 @@ function updateRain(dt) {
             let topY = col.chars.length > 0 ? col.chars[col.chars.length - 1].y - 12 : -10;
             if (topY > 0 && col.chars.length === 0) topY = -10; // Resetear si la columna está vacía
 
-            const randomHex = Math.floor(Math.random() * 16).toString(16).toUpperCase();
+            const randomHex = Math.floor(vfxRandom() * 16).toString(16).toUpperCase();
             col.chars.push({ char: randomHex, y: topY });
-            col.nextCharTimer = 3 + Math.random() * 4; // Ajustar la densidad vertical
+            col.nextCharTimer = 3 + vfxRandom() * 4; // Ajustar la densidad vertical
         }
 
         // Si el último caracter de la cola pasa el fondo, reiniciamos arriba para un flujo continuo
@@ -115,10 +115,10 @@ function initAurora() {
     const themeColor = currentThemeHex();
     for (let i = 0; i < 4; i++) {
         bgAuroraWaves.push({
-            phase: Math.random() * Math.PI * 2,
-            freq: 0.001 + Math.random() * 0.002,
-            amplitude: 50 + Math.random() * 100,
-            yBase: 100 + Math.random() * 400,
+            phase: vfxRandom() * Math.PI * 2,
+            freq: 0.001 + vfxRandom() * 0.002,
+            amplitude: 50 + vfxRandom() * 100,
+            yBase: 100 + vfxRandom() * 400,
             color: themeColor
         });
     }
@@ -148,7 +148,7 @@ function renderAurora(ctx) {
 
 /**
  * Fondos animados, por `id` del catálogo. Son los únicos efectos con
- * estado propio: init() lo crea (y consume Math.random), update(dt) lo
+ * estado propio: init() lo crea (con vfxRandom), update(dt) lo
  * avanza y render(ctx) lo dibuja.
  */
 const BG_RENDERERS = {
@@ -182,8 +182,8 @@ function renderBackground(ctx) {
 }
 
 /**
- * Cambia el fondo activo (al equiparlo en la tienda). Llama a init(), que
- * consume Math.random: no se puede quitar aunque parezca redundante.
+ * Cambia el fondo activo (al equiparlo en la tienda) y lo reinicia. init()
+ * usa vfxRandom, no Math.random, así que no altera la partida.
  */
 function setActiveBg(id) {
     if (BG_RENDERERS[id]) {

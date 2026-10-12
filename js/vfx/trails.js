@@ -62,7 +62,7 @@ function drawTrailNeon(ctx, trail, radius, color) {
     ctx.restore();
 }
 
-/** Fuego: partículas aleatorias que suben (consume Math.random al dibujar). */
+/** Fuego: partículas aleatorias que suben (vfxRandom al dibujar). */
 function drawTrailFire(ctx, trail, radius, color) {
     ctx.save();
     for (let i = 0; i < trail.length; i++) {
@@ -73,15 +73,15 @@ function drawTrailFire(ctx, trail, radius, color) {
         ctx.globalAlpha = alpha;
 
         // 2-3 partículas por punto de la estela
-        const particleCount = 2 + Math.floor(Math.random() * 2);
+        const particleCount = 2 + Math.floor(vfxRandom() * 2);
         for (let p = 0; p < particleCount; p++) {
             // Desplazamiento aleatorio y "subida" (deriva hacia arriba en y)
-            const offsetX = (Math.random() - 0.5) * radius * 1.5;
-            const offsetY = (Math.random() - 0.5) * radius * 1.5 - ((trail.length - i) * 1.5); // deriva hacia arriba
+            const offsetX = (vfxRandom() - 0.5) * radius * 1.5;
+            const offsetY = (vfxRandom() - 0.5) * radius * 1.5 - ((trail.length - i) * 1.5); // deriva hacia arriba
 
             // Gradiente simple aproximado por color
             let fireColor = '#ff0000'; // Rojo por defecto
-            const randColor = Math.random();
+            const randColor = vfxRandom();
             if (randColor < 0.3) fireColor = '#ff6600'; // Naranja
             else if (randColor > 0.8) fireColor = '#330000'; // Rojo oscuro
 
@@ -94,7 +94,7 @@ function drawTrailFire(ctx, trail, radius, color) {
     ctx.restore();
 }
 
-/** Hielo: destellos cuadrados con deriva lateral (consume Math.random al dibujar). */
+/** Hielo: destellos cuadrados con deriva lateral (vfxRandom al dibujar). */
 function drawTrailIce(ctx, trail, radius, color) {
     ctx.save();
     for (let i = 0; i < trail.length; i++) {
@@ -104,14 +104,14 @@ function drawTrailIce(ctx, trail, radius, color) {
 
         ctx.globalAlpha = alpha;
 
-        const particleCount = 2 + Math.floor(Math.random() * 2);
+        const particleCount = 2 + Math.floor(vfxRandom() * 2);
         for (let p = 0; p < particleCount; p++) {
             // Deriva lateral (hacia los lados)
-            const offsetX = (Math.random() - 0.5) * radius * 3;
-            const offsetY = (Math.random() - 0.5) * radius;
+            const offsetX = (vfxRandom() - 0.5) * radius * 3;
+            const offsetY = (vfxRandom() - 0.5) * radius;
 
             let iceColor = '#00ffff';
-            if (Math.random() > 0.5) iceColor = '#ffffff';
+            if (vfxRandom() > 0.5) iceColor = '#ffffff';
 
             ctx.fillStyle = iceColor;
 

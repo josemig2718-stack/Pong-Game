@@ -30,7 +30,7 @@ js/core/        base layer — constants, storage, settings, state
 js/data/        static catalogues — themes, lore, achievements, shop, levels, power-ups
 js/systems/     audio, theme, input (keyboard), pointer (mouse + touch), stats, achievements, progression
 js/game/        canvas, draw, effects, balls, ai, physics, match, hud, loop, render, powerups
-js/vfx/         shop cosmetics — trails, backgrounds, paddles, goal-fx (+ index.js facade)
+js/vfx/         shop cosmetics — random (vfxRandom), trails, backgrounds, paddles, goal-fx (+ index.js facade)
 js/bosses/      index.js (table + dispatchers), shared.js, one file per boss
 js/campaign/    progress (boss in play, VS, advance), menu (carousel + intro), dialogue, finale
 js/ui/          screens, actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
@@ -59,7 +59,7 @@ Breaking the order throws a `ReferenceError` at load and every test fails.
 
 `loop.js` runs `update(dt)` (`physics.js`) then `render()` (`render.js`) per `requestAnimationFrame`. `dt` is normalized to 60 FPS units (`elapsedMs / MS_PER_FRAME`, clamped to ≤3), so speeds are "pixels per frame at 60 FPS" and every movement is multiplied by `dt`; `dt * MS_PER_FRAME` converts to milliseconds.
 
-`update()` is a fixed sequence of named steps: dialogue pause → slow-motion → boss update → player 1 → player 2 or CPU (`ai.js`) → clamp → serve countdown → balls (walls, boss obstacles, paddles, goals) → power-ups → VFX → particles → shake. **The order is behaviour**: physics and several renderers share `Math.random`, so reordering changes every later random number. Two early exits are explicit return values: during the serve countdown only the VFX advance; and a match-ending goal with several balls stops the frame, while with one ball the rest of the frame still runs (`onBallOut` in `physics.js` documents the asymmetry).
+`update()` is a fixed sequence of named steps: dialogue pause → slow-motion → boss update → player 1 → player 2 or CPU (`ai.js`) → clamp → serve countdown → balls (walls, boss obstacles, paddles, goals) → power-ups → VFX → particles → shake. **The order is behaviour**: physics, the screen shake and the bosses share `Math.random`, so reordering changes every later random number. **Visual effects use `vfxRandom()` (`vfx/random.js`), never `Math.random`**, so a cosmetic never changes a match. Two early exits are explicit return values: during the serve countdown only the VFX advance; and a match-ending goal with several balls stops the frame, while with one ball the rest of the frame still runs (`onBallOut` in `physics.js` documents the asymmetry).
 
 - Fixed logical resolution `GAME_WIDTH × GAME_HEIGHT` = 800×600. `canvas.width/height` are always the logical size; `resizeCanvas()` only sets CSS size: it picks the HUD layout (`#game-container[data-layout]`: `top` on desktop/tablet, `sides` in short landscape, `stack` in portrait) and fits 4:3 into the real size of the `#canvas-wrapper` grid cell.
 - Slow-motion is a `dt` multiplier: the min of `getSlowmoMultiplier()` (power-up) and `getGoalSlowmo()` (goal VFX).
@@ -106,7 +106,7 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 
 ### Cosmetics: shop → progression → vfx
 
-`SHOP_CATALOG` (`data/shop.js`) has 4 categories `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps them to `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping `selectCosmetic`, which writes `playerProgression.selected*`. The `vfx/` renderers read `playerProgression.selected*` **every frame** through their id → renderer tables. Adding a cosmetic = a renderer in the right `vfx/` table + a catalogue entry with the same `id` + an SVG icon in `assets/shop/` (`<prefix><id>.svg`; if it uses `var(--primary)`, also inline it in `SHOP_ICONS`, because an `<img>` doesn't inherit CSS variables). Rarity is derived from the price (`shopRarity()`), not stored. Backgrounds are the only stateful ones (`init/update/render`); `setActiveBg()` calls `init()`, which consumes `Math.random`.
+`SHOP_CATALOG` (`data/shop.js`) has 4 categories `trails`/`backgrounds`/`paddles`/`goalEffects`; `SHOP_CATEGORIES` maps them to `trail`/`bg`/`paddle`/`goalFx`. Buying calls `purchaseItem`, equipping `selectCosmetic`, which writes `playerProgression.selected*`. The `vfx/` renderers read `playerProgression.selected*` **every frame** through their id → renderer tables. Adding a cosmetic = a renderer in the right `vfx/` table + a catalogue entry with the same `id` + an SVG icon in `assets/shop/` (`<prefix><id>.svg`; if it uses `var(--primary)`, also inline it in `SHOP_ICONS`, because an `<img>` doesn't inherit CSS variables). Rarity is derived from the price (`shopRarity()`), not stored. Backgrounds are the only stateful ones (`init/update/render`); `setActiveBg()` calls `init()`, which draws from `vfxRandom()`.
 
 ### Other subsystems
 

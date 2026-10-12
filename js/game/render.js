@@ -8,9 +8,9 @@
  * el rally y el efecto activo no se dibujan aquí: son el HUD del DOM
  * (updateHud y updatePowerupPill).
  *
- * Varios renderizadores consumen Math.random (vibración, estelas de
- * fuego/hielo, glitch del Creador), que comparte generador con la
- * física: no cambies el orden de las capas.
+ * La vibración y el glitch del Creador consumen Math.random, que comparte
+ * generador con la física: no cambies el orden de las capas. Los
+ * cosméticos (vfx/) usan su propio generador, vfxRandom.
  * ------------------------------------------------------------------
  */
 

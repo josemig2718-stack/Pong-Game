@@ -37,13 +37,13 @@ function triggerGoalConfetti(goalX, goalY) {
         confettiParticles.push({
             x: goalX,
             y: goalY,
-            dx: (Math.random() - 0.5) * 6, // de -3 a 3
-            dy: -1 - Math.random() * 5,    // de -6 a -1
+            dx: (vfxRandom() - 0.5) * 6, // de -3 a 3
+            dy: -1 - vfxRandom() * 5,    // de -6 a -1
             gravity: 0.15,
-            color: colors[Math.floor(Math.random() * colors.length)],
+            color: colors[Math.floor(vfxRandom() * colors.length)],
             life: 1.0,
-            rotation: Math.random() * Math.PI * 2,
-            rotSpeed: (Math.random() - 0.5) * 0.4
+            rotation: vfxRandom() * Math.PI * 2,
+            rotSpeed: (vfxRandom() - 0.5) * 0.4
         });
     }
 }

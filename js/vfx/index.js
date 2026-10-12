@@ -3,6 +3,7 @@
  * ------------------------------------------------------------------
  * Efectos visuales cosméticos: lo que compra el jugador en la tienda.
  *
+ *   random.js       vfxRandom: el azar de los efectos (nunca Math.random)
  *   trails.js       estelas de la bola
  *   backgrounds.js  fondos animados (los únicos con estado propio)
  *   paddles.js      estilos de paleta
