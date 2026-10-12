@@ -50,6 +50,13 @@ function vfxSparkle(c, x, y, r) {
     c.closePath();
 }
 
+/** Path2D de cada `d` de SVG ya usado: se crea una vez y se reutiliza en cada fotograma. */
+const vfxPathCache = {};
+/** @param {string} d */
+function vfxPath(d) {
+    return vfxPathCache[d] || (vfxPathCache[d] = new Path2D(d));
+}
+
 /** '#rrggbb' + alfa → 'rgba(r, g, b, a)'. */
 function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16);

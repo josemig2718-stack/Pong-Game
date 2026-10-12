@@ -44,10 +44,10 @@ const SHOP_CATALOG = {
         { id: 'slim',         name: 'Delgada Pro',   desc: 'Visualmente delgada, mismo golpe',         price: 45 }
     ],
     goalEffects: [
-        { id: 'classic',     name: 'Clásico',        desc: 'Partículas y vibración',                  price: 0 },
+        { id: 'classic',     name: 'Clásico',        desc: 'Anillo del tema y cuadrados disparados',   price: 0 },
         { id: 'epic_flash',  name: 'Flash Épico',    desc: 'Destello blanco + cámara lenta',           price: 50 },
         { id: 'confetti',    name: 'Confeti',         desc: 'Explosión de partículas multicolor',      price: 65 },
-        { id: 'shockwave',   name: 'Onda Expansiva',  desc: 'Anillo circular que se expande',           price: 80 }
+        { id: 'shockwave',   name: 'Onda Expansiva',  desc: 'Tres anillos con retraso y un destello',   price: 80 }
     ]
 };
 
