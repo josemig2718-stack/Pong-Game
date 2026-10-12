@@ -147,9 +147,10 @@ function render() {
         ctx.shadowBlur = 0;
     }
 
-    // Paletas
-    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, '#ffffff');
-    if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, '#ffffff');
+    // Paletas: el jugador en el color del tema; el rival gris (CPU, Hachepe
+    // o jefe) o azul (jugador 2 en local); el gemelo, rojo
+    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor);
+    if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, state.mode === 'local' ? '#38BDF8' : '#CBD5E1');
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
 
     // Power-ups

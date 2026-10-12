@@ -38,8 +38,8 @@ const SHOP_CATALOG = {
     ],
     paddles: [
         { id: 'classic',      name: 'Clásica',      desc: 'Rectángulo redondeado sólido',             price: 0 },
-        { id: 'pixel',        name: 'Pixel',         desc: 'Bloques de 8 bits en damero',              price: 25 },
-        { id: 'gradient',     name: 'Gradiente',     desc: 'Degradado arcoíris fijo',                  price: 50 },
+        { id: 'pixel',        name: 'Pixel',         desc: 'Bloques de 5 px con luces y sombras de 8 bits', price: 25 },
+        { id: 'gradient',     name: 'Gradiente',     desc: 'Del blanco al color del jugador',          price: 50 },
         { id: 'neon_paddle',  name: 'Neón',          desc: 'Paleta con resplandor pulsante',           price: 70 },
         { id: 'slim',         name: 'Delgada Pro',   desc: 'Visualmente delgada, mismo golpe',         price: 45 }
     ],
