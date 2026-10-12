@@ -32,9 +32,9 @@ const SHOP_CATALOG = {
     ],
     backgrounds: [
         { id: 'none',    name: 'Clásico',       desc: 'Fondo negro puro',                            price: 0 },
-        { id: 'stars',   name: 'Estrellas',      desc: 'Campo estelar con parpadeo suave',            price: 40 },
+        { id: 'stars',   name: 'Estrellas',      desc: 'Tres capas en paralaje y destellos',          price: 40 },
         { id: 'rain',    name: 'Lluvia Digital', desc: 'Caracteres cayendo estilo Matrix',            price: 80 },
-        { id: 'aurora',  name: 'Aurora Boreal',  desc: 'Ondas translúcidas de color',                 price: 120 }
+        { id: 'aurora',  name: 'Aurora Boreal',  desc: 'Cielo nocturno con cortinas de luz',          price: 120 }
     ],
     paddles: [
         { id: 'classic',      name: 'Clásica',      desc: 'Rectángulo redondeado sólido',             price: 0 },
