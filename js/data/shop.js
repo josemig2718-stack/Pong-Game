@@ -24,11 +24,11 @@
 /** @type {Record<string, ShopItem[]>} */
 const SHOP_CATALOG = {
     trails: [
-        { id: 'default',  name: 'Clásica',   desc: 'Trazo que se estrecha y se desvanece',          price: 0 },
+        { id: 'default',  name: 'Clásica',   desc: 'Círculos blancos que se encogen',               price: 0 },
         { id: 'neon',     name: 'Neón',       desc: 'Línea brillante con resplandor intenso',         price: 30 },
-        { id: 'fire',     name: 'Fuego',      desc: 'Partículas de llamas ardientes',                 price: 60 },
+        { id: 'fire',     name: 'Fuego',      desc: 'Llama que parpadea, con brasas',                 price: 60 },
         { id: 'ice',      name: 'Hielo',      desc: 'Destellos celestes cristalinos',                 price: 60 },
-        { id: 'rainbow',  name: 'Arcoíris',   desc: 'Espectro de colores rotativo',                   price: 100 }
+        { id: 'rainbow',  name: 'Arcoíris',   desc: 'Seis bandas paralelas a la trayectoria',         price: 100 }
     ],
     backgrounds: [
         { id: 'none',    name: 'Clásico',       desc: 'Fondo negro puro',                            price: 0 },
