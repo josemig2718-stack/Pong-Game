@@ -1259,6 +1259,9 @@ body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
 .touch-hint--left { left: 0; }
 .touch-hint--right { right: 0; }
 .touch-hint--gone { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+    .touch-hint .ico { animation: none; }
+}
 @keyframes hint-bounce {
     0%, 100% { transform: translateY(-6px); }
     50% { transform: translateY(6px); }
@@ -2287,6 +2290,9 @@ label.set-item__head { cursor: pointer; }
     transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
+@media (prefers-reduced-motion: reduce) {
+    .achievement-toast { transition: opacity 0.3s ease; }
+}
 
 .achievement-toast__medal { flex: none; width: 52px; height: 52px; }
 .achievement-toast__medal .ach-medal { width: 52px; height: 52px; }
@@ -2645,6 +2651,7 @@ body.has-result .achievement-toast--visible { transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
     .shop-card, .shop-tab-btn { transition: none; }
+    .coin-error { animation: none; }
 }
 
 /* Animación de error al comprar */
@@ -3603,7 +3610,8 @@ body.has-result .achievement-toast--visible { transform: none; }
     #finale-screen.glitching::after,
     #finale-eye.opening,
     #finale-eye .eye-pupil,
-    #vs-screen.slam {
+    #vs-screen.slam,
+    .finale-caret::after {
         animation: none;
     }
     /* Sin movimiento, pero el apagón sigue ocurriendo */

@@ -8,6 +8,19 @@
 
 'use strict';
 
+/** Consulta de "menos movimiento"; se crea la primera vez que hace falta. */
+let reducedMotionQuery = null;
+
+/**
+ * El jugador pidió menos movimiento en su sistema. Solo sirve para dibujar
+ * menos: nunca cambia cuántas veces se llama a Math.random, que comparten
+ * la física y los jefes.
+ */
+function prefersReducedMotion() {
+    if (!reducedMotionQuery) reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    return reducedMotionQuery.matches;
+}
+
 /** Lanza `count` partículas en todas direcciones desde (x, y). */
 function spawnParticles(x, y, color, count = 14) {
     for (let i = 0; i < count; i++) {

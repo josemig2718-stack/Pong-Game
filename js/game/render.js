@@ -11,7 +11,9 @@
  *
  * La vibración y el glitch del Creador consumen Math.random, que comparte
  * generador con la física: no cambies el orden de las capas. Los
- * cosméticos (vfx/) usan su propio generador, vfxRandom.
+ * cosméticos (vfx/) usan su propio generador, vfxRandom. Con "menos
+ * movimiento" (prefersReducedMotion) se dibuja menos, pero se consume el
+ * mismo azar.
  * ------------------------------------------------------------------
  */
 
@@ -121,12 +123,15 @@ function drawBallTrail() {
     for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius);
 }
 
+/** Partículas de impacto; con "menos movimiento", solo una de cada dos. */
 function drawParticles() {
-    state.particles.forEach(p => {
+    const step = prefersReducedMotion() ? 2 : 1;
+    for (let i = 0; i < state.particles.length; i += step) {
+        const p = state.particles[i];
         ctx.globalAlpha = Math.max(p.life, 0);
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
-    });
+    }
     ctx.globalAlpha = 1;
 }
 
@@ -191,9 +196,11 @@ function render() {
 
     ctx.save();
     if (state.shakeTimeMs > 0) {
+        // Los dos números se piden siempre, aunque con "menos movimiento"
+        // la imagen no se mueva: la física comparte el generador
         const dx = (Math.random() - 0.5) * state.shakeIntensity;
         const dy = (Math.random() - 0.5) * state.shakeIntensity;
-        ctx.translate(dx, dy);
+        if (!prefersReducedMotion()) ctx.translate(dx, dy);
     }
 
     // Fondo negro base

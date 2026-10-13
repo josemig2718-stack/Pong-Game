@@ -429,10 +429,14 @@ function drawPowerupOrb(ctx, type, x, y, ageMs, maxLifetime) {
 
 /** Estallidos al recoger un power-up: anillo y 10 chispas en su color. */
 let powerupBursts = [];
+/** `n` chispas repartidas en círculo (menos con "menos movimiento"). */
+function burstSparks(n) {
+    return Array.from({ length: n }, (_, i) => ({ a: (i / n) * Math.PI * 2 + vfxRandom() * 0.3, d: 20, v: 3 + vfxRandom() * 2 }));
+}
 function triggerPowerupBurst(x, y, color) {
     powerupBursts.push({
         x, y, color, r: 18, life: 1,
-        sparks: Array.from({ length: 10 }, (_, i) => ({ a: (i / 10) * Math.PI * 2 + vfxRandom() * 0.3, d: 20, v: 3 + vfxRandom() * 2 }))
+        sparks: burstSparks(prefersReducedMotion() ? 5 : 10)
     });
 }
 /** Avanza los estallidos (desde updateVFX, también durante el saque). */

@@ -24,8 +24,9 @@ let shockwave = null;         // { x, y, t, color }
 function triggerGoalClassic(goalX, goalY, color) {
     goalSquares = [];
     const dir = goalX < GAME_WIDTH / 2 ? 1 : -1;
-    for (let i = 0; i < 20; i++) {
-        const ang = (i / 20) * Math.PI * 2 + vfxRandom() * 0.25;
+    const n = prefersReducedMotion() ? 10 : 20;
+    for (let i = 0; i < n; i++) {
+        const ang = (i / n) * Math.PI * 2 + vfxRandom() * 0.25;
         const sp = 3 + vfxRandom() * 3.5;
         goalSquares.push({
             x: goalX, y: goalY,
@@ -82,10 +83,12 @@ function updateGoalFlash(dt) {
     if (goalFlashRays.life <= 0) goalFlashRays = null;
 }
 function renderGoalFlash(ctx) {
+    // Con "menos movimiento": destello a media intensidad y sin rayos
+    const reduced = prefersReducedMotion();
     if (goalFlashAlpha > 0) {
         ctx.save();
         ctx.fillStyle = '#ffffff';
-        ctx.globalAlpha = goalFlashAlpha;
+        ctx.globalAlpha = reduced ? goalFlashAlpha / 2 : goalFlashAlpha;
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         ctx.restore();
     }
@@ -93,19 +96,21 @@ function renderGoalFlash(ctx) {
     const f = goalFlashRays;
     const ease = 1 - Math.pow(f.life, 3);
     ctx.save();
-    // Rayos desde el punto del gol
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = hexToRgba('#FDE047', 0.55 * f.life);
-    ctx.lineWidth = 3;
-    const r0 = 30 + 200 * ease, r1 = 60 + 520 * ease;
-    for (let i = 0; i < 14; i++) {
-        const a = (i / 14) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(f.x + Math.cos(a) * r0, f.y + Math.sin(a) * r0);
-        ctx.lineTo(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1);
-        ctx.stroke();
+    if (!reduced) {
+        // Rayos desde el punto del gol
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = hexToRgba('#FDE047', 0.55 * f.life);
+        ctx.lineWidth = 3;
+        const r0 = 30 + 200 * ease, r1 = 60 + 520 * ease;
+        for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(f.x + Math.cos(a) * r0, f.y + Math.sin(a) * r0);
+            ctx.lineTo(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1);
+            ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
     }
-    ctx.globalCompositeOperation = 'source-over';
     // El rayo aparece junto al gol y se encoge
     const bx = Math.max(90, Math.min(GAME_WIDTH - 90, f.x + (f.x < GAME_WIDTH / 2 ? 90 : -90)));
     const scale = 1.8 * (0.8 + 0.4 * f.life);
@@ -132,7 +137,8 @@ const CONFETTI_COLORS = ['#F472B6', '#FACC15', '#22D3EE', '#A3E635', '#FB923C', 
 /** Confeti: también lo usa la secuencia del falso final de la campaña. */
 function triggerGoalConfetti(goalX, goalY) {
     const dir = goalX < GAME_WIDTH / 2 ? 1 : -1;
-    confettiParticles = Array.from({ length: 80 }, () => ({
+    const reduced = prefersReducedMotion();   // la mitad de papeles y serpentinas
+    confettiParticles = Array.from({ length: reduced ? 40 : 80 }, () => ({
         x: goalX, y: goalY,
         dx: dir * (1.5 + vfxRandom() * 9), dy: -3 - vfxRandom() * 9,
         w: 5 + vfxRandom() * 5, h: 3 + vfxRandom() * 2.5,
@@ -140,7 +146,7 @@ function triggerGoalConfetti(goalX, goalY) {
         flip: vfxRandom() * Math.PI * 2, fs: 0.15 + vfxRandom() * 0.2,
         c: CONFETTI_COLORS[Math.floor(vfxRandom() * CONFETTI_COLORS.length)], life: 1
     }));
-    confettiStreamers = Array.from({ length: 4 }, (_, i) => ({
+    confettiStreamers = Array.from({ length: reduced ? 2 : 4 }, (_, i) => ({
         x: goalX, y: goalY, dx: dir * (2 + i * 1.3), dy: -6 - vfxRandom() * 3, ph: vfxRandom() * 6,
         c: CONFETTI_COLORS[i], life: 1, pts: []
     }));
