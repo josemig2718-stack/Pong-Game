@@ -14,6 +14,24 @@ function drawRect(x, y, w, h, color) {
     ctx.fillRect(x, y, w, h);
 }
 
+/** Corazón de 7×6 píxeles, lleno y vacío (solo el contorno). */
+const PIXEL_HEART = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+const PIXEL_HEART_EMPTY = ['.XX.XX.', 'X..X..X', 'X.....X', '.X...X.', '..X.X..', '...X...'];
+
+/**
+ * Corazón pixelado con su esquina superior izquierda en (x, y).
+ * @param {number} px  lado de cada píxel
+ * @param {string[]} [rows]  PIXEL_HEART o PIXEL_HEART_EMPTY
+ */
+function drawPixelHeart(x, y, px, color, rows = PIXEL_HEART) {
+    ctx.fillStyle = color;
+    rows.forEach((row, j) => {
+        for (let i = 0; i < row.length; i++) {
+            if (row[i] === 'X') ctx.fillRect(x + i * px, y + j * px, px, px);
+        }
+    });
+}
+
 /** Texto centrado con la fuente arcade del juego. */
 function drawText(text, x, y, color, size) {
     ctx.fillStyle = color;

@@ -33,6 +33,25 @@ function drawNet(color) {
     ctx.restore();
 }
 
+/**
+ * Fallos que le quedan al jugador en la arena rotada, como corazones
+ * pixelados centrados sobre su paleta. Sin ninguno, un corazón vacío.
+ */
+function drawLives(vidas) {
+    const px = 4, w = 7 * px, gap = 12;
+    const n = Math.max(vidas, 1);
+    let x = Math.round(GAME_WIDTH / 2 - (n * w + (n - 1) * gap) / 2);
+    const y = GAME_HEIGHT - 76;
+    for (let i = 0; i < n; i++, x += w + gap) {
+        if (vidas === 0) {
+            drawPixelHeart(x, y, px, 'rgba(239, 68, 68, 0.5)', PIXEL_HEART_EMPTY);
+            continue;
+        }
+        drawPixelHeart(x + 3, y + 3, px, '#450A0A');
+        drawPixelHeart(x, y, px, '#ef4444');
+    }
+}
+
 /** Bola blanca con el brillo del tema. */
 function drawBall(b, color) {
     ctx.save();
@@ -198,7 +217,7 @@ function render() {
         // Arena rotada: abajo se muestran los fallos restantes del jugador
         const bcfg = bossConfig();
         const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - state.p2Score);
-        drawText('♥ '.repeat(vidas).trim() || '—', GAME_WIDTH / 2, GAME_HEIGHT - 55, '#ef4444', 22);
+        drawLives(vidas);
     }
 
     // Capa propia del jefe: escombros, escudo, franja del Creador...
