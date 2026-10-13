@@ -392,6 +392,7 @@ h1, h2, h3 { font-family: var(--font-display); }
     display: flex;
     align-items: center;
     gap: 12px;
+    min-height: 44px;    /* toda la fila lleva a la tienda */
     cursor: pointer;
 }
 .menu-progress__level { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
@@ -430,6 +431,42 @@ h1, h2, h3 { font-family: var(--font-display); }
 @media (max-height: 560px) {
     .mini-court { display: none; }
     .menu-hero { gap: 8px; padding: 4px 0; }
+}
+
+/* Apaisado bajo (móvil en horizontal, ventana de 800×600): dos columnas
+   compactas, logo a la izquierda y el panel a la derecha */
+@media (orientation: landscape) and (min-width: 700px) and (max-height: 639px) {
+    .menu-layout {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(24px, 5vw, 64px);
+        max-width: 960px;
+    }
+    .menu-hero { flex: 1 1 0; min-width: 0; gap: 14px; padding: 0; }
+    .menu-logo { font-size: clamp(48px, 8vw, 80px); }
+    .menu-panel { display: flex; flex-direction: column; gap: 10px; flex: 0 0 min(400px, 50vw); }
+    .menu-play { min-height: 56px; font-size: 14px; }
+    .menu-tiles { gap: 8px; }
+    .menu-tiles .tile { min-height: 76px; padding: 12px; gap: 6px; }
+    .menu-bottom .btn { min-height: 48px; }
+}
+@media (orientation: landscape) and (min-width: 700px) and (max-height: 500px) {
+    .menu-play { min-height: 52px; }
+    .menu-tiles .tile { min-height: 70px; padding: 10px 12px; }
+    #main-menu .watermark { display: none; }
+}
+/* Vertical con poca altura (360×640): logo, cancha y tiles más compactos */
+@media (orientation: portrait) and (max-height: 700px) {
+    .menu-layout { gap: 10px; }
+    .menu-hero { gap: 8px; padding: 0; }
+    .menu-logo { font-size: clamp(44px, 14vw, 56px); }
+    .mini-court { max-width: 220px; }
+    .menu-play { min-height: 54px; }
+    .menu-tiles .tile { min-height: 72px; padding: 11px 12px; gap: 6px; }
+    .menu-bottom .btn { min-height: 50px; }
+    #main-menu .watermark { padding-top: 8px; }
 }
 
 /* Escritorio: dos columnas */
@@ -543,6 +580,16 @@ h1, h2, h3 { font-family: var(--font-display); }
 .exit-sheet__actions { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 .exit-sheet__actions .btn { justify-content: center; font-size: 11px; }
 .exit-sheet__actions .btn--danger { background: transparent; box-shadow: none; border-color: rgba(248, 113, 113, 0.45); }
+
+/* Ventanas bajas: hoja compacta con los dos botones en fila */
+@media (max-height: 500px) {
+    .exit-ghost { display: none; }
+    .exit-sheet { gap: 10px; padding: 16px 20px; }
+    .exit-sheet__icon { width: 44px; height: 44px; }
+    .exit-sheet__icon .ico { width: 22px; height: 22px; }
+    .exit-sheet__actions { flex-direction: row; margin-top: 2px; }
+    .exit-sheet__actions .btn { min-height: 48px; text-align: center; }
+}
 
 @media (min-width: 768px) {
     #exit-menu::after { content: ""; }
@@ -796,6 +843,26 @@ h1, h2, h3 { font-family: var(--font-display); }
     .mode-note { display: none; }
     .screen-head__title { font-size: 18px; }
 }
+/* Tablet apaisada con poca altura (800×600): ilustración en franja y
+   sin descripción, para que quepan las cuatro tarjetas */
+@media (min-width: 768px) and (max-width: 1023px) and (min-height: 600px) and (max-height: 760px) {
+    .mode-layout { gap: 18px; }
+    .mode-grid { gap: 14px; }
+    .mode-card__art, .mode-card--campaign .mode-card__art { height: 56px; }
+    .mode-card__badge { top: 10px; left: 10px; padding: 4px 8px; }
+    .mode-card__body, .mode-card--campaign .mode-card__body { gap: 10px; padding: 14px 16px; }
+    .mode-card__tag, .mode-card__desc { display: none; }
+    .mode-card__cta, .mode-card--campaign .mode-card__cta { height: 44px; }
+}
+/* Móvil vertical con poca altura (360×640) */
+@media (orientation: portrait) and (max-height: 700px) {
+    .mode-layout { gap: 14px; }
+    .mode-grid { gap: 10px; }
+    .mode-card--campaign .mode-card__art { height: 84px; }
+    .mode-card--campaign .mode-card__body { padding: 12px 14px; gap: 10px; }
+    .mode-card { padding: 10px 12px; }
+    .mode-card__icon { width: 48px; height: 48px; }
+}
 
 /* ==================================================================
    Botones y controles de las pantallas actuales
@@ -910,7 +977,8 @@ input[type=range] {
     align-items: center;
     position: absolute;
     inset: 0;
-    padding: 20px 16px 30px;
+    /* El mínimo de siempre o la zona segura del notch (viewport-fit=cover) */
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     /* Para evitar que el contenido se corte arriba al hacer scroll en pantallas pequeñas,
@@ -923,7 +991,7 @@ input[type=range] {
 }
 @media (min-width: 768px) {
     .screen {
-        padding: 40px 24px 60px;
+        padding: max(40px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
     }
 }
 .active-screen { display: flex; }
@@ -1005,7 +1073,7 @@ input[type=range] {
     height: 100dvh;
     display: grid;
     gap: 14px;
-    padding: 20px;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     justify-content: center;
     align-content: center;
     touch-action: none;
@@ -1264,7 +1332,7 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 
 /* --- sides: horizontal con poca altura ----------------------------- */
 #game-container[data-layout="sides"] {
-    padding: 6px 0;
+    padding: max(6px, env(safe-area-inset-top)) max(0px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(0px, env(safe-area-inset-left));
     column-gap: 0;
     row-gap: 10px;
     justify-content: stretch;
@@ -1308,7 +1376,7 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 
 /* --- stack: vertical ----------------------------------------------- */
 #game-container[data-layout="stack"] {
-    padding: 22px 16px;
+    padding: max(22px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     justify-content: stretch;
     align-content: stretch;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1354,14 +1422,14 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 /* Pantallas cortas (< 700px de alto) */
 @media (max-height: 700px) {
     .screen {
-        padding: 20px 16px 40px;
+        padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
 }
 
 /* Pantallas muy cortas (< 500px alto) — landscape en móvil */
 @media (max-height: 500px) {
     .screen {
-        padding: 10px 12px 30px;
+        padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
         justify-content: flex-start !important;
     }
     .watermark {
@@ -1374,7 +1442,7 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 /* Pantallas estrechas en ancho (< 400px — teléfonos pequeños) */
 @media (max-width: 400px) {
     .screen {
-        padding: 20px 12px 40px;
+        padding: max(20px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
     }
 }
 
@@ -2192,7 +2260,7 @@ label.set-item__head { cursor: pointer; }
    ================================================================== */
 .achievement-toast {
     position: fixed;
-    top: 20px;
+    top: max(20px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -2927,8 +2995,9 @@ body.has-result .achievement-toast--visible { transform: none; }
 .carousel-dot--creator.active { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25), 0 0 24px rgba(34, 197, 94, 0.6); }
 
 /* --- Intro de la campaña --- */
+/* fixed: cubre toda la ventana aunque la pantalla tenga scroll */
 .campaign-intro {
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: 50;
     display: flex;
@@ -3030,6 +3099,20 @@ body.has-result .achievement-toast--visible { transform: none; }
     .boss-card__cta { height: 44px; }
     .campaign-path__labels { display: none; }
     .carousel-dots { --node: 30px; --node-grow: 3px; --node-gap: clamp(16px, 4vw, 40px); }
+}
+@media (min-width: 768px) and (max-height: 640px) {
+    .campaign-layout { gap: 12px; }
+    .campaign-title { font-size: 22px; }
+    .boss-carousel { --card-h: 360px; --stage-h: 140px; --side-h: 230px; --side-stage-h: 120px; --sprite: 112px; }
+}
+@media (orientation: landscape) and (max-height: 420px) {
+    .campaign-layout { gap: 8px; }
+    .boss-carousel { --card-h: 224px; --side-h: 190px; --stage-h: 84px; --side-stage-h: 80px; --sprite: 72px; }
+    .boss-card__main { gap: 6px; padding: 10px 14px; }
+    .boss-card__cta { height: 40px; }
+}
+@media (orientation: portrait) and (max-height: 680px) {
+    .boss-carousel { --card-h: 396px; --side-h: 372px; --stage-h: 156px; --side-stage-h: 146px; --sprite: 116px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3557,4 +3640,32 @@ body.has-result .achievement-toast--visible { transform: none; }
     #dialogue-box.dialogue-glitch {
         animation: none;
     }
+}
+
+/* ==================================================================
+   Zonas táctiles: con el dedo (puntero grueso) todo control mide al
+   menos 44 px; con ratón se conserva el tamaño del diseño. Los nodos
+   del carrusel amplían su zona con ::after (::before es la línea).
+   Va al final del archivo para ganar a las reglas de cada pantalla.
+   ================================================================== */
+@media (pointer: coarse) {
+    .theme-swatch { width: 44px; height: 44px; }
+    .option-pill { height: 44px; }
+    .shop-card__btn { min-height: 44px; }
+    .ach-cat { height: 44px; }
+    #orientation-hint-close { width: 44px; height: 44px; }
+    input[type=range], .diff-range { height: 44px; }
+    .carousel-dot::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+}
+/* Las ocho muestras de 44 px no caben en una fila del móvil: 4 × 2 */
+@media (pointer: coarse) and (max-width: 480px) {
+    #theme-swatches { display: grid; grid-template-columns: repeat(4, 44px); justify-content: space-between; row-gap: 10px; }
 }
