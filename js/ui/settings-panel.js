@@ -153,8 +153,9 @@ function resetAllSettings() {
     setMasterVolume(settings.volume);   // el volumen de efectos vive aparte, en systems/audio.js
     populateSettingsUI();
     applyTheme(settings.theme);
-    stopAllMusic();
-    playMenuMusic();
+    // La música del menú sigue donde iba; si queda apagada, se pausa
+    if (settings.musicEnabled) playMenuMusic();
+    else pauseAllMusic();
 }
 
 /** Sincroniza todos los controles del menú de configuración con `settings` al iniciar */

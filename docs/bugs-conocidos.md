@@ -26,5 +26,14 @@ uno, cada grupo en su propio commit y regrabando solo las referencias de
 | "Restablecer todo" no actualizaba el volumen de los efectos | `ui/settings-panel.js` | Llama a `setMasterVolume()` | `83fecd5` |
 | La cuenta atrás nunca mostraba "¡YA!" | `game/physics.js`, `game/render.js` | Se muestra 0,6 s al sacar | `ca7a095` |
 
+### Actualización v2 · Fase 0
+
+Fallos encontrados en la revisión previa a la actualización v2
+(`design/actualizacion-v2/fase-0-bugs.md`), uno o varios por commit.
+
+| Bug | Dónde | Arreglo | Commit |
+|---|---|---|---|
+| Apagar y encender la música la volvía a empezar desde el principio | `systems/audio.js`, `ui/settings-panel.js` | `pauseAllMusic()` pausa sin rebobinar; "Restablecer todo" tampoco rebobina | (este commit) |
+
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.

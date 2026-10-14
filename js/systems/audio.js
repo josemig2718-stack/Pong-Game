@@ -203,6 +203,16 @@ function stopAllMusic() {
 }
 
 /**
+ * Pausa toda la música sin rebobinarla: al reactivarla, la pista que toca
+ * sigue donde iba.
+ */
+function pauseAllMusic() {
+    menuMusic.pause();
+    gameplayMusic.pause();
+    hachepeMusic.pause();
+}
+
+/**
  * Volumen de la música, de 0 a 100. Lo aplica a las tres pistas y lo guarda.
  * @param {number} val
  */
@@ -215,14 +225,14 @@ function setMusicVolume(val) {
 }
 
 /**
- * Activa o desactiva la música (al desactivarla, la para).
+ * Activa o desactiva la música (al desactivarla, la pausa sin rebobinar).
  * @param {boolean} enabled
  */
 function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
     saveSettings();
     if (!enabled) {
-        stopAllMusic();
+        pauseAllMusic();
     }
 }
 
