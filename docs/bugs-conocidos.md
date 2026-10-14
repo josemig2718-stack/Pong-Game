@@ -33,7 +33,8 @@ Fallos encontrados en la revisión previa a la actualización v2
 
 | Bug | Dónde | Arreglo | Commit |
 |---|---|---|---|
-| Apagar y encender la música la volvía a empezar desde el principio | `systems/audio.js`, `ui/settings-panel.js` | `pauseAllMusic()` pausa sin rebobinar; "Restablecer todo" tampoco rebobina | (este commit) |
+| Apagar y encender la música la volvía a empezar desde el principio | `systems/audio.js`, `ui/settings-panel.js` | `pauseAllMusic()` pausa sin rebobinar; "Restablecer todo" tampoco rebobina | `534c128` |
+| Los efectos de gol seguían en pantalla en la partida siguiente, y la cámara lenta del Flash Épico pasaba a ella; al cambiar de efecto a mitad de animación, el anterior se congelaba | `vfx/goal-fx.js`, `vfx/index.js`, `game/match.js` | `resetGoalVFX()` al empezar y al salir (`resetVFX()`); `updateGoalVFX()` avanza todos los efectos | (este commit) |
 
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.

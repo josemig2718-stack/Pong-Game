@@ -182,6 +182,9 @@ function quitGame() {
     stopDialogue();
     resetMusicRate();
 
+    // Que no quede ningún efecto de gol (ni su cámara lenta) para la siguiente
+    resetVFX();
+
     // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;
     p1.width = paddleWidth;

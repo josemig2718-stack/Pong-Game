@@ -129,7 +129,12 @@ Edita `scenarios.js`. Cada escenario tiene una semilla, un almacenamiento
 inicial y una lista de acciones (`click`, `clickSel`, `input`, `change`, `key`,
 `steps`, `play`). `expect` declara eventos por los que debe pasar (por ejemplo
 `boss:3` o `screen:finale-screen`): si un cambio hace que ya no pase por ellos,
-el test lo detecta aunque el estado coincida.
+el test lo detecta aunque el estado coincida. `expectNot` declara eventos por
+los que no debe pasar: así `salir-tras-gol` vigila que una partida nunca
+empiece con la cámara lenta del gol anterior (`slowmo-al-empezar`). `play`
+puede jugar hasta `goal` (el primer gol) además de hasta una pantalla o el
+final de la partida. Los eventos solo se detectan al avanzar un fotograma:
+entre dos acciones de interfaz sin `steps` no se registra nada.
 
 ## Archivos
 

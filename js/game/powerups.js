@@ -448,6 +448,10 @@ function updatePowerupBursts(dt) {
     }
     powerupBursts = powerupBursts.filter((b) => b.life > 0);
 }
+/** Quita los estallidos en curso (al abandonar la partida, desde resetVFX). */
+function clearPowerupBursts() {
+    powerupBursts = [];
+}
 function renderPowerupBursts(ctx) {
     if (powerupBursts.length === 0) return;
     ctx.save();

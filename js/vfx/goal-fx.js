@@ -20,6 +20,21 @@ let confettiParticles = [];
 let confettiStreamers = [];
 let shockwave = null;         // { x, y, t, color }
 
+/**
+ * Vacía el estado de todos los efectos de gol: al empezar o abandonar una
+ * partida no queda ninguno a la vista ni la cámara lenta del destello.
+ */
+function resetGoalVFX() {
+    goalFlashAlpha = 0;
+    goalSlowmoTimer = 0;
+    goalSquares = [];
+    goalRing = null;
+    goalFlashRays = null;
+    confettiParticles = [];
+    confettiStreamers = [];
+    shockwave = null;
+}
+
 // --- Clásico: anillo del color del tema y cuadrados disparados ---
 function triggerGoalClassic(goalX, goalY, color) {
     goalSquares = [];
@@ -257,14 +272,14 @@ function triggerGoalVFX(goalX, goalY) {
 }
 
 /**
- * Avanza el efecto de gol equipado y los temporizadores comunes.
+ * Avanza todos los efectos de gol, no solo el equipado: si se cambia de
+ * efecto a mitad de una animación, la anterior termina en vez de quedarse
+ * congelada (los que no tienen nada en curso salen al momento).
  * @param {number} dt
  */
 function updateGoalVFX(dt) {
-    const fxId = playerProgression.selectedGoalFx || 'classic';
-
-    if (GOAL_FX[fxId]) {
-        GOAL_FX[fxId].update(dt);
+    for (const fx of Object.values(GOAL_FX)) {
+        fx.update(dt);
     }
 
     // Los temporizadores comunes avanzan siempre, sea cual sea el efecto

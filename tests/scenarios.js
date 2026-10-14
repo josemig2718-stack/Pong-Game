@@ -11,8 +11,8 @@
  *   { type: 'steps', n }             dejar pasar n fotogramas
  *   { type: 'play', bot, bot2?, until, max }
  *                                    jugar con bots hasta una condición
- *                                    (gameover, finale, stopped, screen:<id>;
- *                                    varias separadas por |)
+ *                                    (gameover, finale, stopped, goal,
+ *                                    screen:<id>; varias separadas por |)
  *
  * Opciones del bot: react (cada cuántos fotogramas decide), noise (error
  * de puntería en px), deadzone, y mouse/touch para jugar con el ratón o
@@ -20,7 +20,8 @@
  *
  * `expect` lista eventos que el escenario debe atravesar. Si un cambio
  * hace que ya no pase por ellos, el test lo señala aunque el estado
- * coincida: protege la cobertura de la propia batería.
+ * coincida: protege la cobertura de la propia batería. `expectNot`
+ * lista eventos por los que no debe pasar (un bug que no debe volver).
  * ------------------------------------------------------------------
  */
 
@@ -353,5 +354,27 @@ export const SCENARIOS = [
             { type: 'click', text: 'SÍ, SALIR' },
             { type: 'steps', n: 10 }
         ]
+    },
+    {
+        // Salir de la partida durante la cámara lenta del Flash Épico: la
+        // siguiente partida debe empezar sin ella ni restos del efecto
+        name: 'salir-tras-gol',
+        seed: 403,
+        storage: progression({ selectedGoalFx: 'epic_flash', purchasedItems: ['default', 'none', 'classic', 'epic_flash'] }),
+        actions: [
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'VS CPU' },
+            { type: 'play', bot: { react: 2, noise: 20 }, until: 'goal', max: 15000 },
+            { type: 'steps', n: 5 },
+            { type: 'key', code: 'Escape' },
+            { type: 'steps', n: 1 },
+            { type: 'click', text: 'RENDIRSE' },
+            { type: 'steps', n: 1 },
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'VS CPU' },
+            { type: 'steps', n: 120 }
+        ],
+        expect: ['start:cpu', 'goal:slowmo', 'paused'],
+        expectNot: ['slowmo-al-empezar']
     }
 ];

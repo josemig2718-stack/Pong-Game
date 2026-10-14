@@ -144,6 +144,11 @@ class Recorder {
             ev('collect:' + p.powerups.field.type);
         }
         if (s.campaign.isDialogueActive) ev('dialogue');
+        // Cámara lenta del Flash Épico: no debe pasar de una partida a la siguiente
+        if (this.P.diag().goalSlowmoTimer > 0) {
+            ev('goal:slowmo');
+            if (m.isPlaying && !(p && p.match.isPlaying)) ev('slowmo-al-empezar');
+        }
         if (s.boss) {
             ev('boss:' + s.boss.level);
             if (s.boss.hidesBall) ev('boss:hidesBall');
@@ -485,6 +490,7 @@ function until(rec, cond) {
     if (cond === 'gameover') return rec.isScreen('game-over-screen');
     if (cond === 'finale') return rec.isScreen('finale-screen');
     if (cond === 'stopped') return !rec.P.match().isPlaying;
+    if (cond === 'goal') { const m = rec.P.match(); return m.p1Score + m.p2Score > 0; }
     if (cond.startsWith('screen:')) return rec.isScreen(cond.slice(7));
     throw new Error('Condición desconocida: ' + cond);
 }
@@ -549,6 +555,9 @@ export function compare(golden, got, scn) {
 
     for (const e of scn.expect || []) {
         if (!got.events.includes(e)) errors.push(`El escenario no pasó por "${e}"`);
+    }
+    for (const e of scn.expectNot || []) {
+        if (got.events.includes(e)) errors.push(`El escenario pasó por "${e}" y no debía`);
     }
     if (!golden) return { errors, warnings: ['Sin referencia grabada'] };
 

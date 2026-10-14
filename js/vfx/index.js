@@ -24,6 +24,13 @@
 /** Prepara los efectos al empezar una partida. */
 function initVFX() {
     initBackground();
+    resetGoalVFX();
+}
+
+/** Vacía los efectos de la partida al abandonarla: los de gol y los estallidos de los power-ups. */
+function resetVFX() {
+    resetGoalVFX();
+    clearPowerupBursts();
 }
 
 /** Avanza los efectos con estado: el fondo, el efecto de gol y los estallidos de los power-ups. */
