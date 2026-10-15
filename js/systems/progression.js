@@ -191,7 +191,9 @@ function purchaseItem(itemId, cost) {
         playerProgression.purchasedItems.push(itemId);
         saveProgression();
 
-        if (playerProgression.purchasedItems.length === DEFAULT_PROGRESSION.purchasedItems.length + 1) {
+        // Cuenta solo los objetos de pago: la lista guardada puede traer
+        // otro número de gratuitos
+        if (getTotalPurchasedItems() >= 1) {
             unlockAchievement('grow_partner');
         }
         return true;

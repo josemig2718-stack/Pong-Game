@@ -206,6 +206,16 @@ function checkAllAchievements(mode, p1Won) {
     if (achievementGoalMet('powerup_collector')) {
         unlockAchievement('powerup_collector');
     }
+
+    // Nivel y tienda: también al terminar una partida (con `mode`), no solo
+    // al subir de nivel o al comprar, para que se pongan al día. No al
+    // estrenar un tema: eso pasa al abrir el juego y no debe dar avisos.
+    if (mode) {
+        if (achievementGoalMet('reach_level_5'))  unlockAchievement('reach_level_5');
+        if (achievementGoalMet('reach_level_10')) unlockAchievement('reach_level_10');
+        if (achievementGoalMet('fashionista'))    unlockAchievement('fashionista');
+        if (getTotalPurchasedItems() >= 1)        unlockAchievement('grow_partner');
+    }
     
     // Sin Ayuda: ganó contra la máquina con power-ups activados, apareció al
     // menos uno y eligió no cogerlo

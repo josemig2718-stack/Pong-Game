@@ -181,6 +181,9 @@ function quitGame() {
     state.isPlaying = false;
     stopLoop();
 
+    // Guardar el tiempo jugado desde el último guardado y parar el reloj
+    statsPauseClock();
+
     // Cortar diálogos de campaña en curso
     stopDialogue();
     resetMusicRate();
@@ -215,8 +218,10 @@ function togglePause() {
         syncAudioToggles();
         document.getElementById('pause-menu').classList.add('active-screen');
         stopLoop();
+        statsPauseClock();
     } else {
         document.getElementById('pause-menu').classList.remove('active-screen');
+        statsResumeClock();
         resumeLoop();
     }
     syncResultClass();

@@ -78,7 +78,10 @@ const gameStats = loadStats();
 // --- Variables de tracking en tiempo real (durante una partida) ---
 let currentRally    = 0;   // golpes consecutivos en la ronda actual
 let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
-let gameStartTimeMs = 0;   // timestamp de inicio de partida (para tiempo jugado)
+// Desde cuándo corre el reloj del tiempo jugado; -1 = parado (pausa, fuera de
+// partida). No vale 0 como "parado": performance.now() puede valer 0 (el
+// reloj virtual de los tests empieza ahí).
+let gameStartTimeMs = -1;
 let matchElapsedMs  = 0;   // tiempo jugado en la partida (sin pausas, diálogos ni saques)
 let matchBestRally  = 0;   // rally más largo de la partida
 let matchReachedMaxSpeed = false;   // una bola llegó al máximo del preset en esta partida ("Demonio Veloz")
@@ -160,9 +163,13 @@ function statsOnScore(scorerIsP1, ball) {
 function statsOnGameEnd(mode, p1Won, p2FinalScore) {
     gameStats.totalGamesPlayed++;
 
-    // Tiempo jugado
-    const elapsed = performance.now() - gameStartTimeMs;
-    gameStats.totalTimePlayedMs += elapsed;
+    // Tiempo jugado (con el reloj parado no hay nada que sumar). El reloj
+    // se para aquí: si después se sale con "MENÚ PRINCIPAL", quitGame() no
+    // vuelve a contar este tiempo.
+    if (gameStartTimeMs >= 0) {
+        gameStats.totalTimePlayedMs += performance.now() - gameStartTimeMs;
+        gameStartTimeMs = -1;
+    }
 
     // Último rally de la partida
     if (currentRally > gameStats.longestRally) {
@@ -224,6 +231,17 @@ function statsFlushTime() {
         gameStartTimeMs = now;
         saveStats();
     }
+}
+
+/** Para el reloj del tiempo jugado (al pausar o abandonar): guarda lo que llevaba. */
+function statsPauseClock() {
+    statsFlushTime();
+    gameStartTimeMs = -1;
+}
+
+/** Vuelve a poner en marcha el reloj al reanudar: el tiempo en pausa no cuenta. */
+function statsResumeClock() {
+    gameStartTimeMs = performance.now();
 }
 
 /** Formatea milisegundos a texto legible "Xh Ym" */
