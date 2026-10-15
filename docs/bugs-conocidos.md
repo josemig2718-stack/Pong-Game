@@ -35,9 +35,12 @@ Fallos encontrados en la revisión previa a la actualización v2
 |---|---|---|---|
 | Apagar y encender la música la volvía a empezar desde el principio | `systems/audio.js`, `ui/settings-panel.js` | `pauseAllMusic()` pausa sin rebobinar; "Restablecer todo" tampoco rebobina | `534c128` |
 | Los efectos de gol seguían en pantalla en la partida siguiente, y la cámara lenta del Flash Épico pasaba a ella; al cambiar de efecto a mitad de animación, el anterior se congelaba | `vfx/goal-fx.js`, `vfx/index.js`, `game/match.js` | `resetGoalVFX()` al empezar y al salir (`resetVFX()`); `updateGoalVFX()` avanza todos los efectos | `ee06571` |
-| La pantalla temblaba durante toda la cuenta atrás tras cada gol (y a veces al empezar la partida siguiente) | `game/physics.js`, `game/match.js` | La vibración avanza durante el saque; `startGame()` y `quitGame()` la ponen a cero | (este commit) |
-| Las partículas del gol se quedaban quietas en el aire durante el saque | `game/physics.js` | Las partículas avanzan durante el saque | (este commit) |
-| Desactivar "Vibración de pantalla" no cortaba una vibración en curso | `ui/settings-panel.js` | `toggleScreenShake(false)` pone `shakeTimeMs` a 0 | (este commit) |
+| La pantalla temblaba durante toda la cuenta atrás tras cada gol (y a veces al empezar la partida siguiente) | `game/physics.js`, `game/match.js` | La vibración avanza durante el saque; `startGame()` y `quitGame()` la ponen a cero | `4931149` |
+| Las partículas del gol se quedaban quietas en el aire durante el saque | `game/physics.js` | Las partículas avanzan durante el saque | `4931149` |
+| Desactivar "Vibración de pantalla" no cortaba una vibración en curso | `ui/settings-panel.js` | `toggleScreenShake(false)` pone `shakeTimeMs` a 0 | `4931149` |
+| "Sin Ayuda" salía con cualquier victoria sin power-ups recogidos: en local, con los power-ups desactivados o sin que apareciera ninguno | `systems/achievements.js`, `game/powerups.js` | Exige modo contra la máquina, power-ups activados y al menos uno aparecido (`powerupsSpawnedThisGame`) sin recoger | (este commit) |
+| "Demonio Veloz" comparaba el récord histórico (de cualquier preset) con el máximo del preset actual | `systems/achievements.js`, `systems/stats.js`, `game/physics.js` | Cuenta si una bola llega al máximo en esa partida (`matchReachedMaxSpeed`) | (este commit) |
+| El récord de velocidad se leía siempre de la primera bola, también con multibola | `systems/stats.js`, `game/physics.js` | `statsOnScore()` recibe la bola que marcó; al terminar, la más rápida de las que quedan | (este commit) |
 
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.

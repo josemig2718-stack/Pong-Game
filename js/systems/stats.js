@@ -81,6 +81,7 @@ let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
 let gameStartTimeMs = 0;   // timestamp de inicio de partida (para tiempo jugado)
 let matchElapsedMs  = 0;   // tiempo jugado en la partida (sin pausas, diálogos ni saques)
 let matchBestRally  = 0;   // rally más largo de la partida
+let matchReachedMaxSpeed = false;   // una bola llegó al máximo del preset en esta partida ("Demonio Veloz")
 
 /** Llamar al iniciar una nueva partida */
 function statsOnGameStart() {
@@ -89,6 +90,22 @@ function statsOnGameStart() {
     gameStartTimeMs = performance.now();
     matchElapsedMs  = 0;
     matchBestRally  = 0;
+    matchReachedMaxSpeed = false;
+}
+
+/** Una bola acaba de alcanzar la velocidad máxima del preset (desde hitPaddles). */
+function statsOnMaxSpeed() {
+    matchReachedMaxSpeed = true;
+}
+
+/**
+ * Guarda la velocidad de una bola como récord si lo supera.
+ * @param {number} speed
+ */
+function statsRecordBallSpeed(speed) {
+    if (speed > gameStats.maxBallSpeed) {
+        gameStats.maxBallSpeed = Math.round(speed * 10) / 10;
+    }
 }
 
 /**
@@ -105,8 +122,12 @@ function statsOnPaddleHit() {
     if (currentRally > matchBestRally) matchBestRally = currentRally;
 }
 
-/** Llamar cuando se anota un punto (antes de resetBall) */
-function statsOnScore(scorerIsP1) {
+/**
+ * Llamar cuando se anota un punto (antes de resetBall).
+ * @param {boolean} scorerIsP1
+ * @param {Ball} ball la bola que salió del campo (con multibola puede no ser la primera)
+ */
+function statsOnScore(scorerIsP1, ball) {
     // Actualizar rally más largo
     if (currentRally > gameStats.longestRally) {
         gameStats.longestRally = currentRally;
@@ -124,11 +145,8 @@ function statsOnScore(scorerIsP1) {
     const deficit = state.p2Score - state.p1Score;
     if (deficit > maxDeficit) maxDeficit = deficit;
 
-    // Rastrear velocidad máxima de la bola
-    const ball = state.balls[0];
-    if (ball.speed > gameStats.maxBallSpeed) {
-        gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
-    }
+    // Rastrear velocidad máxima de la bola que marcó
+    statsRecordBallSpeed(ball.speed);
 
     saveStats();
 }
@@ -151,10 +169,9 @@ function statsOnGameEnd(mode, p1Won, p2FinalScore) {
         gameStats.longestRally = currentRally;
     }
 
-    // Velocidad máxima
-    const ball = state.balls[0];
-    if (ball.speed > gameStats.maxBallSpeed) {
-        gameStats.maxBallSpeed = Math.round(ball.speed * 10) / 10;
+    // Velocidad máxima: la más rápida de las bolas que queden (si no queda ninguna, nada)
+    if (state.balls.length > 0) {
+        statsRecordBallSpeed(Math.max(...state.balls.map(b => b.speed)));
     }
 
     if (mode === 'cpu') {

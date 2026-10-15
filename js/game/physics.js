@@ -269,6 +269,7 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
         b.dx = b.speed * Math.sin(angleRad);
         b.dy = -b.speed * Math.cos(angleRad); // Siempre hacia arriba
         if (b.speed < maxBallSpeed) b.speed += 0.5;
+        if (b.speed >= maxBallSpeed) statsOnMaxSpeed();
 
         b.y = targetPaddle.y - b.radius;
     } else {
@@ -280,6 +281,7 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
         b.dx = direction * b.speed * Math.cos(angleRad);
         b.dy = b.speed * Math.sin(angleRad);
         if (b.speed < maxBallSpeed) b.speed += 0.5;
+        if (b.speed >= maxBallSpeed) statsOnMaxSpeed();   // "Demonio Veloz": no toca la partida
 
         b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
     }
@@ -320,7 +322,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
     if (b.x - b.radius < 0) {
         // CPU/P2 anota
         state.p2Score++;
-        statsOnScore(false);
+        statsOnScore(false, b);
         bossOnGoal(false);
         checkMidDialogue();
         soundEffects.score();
@@ -332,7 +334,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
     if (b.x + b.radius > GAME_WIDTH) {
         // P1 anota
         state.p1Score++;
-        statsOnScore(true);
+        statsOnScore(true, b);
         bossOnGoal(true);
         soundEffects.score();
         triggerShake(10, 260);

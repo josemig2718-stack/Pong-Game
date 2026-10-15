@@ -191,9 +191,9 @@ function checkAllAchievements(mode, p1Won) {
         unlockAchievement('comeback');
     }
 
-    // Speed demon: verificar si alcanzó la velocidad máxima del preset actual
-    const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
-    if (s.maxBallSpeed >= speedPreset.max) {
+    // Demonio Veloz: una bola llegó al máximo del preset en esta misma partida
+    // (no vale el récord histórico, que puede ser de un preset más rápido)
+    if (matchReachedMaxSpeed) {
         unlockAchievement('speed_demon');
     }
 
@@ -207,8 +207,11 @@ function checkAllAchievements(mode, p1Won) {
         unlockAchievement('powerup_collector');
     }
     
-    // Sin ayuda (si ganó y no recogió power-ups en esta partida)
-    if (p1Won && powerupsThisGame === 0) {
+    // Sin Ayuda: ganó contra la máquina con power-ups activados, apareció al
+    // menos uno y eligió no cogerlo
+    const vsMachine = mode === 'cpu' || mode === 'hachepe' || mode === 'campaign';
+    if (vsMachine && p1Won && settings.powerupsEnabled &&
+        powerupsSpawnedThisGame >= 1 && powerupsThisGame === 0) {
         unlockAchievement('no_powerups_win');
     }
 }

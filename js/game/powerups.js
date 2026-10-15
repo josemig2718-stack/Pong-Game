@@ -25,6 +25,7 @@ let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparició
 let shieldWall = null;          // { x, y, width, height, owner }
 let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
 let powerupsThisGame = 0;       // Contador por partida (para logros)
+let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayuda")
 let slowmoActive = false;       // Indica si la cámara lenta está activa
 
 /**
@@ -37,6 +38,7 @@ function initPowerups() {
     slowmoActive = false;
     lastHitter = 'p1';
     powerupsThisGame = 0;
+    powerupsSpawnedThisGame = 0;
     powerupBursts = [];
     // Tiempo inicial aleatorio entre 8 y 15 segundos
     powerupCooldownMs = 8000 + Math.random() * 7000;
@@ -141,6 +143,7 @@ function spawnPowerup() {
         ageMs: 0,
         maxLifetime: 12000 // 12 segundos antes de desaparecer
     };
+    powerupsSpawnedThisGame++;
 
     soundEffects.powerupSpawn();
 }
