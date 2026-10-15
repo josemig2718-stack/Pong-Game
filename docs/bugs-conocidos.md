@@ -43,7 +43,8 @@ Fallos encontrados en la revisión previa a la actualización v2
 | El récord de velocidad se leía siempre de la primera bola, también con multibola | `systems/stats.js`, `game/physics.js` | `statsOnScore()` recibe la bola que marcó; al terminar, la más rápida de las que quedan | `ee02342` |
 | "Rango Experto", "Leyenda Definitiva", "Fashionista" y "Grow Partner" podían no salir nunca: los de nivel solo se miraban al subir de nivel, "Fashionista" solo al comprar y "Grow Partner" exigía un número exacto de objetos | `systems/achievements.js`, `systems/progression.js` | Se comprueban también en `checkAllAchievements()`; "Grow Partner" pide al menos un objeto de pago | `470b3de` |
 | El tiempo en pausa contaba como tiempo jugado (inflaba "Pongmaníaco") y "Salir" perdía el tiempo desde el último guardado | `systems/stats.js`, `game/match.js` | `statsPauseClock()`/`statsResumeClock()` al pausar y reanudar; `quitGame()` guarda el tiempo y para el reloj (-1); el fin de partida también lo para, para no contarlo dos veces | `470b3de` |
-| El modo local daba Chemi Coins por juego perfecto, aunque no debe dar monedas | `systems/progression.js` | Las monedas del juego perfecto solo fuera del modo local; el XP se mantiene | (este commit) |
+| El modo local daba Chemi Coins por juego perfecto, aunque no debe dar monedas | `systems/progression.js` | Las monedas del juego perfecto solo fuera del modo local; el XP se mantiene | `ca2b20a` |
+| Los logros "Leyenda" (`streak_10`) y "Gran Maestro" (`beat_impossible`) se llamaban igual que los niveles 10 y 9 | `data/achievements.js` | Pasan a "Intocable" e "Imposible No Existe"; el `id` no cambia | (este commit) |
 
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.

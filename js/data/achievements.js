@@ -61,7 +61,7 @@ const ACHIEVEMENTS = [
       icon: 'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z' },
     { id: 'streak_5', category: 'rachas', name: 'Imparable', desc: 'Gana 5 partidas seguidas vs CPU',
       icon: 'M12 2l2 5 5-2-2 5 5 2-5 2 2 5-5-2-2 5-2-5-5 2 2-5-5-2 5-2-2-5 5 2z' },
-    { id: 'streak_10', category: 'rachas', name: 'Leyenda', desc: 'Gana 10 partidas seguidas vs CPU',
+    { id: 'streak_10', category: 'rachas', name: 'Intocable', desc: 'Gana 10 partidas seguidas vs CPU',
       icon: 'M13 2L5 13h6l-1 9 8-12h-6zM3.5 5.5L5 7M20.5 5.5L19 7' },
 
     // Habilidad
@@ -69,7 +69,7 @@ const ACHIEVEMENTS = [
       icon: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z' },
     { id: 'perfect_3', category: 'habilidad', name: 'Diamante', desc: 'Consigue 3 juegos perfectos',
       icon: 'M6 3h12l4 6-10 12L2 9zM2 9h20M12 21L8 9l2-6M12 21l4-12-2-6' },
-    { id: 'beat_impossible', category: 'habilidad', name: 'Gran Maestro', desc: 'Vence a la CPU en dificultad Imposible',
+    { id: 'beat_impossible', category: 'habilidad', name: 'Imposible No Existe', desc: 'Vence a la CPU en dificultad Imposible',
       icon: 'M8 10h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2zM3 14h3M3 17h3M18 14h3M18 17h3M7 7l2.5 1.5L12 4l2.5 4.5L17 7' },
     { id: 'rally_15', category: 'habilidad', name: 'Peloteo', desc: 'Consigue un rally de 15 golpes',
       icon: 'M3 18l5-10 5 10 4-8M18.5 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0' },
