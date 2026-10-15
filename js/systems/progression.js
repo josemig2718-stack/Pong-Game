@@ -259,7 +259,8 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
 
     if (p1Won && p2Score === 0) {
         addXP(XP_REWARDS.perfectGame);
-        addCoins(COIN_REWARDS.perfectGame);
+        // El modo local no da monedas, tampoco por juego perfecto
+        if (mode !== 'local') addCoins(COIN_REWARDS.perfectGame);
     }
 
     saveProgression();
