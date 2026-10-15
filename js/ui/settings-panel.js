@@ -119,11 +119,13 @@ function toggleCrtEffect(enabled) {
 }
 
 /**
+ * Al desactivarla corta también la vibración en curso.
  * @param {boolean} enabled
  */
 function toggleScreenShake(enabled) {
     settings.screenShake = enabled;
     saveSettings();
+    if (!enabled) state.shakeTimeMs = 0;
 }
 
 /**

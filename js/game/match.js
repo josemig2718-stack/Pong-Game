@@ -110,6 +110,9 @@ function startGame(mode) {
     state.p2Score = 0;
     state.goTextMs = 0;
     state.particles = [];
+    // La vibración del gol que cerró la partida anterior no pasa a esta
+    state.shakeTimeMs = 0;
+    state.shakeIntensity = 0;
 
     // Restaurar geometría original de las paletas. Hay que reponer también
     // width y x: la arena rotada del Creador convierte a p1 en una paleta
@@ -182,8 +185,10 @@ function quitGame() {
     stopDialogue();
     resetMusicRate();
 
-    // Que no quede ningún efecto de gol (ni su cámara lenta) para la siguiente
+    // Que no quede ningún efecto de gol (ni su cámara lenta) ni vibración
     resetVFX();
+    state.shakeTimeMs = 0;
+    state.shakeIntensity = 0;
 
     // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;

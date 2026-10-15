@@ -60,9 +60,11 @@ function update(dt) {
 
     if (state.serveCountdownMs > 0) {
         tickServeCountdown(dt);
-        // Los fondos animados siguen; la bola, los power-ups y las
-        // partículas esperan al saque.
+        // Los fondos animados, las partículas y la vibración siguen; la
+        // bola y los power-ups esperan al saque.
         updateVFX(dt);
+        updateParticles(dt);
+        updateShake(dt);
         return;
     }
 
