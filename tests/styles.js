@@ -61,6 +61,7 @@ export const STYLE_STATES = [
     { name: 'campana-intro', run: (g) => { g.showScreen('campaign-menu'); g.replayCampaignIntro(); } },
     { name: 'vs', run: (g) => g.prepareCampaignMatch(3) },
     { name: 'controles', run: (g) => g.showScreen('controls-menu') },
+    { name: 'como-jugar', run: (g) => g.openHowto('main-menu') },
     { name: 'estadisticas', run: (g) => g.showStatsScreen() },
     { name: 'logros', run: (g) => g.showAchievementsScreen() },
     { name: 'configuracion', run: (g) => g.showScreen('settings-menu') },

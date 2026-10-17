@@ -219,6 +219,11 @@ function quitGame() {
 /** Pausa o reanuda la partida (ESC, botón de pausa, menú de pausa). */
 function togglePause() {
     if (!state.isPlaying) return;
+    // Con «Cómo jugar» abierto desde la pausa, ESC vuelve a la pausa
+    if (howtoOverPause()) {
+        closeHowto();
+        return;
+    }
     state.isPaused = !state.isPaused;
     if (state.isPaused) {
         fillMatchScore('pause');

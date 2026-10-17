@@ -33,7 +33,7 @@ js/game/        canvas, draw, effects, balls, ai, mechanics, physics, match, hud
 js/vfx/         random (vfxRandom, vfxHash, vfxT, and sfxRandom for audio), shop cosmetics — trails, backgrounds, paddles, goal-fx — plus super (super-hit styles) and mechanics (MECH_FX) (+ index.js facade)
 js/bosses/      index.js (table + dispatchers), shared.js, one file per boss
 js/campaign/    progress (boss in play, VS, advance), menu (carousel + intro), dialogue, finale
-js/ui/          screens, actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
+js/ui/          screens, howto («Cómo jugar»), actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
 ```
 
 All files are classic scripts: their top-level `const`/`let`/`function` share one global scope, so **every top-level name must be unique across the project and must not collide with a `window` property** (grep before naming). Each file starts with `'use strict'`. Files call each other freely inside function bodies (those run after every script has loaded), but **top-level code may only use what `index.html` loaded before it**. The script list follows the layer order above; within it, the only cross-file top-level dependencies are:
@@ -53,7 +53,7 @@ Breaking the order throws a `ReferenceError` at load and every test fails.
 
 - No file registers listeners or touches the DOM while loading (reading `localStorage` and looking up the canvas are the only load-time work; music `Audio` elements are created the first time a track plays). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI` in that order. **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
 - The markup has **no inline handlers**. Controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/ui/actions.js` has one registry per event type, named after the functions they call, and three delegated listeners on `document`. Adding a control = adding a registry entry that **converts its argument** (dataset values are strings: `carouselMove("-1")` would concatenate). Unknown actions throw.
-- Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. Entering `main-menu` hides `#game-container`; `shop-menu` and `campaign-menu` re-render; every screen sets its music through `screenMusic(id)` (see `systems/music.js` below). Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
+- Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. «Cómo jugar» (`#howto-menu`, `js/ui/howto.js`) opens from the main menu, the pause or Novedades and its back button returns there; opened from the pause it toggles the classes itself (like `togglePause`), so the match stays paused with its music ducked, and ESC closes it back to the pause. Its key labels come from `settings.bindings` each time it opens. Entering `main-menu` hides `#game-container`; `shop-menu` and `campaign-menu` re-render; every screen sets its music through `screenMusic(id)` (see `systems/music.js` below). Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
 
 ### Game loop (`js/game/`)
 

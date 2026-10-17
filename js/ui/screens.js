@@ -47,6 +47,7 @@ const SCREEN_MUSIC = {
     'mode-select-menu':  'musica_menu',
     'campaign-menu':     'musica_menu',
     'controls-menu':     'musica_menu',
+    'howto-menu':        'musica_menu',
     'settings-menu':     'musica_menu',
     'exit-menu':         'musica_menu',
     'shop-menu':         'musica_tienda',

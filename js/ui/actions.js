@@ -24,6 +24,8 @@ const CLICK_ACTIONS = {
     showStatsScreen:        () => showStatsScreen(),
     showAchievementsScreen: () => showAchievementsScreen(),
     closeGame:              () => closeGame(),
+    openHowto:              (el) => openHowto(/** @type {HowtoOrigin} */ (el.dataset.arg)),
+    closeHowto:             () => closeHowto(),
     forceClose:             () => forceClose(),
 
     // Partida
