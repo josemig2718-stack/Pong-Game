@@ -230,6 +230,22 @@ function togglePause() {
 }
 
 /**
+ * Sonido del fin de partida: con la música activada se funde la pista y
+ * suena el jingle; sin música, la fanfarria sintetizada (con el volumen
+ * de efectos).
+ * @param {boolean} won
+ */
+function playMatchEndSound(won) {
+    // También con la música apagada: la pista de partida no se retoma
+    musicStop({ fade: 0.25 });
+    if (settings.musicEnabled) {
+        musicPlayOneShot(won ? 'jingle_victoria' : 'jingle_derrota');
+    } else {
+        won ? soundEffects.win() : soundEffects.lose();
+    }
+}
+
+/**
  * Comprueba si la partida ha terminado y, si es así, la cierra.
  * @returns {boolean} true si terminó
  */
@@ -271,7 +287,7 @@ function checkWin() {
 
     if (state.mode === 'campaign') {
         winnerText.textContent = p1Won ? '¡DERROTASTE AL HACHEPE!' : 'HAS CAÍDO...';
-        if (!narrativeEnding) p1Won ? soundEffects.win() : soundEffects.lose();
+        if (!narrativeEnding) playMatchEndSound(p1Won);
 
         // Diálogo de despedida del jefe (win/lose desde su punto de vista)
         playBossOutcomeDialogue(p1Won);
@@ -287,10 +303,10 @@ function checkWin() {
         }
     } else if (state.mode === 'cpu' || state.mode === 'hachepe') {
         winnerText.textContent = p1Won ? '¡GANASTE!' : 'DERROTA';
-        p1Won ? soundEffects.win() : soundEffects.lose();
+        playMatchEndSound(p1Won);
     } else {
         winnerText.textContent = p1Won ? 'JUGADOR 1 GANA' : 'JUGADOR 2 GANA';
-        soundEffects.win();
+        playMatchEndSound(true);   // en local siempre gana alguien
     }
 
     fillMatchScore('final');
@@ -332,8 +348,9 @@ function checkWin() {
     p2.height = paddleHeight;
     p2.width = paddleWidth;
 
-    // Música
-    stopGameplayMusic();
+    // Música: los desenlaces narrados no tienen jingle y la paran aquí
+    // (en el resto ya la paró playMatchEndSound)
+    if (narrativeEnding) stopGameplayMusic();
 
     // Encadenar la secuencia narrativa que corresponda
     if (narrativeEnding === 'finale') {
