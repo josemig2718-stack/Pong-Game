@@ -14,9 +14,10 @@
 
 /**
  * Muestra una pantalla (un div.screen) y oculta las demás. Algunas
- * pantallas hacen algo al entrar: el menú principal oculta el juego,
- * refresca sus tiles y pone su música, la selección de modo refresca sus
- * tarjetas, y la tienda y la campaña se redibujan.
+ * pantallas hacen algo al entrar: el menú principal oculta el juego y
+ * refresca sus tiles, la selección de modo refresca sus tarjetas y
+ * precarga la música de partida, y la tienda y la campaña se redibujan.
+ * Cada pantalla pone su música (screenMusic).
  */
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active-screen'));
@@ -27,17 +28,40 @@ function showScreen(screenId) {
     if (screenId === 'main-menu') {
         document.getElementById('game-container').classList.add('hidden');
         updateMenuTiles();
-
-        // Música del menú principal
-        playMenuMusic();
     } else if (screenId === 'mode-select-menu') {
         updateModeCards();
+        musicPreload('partida_synthwave');
     } else if (screenId === 'shop-menu') {
         showShopScreen();
     } else if (screenId === 'campaign-menu') {
         renderCampaignMap();
     }
+    const track = screenMusic(screenId);
+    if (track) musicPlay(track);
     soundEffects.uiClick();
+}
+
+/** Música de cada pantalla. Las que no salen aquí no cambian la que suena. */
+const SCREEN_MUSIC = {
+    'main-menu':         'musica_menu',
+    'mode-select-menu':  'musica_menu',
+    'campaign-menu':     'musica_menu',
+    'controls-menu':     'musica_menu',
+    'settings-menu':     'musica_menu',
+    'exit-menu':         'musica_menu',
+    'shop-menu':         'musica_tienda',
+    'achievements-menu': 'musica_tienda',
+    'stats-menu':        'musica_tienda'
+};
+
+/**
+ * La pista de una pantalla, o null si al entrar no cambia la música (la
+ * pausa, el fin de partida, el VS o el falso final).
+ * @param {string} screenId
+ * @returns {string|null}
+ */
+function screenMusic(screenId) {
+    return SCREEN_MUSIC[screenId] || null;
 }
 
 /** Botón SALIR: pide confirmación. */

@@ -5,7 +5,8 @@
  * dos primitivas, sfxVoice() y sfxNoise(), programadas con el reloj de
  * audio, y los efectos de soundEffects. Su azar sale de sfxRandom(),
  * nunca de Math.random (la física) ni de vfxRandom (los cosméticos).
- * Más la música de fondo con elementos <audio> HTML5.
+ * La música la toca systems/music.js; aquí quedan sus envoltorios de
+ * siempre (playMenuMusic, playGameplayMusic...).
  * ------------------------------------------------------------------
  */
 
@@ -426,84 +427,44 @@ function setSfxEnabled(enabled) {
 }
 
 // =================================================================
-//  Música de fondo (HTML5 Audio)
+//  Música de fondo: envoltorios del reproductor (systems/music.js)
 // =================================================================
-const menuMusic     = new Audio('assets/audio/musica_menuprincipal.mp3');
-const gameplayMusic = new Audio('assets/audio/musica_gameplay.mp3');
-const hachepeMusic  = new Audio('assets/audio/hachepe_rap.mp3');
 
-menuMusic.loop     = true;
-gameplayMusic.loop = true;
-hachepeMusic.loop  = true;
-
-// Aplica el volumen de música almacenado al iniciar
-menuMusic.volume     = settings.musicVolume / 100;
-gameplayMusic.volume = settings.musicVolume / 100;
-hachepeMusic.volume  = settings.musicVolume / 100;
-
-/** Para la música de partida y pone la del menú (si la música está activada). */
+/** Pone la música del menú (o la retoma donde iba). */
 function playMenuMusic() {
-    if (!settings.musicEnabled) return;
-    gameplayMusic.pause();
-    gameplayMusic.currentTime = 0;
-    hachepeMusic.pause();
-    hachepeMusic.currentTime = 0;
-    menuMusic.volume = settings.musicVolume / 100;
-    menuMusic.play().catch(() => {});  // Silencia el autoplay-block
+    musicPlay('musica_menu');
 }
 
-/** Para la música del menú y la rebobina. */
+/** Para la música del menú si es la que suena. */
 function stopMenuMusic() {
-    menuMusic.pause();
-    menuMusic.currentTime = 0;
+    if (musicCurrent() === 'musica_menu') musicStop();
 }
 
 /**
  * Música de partida según el modo: el rap de los Hachepes en Hachepe y
- * campaña, silencio contra el Creador y la pista normal en el resto.
+ * campaña, silencio contra el Creador y la Synthwave en el resto.
  * @param {string} [mode]
  */
 function playGameplayMusic(mode = 'cpu') {
-    if (!settings.musicEnabled) return;
-    menuMusic.pause();
-    menuMusic.currentTime = 0;
-
     // El combate contra El Creador va en silencio: la tensión la llevan
     // los tonos sintetizados del propio jefe.
     if (mode === 'campaign' && currentCampaignLevel === CAMPAIGN_CREATOR) {
-        gameplayMusic.pause();
-        gameplayMusic.currentTime = 0;
-        hachepeMusic.pause();
-        hachepeMusic.currentTime = 0;
+        musicStop();
         return;
     }
-
     // El resto de jefes comparten el rap de los Hachepes
-    if (mode === 'hachepe' || mode === 'campaign') {
-        gameplayMusic.pause();
-        gameplayMusic.currentTime = 0;
-        hachepeMusic.volume = settings.musicVolume / 100;
-        hachepeMusic.play().catch(() => {});
-    } else {
-        hachepeMusic.pause();
-        hachepeMusic.currentTime = 0;
-        gameplayMusic.volume = settings.musicVolume / 100;
-        gameplayMusic.play().catch(() => {});
-    }
+    musicPlay(mode === 'hachepe' || mode === 'campaign' ? 'hachepe_rap' : 'partida_synthwave');
 }
 
-/** Para las pistas de partida y las rebobina. */
+/** Para la música de partida (la de los menús no la toca). */
 function stopGameplayMusic() {
-    gameplayMusic.pause();
-    gameplayMusic.currentTime = 0;
-    hachepeMusic.pause();
-    hachepeMusic.currentTime = 0;
+    const current = musicCurrent();
+    if (current && current !== 'musica_menu' && current !== 'musica_tienda') musicStop();
 }
 
 /** Para toda la música. */
 function stopAllMusic() {
-    stopMenuMusic();
-    stopGameplayMusic();
+    musicStop();
 }
 
 /**
@@ -511,21 +472,16 @@ function stopAllMusic() {
  * sigue donde iba.
  */
 function pauseAllMusic() {
-    menuMusic.pause();
-    gameplayMusic.pause();
-    hachepeMusic.pause();
+    musicPause();
 }
 
 /**
- * Volumen de la música, de 0 a 100. Lo aplica a las tres pistas y lo guarda.
+ * Volumen de la música, de 0 a 100. Lo aplica y lo guarda.
  * @param {number} val
  */
 function setMusicVolume(val) {
     settings.musicVolume = val;
-    if (musicBus) musicBus.gain.value = val / 100;
-    menuMusic.volume     = val / 100;
-    gameplayMusic.volume = val / 100;
-    hachepeMusic.volume  = val / 100;
+    musicSetVolume(val / 100);
     saveSettings();
 }
 
@@ -537,17 +493,19 @@ function setMusicEnabled(enabled) {
     settings.musicEnabled = enabled;
     saveSettings();
     if (!enabled) {
-        pauseAllMusic();
+        musicPause();
     }
 }
 
 // --- Autoplay workaround ---
-// Los navegadores bloquean el autoplay de audio hasta la primera
-// interacción del usuario. Este listener one-shot arranca la música
-// del menú en cuanto el usuario hace click, toca la pantalla o
-// presiona una tecla por primera vez.
+// Los navegadores bloquean el audio hasta la primera interacción del
+// usuario. Este listener one-shot reanuda el AudioContext, precarga la
+// música del menú y reintenta la pista que no pudo arrancar en cuanto el
+// usuario hace click, toca la pantalla o presiona una tecla por primera vez.
 function onFirstInteraction() {
-    playMenuMusic();
+    getAudioContext();
+    musicPreload('musica_menu');
+    musicResume();
     window.removeEventListener('click', onFirstInteraction);
     window.removeEventListener('keydown', onFirstInteraction);
     window.removeEventListener('touchstart', onFirstInteraction);

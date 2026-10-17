@@ -219,10 +219,12 @@ function togglePause() {
         document.getElementById('pause-menu').classList.add('active-screen');
         stopLoop();
         statsPauseClock();
+        musicSetDuck(true);
     } else {
         document.getElementById('pause-menu').classList.remove('active-screen');
         statsResumeClock();
         resumeLoop();
+        musicSetDuck(false);
     }
     syncResultClass();
 }

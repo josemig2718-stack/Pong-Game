@@ -45,20 +45,14 @@ function updateMusicVolume(val) {
 }
 
 /**
- * Activa o desactiva la música; al activarla suena la que toca ahora.
+ * Activa o desactiva la música; al activarla, la que toca aquí sigue
+ * donde iba (el reproductor recuerda la pista aunque estuviera apagada).
  * @param {boolean} enabled
  */
 function toggleMusic(enabled) {
     setMusicEnabled(enabled);
     syncAudioToggles();
-    if (enabled) {
-        // Reanudar la música que corresponda según el estado actual
-        if (state.isPlaying) {
-            playGameplayMusic(state.mode);
-        } else {
-            playMenuMusic();
-        }
-    }
+    if (enabled) musicResume();
 }
 
 /**

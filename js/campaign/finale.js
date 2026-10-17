@@ -207,9 +207,13 @@ function typeRevealText(text) {
     }, 45);
 }
 
-/** Deforma la música en curso bajando su velocidad hasta desafinarla. */
+/**
+ * Deforma la música en curso bajando su velocidad hasta desafinarla. Sin
+ * pista en curso no hace nada.
+ * BUG conocido (conservado): hoy nunca la hay, porque checkWin() para la
+ * música antes de runFinaleSequence(); el falso final suena sin música.
+ */
 function warpMusic() {
-    const tracks = [menuMusic, gameplayMusic, hachepeMusic];
     let rate = 1;
     const warp = setInterval(() => {
         rate -= 0.06;
@@ -217,17 +221,13 @@ function warpMusic() {
             clearInterval(warp);
             rate = 0.35;
         }
-        tracks.forEach(t => {
-            try { if (!t.paused) t.playbackRate = rate; } catch (err) { /* navegador quisquilloso */ }
-        });
+        musicSetRate(rate);
     }, 220);
 }
 
 /** Restaura la velocidad normal (al salir de la secuencia). */
 function resetMusicRate() {
-    [menuMusic, gameplayMusic, hachepeMusic].forEach(t => {
-        try { t.playbackRate = 1; } catch (err) { /* ignorar */ }
-    });
+    musicSetRate(1);
 }
 
 /** Fanfarria de victoria sintetizada: no hace falta un MP3 nuevo. */
