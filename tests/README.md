@@ -104,9 +104,9 @@ antes de lo que necesita rompe la carga y fallan todos.
 ### Estilos computados
 
 `estilos-computados` (`styles.js`) protege los cambios de HTML y CSS que no
-deben verse: para 17 estados de la interfaz (cada pantalla, la partida, la
-pausa, el fin de partida, el diálogo, el aviso de logro, la intro y el falso
-final) y 4 tamaños de ventana (1280×800, 800×600, 390×844, 844×390), guarda
+deben verse: para 20 estados de la interfaz (cada pantalla, «Cómo jugar»,
+las Novedades, la partida, la práctica, la pausa, el fin de partida, el
+diálogo, el aviso de logro, la intro y el falso final) y 4 tamaños de ventana (1280×800, 800×600, 390×844, 844×390), guarda
 un hash de **todas** las propiedades de `getComputedStyle` de cada elemento y
 de sus `::before`/`::after`. La clave de cada elemento es su posición en el
 árbol, no su etiqueta, así que cambiar un `<div>` por un `<section>` no la
@@ -138,7 +138,10 @@ el test lo detecta aunque el estado coincida. Las mecánicas de golpe dan
 `mech:perfect`, `mech:edge`, `mech:block`, `mech:smash`, `mech:super` y
 `mech:spin` (de los contadores `mechHits` de `game/mechanics.js`, que el
 adaptador expone en `diag`), `mech:fever` y `shield:spent` (el escudo se
-rompe tras su último bloqueo). `expectNot` declara eventos por
+rompe tras su último bloqueo); también `screen:news-screen` y
+`screen:howto-menu`. Todos los escenarios empiezan con las Novedades de esta
+versión ya vistas (`seenNewsVersion`), salvo los que llevan `news: true`
+(`novedades`). `expectNot` declara eventos por
 los que no debe pasar: así `salir-tras-gol` vigila que una partida nunca
 empiece con la cámara lenta del gol anterior (`slowmo-al-empezar`). `play`
 puede jugar hasta `goal` (el primer gol) o hasta un evento (`event:<nombre>`),

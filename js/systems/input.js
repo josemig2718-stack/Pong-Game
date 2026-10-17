@@ -31,6 +31,12 @@ function handleKeyDown(e) {
 
     keysDown.add(e.code);
 
+    // ESC cierra las Novedades (un diálogo encima del menú)
+    if (e.code === 'Escape' && newsIsOpen()) {
+        closeNews();
+        return;
+    }
+
     if (e.code === settings.bindings.pause && state.isPlaying) {
         togglePause();
     }

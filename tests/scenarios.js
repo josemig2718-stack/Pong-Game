@@ -26,6 +26,10 @@
  * hace que ya no pase por ellos, el test lo señala aunque el estado
  * coincida: protege la cobertura de la propia batería. `expectNot`
  * lista eventos por los que no debe pasar (un bug que no debe volver).
+ *
+ * Todos los escenarios arrancan con las Novedades de esta versión ya
+ * vistas (seenNewsVersion), para que no tapen el menú, salvo los que
+ * llevan `news: true`.
  * ------------------------------------------------------------------
  */
 
@@ -81,7 +85,7 @@ const bossScenario = (level, seed, bot = ACE) => ({
     expect: ['start:campaign', 'dialogue', `boss:${level}`, 'end:campaign']
 });
 
-export const SCENARIOS = [
+const RAW_SCENARIOS = [
     // --------------------------------------------------------------
     //  Modos de juego
     // --------------------------------------------------------------
@@ -449,5 +453,37 @@ export const SCENARIOS = [
         ],
         expect: ['start:cpu', 'goal:slowmo', 'paused'],
         expectNot: ['slowmo-al-empezar']
+    },
+    {
+        // Primera carga de la versión: las Novedades se abren solas encima
+        // del menú; CÓMO JUGAR y VOLVER regresan a ellas, ¡A JUGAR! las
+        // cierra y el botón del documento las reabre (sin el punto)
+        name: 'novedades',
+        seed: 404,
+        news: true,
+        actions: [
+            { type: 'steps', n: 30 },
+            { type: 'clickSel', sel: '#news-screen [data-action="newsToHowto"]' },
+            { type: 'steps', n: 10 },
+            { type: 'click', text: 'VOLVER' },
+            { type: 'click', text: '¡A JUGAR!' },
+            { type: 'clickSel', sel: '#news-btn' },
+            { type: 'click', text: 'Cerrar' },
+            { type: 'clickSel', sel: '#news-btn' },
+            { type: 'key', code: 'Escape' },
+            { type: 'steps', n: 30 }
+        ],
+        expect: ['screen:news-screen', 'screen:howto-menu']
     }
 ];
+
+/** Novedades ya vistas, mezclado en la clave de ajustes de cada escenario. */
+const NEWS_SEEN = { seenNewsVersion: '2.0' };
+
+/** @param {Record<string, string>} [storage] */
+function withNewsSeen(storage = {}) {
+    const saved = storage['pongGame.settings.v1'] ? JSON.parse(storage['pongGame.settings.v1']) : {};
+    return { ...storage, ...settings({ ...saved, ...NEWS_SEEN }) };
+}
+
+export const SCENARIOS = RAW_SCENARIOS.map((s) => (s.news ? s : { ...s, storage: withNewsSeen(s.storage) }));

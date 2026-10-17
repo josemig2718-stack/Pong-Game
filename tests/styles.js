@@ -35,8 +35,12 @@ const FREEZE_CSS = `*, *::before, *::after {
     animation-delay: 0s !important;
 }`;
 
-/** Progreso con algo comprado, logros y la campaña a medias: más elementos visibles. */
+/**
+ * Progreso con algo comprado, logros y la campaña a medias: más elementos
+ * visibles. Las Novedades, ya vistas (salvo en su propio estado).
+ */
 const STORAGE = {
+    'pongGame.settings.v1': JSON.stringify({ seenNewsVersion: '2.0' }),
     'pongGame.progression.v1': JSON.stringify({
         totalXP: 300, level: 3, chemiCoins: 85,
         selectedTrail: 'neon', selectedBg: 'none', selectedPaddle: 'classic', selectedGoalFx: 'classic',
@@ -62,6 +66,7 @@ export const STYLE_STATES = [
     { name: 'vs', run: (g) => g.prepareCampaignMatch(3) },
     { name: 'controles', run: (g) => g.showScreen('controls-menu') },
     { name: 'como-jugar', run: (g) => g.openHowto('main-menu') },
+    { name: 'novedades', run: (g) => g.openNews() },
     { name: 'estadisticas', run: (g) => g.showStatsScreen() },
     { name: 'logros', run: (g) => g.showAchievementsScreen() },
     { name: 'configuracion', run: (g) => g.showScreen('settings-menu') },

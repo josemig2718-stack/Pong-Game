@@ -67,6 +67,9 @@ function closeHowto() {
         document.getElementById('pause-menu').classList.add('active-screen');
         syncResultClass();
         soundEffects.uiClick();
+    } else if (howtoOrigin === 'news-screen') {
+        showScreen('main-menu');
+        openNews();
     } else {
         showScreen(howtoOrigin);
     }

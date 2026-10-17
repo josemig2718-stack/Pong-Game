@@ -61,6 +61,7 @@ const DEFAULT_SETTINGS = {
     haptics:      true,    // vibración del móvil en los golpes fuertes
     showHints:    true,    // avisos de primera vez en partida (game/hints.js)
     seenHints:    [],      // claves de los avisos ya vistos ('energy' se repite: una entrada por vez)
+    seenNewsVersion: null, // última versión de Novedades vista (ui/news.js)
     bindings: { ...DEFAULT_BINDINGS }
 };
 

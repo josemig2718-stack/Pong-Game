@@ -27,13 +27,13 @@ Deployed as a GitHub Pages static site — the repo root is the web root.
 ```
 js/main.js      entry point: calls every init*() in order
 js/core/        base layer — constants, storage, settings, state
-js/data/        static catalogues — themes, lore, achievements, shop, levels, power-ups, mechanics (MECH), music
+js/data/        static catalogues — themes, lore, achievements, shop, levels, power-ups, mechanics (MECH), music, news (Novedades)
 js/systems/     audio (SFX), music (player), theme, input (keyboard), pointer (mouse + touch), stats, achievements, progression
 js/game/        canvas, draw, effects, balls, ai, mechanics, physics, match, hud, hints, loop, render, powerups, practice
 js/vfx/         random (vfxRandom, vfxHash, vfxT, and sfxRandom for audio), shop cosmetics — trails, backgrounds, paddles, goal-fx — plus super (super-hit styles) and mechanics (MECH_FX) (+ index.js facade)
 js/bosses/      index.js (table + dispatchers), shared.js, one file per boss
 js/campaign/    progress (boss in play, VS, advance), menu (carousel + intro), dialogue, finale
-js/ui/          screens, howto («Cómo jugar»), actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
+js/ui/          screens, howto («Cómo jugar»), news (Novedades), actions (data-action registry), settings-panel, stats-panel, shop-ui, progress-display
 ```
 
 All files are classic scripts: their top-level `const`/`let`/`function` share one global scope, so **every top-level name must be unique across the project and must not collide with a `window` property** (grep before naming). Each file starts with `'use strict'`. Files call each other freely inside function bodies (those run after every script has loaded), but **top-level code may only use what `index.html` loaded before it**. The script list follows the layer order above; within it, the only cross-file top-level dependencies are:
@@ -51,9 +51,9 @@ Breaking the order throws a `ReferenceError` at load and every test fails.
 
 ### Boot and events
 
-- No file registers listeners or touches the DOM while loading (reading `localStorage` and looking up the canvas are the only load-time work; music `Audio` elements are created the first time a track plays). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI` in that order. **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
+- No file registers listeners or touches the DOM while loading (reading `localStorage` and looking up the canvas are the only load-time work; music `Audio` elements are created the first time a track plays). `js/main.js` calls `initAudio`, `initInput`, `initCanvas`, `initPointer`, `initCarouselControls`, `initActions`, `initUI`, `initNews` in that order (`initNews` opens Novedades on top of the main menu when `settings.seenNewsVersion !== NEWS_VERSION`). **Keep `initAudio` before `initInput`**: both listen to `keydown` on `window`, and same-target listeners run in registration order.
 - The markup has **no inline handlers**. Controls declare `data-action="fn"` (click), `data-input="fn"` or `data-change="fn"`, plus `data-arg` when the call takes an argument. `js/ui/actions.js` has one registry per event type, named after the functions they call, and three delegated listeners on `document`. Adding a control = adding a registry entry that **converts its argument** (dataset values are strings: `carouselMove("-1")` would concatenate). Unknown actions throw.
-- Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. «Cómo jugar» (`#howto-menu`, `js/ui/howto.js`) opens from the main menu, the pause or Novedades and its back button returns there; opened from the pause it toggles the classes itself (like `togglePause`), so the match stays paused with its music ducked, and ESC closes it back to the pause. Its key labels come from `settings.bindings` each time it opens. Entering `main-menu` hides `#game-container`; `shop-menu` and `campaign-menu` re-render; every screen sets its music through `screenMusic(id)` (see `systems/music.js` below). Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
+- Every menu is a `<section class="screen">`; `showScreen(id)` (`js/ui/screens.js`) shows one. «Cómo jugar» (`#howto-menu`, `js/ui/howto.js`) opens from the main menu, the pause or Novedades and its back button returns there; opened from the pause it toggles the classes itself (like `togglePause`), so the match stays paused with its music ducked, and ESC closes it back to the pause. Its key labels come from `settings.bindings` each time it opens. Entering `main-menu` hides `#game-container`; `shop-menu` and `campaign-menu` re-render; every screen sets its music through `screenMusic(id)` (see `systems/music.js` below). Novedades (`#news-screen`, `js/ui/news.js`) is not a screen of its own either: `openNews()` keeps `main-menu` active (and `inert`) underneath — full screen below 900 px, a 760 px dialog above. It opens by itself on the first load of a version and from `#news-btn` (with a dot while unseen); closing it (¡A JUGAR!, ✕ or ESC) stores `seenNewsVersion`. Its reset notice shows only on that first open and only if `progressWasReset` (`systems/progression.js`, set by the phase 4 reset). Test scenarios start with `seenNewsVersion` stored (`tests/scenarios.js` adds it unless `news: true`), and so does the styles test. Gameplay is not a screen — `startGame(mode)` hides all and shows `#game-container`; pause and game-over are screens layered on top.
 
 ### Game loop (`js/game/`)
 
@@ -112,7 +112,7 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 
 | Key | Owner | Holds |
 |---|---|---|
-| `pongGame.settings.v1` | `js/core/settings.js` | theme, difficulty, volumes, winning score, ball speed, CRT/shake/mouse/powerups toggles, `smashTouch`, `haptics`, `showHints` and `seenHints` (first-time hints already shown), key bindings (including `p1Smash` Space and `p2Smash` Enter) |
+| `pongGame.settings.v1` | `js/core/settings.js` | theme, difficulty, volumes, winning score, ball speed, CRT/shake/mouse/powerups toggles, `smashTouch`, `haptics`, `showHints` and `seenHints` (first-time hints already shown), `seenNewsVersion` (kept by «Restablecer todo»), key bindings (including `p1Smash` Space and `p2Smash` Enter) |
 | `pongGame.stats.v1` | `js/systems/stats.js` | games/wins/streaks/records, mechanics totals (perfect, spin, smash/super goals, fevers) **and the unlocked-achievements map** |
 | `pongGame.progression.v1` | `js/systems/progression.js` | XP, level, Chemi Coins, `purchasedItems`, selected cosmetics, `campaignProgress`, `campaignIntroSeen` |
 
@@ -131,7 +131,7 @@ The typewriter interval is shared by dialogues, the intro and the finale reveal;
 
   | Where | Track |
   |---|---|
-  | Main menu, mode select, campaign, controls, settings, exit | `musica_menu` |
+  | Main menu, mode select, campaign, controls, «Cómo jugar», Novedades, settings, exit | `musica_menu` |
   | Shop, achievements, stats | `musica_tienda` |
   | VS CPU and local matches | `partida_synthwave` |
   | Hachepe mode and campaign bosses | `hachepe_rap` |

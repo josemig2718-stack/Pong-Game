@@ -26,6 +26,9 @@ const CLICK_ACTIONS = {
     closeGame:              () => closeGame(),
     openHowto:              (el) => openHowto(/** @type {HowtoOrigin} */ (el.dataset.arg)),
     closeHowto:             () => closeHowto(),
+    openNews:               () => openNews(),
+    closeNews:              () => closeNews(),
+    newsToHowto:            () => newsToHowto(),
     forceClose:             () => forceClose(),
 
     // Partida

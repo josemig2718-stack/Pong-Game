@@ -28,6 +28,12 @@ const DEFAULT_PROGRESSION = {
 
 const playerProgression = loadProgression();
 
+/**
+ * true si al cargar se reinició el progreso de una versión anterior. Lo
+ * pondrá el reinicio de la fase 4; Novedades lo lee para mostrar su aviso.
+ */
+let progressWasReset = false;
+
 // Session trackers for end-of-game summary
 let sessionXPGained = 0;
 let sessionCoinsGained = 0;

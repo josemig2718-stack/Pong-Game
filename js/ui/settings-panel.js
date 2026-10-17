@@ -151,9 +151,12 @@ function toggleHints(enabled) {
     saveSettings();
 }
 
-/** Botón "RESTABLECER TODO": vuelve a la configuración por defecto (y los avisos vuelven a salir). */
+/**
+ * Botón "RESTABLECER TODO": vuelve a la configuración por defecto (y los
+ * avisos vuelven a salir). Las Novedades ya vistas no vuelven a abrirse.
+ */
 function resetAllSettings() {
-    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS }, seenHints: [] });
+    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS }, seenHints: [], seenNewsVersion: settings.seenNewsVersion });
     saveSettings();
     setMasterVolume(settings.volume);   // el volumen de efectos vive aparte, en systems/audio.js
     populateSettingsUI();
