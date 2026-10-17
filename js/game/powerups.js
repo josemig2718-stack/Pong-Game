@@ -214,9 +214,11 @@ function applyPowerup(type, beneficiary) {
             break;
 
         case 'turbo':
+            // Acelera, pero no cuenta como smash
             state.balls.forEach(b => {
                 b.dx *= 1.4;
                 b.dy *= 1.4;
+                b.power = null;
             });
             break;
 

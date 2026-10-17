@@ -186,6 +186,7 @@ function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
         // Mover bola
         b.x += b.dx * dt;
         b.y += b.dy * dt;
+        applySpin(b, dt, rotatedArena);
 
         bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed);
 
@@ -214,6 +215,7 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
         // Rebote en paredes laterales
         if (b.x - b.radius < 0 || b.x + b.radius > GAME_WIDTH) {
             b.dx = -b.dx;
+            b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
             b.x = Math.max(b.radius, Math.min(GAME_WIDTH - b.radius, b.x));
             soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
@@ -243,6 +245,7 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
         // Rebote en paredes superior/inferior normales
         if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
             b.dy = -b.dy;
+            b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
             b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
             soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
@@ -256,7 +259,10 @@ function collision(b, p) {
     return p.x < right && p.y < bottom && p.x + p.width > left && p.y + p.height > top;
 }
 
-/** Golpe de paleta: el ángulo de salida depende de dónde toca la bola. */
+/**
+ * Golpe de paleta: aquí solo se detecta con qué paleta choca la bola; el
+ * rebote lo calcula resolveHit (game/mechanics.js).
+ */
 function hitPaddles(b, rotatedArena, maxBallSpeed) {
     /** @type {Paddle} */
     let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
@@ -271,43 +277,7 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
     }
     if (!hit) return;
 
-    if (rotatedArena) {
-        // Cálculo de rebote estilo Breakout (basado en X)
-        const collidePoint = (b.x - (targetPaddle.x + targetPaddle.width / 2)) / (targetPaddle.width / 2);
-        const angleRad = (Math.PI / 3) * collidePoint; // Max 60 grados
-
-        b.dx = b.speed * Math.sin(angleRad);
-        b.dy = -b.speed * Math.cos(angleRad); // Siempre hacia arriba
-        if (b.speed < maxBallSpeed) b.speed += 0.5;
-        if (b.speed >= maxBallSpeed) statsOnMaxSpeed();
-
-        b.y = targetPaddle.y - b.radius;
-    } else {
-        // Pong normal (basado en Y)
-        const collidePoint = (b.y - (targetPaddle.y + targetPaddle.height / 2)) / (targetPaddle.height / 2);
-        const angleRad = (Math.PI / 4) * collidePoint;
-        const direction = (b.x + b.radius < GAME_WIDTH / 2) ? 1 : -1;
-
-        b.dx = direction * b.speed * Math.cos(angleRad);
-        b.dy = b.speed * Math.sin(angleRad);
-        if (b.speed < maxBallSpeed) b.speed += 0.5;
-        if (b.speed >= maxBallSpeed) statsOnMaxSpeed();   // "Demonio Veloz": no toca la partida
-
-        b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
-    }
-
-    soundEffects.paddleHit({ x: b.x, speedRatio: Math.min(1, b.speed / maxBallSpeed) });
-    spawnParticles(b.x, b.y, '#ffffff', 16);
-    triggerShake(4, 100);
-
-    // Nuevo intercambio: el jefe recalcula su puntería
-    bossRefreshAim();
-
-    // Registrar último golpeador para power-ups
-    setLastHitter(targetPaddle === p1 ? 'p1' : 'p2');
-
-    // Estadísticas: contar golpe para rally
-    statsOnPaddleHit();
+    resolveHit(b, targetPaddle, maxBallSpeed, rotatedArena);
 }
 
 /**

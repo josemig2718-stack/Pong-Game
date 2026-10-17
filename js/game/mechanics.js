@@ -6,6 +6,9 @@
  *
  *   cinemática  la paleta con inercia (teclado) y la velocidad medida
  *               (dedo, ratón y CPU)
+ *   golpe       resolveHit: tipo de golpe (súper, smash, perfecto,
+ *               esquina, bloqueo, normal), rebote, efecto y energía;
+ *               applySpin curva la bola en vuelo
  *
  * Todos los números salen de MECH (data/mechanics.js). Nada aquí usa
  * vfxRandom: el azar de la física y de la CPU es Math.random.
@@ -110,4 +113,226 @@ function measurePaddleSpeeds(playerDt, dt, rotatedArena) {
     }
     if (state.mode !== 'local' || p2.touchY !== null) measurePaddle(p2, dt, 'y');
     if (p2Twin.active) measurePaddle(p2Twin, dt, 'y');
+}
+
+// ------------------------------------------------------------------
+//  Modelo de golpe
+// ------------------------------------------------------------------
+
+/** @typedef {'normal' | 'perfect' | 'edge' | 'block' | 'smash' | 'super'} HitType */
+
+/** Lado del marcador al que pertenece una paleta: la gemela juega con p2. */
+function paddleSide(paddle) {
+    return paddle === p1 ? 'p1' : 'p2';
+}
+
+/** La paleta que lleva la energía de un lado. */
+function sidePaddle(side) {
+    return side === 'p1' ? p1 : p2;
+}
+
+/** ¿La energía de esta paleta está llena (o tiene un súper regalado)? */
+function superReadyFor(p) {
+    return p.energy >= MECH.energy.max || p.superArmed;
+}
+
+/**
+ * Tipo de golpe, por orden de prioridad: súper, smash, perfecto,
+ * esquina, bloqueo y normal. El bloqueo coincide a veces con la
+ * esquina; entonces manda la esquina.
+ * @param {Paddle} paddle
+ * @param {Paddle} holder la paleta con la energía de ese lado
+ * @param {number} c punto de contacto, de -1 (un extremo) a 1 (el otro)
+ * @param {number} rawV velocidad de la paleta en px/fotograma
+ * @returns {HitType}
+ */
+function classifyHit(paddle, holder, c, rawV) {
+    const windowOpen = paddle.releaseMs <= MECH.smashWindowMs;
+    if (windowOpen && paddle.charge >= MECH.superMinCharge && superReadyFor(holder)) return 'super';
+    if (windowOpen && paddle.charge >= MECH.smashMinCharge) return 'smash';
+    const ac = Math.abs(c);
+    if (ac <= MECH.centerZone) return 'perfect';
+    if (ac >= MECH.edgeZone) return 'edge';
+    if (Math.abs(rawV) < MECH.blockVy) return 'block';
+    return 'normal';
+}
+
+/**
+ * Ángulo de salida respecto a la perpendicular de la paleta.
+ * @param {HitType} type
+ * @param {number} c
+ */
+function hitAngle(type, c) {
+    switch (type) {
+        case 'edge': {
+            const k = (Math.min(1, Math.abs(c)) - MECH.edgeZone) / (1 - MECH.edgeZone);
+            return Math.sign(c) * (MECH.baseAngle + (MECH.edgeAngle - MECH.baseAngle) * k);
+        }
+        case 'smash': return c * MECH.baseAngle * MECH.smashAngleK;
+        case 'super': return c * MECH.baseAngle * MECH.superAngleK;
+        default: return c * MECH.baseAngle;
+    }
+}
+
+/**
+ * Nueva velocidad de la bola según el tipo de golpe. El roce y el
+ * bloqueo frenan, pero nunca por debajo de la velocidad de saque.
+ * @param {HitType} type
+ * @param {Ball} b
+ * @param {Paddle} paddle
+ * @param {number} maxBallSpeed
+ */
+function hitSpeed(type, b, paddle, maxBallSpeed) {
+    const base = currentSpeedPreset().base;
+    let speed = b.speed;
+    switch (type) {
+        case 'perfect':
+            if (speed < maxBallSpeed) speed = Math.min(maxBallSpeed, speed + 0.5 + MECH.perfectBonus);
+            break;
+        case 'edge':
+            if (speed < maxBallSpeed) speed += 0.5;
+            speed = Math.max(base, speed * MECH.edgeSpeedK);
+            break;
+        case 'block':
+            speed = Math.max(base, speed * MECH.blockSpeedK);
+            break;
+        case 'smash':
+            speed = Math.min(speed * (1 + MECH.smashSpeedK * paddle.charge), maxBallSpeed * MECH.smashCapK);
+            break;
+        case 'super':
+            speed = Math.min(speed * MECH.superSpeedK, maxBallSpeed * MECH.superCapK);
+            break;
+        default:
+            if (speed < maxBallSpeed) speed += 0.5;
+    }
+    return speed;
+}
+
+/** Energía que gana el que golpea, según el tipo de golpe (el súper no suma: la gasta). */
+const HIT_ENERGY = {
+    normal: MECH.energy.hit, edge: MECH.energy.hit, block: MECH.energy.hit,
+    perfect: MECH.energy.perfect, smash: MECH.energy.smash, super: 0
+};
+
+/**
+ * Suma energía a una paleta, hasta el máximo. Al llenarse suena el aviso
+ * (una vez por llenado).
+ * @param {Paddle} p
+ * @param {number} amount
+ */
+function addEnergy(p, amount) {
+    if (amount <= 0) return;
+    const wasFull = p.energy >= MECH.energy.max;
+    p.energy = Math.min(MECH.energy.max, p.energy + amount);
+    if (!wasFull && p.energy >= MECH.energy.max) soundEffects.superReady();
+}
+
+/**
+ * Chispas del golpe según su tipo.
+ * @param {HitType} type
+ * @returns {[number, string]} cuántas y de qué color
+ */
+function hitParticles(type) {
+    if (type === 'super') return [30, currentThemeHex()];
+    if (type === 'smash') return [24, '#FDE047'];
+    if (type === 'perfect') return [20, '#ffffff'];
+    return [16, '#ffffff'];
+}
+
+/**
+ * Una bola acaba de chocar con una paleta: decide el tipo de golpe y
+ * calcula el rebote, el efecto, la energía y la sensación del golpe.
+ * La detección de la colisión es de hitPaddles (physics.js).
+ * @param {Ball} b
+ * @param {Paddle} paddle p1, p2 o la gemela
+ * @param {number} maxBallSpeed
+ * @param {boolean} rotated arena rotada del Creador (la paleta es horizontal, abajo)
+ * @returns {HitType}
+ */
+function resolveHit(b, paddle, maxBallSpeed, rotated) {
+    const side = paddleSide(paddle);
+    const holder = sidePaddle(side);
+
+    // 1. Punto de contacto y velocidad de la paleta
+    const c = rotated
+        ? (b.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2)
+        : (b.y - (paddle.y + paddle.height / 2)) / (paddle.height / 2);
+    const v = vNorm(paddle, rotated);
+
+    // 2-4. Tipo, ángulo y velocidad. Un smash o súper del rival no se
+    // devuelve más rápido que el tope normal.
+    const type = classifyHit(paddle, holder, c, rotated ? paddle.vx : paddle.vy);
+    const angle = hitAngle(type, c);
+    if (b.power && b.owner && b.owner !== side) b.speed = Math.min(b.speed, maxBallSpeed);
+    b.speed = hitSpeed(type, b, paddle, maxBallSpeed);
+    if (b.speed >= maxBallSpeed) statsOnMaxSpeed();   // "Demonio Veloz": no toca la partida
+
+    // 5. Efecto: solo si la paleta se movía lo bastante
+    const spins = type !== 'block' && type !== 'smash' && type !== 'super' && Math.abs(v) >= MECH.spinMinV;
+    b.spin = spins ? mechClamp(v * MECH.spinK, -1, 1) : 0;
+
+    // 6. Dirección, y la bola fuera de la paleta
+    if (rotated) {
+        b.dx = b.speed * Math.sin(angle);
+        b.dy = -b.speed * Math.cos(angle);   // siempre hacia arriba
+        b.y = paddle.y - b.radius;
+    } else {
+        const direction = side === 'p1' ? 1 : -1;
+        b.dx = direction * b.speed * Math.cos(angle);
+        b.dy = b.speed * Math.sin(angle);
+        b.x = direction === 1 ? paddle.x + paddle.width + b.radius : paddle.x - b.radius;
+    }
+    b.owner = side;
+    b.power = type === 'smash' || type === 'super' ? type : null;
+
+    // 7. Energía del que golpea; el súper la gasta (o gasta el súper regalado)
+    if (type === 'super') {
+        if (holder.superArmed) holder.superArmed = false;
+        else holder.energy = 0;
+    }
+    addEnergy(holder, HIT_ENERGY[type]);
+
+    // 8. Cualquier golpe cierra la carga del smash, se usara o no
+    paddle.charge = 0;
+    paddle.releaseMs = Infinity;
+
+    // 9. Sensación: sonido, chispas y vibración de pantalla
+    const info = { x: b.x, speedRatio: Math.min(1, b.speed / maxBallSpeed) };
+    if (type === 'super') soundEffects.superHit(info);
+    else if (type === 'smash') soundEffects.smashRelease(info);
+    else if (type === 'perfect') soundEffects.perfectHit(info);
+    else if (Math.abs(b.spin) > MECH.spinSoundMin) soundEffects.spinHit(info);
+    else soundEffects.paddleHit(info);
+    const [count, color] = hitParticles(type);
+    spawnParticles(b.x, b.y, color, count);
+    const shake = MECH.shake[type] || [4, 100];
+    triggerShake(shake[0], shake[1]);
+
+    // 11. Nuevo intercambio: el jefe recalcula su puntería, el último en
+    // golpear se queda los power-ups y el rally suma. Cada 10 golpes de
+    // rally, los dos ganan energía.
+    bossRefreshAim();
+    setLastHitter(side);
+    statsOnPaddleHit();
+    if (currentRally % 10 === 0) {
+        addEnergy(p1, MECH.energy.rally10);
+        addEnergy(p2, MECH.energy.rally10);
+    }
+    return type;
+}
+
+/**
+ * El efecto curva la bola en vuelo (dy, o dx en la arena rotada) y se
+ * va apagando. La bola nunca llega a ir casi en paralelo a la paleta.
+ * @param {Ball} b
+ * @param {number} dt
+ * @param {boolean} rotated
+ */
+function applySpin(b, dt, rotated) {
+    if (b.spin === 0) return;
+    const lim = b.speed * MECH.spinMaxSlope;
+    if (rotated) b.dx = mechClamp(b.dx + b.spin * MECH.spinAccel * dt, -lim, lim);
+    else b.dy = mechClamp(b.dy + b.spin * MECH.spinAccel * dt, -lim, lim);
+    b.spin *= Math.pow(MECH.spinDecay, dt);
+    if (Math.abs(b.spin) < 0.001) b.spin = 0;
 }
