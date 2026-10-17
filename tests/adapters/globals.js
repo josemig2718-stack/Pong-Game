@@ -16,13 +16,15 @@
 
     const paddle = (p) => ({
         x: p.x, y: p.y, width: p.width, height: p.height,
-        touchX: p.touchX ?? null, touchY: p.touchY ?? null
+        touchX: p.touchX ?? null, touchY: p.touchY ?? null,
+        vy: p.vy, vx: p.vx, charge: p.charge, energy: p.energy
     });
 
     const ball = (b) => {
         const last = b.trail.length ? b.trail[b.trail.length - 1] : null;
         return {
             x: b.x, y: b.y, dx: b.dx, dy: b.dy, speed: b.speed, radius: b.radius,
+            spin: b.spin, power: b.power, owner: b.owner,
             trailN: b.trail.length, trailLast: last ? [last.x, last.y] : null
         };
     };
@@ -39,6 +41,7 @@
                 serveCountdownMs: state.serveCountdownMs,
                 shakeTimeMs: state.shakeTimeMs, shakeIntensity: state.shakeIntensity,
                 frameCount: state.frameCount,
+                fever: state.fever, hitStopMs: state.hitStopMs,
                 balls: state.balls.map(ball),
                 p1: paddle(p1),
                 p2: paddle(p2),
@@ -85,7 +88,7 @@
                     type: activeEffect.type.id, target: activeEffect.target,
                     remainingMs: activeEffect.remainingMs, originalValues: activeEffect.originalValues
                 },
-                shield: shieldWall,
+                shield: shieldWall && { ...shieldWall },   // copia: el anterior no debe ver los bloqueos de este fotograma
                 slowmo: slowmoActive,
                 cooldownMs: powerupCooldownMs,
                 lastHitter,
@@ -112,6 +115,7 @@
             return {
                 bossState: bossConfig() ? bossState : null,
                 currentRally, maxDeficit, goalSlowmoTimer,
+                mechHits: { ...mechHits },
                 confetti: confettiParticles.length,
                 shockwave,
                 carouselIndex

@@ -272,19 +272,23 @@ function classifyHit(paddle, holder, side, c, rawV) {
 }
 
 /**
- * Ángulo de salida respecto a la perpendicular de la paleta.
+ * Ángulo de salida respecto a la perpendicular de la paleta. La arena
+ * rotada usa sus propios ángulos, más abiertos.
  * @param {HitType} type
  * @param {number} c
+ * @param {boolean} rotated
  */
-function hitAngle(type, c) {
+function hitAngle(type, c, rotated) {
+    const base = rotated ? MECH.rotatedBaseAngle : MECH.baseAngle;
+    const edge = rotated ? MECH.rotatedEdgeAngle : MECH.edgeAngle;
     switch (type) {
         case 'edge': {
             const k = (Math.min(1, Math.abs(c)) - MECH.edgeZone) / (1 - MECH.edgeZone);
-            return Math.sign(c) * (MECH.baseAngle + (MECH.edgeAngle - MECH.baseAngle) * k);
+            return Math.sign(c) * (base + (edge - base) * k);
         }
-        case 'smash': return c * MECH.baseAngle * MECH.smashAngleK;
-        case 'super': return c * MECH.baseAngle * MECH.superAngleK;
-        default: return c * MECH.baseAngle;
+        case 'smash': return c * base * MECH.smashAngleK;
+        case 'super': return c * base * MECH.superAngleK;
+        default: return c * base;
     }
 }
 
@@ -320,6 +324,17 @@ function hitSpeed(type, b, paddle, maxBallSpeed) {
             if (speed < maxBallSpeed) speed += 0.5;
     }
     return speed;
+}
+
+/**
+ * Golpes de cada tipo en la partida, de los dos jugadores (spin: los que
+ * salen con efecto). Solo los leen los tests (eventos mech:*); se ponen a
+ * cero en startGame.
+ */
+const mechHits = { normal: 0, perfect: 0, edge: 0, block: 0, smash: 0, super: 0, spin: 0 };
+
+function resetMechHits() {
+    for (const k of Object.keys(mechHits)) mechHits[k] = 0;
 }
 
 /** Energía que gana el que golpea, según el tipo de golpe (el súper no suma: la gasta). */
@@ -378,14 +393,18 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 2-4. Tipo, ángulo y velocidad. Un smash o súper del rival no se
     // devuelve más rápido que el tope normal.
-    const type = classifyHit(paddle, holder, side, c, rotated ? paddle.vx : paddle.vy);
-    const angle = hitAngle(type, c);
+    // Los jefes de campaña no usan las mecánicas (llegarán con su rework):
+    // sus golpes son siempre normales, sin efecto ni bloqueo. Un bloqueo
+    // frenaría cada bola y les daría tiempo a llegar a todas.
+    const bossHit = state.mode === 'campaign' && side === 'p2';
+    const type = bossHit ? 'normal' : classifyHit(paddle, holder, side, c, rotated ? paddle.vx : paddle.vy);
+    const angle = hitAngle(type, c, rotated);
     if (b.power && b.owner && b.owner !== side) b.speed = Math.min(b.speed, maxBallSpeed);
     b.speed = hitSpeed(type, b, paddle, maxBallSpeed);
     if (b.speed >= maxBallSpeed) statsOnMaxSpeed();   // "Demonio Veloz": no toca la partida
 
     // 5. Efecto: solo si la paleta se movía lo bastante
-    const spins = type !== 'block' && type !== 'smash' && type !== 'super' && Math.abs(v) >= MECH.spinMinV;
+    const spins = !bossHit && type !== 'block' && type !== 'smash' && type !== 'super' && Math.abs(v) >= MECH.spinMinV;
     b.spin = spins ? mechClamp(v * MECH.spinK, -1, 1) : 0;
 
     // 6. Dirección, y la bola fuera de la paleta
@@ -401,6 +420,8 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     }
     b.owner = side;
     b.power = type === 'smash' || type === 'super' ? type : null;
+    mechHits[type]++;
+    if (Math.abs(b.spin) > MECH.spinSoundMin) mechHits.spin++;
 
     // 7. Energía del que golpea; el súper la gasta (o gasta el súper regalado)
     if (type === 'super') {

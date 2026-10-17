@@ -51,7 +51,9 @@ runner lo detecta y falla con un mensaje claro).
 4. Se maneja como una caja negra: un bot que pulsa teclas reales (o mueve el
    ratón, o arrastra el dedo) y clics sobre botones localizados por su **texto
    visible** (o por su `aria-label`, si lo tienen: botones de solo icono y
-   tiles con subtítulo).
+   tiles con subtítulo). Con teclado, el bot frena contando la inercia de la
+   paleta (`brake`, por defecto) y puede mantener el smash al venir la bola
+   (`smash`, en una fracción `smashChance` de las devoluciones).
 5. En cada fotograma se guarda un hash del estado de la partida; cada 120
    fotogramas, y tras cada acción de interfaz, una instantánea completa:
    estado, almacenamiento, DOM visible, audio y píxeles del canvas.
@@ -72,7 +74,7 @@ fotograma (`rng`): si un cambio de código altera una sola llamada a
 
 | Sección | Contenido |
 |---|---|
-| `match` | modo, pausa, marcadores, cuenta atrás, bolas, paletas, gemelo, partículas |
+| `match` | modo, pausa, marcadores, cuenta atrás, fiebre, hit-stop, bolas (con efecto, smash/súper y dueño), paletas (con velocidad, carga y energía), gemelo, partículas |
 | `boss` | el jefe a través de sus funciones públicas: config, vida, arena, apuntado, tramos blindados |
 | `powerups` | power-up en el campo, efecto activo, escudo, cámara lenta |
 | `campaign` | nivel, repetición, diálogo |
@@ -132,11 +134,15 @@ Edita `scenarios.js`. Cada escenario tiene una semilla, un almacenamiento
 inicial y una lista de acciones (`click`, `clickSel`, `input`, `change`, `key`,
 `steps`, `play`). `expect` declara eventos por los que debe pasar (por ejemplo
 `boss:3` o `screen:finale-screen`): si un cambio hace que ya no pase por ellos,
-el test lo detecta aunque el estado coincida. `expectNot` declara eventos por
+el test lo detecta aunque el estado coincida. Las mecánicas de golpe dan
+`mech:perfect`, `mech:edge`, `mech:block`, `mech:smash`, `mech:super` y
+`mech:spin` (de los contadores `mechHits` de `game/mechanics.js`, que el
+adaptador expone en `diag`), `mech:fever` y `shield:spent` (el escudo se
+rompe tras su último bloqueo). `expectNot` declara eventos por
 los que no debe pasar: así `salir-tras-gol` vigila que una partida nunca
 empiece con la cámara lenta del gol anterior (`slowmo-al-empezar`). `play`
-puede jugar hasta `goal` (el primer gol) además de hasta una pantalla o el
-final de la partida. Los eventos solo se detectan al avanzar un fotograma:
+puede jugar hasta `goal` (el primer gol) o hasta un evento (`event:<nombre>`),
+además de hasta una pantalla o el final de la partida. Los eventos solo se detectan al avanzar un fotograma:
 entre dos acciones de interfaz sin `steps` no se registra nada.
 
 ## Archivos

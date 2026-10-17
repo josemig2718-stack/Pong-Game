@@ -95,6 +95,26 @@ function predictBallY(b, targetX, read) {
 }
 
 /**
+ * Sentido del barrido para dar efecto: lejos del jugador (1 abajo, -1
+ * arriba). Si junto a una pared no cabe la colocación previa (medio
+ * barrido hacia el otro lado), prueba el sentido contrario; si tampoco
+ * cabe, 0: esta vez no da efecto.
+ * @param {number} contactY dónde llegará la bola
+ * @param {number} aiSpeed
+ */
+function cpuSpinSweep(contactY, aiSpeed) {
+    const half = aiSpeed * MECH.cpu.spinFrames / 2;
+    const fits = (dir) => {
+        const start = contactY - dir * half;
+        return start >= p2.height / 2 && start <= GAME_HEIGHT - p2.height / 2;
+    };
+    const away = p1.y + p1.height / 2 < GAME_HEIGHT / 2 ? 1 : -1;
+    if (fits(away)) return away;
+    if (fits(-away)) return -away;
+    return 0;
+}
+
+/**
  * VS CPU y Hachepe: la CPU sigue su plan para la bola que viene. La
  * velocidad y la zona muerta son las de su dificultad.
  * @param {Ball|undefined} ball la bola objetivo
@@ -123,14 +143,20 @@ function cpuPlay(ball, aiSpeed, errorMargin, dt) {
             holdSmash = near && msLeft > MECH.cpu.smashReleaseMs;
         }
 
-        if (cpuPlan.spin && !trySmash && pred.frames <= MECH.cpu.spinFrames) {
-            // Efecto: a toda velocidad, lejos de donde está el jugador
-            const away = p1.y + p1.height / 2 < GAME_HEIGHT / 2 ? 1 : -1;
-            p2.y += away * aiSpeed * dt;
+        // Efecto: en los últimos fotogramas barre a toda velocidad, lejos de
+        // donde está el jugador. Antes se coloca medio barrido hacia el otro
+        // lado, para que la bola acabe dando dentro de la paleta.
+        const sweep = cpuSpinSweep(pred.y, aiSpeed);
+        const spin = cpuPlan.spin && !trySmash && sweep !== 0;
+        if (spin && pred.frames <= MECH.cpu.spinFrames) {
+            // Solo mientras la bola siga cayendo dentro de la paleta
+            const next = center + sweep * aiSpeed * dt;
+            if (Math.abs(pred.y - next) <= p2.height / 2 * MECH.cpu.spinMaxContact) p2.y += sweep * aiSpeed * dt;
         } else {
             // Apunta a que la bola dé en el centro de la paleta; sin
             // puntería (Fácil), persigue la bola como siempre
-            const goal = cpuPlan.aimOffset === null ? ball.y : pred.y + cpuPlan.aimOffset;
+            let goal = cpuPlan.aimOffset === null ? ball.y : pred.y + cpuPlan.aimOffset;
+            if (spin) goal -= sweep * aiSpeed * MECH.cpu.spinFrames / 2;
             if (center < goal - errorMargin) p2.y += speed * dt;
             else if (center > goal + errorMargin) p2.y -= speed * dt;
         }

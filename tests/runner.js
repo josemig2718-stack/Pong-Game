@@ -144,6 +144,12 @@ class Recorder {
             ev('collect:' + p.powerups.field.type);
         }
         if (s.campaign.isDialogueActive) ev('dialogue');
+        // Mecánicas de golpe: los contadores de game/mechanics.js
+        const hits = this.P.diag().mechHits;
+        for (const k of ['perfect', 'edge', 'block', 'smash', 'super', 'spin']) if (hits[k] > 0) ev('mech:' + k);
+        if (m.fever) ev('mech:fever');
+        // El escudo se rompe tras gastar su último bloqueo
+        if (p && p.powerups.shield && p.powerups.shield.hp === 1 && !s.powerups.shield) ev('shield:spent');
         // Cámara lenta del Flash Épico: no debe pasar de una partida a la siguiente
         if (this.P.diag().goalSlowmoTimer > 0) {
             ev('goal:slowmo');
@@ -240,7 +246,7 @@ function parseStorage(raw) {
  */
 class Bot {
     /**
-     * @param {{side:'p1'|'p2', seed:number, react?:number, noise?:number, deadzone?:number, edge?:number, mouse?:boolean, touch?:boolean}} opts
+     * @param {{side:'p1'|'p2', seed:number, react?:number, noise?:number, deadzone?:number, edge?:number, mouse?:boolean, touch?:boolean, smash?:boolean, smashChance?:number, brake?:boolean}} opts
      */
     constructor(opts) {
         this.side = opts.side;
@@ -252,6 +258,12 @@ class Bot {
         this.noise = opts.noise ?? 0;        // error de puntería en píxeles
         this.deadzone = opts.deadzone ?? 6;
         this.edge = opts.edge ?? 0;          // golpear con el borde: devoluciones con ángulo
+        this.brake = opts.brake ?? true;     // con teclado, suelta antes contando la inercia de la paleta
+        this.smash = !!opts.smash;           // mantiene el smash cuando viene la bola y suelta justo antes
+        this.smashChance = opts.smashChance ?? 0.6;   // en qué fracción de las devoluciones lo intenta
+        this.smashThis = false;
+        this.smashHeld = false;
+        this.smashKey = null;
         this.wasToward = false;
         this.offset = 0;
         this.held = null;                    // tecla pulsada ahora
@@ -277,11 +289,14 @@ class Bot {
         } else if (!this.edge && this.rand() < 0.08) {
             this.offset = (this.rand() * 2 - 1) * this.noise;
         }
+        if (this.smash && isToward && !this.wasToward) this.smashThis = this.rand() < this.smashChance;
         this.wasToward = isToward;
 
         const rotated = this.side === 'p1' && me.height < me.width;   // arena del Creador
         const center = rotated ? me.x + me.width / 2 : me.y + me.height / 2;
         const goal = (rotated ? target.x : target.y) + this.offset;
+
+        if (this.smash) this.actSmash(me, target, isToward, rotated, settings, H);
 
         if (this.mouse) {
             moveMouse(doc, rotated ? goal : null, rotated ? null : goal);
@@ -297,14 +312,35 @@ class Bot {
 
         const upKey = settings.bindings[this.side === 'p1' ? 'p1Up' : 'p2Up'];
         const downKey = settings.bindings[this.side === 'p1' ? 'p1Down' : 'p2Down'];
+        // La paleta tiene inercia: sigue avanzando ~1,2 fotogramas de su
+        // velocidad tras soltar, así que se decide con dónde se parará.
+        const stop = this.brake ? center + (rotated ? me.vx : me.vy) * 1.2 : center;
         let want = null;
-        if (center < goal - this.deadzone) want = downKey;          // abajo / derecha
-        else if (center > goal + this.deadzone) want = upKey;       // arriba / izquierda
+        if (stop < goal - this.deadzone) want = downKey;          // abajo / derecha
+        else if (stop > goal + this.deadzone) want = upKey;       // arriba / izquierda
 
         if (want === this.held) return;
         if (this.held) H.key(this.held, 'keyup');
         if (want) H.key(want, 'keydown');
         this.held = want;
+    }
+
+    /**
+     * Smash con la tecla: mantiene cuando faltan 40 fotogramas o menos para
+     * el contacto y suelta a 6 (unos 100 ms), dentro de la ventana.
+     */
+    actSmash(me, target, isToward, rotated, settings, H) {
+        let ttc = Infinity;
+        if (isToward) {
+            if (rotated) ttc = (me.y - (target.y + target.radius)) / Math.max(0.1, target.dy);
+            else if (this.side === 'p1') ttc = (target.x - target.radius - (me.x + me.width)) / Math.max(0.1, -target.dx);
+            else ttc = (me.x - (target.x + target.radius)) / Math.max(0.1, target.dx);
+        }
+        const want = this.smashThis && ttc <= 40 && ttc > 6;
+        if (want === this.smashHeld) return;
+        this.smashKey = settings.bindings[this.side === 'p1' ? 'p1Smash' : 'p2Smash'];
+        H.key(this.smashKey, want ? 'keydown' : 'keyup');
+        this.smashHeld = want;
     }
 
     /**
@@ -314,6 +350,8 @@ class Bot {
     release(H, doc) {
         if (this.held) H.key(this.held, 'keyup');
         this.held = null;
+        if (this.smashHeld) H.key(this.smashKey, 'keyup');
+        this.smashHeld = false;
         if (this.touching) touch(doc, 'touchend', this.side === 'p1' ? 1 : 2, 400, 300);
         this.touching = false;
     }
@@ -491,6 +529,7 @@ function until(rec, cond) {
     if (cond === 'finale') return rec.isScreen('finale-screen');
     if (cond === 'stopped') return !rec.P.match().isPlaying;
     if (cond === 'goal') { const m = rec.P.match(); return m.p1Score + m.p2Score > 0; }
+    if (cond.startsWith('event:')) return rec.events.has(cond.slice(6));
     if (cond.startsWith('screen:')) return rec.isScreen(cond.slice(7));
     throw new Error('Condición desconocida: ' + cond);
 }

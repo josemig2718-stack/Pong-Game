@@ -33,6 +33,10 @@ const MECH = {
     edgeZone: 0.80,        // |c| >= 0.80 → roce de esquina
     baseAngle: Math.PI / 4,
     edgeAngle: Math.PI / 3,     // hasta 60° en el roce
+    // Arena rotada del Creador: conserva sus 60° de siempre (hay que apuntar
+    // a los huecos del blindaje) y el roce llega a 70°
+    rotatedBaseAngle: Math.PI / 3,
+    rotatedEdgeAngle: Math.PI * 7 / 18,
     edgeSpeedK: 0.85,           // el roce sale más lento
     // Bloqueo: paleta quieta
     blockVy: 0.6,               // |vy| por debajo de esto = quieta
@@ -73,6 +77,7 @@ const MECH = {
         /** @type {CpuPlanTuning} */
         hachepe: { spin: 0.60, smash: 0.50, useSuper: 1, aim: 10, read: 1 },
         spinFrames: 6,          // fotogramas antes del contacto en los que mueve la paleta para dar efecto
+        spinMaxContact: 0.7,    // al barrer, la bola no debe caer más allá de esta fracción de media paleta
         smashRange: 220,        // px: empieza a cargar cuando la bola está más cerca que esto...
         smashLeadMs: 650,       // ...o cuando falta esto para el contacto: con bolas rápidas, 220 px no dan tiempo a cargar
         smashReleaseMs: 120     // suelta cuando falta esto para el contacto

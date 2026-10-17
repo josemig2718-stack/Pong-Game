@@ -12,11 +12,15 @@
  *   { type: 'play', bot, bot2?, until, max }
  *                                    jugar con bots hasta una condición
  *                                    (gameover, finale, stopped, goal,
- *                                    screen:<id>; varias separadas por |)
+ *                                    screen:<id>, event:<evento>; varias
+ *                                    separadas por |)
  *
  * Opciones del bot: react (cada cuántos fotogramas decide), noise (error
- * de puntería en px), deadzone, y mouse/touch para jugar con el ratón o
- * con el dedo en vez del teclado.
+ * de puntería en px), deadzone, edge (golpear con el borde), mouse/touch
+ * para jugar con el ratón o con el dedo en vez del teclado, smash
+ * (mantener la tecla de smash al venir la bola, en una fracción
+ * smashChance de las devoluciones) y brake (frenar contando la inercia de
+ * la paleta; por defecto, sí).
  *
  * `expect` lista eventos que el escenario debe atravesar. Si un cambio
  * hace que ya no pase por ellos, el test lo señala aunque el estado
@@ -37,9 +41,21 @@ const campaign = (level, extra = {}) => progression({ campaignIntroSeen: true, c
 /** Teclado, golpeando con el borde de la paleta para sacar ángulo. */
 const STRONG = { react: 1, noise: 6, deadzone: 4, edge: 38 };
 
-/** Ratón (la paleta sigue al cursor sin límite de velocidad) y golpes con borde. */
-const ACE = { mouse: true, react: 1, noise: 4, edge: 40 };
+/**
+ * Teclado con roces de esquina (bola a 60°): con las mecánicas de la
+ * fase 2, dos jugadores que devuelven al centro pelotean casi sin fin.
+ */
+const EDGY = { react: 1, noise: 6, deadzone: 4, edge: 46 };
+
+/**
+ * Ratón (la paleta sigue al cursor sin límite de velocidad) y golpes con
+ * borde, sin llegar a la zona de esquina (a 40 px saldrían roces lentos).
+ */
+const ACE = { mouse: true, react: 1, noise: 4, edge: 30 };
 const MOUSE = settings({ mouseControl: true });
+
+/** Teclado con el centro de la paleta (golpes perfectos) y smash en la mitad de las devoluciones. */
+const MECHANIC = { react: 1, noise: 5, deadzone: 3, smash: true, smashChance: 0.5 };
 
 /** Entra al jefe que el carrusel muestra centrado (el pendiente). */
 const enterCurrentBoss = [
@@ -59,10 +75,10 @@ const bossScenario = (level, seed, bot = ACE) => ({
     storage: { ...campaign(level), ...(bot.mouse ? MOUSE : {}) },
     actions: [
         ...enterCurrentBoss,
-        { type: 'play', bot, until: 'gameover|finale', max: 20000 },
+        { type: 'play', bot, until: 'gameover|finale', max: 40000 },
         { type: 'steps', n: 60 }
     ],
-    expect: ['start:campaign', 'dialogue', `boss:${level}`]
+    expect: ['start:campaign', 'dialogue', `boss:${level}`, 'end:campaign']
 });
 
 export const SCENARIOS = [
@@ -89,9 +105,9 @@ export const SCENARIOS = [
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
-            { type: 'play', bot: STRONG, until: 'gameover', max: 15000 },
+            { type: 'play', bot: EDGY, until: 'gameover', max: 20000 },
             { type: 'click', text: 'JUGAR DE NUEVO' },
-            { type: 'play', bot: STRONG, until: 'gameover', max: 15000 }
+            { type: 'play', bot: EDGY, until: 'gameover', max: 20000 }
         ],
         expect: ['start:cpu', 'screen:game-over-screen']
     },
@@ -102,7 +118,7 @@ export const SCENARIOS = [
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
-            { type: 'play', bot: { react: 3, noise: 40 }, until: 'gameover', max: 15000 }
+            { type: 'play', bot: { react: 3, noise: 40 }, until: 'gameover', max: 20000 }
         ],
         expect: ['start:cpu', 'screen:game-over-screen']
     },
@@ -113,7 +129,7 @@ export const SCENARIOS = [
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'LOCAL (2 JUGADORES)' },
-            { type: 'play', bot: { react: 1, noise: 6, edge: 38 }, bot2: { react: 4, noise: 45 }, until: 'gameover', max: 15000 }
+            { type: 'play', bot: { react: 1, noise: 6, edge: 38 }, bot2: { react: 4, noise: 45 }, until: 'gameover', max: 20000 }
         ],
         expect: ['start:local', 'screen:game-over-screen']
     },
@@ -178,20 +194,51 @@ export const SCENARIOS = [
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
-            { type: 'play', bot: { react: 1, noise: 18 }, until: 'gameover', max: 40000 }
+            { type: 'play', bot: { react: 1, noise: 18, edge: 46 }, until: 'gameover', max: 40000 }
         ],
-        expect: ['start:cpu']
+        expect: ['start:cpu', 'end:cpu', 'collect:big_ball', 'collect:slowmo', 'collect:turbo']
     },
     {
         name: 'powerups-b',
-        seed: 202,
+        seed: 203,
         storage: settings({ winningScore: 7, ballSpeed: 1 }),
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
-            { type: 'play', bot: STRONG, until: 'gameover', max: 25000 }
+            { type: 'play', bot: EDGY, until: 'gameover', max: 30000 }
         ],
-        expect: ['start:cpu']
+        expect: ['start:cpu', 'end:cpu', 'collect:multi_ball', 'collect:paddle_mini', 'collect:paddle_xl', 'collect:shield']
+    },
+
+    // --------------------------------------------------------------
+    //  Mecánicas de golpe (fase 2)
+    // --------------------------------------------------------------
+    {
+        // Un bot que golpea con el centro y mantiene ESPACIO al venir la
+        // bola: golpes perfectos, smash, súper y una fiebre del rally
+        name: 'mecanicas',
+        seed: 501,
+        storage: settings({ difficulty: 2, winningScore: 5 }),
+        actions: [
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'VS CPU' },
+            { type: 'play', bot: MECHANIC, until: 'gameover', max: 30000 },
+            { type: 'steps', n: 30 }
+        ],
+        expect: ['start:cpu', 'mech:perfect', 'mech:smash', 'mech:super', 'mech:spin', 'mech:fever', 'screen:game-over-screen']
+    },
+    {
+        // Sembrado para que salga un escudo pronto: aguanta 5 bloqueos y se rompe
+        name: 'escudo',
+        seed: 504,
+        storage: settings({ winningScore: 11 }),
+        actions: [
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'VS CPU' },
+            { type: 'play', bot: STRONG, until: 'event:shield:spent|gameover', max: 30000 },
+            { type: 'steps', n: 60 }
+        ],
+        expect: ['start:cpu', 'effect:shield', 'shield:spent']
     },
 
     // --------------------------------------------------------------
@@ -220,9 +267,9 @@ export const SCENARIOS = [
         actions: [
             ...enterCurrentBoss,
             // Yisus: al vencerle empieza el falso final, no la pantalla de fin
-            { type: 'play', bot: ACE, until: 'finale', max: 30000 },
+            { type: 'play', bot: ACE, until: 'finale', max: 45000 },
             { type: 'steps', n: 1700 },                 // la secuencia completa hasta el VS
-            { type: 'play', bot: ACE, until: 'finale', max: 30000 },   // El Creador
+            { type: 'play', bot: ACE, until: 'finale', max: 45000 },   // El Creador
             { type: 'steps', n: 480 },                  // el final verdadero muestra FIN a los 7 s
             { type: 'click', text: 'FIN' },
             { type: 'steps', n: 30 }
@@ -242,7 +289,7 @@ export const SCENARIOS = [
             { type: 'key', code: 'ArrowLeft' },
             { type: 'key', code: 'ArrowLeft' },
             { type: 'key', code: 'Enter' },
-            { type: 'play', bot: ACE, until: 'gameover', max: 20000 },
+            { type: 'play', bot: ACE, until: 'gameover', max: 40000 },
             { type: 'click', text: 'SIGUIENTE HACHEPE' },
             { type: 'steps', n: 400 }
         ],
@@ -337,7 +384,7 @@ export const SCENARIOS = [
             // Una partida con los cosméticos y ajustes nuevos
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
-            { type: 'play', bot: { react: 1, noise: 10 }, until: 'gameover', max: 15000 },
+            { type: 'play', bot: { react: 1, noise: 10 }, until: 'gameover', max: 25000 },
             { type: 'click', text: 'MENÚ PRINCIPAL' },
             { type: 'click', text: 'LOGROS' },
             { type: 'steps', n: 300 }
