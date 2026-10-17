@@ -2,8 +2,8 @@
  * game/hud.js
  * ------------------------------------------------------------------
  * HUD de la partida en el DOM, fuera del campo: una tarjeta por jugador
- * (nombre, marcador y una marca por punto), el chip del modo, el tiempo
- * y el rally en curso.
+ * (nombre, marcador y una marca por punto), el chip del modo, el tiempo,
+ * el rally en curso y, en pantallas táctiles, los botones de smash.
  *
  * setupHud() lo prepara al empezar la partida; updateHud() lo refresca
  * desde render() y solo toca el DOM cuando cambia algo. Solo lee estado:
@@ -16,6 +16,8 @@
 const HUD_CPU_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>';
 
 let hudKey = '';
+/** Lo último que se pintó en los botones de smash, para tocar el DOM solo si cambia. */
+let smashButtonsKey = '';
 
 /** Prepara el HUD para la partida que empieza (startGame). */
 function setupHud() {
@@ -25,6 +27,14 @@ function setupHud() {
     // En la pelea con barra de vida las tarjetas sobran: los corazones
     // del canvas y la barra del jefe ya cuentan la partida.
     container.toggleAttribute('data-health', useHealth);
+
+    // Botones de smash: con pantalla táctil y el ajuste "botón"; el del
+    // J2 solo en local. Antes de resizeCanvas(), que mide el campo con ellos.
+    if (isTouchDevice() && settings.smashTouch === 'button') {
+        container.dataset.smash = state.mode === 'local' ? '2' : '1';
+    } else {
+        delete container.dataset.smash;
+    }
 
     const target = matchTargetScore();
     const mode = document.getElementById('hud-mode');
@@ -61,11 +71,29 @@ function setupHud() {
     }
 
     hudKey = '';
+    smashButtonsKey = '';
     updateHud();
 }
 
-/** Refresca marcador, marcas, tiempo y rally si han cambiado. */
+/** Anillo de carga y aspecto SÚPER de los botones de smash (solo si cambian). */
+function updateSmashButtons() {
+    if (!document.getElementById('game-container').dataset.smash) return;
+    const key = [p1, p2].map((p) => `${Math.round(p.charge * 50)}|${superReadyFor(p)}`).join('|');
+    if (key === smashButtonsKey) return;
+    smashButtonsKey = key;
+    for (const [side, p] of /** @type {Array<[string, Paddle]>} */ ([['p1', p1], ['p2', p2]])) {
+        const btn = document.getElementById(`smash-btn-${side}`);
+        const full = superReadyFor(p);
+        btn.style.setProperty('--charge', p.charge.toFixed(2));
+        /** @type {SVGElement} */ (btn.querySelector('.smash-btn__fill')).style.strokeDasharray = `${(p.charge * 100).toFixed(1)} 100`;
+        btn.classList.toggle('is-super', full);
+        btn.querySelector('.smash-btn__label').textContent = full ? 'SÚPER' : 'SMASH';
+    }
+}
+
+/** Refresca marcador, marcas, tiempo, rally y botones de smash si han cambiado. */
 function updateHud() {
+    updateSmashButtons();
     const secs = Math.floor(matchElapsedMs / 1000);
     const key = `${state.p1Score}|${state.p2Score}|${currentRally}|${secs}`;
     if (key === hudKey) return;

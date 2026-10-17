@@ -9,9 +9,11 @@
  * del Creador la paleta se mueve en X, así que hay que escribir touchX.
  *
  * Táctil: en modo local la mitad izquierda mueve a P1 y la derecha a
- * P2; en el resto, cualquier toque mueve a P1. Incluye el botón de
- * pausa en pantalla (imprescindible en móvil, sin tecla ESC) y el aviso
- * de girar el dispositivo.
+ * P2; en el resto, cualquier toque mueve a P1. El smash se mantiene con
+ * su botón (smashTouch 'button') o con un segundo dedo en la mitad del
+ * jugador ('finger'); ambos escriben smashTouchHeld de la paleta.
+ * Incluye el botón de pausa en pantalla (imprescindible en móvil, sin
+ * tecla ESC) y el aviso de girar el dispositivo.
  * ------------------------------------------------------------------
  */
 
@@ -28,6 +30,8 @@ function isTouchDevice() {
 
 // Recuerda qué paleta (p1/p2) está controlando cada dedo (por touch.identifier),
 // para que un dedo que se desliza no "salte" de paleta al cruzar el centro.
+// Un segundo dedo que mantiene el smash se guarda como 'p1Smash'/'p2Smash'.
+/** @type {Map<number, string>} */
 const activeTouches = new Map();
 
 /** Convierte la coordenada Y de un evento táctil a coordenadas internas del canvas */
@@ -60,6 +64,9 @@ function isFingerOn(side) {
 }
 
 function assignTouch(touch) {
+    // Un toque que empieza en un botón de smash no mueve ninguna paleta
+    if (touch.target instanceof Element && touch.target.closest('.smash-btn')) return;
+
     const canvasX = touchToCanvasX(touch.clientX);
     const canvasY = touchToCanvasY(touch.clientY);
 
@@ -67,9 +74,40 @@ function assignTouch(touch) {
     // derecha a P2. En modo VS CPU, cualquier toque mueve a P1.
     const target = (state.mode === 'local' && canvasX >= GAME_WIDTH / 2) ? 'p2' : 'p1';
 
+    // "Segundo dedo": si ese jugador ya mueve su paleta con un dedo, este
+    // otro mantiene el smash mientras dure
+    if (settings.smashTouch === 'finger' && isFingerOn(target)) {
+        activeTouches.set(touch.identifier, target + 'Smash');
+        (target === 'p1' ? p1 : p2).smashTouchHeld = true;
+        return;
+    }
+
     activeTouches.set(touch.identifier, target);
     updatePaddleFromTouch(target, canvasY, canvasX);
     hideTouchHint(target);
+}
+
+/**
+ * Botón de smash táctil: mantenerlo pulsado carga el smash de su paleta.
+ * @param {string} id
+ * @param {Paddle} paddle
+ */
+function bindSmashButton(id, paddle) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        paddle.smashTouchHeld = true;
+        btn.classList.add('is-held');
+        // Así un dedo que se desliza un poco fuera del botón no lo suelta
+        try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura también funciona */ }
+    });
+    const release = () => {
+        paddle.smashTouchHeld = false;
+        btn.classList.remove('is-held');
+    };
+    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(type, release);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function updatePaddleFromTouch(target, canvasY, canvasX) {
@@ -85,6 +123,12 @@ function releaseTouch(touch) {
     const target = activeTouches.get(touch.identifier);
     if (!target) return;
     activeTouches.delete(touch.identifier);
+
+    if (target.endsWith('Smash')) {
+        // Se suelta el smash si no queda otro dedo manteniéndolo
+        if (![...activeTouches.values()].includes(target)) (target === 'p1Smash' ? p1 : p2).smashTouchHeld = false;
+        return;
+    }
 
     // Solo suelta la paleta si ningún OTRO dedo activo sigue controlándola
     // (relevante si, por accidente, dos dedos tocan el mismo lado).
@@ -109,7 +153,7 @@ function handleTouchMove(e) {
     e.preventDefault();
     for (const touch of e.changedTouches) {
         const target = activeTouches.get(touch.identifier);
-        if (!target) continue;
+        if (target !== 'p1' && target !== 'p2') continue;   // sin dedo, o el del smash
         updatePaddleFromTouch(target, touchToCanvasY(touch.clientY), touchToCanvasX(touch.clientX));
     }
 }
@@ -179,7 +223,7 @@ function clearMouseControl() {
     }
 }
 
-/** Registra el ratón y el táctil sobre el canvas, el botón de pausa y el aviso de orientación. */
+/** Registra el ratón y el táctil sobre el canvas, los botones de pausa y de smash y el aviso de orientación. */
 function initPointer() {
     canvas.addEventListener('mouseenter', () => { mouseActive = true; });
     canvas.addEventListener('mouseleave', () => {
@@ -194,6 +238,8 @@ function initPointer() {
 
     setupMobilePauseButton();
     setupOrientationHint();
+    bindSmashButton('smash-btn-p1', p1);
+    bindSmashButton('smash-btn-p2', p2);
 
     if (isTouchDevice()) {
         document.body.classList.add('touch-device');

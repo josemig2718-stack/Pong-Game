@@ -203,15 +203,19 @@ function superReadyFor(p) {
  * Tipo de golpe, por orden de prioridad: súper, smash, perfecto,
  * esquina, bloqueo y normal. El bloqueo coincide a veces con la
  * esquina; entonces manda la esquina.
+ * En el modo táctil automático no hay smash: con la energía llena, el
+ * siguiente golpe del que juega con el dedo es súper.
  * @param {Paddle} paddle
  * @param {Paddle} holder la paleta con la energía de ese lado
+ * @param {'p1'|'p2'} side
  * @param {number} c punto de contacto, de -1 (un extremo) a 1 (el otro)
  * @param {number} rawV velocidad de la paleta en px/fotograma
  * @returns {HitType}
  */
-function classifyHit(paddle, holder, c, rawV) {
+function classifyHit(paddle, holder, side, c, rawV) {
     const windowOpen = paddle.releaseMs <= MECH.smashWindowMs;
     if (windowOpen && paddle.charge >= MECH.superMinCharge && superReadyFor(holder)) return 'super';
+    if (settings.smashTouch === 'auto' && superReadyFor(holder) && isFingerOn(side)) return 'super';
     if (windowOpen && paddle.charge >= MECH.smashMinCharge) return 'smash';
     const ac = Math.abs(c);
     if (ac <= MECH.centerZone) return 'perfect';
@@ -324,7 +328,7 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 2-4. Tipo, ángulo y velocidad. Un smash o súper del rival no se
     // devuelve más rápido que el tope normal.
-    const type = classifyHit(paddle, holder, c, rotated ? paddle.vx : paddle.vy);
+    const type = classifyHit(paddle, holder, side, c, rotated ? paddle.vx : paddle.vy);
     const angle = hitAngle(type, c);
     if (b.power && b.owner && b.owner !== side) b.speed = Math.min(b.speed, maxBallSpeed);
     b.speed = hitSpeed(type, b, paddle, maxBallSpeed);
