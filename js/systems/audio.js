@@ -303,7 +303,7 @@ const soundEffects = {
     /** Ruido de glitch del Creador: disonancia deliberada. */
     glitch: () => {
         for (let i = 0; i < 5; i++) {
-            setTimeout(() => sfxVoice({ type: 'sawtooth', freq: 90 + Math.random() * 900, decay: 0.05 }), i * 45);
+            sfxVoice({ type: 'sawtooth', freq: 90 + sfxRandom() * 900, decay: 0.05, when: i * 0.045 });
         }
     },
     /** Pitido suave de la máquina de escribir en los diálogos. */
