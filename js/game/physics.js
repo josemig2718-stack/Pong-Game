@@ -29,6 +29,13 @@ function update(dt) {
     // Un diálogo de campaña congela la partida por completo
     if (isDialogueActive) return;
 
+    // Hit-stop: tras un golpe fuerte la imagen se queda quieta unos
+    // fotogramas (render() sigue dibujando). Cuenta en tiempo real.
+    if (state.hitStopMs > 0) {
+        state.hitStopMs = Math.max(0, state.hitStopMs - dt * MS_PER_FRAME);
+        return;
+    }
+
     // El reloj de la partida cuenta tiempo real, sin la cámara lenta
     const realDt = dt;
 
@@ -189,6 +196,7 @@ function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
         b.x += b.dx * dt;
         b.y += b.dy * dt;
         applySpin(b, dt, rotatedArena);
+        decaySquash(b, dt);
 
         bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed);
 

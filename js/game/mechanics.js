@@ -9,7 +9,8 @@
  *   smash       updateSmash: carga mientras se mantiene, ventana corta
  *               al soltar
  *   golpe       resolveHit: tipo de golpe (súper, smash, perfecto,
- *               esquina, bloqueo, normal), rebote, efecto y energía;
+ *               esquina, bloqueo, normal), rebote, efecto, energía y
+ *               sensación (hit-stop, vibración del móvil, aplastamiento);
  *               applySpin curva la bola en vuelo
  *
  * Todos los números salen de MECH (data/mechanics.js). Nada aquí usa
@@ -369,6 +370,9 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     spawnParticles(b.x, b.y, color, count);
     const shake = MECH.shake[type] || [4, 100];
     triggerShake(shake[0], shake[1]);
+    if (MECH.hitStopMs[type]) state.hitStopMs = MECH.hitStopMs[type];
+    if (MECH.vibrate[type]) mechVibrate(side, MECH.vibrate[type]);
+    b.squash = 1;
 
     // 11. Nuevo intercambio: el jefe recalcula su puntería, el último en
     // golpear se queda los power-ups y el rally suma. Cada 10 golpes de
@@ -381,6 +385,29 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
         addEnergy(p2, MECH.energy.rally10);
     }
     return type;
+}
+
+/**
+ * Vibra el móvil si el golpe lo dio alguien que juega con el dedo y el
+ * jugador no lo ha desactivado.
+ * @param {'p1'|'p2'} side
+ * @param {number} ms
+ */
+function mechVibrate(side, ms) {
+    if (!settings.haptics || typeof navigator.vibrate !== 'function') return;
+    if (!isFingerOn(side)) return;
+    navigator.vibrate(ms);
+}
+
+/**
+ * El aplastamiento del golpe se recupera solo (es solo visual).
+ * @param {Ball} b
+ * @param {number} dt
+ */
+function decaySquash(b, dt) {
+    if (b.squash === 0) return;
+    b.squash *= Math.pow(0.8, dt);
+    if (b.squash < 0.001) b.squash = 0;
 }
 
 /**

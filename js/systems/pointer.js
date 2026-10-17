@@ -48,6 +48,17 @@ function clampPaddleY(y, paddle) {
     return Math.max(0, Math.min(GAME_HEIGHT - paddle.height, y));
 }
 
+/**
+ * ¿Hay un dedo en pantalla moviendo la paleta de ese jugador? (El ratón
+ * también escribe touchY, así que eso no basta para saber si juega con
+ * el dedo.)
+ * @param {'p1'|'p2'} side
+ */
+function isFingerOn(side) {
+    for (const target of activeTouches.values()) if (target === side) return true;
+    return false;
+}
+
 function assignTouch(touch) {
     const canvasX = touchToCanvasX(touch.clientX);
     const canvasY = touchToCanvasY(touch.clientY);

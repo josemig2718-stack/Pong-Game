@@ -54,14 +54,24 @@ function drawLives(vidas) {
     }
 }
 
-/** Bola blanca con el brillo del tema. */
+/**
+ * Bola blanca con el brillo del tema. Tras un golpe se aplasta: se
+ * estira en la dirección del movimiento y se estrecha en la otra.
+ */
 function drawBall(b, color) {
     ctx.save();
     ctx.shadowColor = color;
     ctx.shadowBlur = 18;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    if (b.squash > 0.001) {
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.atan2(b.dy, b.dx));
+        ctx.scale(1 + 0.25 * b.squash, 1 - 0.2 * b.squash);
+        ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+    } else {
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    }
     ctx.fill();
     ctx.restore();
 }

@@ -84,6 +84,7 @@
  * @property {number} goTextMs  tras el saque, tiempo que queda mostrando "¡YA!" (ms)
  * @property {number} shakeIntensity
  * @property {number} shakeTimeMs
+ * @property {number} hitStopMs  congelación breve tras un golpe fuerte (ms reales); update() no avanza mientras dure
  * @property {Ball[]} balls
  * @property {Particle[]} particles
  */
@@ -104,6 +105,8 @@ const state = {
     /** Vibración de pantalla: amplitud en px y tiempo restante en ms. */
     shakeIntensity: 0,
     shakeTimeMs: 0,
+    /** Hit-stop: tras un golpe fuerte la partida se congela unos fotogramas (ms). */
+    hitStopMs: 0,
     /**
      * Bolas en juego (el power-up multi-bola añade hasta dos más).
      * resetBall() sustituye el array entero: no guardes una referencia a
