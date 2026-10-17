@@ -158,6 +158,7 @@ function spawnPowerup() {
     powerupsSpawnedThisGame++;
 
     soundEffects.powerupSpawn();
+    showHint('pu_' + selectedType.id);
 }
 
 /**

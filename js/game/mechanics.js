@@ -198,6 +198,7 @@ function startFever() {
     state.fever = true;
     soundEffects.feverStart();
     statsOnFeverStart();
+    showHint('fever');
     if (feverChangesMusic()) {
         feverPrevTrack = musicCurrent();
         musicPlay('fiebre_rally', { fade: 0.5 });
@@ -422,6 +423,9 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     b.power = type === 'smash' || type === 'super' ? type : null;
     mechHits[type]++;
     if (Math.abs(b.spin) > MECH.spinSoundMin) mechHits.spin++;
+    // Avisos de primera vez del jugador 1
+    if (side === 'p1' && type === 'perfect') showHint('perfect');
+    if (side === 'p1' && Math.abs(b.spin) > MECH.spinSoundMin) showHint('spin');
 
     // 7. Energía del que golpea; el súper la gasta (o gasta el súper regalado)
     if (type === 'super') {

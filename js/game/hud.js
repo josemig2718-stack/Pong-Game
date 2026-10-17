@@ -78,6 +78,7 @@ function setupHud() {
     smashButtonsKey = '';
     superHintUntil = 0;
     document.getElementById('super-hint').classList.add('hidden');
+    resetHints();
     updateHud();
 }
 
@@ -100,8 +101,14 @@ function fillSuperHintText(el) {
     }
 }
 
-/** La energía del jugador 1 acaba de llenarse: el aviso se ve MECH.superHintMs. */
+/**
+ * La energía del jugador 1 acaba de llenarse: el aviso se ve
+ * MECH.superHintMs, solo las ENERGY_HINT_TIMES primeras veces (y si los
+ * consejos están activados).
+ */
 function showSuperHint() {
+    if (!hintDue('energy', ENERGY_HINT_TIMES)) return;
+    markHintSeen('energy');
     fillSuperHintText(document.getElementById('super-hint-text'));
     document.getElementById('super-hint').classList.remove('hidden');
     superHintUntil = performance.now() + MECH.superHintMs;
@@ -139,6 +146,7 @@ function energySegments(p) {
 function updateHud() {
     updateSmashButtons();
     updateSuperHint();
+    updateHintToast();
     const secs = Math.floor(matchElapsedMs / 1000);
     const energyKey = [p1, p2].map((p) => `${energySegments(p)}${superReadyFor(p) ? '!' : ''}`).join('|');
     const key = `${state.p1Score}|${state.p2Score}|${currentRally}|${secs}|${state.fever}|${energyKey}`;

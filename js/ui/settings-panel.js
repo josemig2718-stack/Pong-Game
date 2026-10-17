@@ -142,9 +142,18 @@ function togglePowerups(enabled) {
     saveSettings();
 }
 
-/** Botón "RESTABLECER TODO": vuelve a la configuración por defecto. */
+/**
+ * Avisos de primera vez en partida.
+ * @param {boolean} enabled
+ */
+function toggleHints(enabled) {
+    settings.showHints = enabled;
+    saveSettings();
+}
+
+/** Botón "RESTABLECER TODO": vuelve a la configuración por defecto (y los avisos vuelven a salir). */
 function resetAllSettings() {
-    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS } });
+    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS }, seenHints: [] });
     saveSettings();
     setMasterVolume(settings.volume);   // el volumen de efectos vive aparte, en systems/audio.js
     populateSettingsUI();
@@ -171,6 +180,7 @@ function populateSettingsUI() {
     if (input('powerups-toggle')) {
         input('powerups-toggle').checked = settings.powerupsEnabled;
     }
+    input('hints-toggle').checked         = settings.showHints;
     document.body.classList.toggle('crt-effect', settings.crtEffect);
 
     updateWinningScore(settings.winningScore);

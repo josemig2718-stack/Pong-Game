@@ -59,6 +59,8 @@ const DEFAULT_SETTINGS = {
     powerupsEnabled: true, // power-ups en partida
     smashTouch:   'button', // smash en táctil: 'button' (botón), 'finger' (segundo dedo) o 'auto' (súper automático)
     haptics:      true,    // vibración del móvil en los golpes fuertes
+    showHints:    true,    // avisos de primera vez en partida (game/hints.js)
+    seenHints:    [],      // claves de los avisos ya vistos ('energy' se repite: una entrada por vez)
     bindings: { ...DEFAULT_BINDINGS }
 };
 
@@ -83,6 +85,8 @@ function loadSettings() {
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
+        // Array propio: no compartir el de DEFAULT_SETTINGS
+        seenHints: Array.isArray(saved.seenHints) ? [...saved.seenHints] : [],
         bindings
     };
 }

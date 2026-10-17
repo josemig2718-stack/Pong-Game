@@ -67,7 +67,8 @@ const CHANGE_ACTIONS = {
     toggleCrtEffect:    (el) => toggleCrtEffect(el.checked),
     toggleScreenShake:  (el) => toggleScreenShake(el.checked),
     toggleMouseControl: (el) => toggleMouseControl(el.checked),
-    togglePowerups:     (el) => togglePowerups(el.checked)
+    togglePowerups:     (el) => togglePowerups(el.checked),
+    toggleHints:        (el) => toggleHints(el.checked)
 };
 
 /**

@@ -1239,6 +1239,40 @@ body[data-game-mode="campaign"] #hud-energy-p2 { display: none; }
     .super-hint { animation: none; }
 }
 
+/* Aviso de primera vez (game/hints.js), centrado arriba dentro del campo */
+.hint-toast {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    z-index: 5;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    max-width: min(520px, calc(100% - 24px));
+    padding: 9px 16px 9px 12px;
+    border-radius: 14px;
+    background: rgba(6, 10, 20, 0.88);
+    border: 1px solid rgba(var(--primary-rgb), 0.55);
+    box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.18);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    pointer-events: none;
+    animation: hint-toast-in .25s ease-out;
+}
+.hint-toast.hidden { display: none; }
+.hint-toast .ico { flex: none; color: var(--primary); }
+@keyframes hint-toast-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    to { opacity: 1; transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hint-toast { animation: none; }
+}
+
 /* Modo Hachepe: los seis personajes, tres en cada tarjeta */
 .hud-crew { display: none; flex: none; gap: 2px; align-items: flex-end; }
 .hud-crew img { width: 28px; height: 28px; object-fit: contain; image-rendering: pixelated; }
