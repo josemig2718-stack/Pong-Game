@@ -330,7 +330,7 @@ const HIT_ENERGY = {
 
 /**
  * Suma energía a una paleta, hasta el máximo. Al llenarse suena el aviso
- * (una vez por llenado).
+ * (una vez por llenado) y, si es la del jugador 1, se ve en el campo.
  * @param {Paddle} p
  * @param {number} amount
  */
@@ -338,7 +338,10 @@ function addEnergy(p, amount) {
     if (amount <= 0) return;
     const wasFull = p.energy >= MECH.energy.max;
     p.energy = Math.min(MECH.energy.max, p.energy + amount);
-    if (!wasFull && p.energy >= MECH.energy.max) soundEffects.superReady();
+    if (!wasFull && p.energy >= MECH.energy.max) {
+        soundEffects.superReady();
+        if (p === p1) showSuperHint();
+    }
 }
 
 /**

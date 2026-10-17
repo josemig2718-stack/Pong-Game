@@ -3,7 +3,9 @@
  * ------------------------------------------------------------------
  * HUD de la partida en el DOM, fuera del campo: una tarjeta por jugador
  * (nombre, marcador y una marca por punto), el chip del modo, el tiempo,
- * el rally en curso y, en pantallas táctiles, los botones de smash.
+ * el rally en curso (o la fiebre), la energía del súper golpe de cada
+ * jugador, el aviso de súper listo y, en pantallas táctiles, los botones
+ * de smash.
  *
  * setupHud() lo prepara al empezar la partida; updateHud() lo refresca
  * desde render() y solo toca el DOM cuando cambia algo. Solo lee estado:
@@ -18,6 +20,8 @@ const HUD_CPU_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><r
 let hudKey = '';
 /** Lo último que se pintó en los botones de smash, para tocar el DOM solo si cambia. */
 let smashButtonsKey = '';
+/** Hasta cuándo (performance.now) se ve el aviso de súper listo; 0 = oculto. */
+let superHintUntil = 0;
 
 /** Prepara el HUD para la partida que empieza (startGame). */
 function setupHud() {
@@ -72,7 +76,42 @@ function setupHud() {
 
     hudKey = '';
     smashButtonsKey = '';
+    superHintUntil = 0;
+    document.getElementById('super-hint').classList.add('hidden');
     updateHud();
+}
+
+/**
+ * Texto del aviso de súper listo según cómo juega el jugador 1: el botón
+ * táctil, un segundo dedo, el súper automático o la tecla de smash.
+ * @param {HTMLElement} el
+ */
+function fillSuperHintText(el) {
+    if (isTouchDevice() && settings.smashTouch === 'auto') {
+        el.textContent = 'Tu siguiente golpe será súper';
+    } else if (isTouchDevice() && settings.smashTouch === 'finger') {
+        el.textContent = 'Mantén un segundo dedo y suelta al golpear';
+    } else if (isTouchDevice() && !settings.mouseControl) {
+        el.textContent = 'Mantén SÚPER y suelta al golpear';
+    } else {
+        const kbd = document.createElement('kbd');
+        kbd.textContent = keyLabel(settings.bindings.p1Smash);
+        el.replaceChildren('Mantén ', kbd, ' y suelta al golpear');
+    }
+}
+
+/** La energía del jugador 1 acaba de llenarse: el aviso se ve MECH.superHintMs. */
+function showSuperHint() {
+    fillSuperHintText(document.getElementById('super-hint-text'));
+    document.getElementById('super-hint').classList.remove('hidden');
+    superHintUntil = performance.now() + MECH.superHintMs;
+}
+
+/** Oculta el aviso de súper listo cuando se acaba su tiempo. */
+function updateSuperHint() {
+    if (superHintUntil === 0 || performance.now() < superHintUntil) return;
+    superHintUntil = 0;
+    document.getElementById('super-hint').classList.add('hidden');
 }
 
 /** Anillo de carga y aspecto SÚPER de los botones de smash (solo si cambian). */
@@ -91,11 +130,18 @@ function updateSmashButtons() {
     }
 }
 
-/** Refresca marcador, marcas, tiempo, rally y botones de smash si han cambiado. */
+/** Segmentos de energía encendidos (de 10). */
+function energySegments(p) {
+    return Math.floor(p.energy / (MECH.energy.max / 10));
+}
+
+/** Refresca marcador, marcas, tiempo, rally, fiebre, energía y botones de smash si han cambiado. */
 function updateHud() {
     updateSmashButtons();
+    updateSuperHint();
     const secs = Math.floor(matchElapsedMs / 1000);
-    const key = `${state.p1Score}|${state.p2Score}|${currentRally}|${secs}`;
+    const energyKey = [p1, p2].map((p) => `${energySegments(p)}${superReadyFor(p) ? '!' : ''}`).join('|');
+    const key = `${state.p1Score}|${state.p2Score}|${currentRally}|${secs}|${state.fever}|${energyKey}`;
     if (key === hudKey) return;
     hudKey = key;
 
@@ -106,5 +152,17 @@ function updateHud() {
         for (let i = 0; i < pips.length; i++) pips[i].classList.toggle('is-on', i < score);
     }
     document.getElementById('hud-time').textContent = formatMatchTime(matchElapsedMs);
-    document.getElementById('hud-rally').textContent = `Rally ${currentRally}`;
+    document.getElementById('hud-rally-chip').classList.toggle('is-fever', state.fever);
+    document.getElementById('hud-rally').textContent = state.fever ? `FIEBRE ${currentRally}` : `Rally ${currentRally}`;
+
+    // Energía: 10 segmentos; llena, la tarjeta pasa a amarillo y dice SÚPER
+    for (const [side, p] of /** @type {Array<[string, Paddle]>} */ ([['p1', p1], ['p2', p2]])) {
+        const full = superReadyFor(p);
+        const on = full ? 10 : energySegments(p);
+        document.getElementById(`hud-${side}`).classList.toggle('is-super', full);
+        const energy = document.getElementById(`hud-energy-${side}`);
+        energy.querySelector('.hud-energy__lbl').textContent = full ? 'SÚPER' : 'ENERGÍA';
+        const segs = energy.querySelector('.hud-energy__seg').children;
+        for (let i = 0; i < segs.length; i++) segs[i].classList.toggle('is-on', i < on);
+    }
 }
