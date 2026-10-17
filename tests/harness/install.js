@@ -216,34 +216,92 @@
     /** Cada entrada: [tipo, fotograma, ...datos]. */
     const audioLog = [];
 
+    /**
+     * Parámetro de audio. `value` es el último valor fijado con
+     * setValueAtTime; las rampas guardan su destino en `end` sin tocarlo.
+     * `peak` es el mayor valor programado (fijado o de rampa): para una
+     * envolvente 0 → pico → 0 es lo que se registra como volumen del tono.
+     */
     class FakeParam {
-        constructor(value) { this.value = value; }
-        setValueAtTime(v) { this.value = v; return this; }
-        exponentialRampToValueAtTime() { return this; }
-        linearRampToValueAtTime() { return this; }
+        constructor(value) { this.value = value; this.end = value; this.peak = -Infinity; }
+        _note(v) { if (v > this.peak) this.peak = v; }
+        setValueAtTime(v) { this.value = v; this.end = v; this._note(v); return this; }
+        exponentialRampToValueAtTime(v) { this.end = v; this._note(v); return this; }
+        linearRampToValueAtTime(v) { this.end = v; this._note(v); return this; }
+        setTargetAtTime(v) { this.end = v; this._note(v); return this; }
+        cancelScheduledValues() { return this; }
     }
 
+    /** Nodo genérico: se conecta a lo que sea y no suena. */
+    const fakeNode = (fields) => Object.assign({ connect() {}, disconnect() {} }, fields);
+
+    /** El volumen que se registra de un nodo de ganancia. */
+    const gainOf = (node) => {
+        if (!node || !node.gain) return null;
+        return Number.isFinite(node.gain.peak) ? node.gain.peak : node.gain.value;
+    };
+
+    /*
+     * A propósito NO tiene decodeAudioData: sin él, el reproductor de música
+     * elige siempre el motor de <audio> (FakeAudio, que ya se registra) y la
+     * música es determinista sin simular fetch.
+     */
     class FakeAudioContext {
         constructor() {
             this.state = 'running';
-            this.destination = {};
+            this.sampleRate = 44100;
+            this.destination = fakeNode({});
         }
         get currentTime() { return clock / 1000; }
         resume() { return Promise.resolve(); }
         createGain() {
-            return { gain: new FakeParam(1), connect() {} };
+            return fakeNode({ gain: new FakeParam(1) });
+        }
+        createBiquadFilter() {
+            return fakeNode({
+                type: 'lowpass',
+                frequency: new FakeParam(350), Q: new FakeParam(1), gain: new FakeParam(0)
+            });
+        }
+        createDynamicsCompressor() {
+            return fakeNode({
+                threshold: new FakeParam(-24), knee: new FakeParam(30), ratio: new FakeParam(12),
+                attack: new FakeParam(0.003), release: new FakeParam(0.25)
+            });
+        }
+        createStereoPanner() {
+            return fakeNode({ pan: new FakeParam(0) });
+        }
+        createBuffer(channels, length, sampleRate) {
+            const data = new Float32Array(length);
+            return { numberOfChannels: channels, length, sampleRate, duration: length / sampleRate, getChannelData: () => data };
+        }
+        createBufferSource() {
+            const ctx = this;
+            const src = fakeNode({
+                buffer: null, loop: false, loopStart: 0, loopEnd: 0,
+                playbackRate: new FakeParam(1),
+                start(when = 0, offset = 0, dur) {
+                    const length = dur !== undefined ? dur : (src.buffer ? src.buffer.duration : null);
+                    audioLog.push(['noise', frame, length, when - ctx.currentTime]);
+                },
+                stop() {}
+            });
+            return src;
         }
         createOscillator() {
             const ctx = this;
             const osc = {
                 type: 'sine',
                 frequency: new FakeParam(440),
+                detune: new FakeParam(0),
                 _gain: null,
                 connect(node) { osc._gain = node; },
+                disconnect() {},
                 start() {},
                 stop(when) {
                     audioLog.push(['tone', frame, osc.type, osc.frequency.value,
-                        when - ctx.currentTime, osc._gain ? osc._gain.gain.value : null]);
+                        when - ctx.currentTime, gainOf(osc._gain)]);
                 }
             };
             return osc;
