@@ -1,9 +1,11 @@
 /**
  * systems/audio.js
  * ------------------------------------------------------------------
- * Sintetizador de audio 100% generado por JavaScript (Web Audio API)
- * para efectos de sonido, más reproducción de música de fondo con
- * elementos <audio> HTML5 para menú y gameplay.
+ * Sintetizador de efectos 100% generado por JavaScript (Web Audio API):
+ * dos primitivas, sfxVoice() y sfxNoise(), programadas con el reloj de
+ * audio, y los efectos de soundEffects. Su azar sale de sfxRandom(),
+ * nunca de Math.random (la física) ni de vfxRandom (los cosméticos).
+ * Más la música de fondo con elementos <audio> HTML5.
  * ------------------------------------------------------------------
  */
 
@@ -51,83 +53,358 @@ function getAudioContext() {
 }
 
 /**
- * Toca un tono sintetizado hacia el bus de efectos. Con los efectos
- * desactivados (o a volumen 0) no crea ninguna voz.
- * @param {number} freq hercios
- * @param {OscillatorType} [type]
- * @param {number} [duration] segundos
+ * ¿Suenan los efectos? Desactivados o a volumen 0 no se crea ninguna voz
+ * (no basta con bajar el bus a cero).
  */
-function playTone(freq, type = 'square', duration = 0.1) {
-    if (!settings.sfxEnabled || settings.volume === 0) return;
-    const ctx = getAudioContext();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
-
-    gainNode.gain.setValueAtTime(1, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(sfxBus);
-
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + duration);
+function sfxActive() {
+    return settings.sfxEnabled && settings.volume > 0;
 }
 
+/**
+ * Conecta la salida de una voz al bus de efectos, con panorama si el
+ * navegador lo tiene (Safari antiguo no tiene createStereoPanner).
+ * @param {AudioContext} ctx
+ * @param {AudioNode} node
+ * @param {number} pan de -1 (izquierda) a 1 (derecha)
+ * @param {number} t0 segundos del reloj de audio
+ */
+function sfxOut(ctx, node, pan, t0) {
+    if (pan && typeof ctx.createStereoPanner === 'function') {
+        const panner = ctx.createStereoPanner();
+        panner.pan.setValueAtTime(Math.max(-1, Math.min(1, pan)), t0);
+        node.connect(panner);
+        panner.connect(sfxBus);
+    } else {
+        node.connect(sfxBus);
+    }
+}
+
+/**
+ * Voz tonal: oscilador → envolvente → filtro opcional → panorama → sfxBus.
+ * La envolvente va antes del filtro (los dos son lineales: suena igual).
+ * Todo se programa con el reloj de audio; las secuencias usan `when`,
+ * nunca setTimeout.
+ * @param {{ type?: OscillatorType, freq: number, freqEnd?: number|null, when?: number,
+ *           attack?: number, decay?: number, gain?: number, pan?: number,
+ *           lowpass?: number|null, detune?: number }} voice
+ * @returns {OscillatorNode|null} el oscilador, o null si los efectos están apagados
+ */
+function sfxVoice({ type = 'square', freq, freqEnd = null, when = 0, attack = 0.004,
+                    decay = 0.12, gain = 0.5, pan = 0, lowpass = null, detune = 0 }) {
+    if (!sfxActive()) return null;
+    const ctx = getAudioContext();
+    const t0 = ctx.currentTime + when;
+    const tPeak = t0 + attack;
+    const tEnd = tPeak + decay;
+
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) {
+        osc.frequency.setValueAtTime(freq, tPeak);
+        osc.frequency.exponentialRampToValueAtTime(freqEnd, tEnd);
+    }
+    if (detune) osc.detune.setValueAtTime(detune, t0);
+
+    // De casi 0 al pico y de vuelta: sin chasquidos al empezar ni al acabar
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(gain, tPeak);
+    env.gain.exponentialRampToValueAtTime(0.0001, tEnd);
+    osc.connect(env);
+
+    /** @type {AudioNode} */
+    let out = env;
+    if (lowpass) {
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(lowpass, t0);
+        env.connect(filter);
+        out = filter;
+    }
+    sfxOut(ctx, out, pan, t0);
+
+    osc.start(t0);
+    osc.stop(tEnd + 0.02);
+    return osc;
+}
+
+/** @type {AudioBuffer|null} Un segundo de ruido blanco, creado una vez y reutilizado. */
+let sfxNoiseBuffer = null;
+
+/**
+ * @param {AudioContext} ctx
+ * @returns {AudioBuffer}
+ */
+function getNoiseBuffer(ctx) {
+    if (!sfxNoiseBuffer) {
+        const length = ctx.sampleRate;
+        sfxNoiseBuffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = sfxNoiseBuffer.getChannelData(0);
+        for (let i = 0; i < length; i++) data[i] = sfxRandom() * 2 - 1;
+    }
+    return sfxNoiseBuffer;
+}
+
+/**
+ * Ráfaga de ruido blanco filtrado (el "chasquido" del impacto).
+ * `bandpassEnd` barre el filtro durante la ráfaga.
+ * @param {{ when?: number, dur?: number, bandpass?: number, bandpassEnd?: number|null,
+ *           q?: number, gain?: number, pan?: number }} burst
+ */
+function sfxNoise({ when = 0, dur = 0.03, bandpass = 2500, bandpassEnd = null, q = 1.2, gain = 0.35, pan = 0 }) {
+    if (!sfxActive()) return;
+    const ctx = getAudioContext();
+    const t0 = ctx.currentTime + when;
+    const buffer = getNoiseBuffer(ctx);
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(bandpass, t0);
+    if (bandpassEnd) filter.frequency.exponentialRampToValueAtTime(bandpassEnd, t0 + dur);
+    filter.Q.setValueAtTime(q, t0);
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(gain, t0 + 0.002);
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    src.connect(filter);
+    filter.connect(env);
+    sfxOut(ctx, env, pan, t0);
+
+    // Cada ráfaga lee un trozo distinto del mismo buffer
+    const offset = sfxRandom() * Math.max(0, buffer.duration - dur);
+    src.start(t0, offset, dur);
+}
+
+/**
+ * Desafinado aleatorio de ±n cents, para que dos golpes seguidos no suenen idénticos.
+ * @param {number} n
+ */
+function sfxVary(n) {
+    return (sfxRandom() - 0.5) * 2 * n;
+}
+
+/**
+ * Panorama según la x del campo: lo que pasa a la izquierda suena a la izquierda.
+ * @param {number|undefined} x
+ */
+function sfxPanX(x) {
+    if (typeof x !== 'number') return 0;
+    return Math.max(-0.6, Math.min(0.6, (x / (GAME_WIDTH / 2) - 1) * 0.6));
+}
+
+/**
+ * Arpegio: una nota cada `step` segundos.
+ * @param {number[]} notes hercios
+ * @param {number} step segundos entre notas
+ * @param {{ type?: OscillatorType, decay?: number, gain?: number, when?: number }} [voice]
+ */
+function sfxArpeggio(notes, step, { type = 'triangle', decay = 0.12, gain = 0.5, when = 0 } = {}) {
+    notes.forEach((f, i) => sfxVoice({ type, freq: f, decay, gain, when: when + i * step }));
+}
+
+/**
+ * Arpegio con brillo: cada nota lleva un `sine` una octava arriba.
+ * @param {number[]} notes
+ * @param {number} step
+ */
+function sfxSparkleArpeggio(notes, step) {
+    sfxArpeggio(notes, step, { type: 'triangle', decay: 0.18 });
+    sfxArpeggio(notes.map(f => f * 2), step, { type: 'sine', decay: 0.18, gain: 0.15 });
+}
+
+/** @type {{ osc: OscillatorNode, env: GainNode }|null} La carga del smash en curso. */
+let smashChargeVoice = null;
+
+/** @typedef {{ x?: number, speedRatio?: number }} HitInfo */
+
 const soundEffects = {
-    paddleHit:  () => playTone(600, 'square', 0.1),
-    wallHit:    () => playTone(300, 'square', 0.1),
-    score:      () => {
-        playTone(400, 'sawtooth', 0.15);
-        setTimeout(() => playTone(600, 'sawtooth', 0.4), 100);
+    /** @param {HitInfo} [info] x del golpe y velocidad de la bola (0 a 1) */
+    paddleHit: (info = {}) => {
+        const pan = sfxPanX(info.x);
+        const f = 420 + 260 * Math.max(0, Math.min(1, info.speedRatio || 0));
+        sfxNoise({ dur: 0.025, bandpass: 2800, pan });
+        sfxVoice({ type: 'square', freq: f, freqEnd: f * 0.85, decay: 0.07, detune: sfxVary(25), pan });
     },
-    uiClick:    () => playTone(500, 'triangle', 0.05),
-    countdown:  () => playTone(440, 'square', 0.08),
-    go:         () => playTone(880, 'square', 0.15),
-    win:        () => {
-        [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.2), i * 120));
+    /** @param {HitInfo} [info] */
+    wallHit: (info = {}) => {
+        const pan = sfxPanX(info.x);
+        sfxNoise({ dur: 0.018, bandpass: 1800, gain: 0.25, pan });
+        sfxVoice({ type: 'triangle', freq: 300, freqEnd: 240, decay: 0.06, pan });
     },
-    lose:       () => {
-        [400, 300, 200].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.25), i * 150));
+    score: () => {
+        sfxVoice({ type: 'sawtooth', freq: 392, freqEnd: 523, decay: 0.12 });
+        sfxArpeggio([523, 659, 784], 0.07, { type: 'square', gain: 0.35, decay: 0.1, when: 0.12 });
     },
-    achievementUnlock: () => {
-        [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.18), i * 80));
+    uiClick:   () => sfxVoice({ type: 'triangle', freq: 520, freqEnd: 480, decay: 0.04, gain: 0.25 }),
+    countdown: () => sfxVoice({ type: 'square', freq: 440, decay: 0.06, lowpass: 3000 }),
+    go: () => {
+        sfxVoice({ type: 'square', freq: 880, decay: 0.16 });
+        sfxVoice({ type: 'triangle', freq: 1320, decay: 0.16 });
     },
+    /** Victoria sintetizada: con la música activada suena el jingle en su lugar. */
+    win:  () => sfxArpeggio([523, 659, 784, 1046], 0.12, { type: 'square', decay: 0.2 }),
+    /** Derrota sintetizada: con la música activada suena el jingle en su lugar. */
+    lose: () => sfxArpeggio([400, 300, 200], 0.15, { type: 'sawtooth', decay: 0.25 }),
+    achievementUnlock: () => sfxSparkleArpeggio([660, 880, 1100, 1320], 0.07),
 
     // --- Power-ups ---
-    powerupSpawn:   () => { playTone(350, 'triangle', 0.12); setTimeout(() => playTone(500, 'triangle', 0.08), 80); },
-    powerupCollect: () => { [700, 900, 1100].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.1), i * 60)); },
-    powerupExpire:  () => { playTone(400, 'sawtooth', 0.1); setTimeout(() => playTone(300, 'sawtooth', 0.1), 80); },
-    multiBallSplit: () => { playTone(600, 'square', 0.06); setTimeout(() => playTone(800, 'square', 0.06), 50); setTimeout(() => playTone(600, 'square', 0.06), 100); },
-    shieldBlock:    () => playTone(200, 'square', 0.15),
+    powerupSpawn: () => {
+        sfxVoice({ type: 'triangle', freq: 350, decay: 0.12 });
+        sfxVoice({ type: 'triangle', freq: 500, decay: 0.08, when: 0.08 });
+    },
+    powerupCollect: () => sfxArpeggio([700, 900, 1100], 0.06, { type: 'square', decay: 0.1 }),
+    powerupExpire: () => {
+        sfxVoice({ type: 'sawtooth', freq: 400, decay: 0.1 });
+        sfxVoice({ type: 'sawtooth', freq: 300, decay: 0.1, when: 0.08 });
+    },
+    multiBallSplit: () => sfxArpeggio([600, 800, 600], 0.05, { type: 'square', decay: 0.06 }),
+    shieldBlock: () => sfxVoice({ type: 'square', freq: 200, decay: 0.15 }),
 
     // --- Progresión y Tienda ---
-    levelUp:   () => { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.25), i * 100)); },
-    shopBuy:   () => { playTone(800, 'square', 0.08); setTimeout(() => playTone(1000, 'triangle', 0.12), 60); setTimeout(() => playTone(1200, 'triangle', 0.08), 120); },
+    levelUp: () => {
+        sfxArpeggio([523, 659, 784, 1046, 1318], 0.09, { type: 'triangle', decay: 0.25 });
+        sfxNoise({ when: 0.45, dur: 0.12, bandpass: 6000, gain: 0.12 });
+    },
+    shopBuy: () => {
+        sfxVoice({ type: 'square', freq: 800, decay: 0.08 });
+        sfxVoice({ type: 'triangle', freq: 1000, decay: 0.12, when: 0.06 });
+        sfxVoice({ type: 'triangle', freq: 1200, decay: 0.08, when: 0.12 });
+    },
 
     // --- Campaña: todo sintetizado, sin archivos nuevos ---
     /** Aviso previo de un ataque de jefe (escudo de Dani, parada de tiempo). */
-    bossWarning: () => { playTone(220, 'square', 0.09); setTimeout(() => playTone(220, 'square', 0.09), 160); },
+    bossWarning: () => sfxArpeggio([220, 220], 0.16, { type: 'square', decay: 0.09 }),
     /** El escudo de Dani se materializa. */
-    bossShield:  () => { playTone(180, 'sawtooth', 0.18); setTimeout(() => playTone(260, 'square', 0.14), 90); },
+    bossShield: () => {
+        sfxVoice({ type: 'sawtooth', freq: 180, decay: 0.18 });
+        sfxVoice({ type: 'square', freq: 260, decay: 0.14, when: 0.09 });
+    },
     /** Teletransporte de Dani. */
-    bossTeleport: () => { playTone(900, 'triangle', 0.05); setTimeout(() => playTone(500, 'triangle', 0.08), 50); },
+    bossTeleport: () => {
+        sfxVoice({ type: 'triangle', freq: 900, decay: 0.05 });
+        sfxVoice({ type: 'triangle', freq: 500, decay: 0.08, when: 0.05 });
+    },
     /** Uno del dúo se retira del campo. */
-    bossRetreat: () => { [520, 420, 330].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.1), i * 70)); },
+    bossRetreat: () => sfxArpeggio([520, 420, 330], 0.07, { type: 'triangle', decay: 0.1 }),
     /** La bola desaparece (Fano): un latido grave. */
-    bossVanish:  () => { playTone(120, 'sine', 0.3); setTimeout(() => playTone(90, 'sine', 0.35), 180); },
+    bossVanish: () => {
+        sfxVoice({ type: 'sine', freq: 120, decay: 0.3 });
+        sfxVoice({ type: 'sine', freq: 90, decay: 0.35, when: 0.18 });
+    },
     /** Parada de tiempo de Yisus. */
-    timeStop:    () => { [660, 550, 440, 330].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.3), i * 60)); },
+    timeStop: () => sfxArpeggio([660, 550, 440, 330], 0.06, { type: 'sine', decay: 0.3 }),
     /** Ruido de glitch del Creador: disonancia deliberada. */
-    glitch:      () => {
+    glitch: () => {
         for (let i = 0; i < 5; i++) {
-            setTimeout(() => playTone(90 + Math.random() * 900, 'sawtooth', 0.05), i * 45);
+            setTimeout(() => sfxVoice({ type: 'sawtooth', freq: 90 + Math.random() * 900, decay: 0.05 }), i * 45);
         }
     },
     /** Pitido suave de la máquina de escribir en los diálogos. */
-    dialogueBlip: () => playTone(680, 'square', 0.02)
+    dialogueBlip: () => sfxVoice({ type: 'square', freq: 680, decay: 0.02 }),
+
+    // --- Efectos nuevos: se definen ya y se usan en fases posteriores ---
+    /** @param {HitInfo} [info] Golpe con efecto: el silbido del giro. */
+    spinHit: (info = {}) => {
+        soundEffects.paddleHit(info);
+        sfxVoice({ type: 'sine', freq: 900, freqEnd: 1400, decay: 0.09, gain: 0.15, pan: sfxPanX(info.x) });
+    },
+    /** @param {HitInfo} [info] Golpe perfecto: una campana encima del golpe. */
+    perfectHit: (info = {}) => {
+        soundEffects.paddleHit(info);
+        const pan = sfxPanX(info.x);
+        sfxVoice({ type: 'sine', freq: 1568, decay: 0.35, gain: 0.25, pan });
+        sfxVoice({ type: 'sine', freq: 2093, decay: 0.35, gain: 0.25, pan });
+    },
+    /**
+     * Carga del smash: con `true` arranca un zumbido que sube; con `false`
+     * lo apaga con un fundido de 40 ms.
+     * @param {boolean} on
+     */
+    smashCharge: (on) => {
+        if (on) {
+            if (smashChargeVoice || !sfxActive()) return;
+            const ctx = getAudioContext();
+            const t0 = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(110, t0);
+            osc.frequency.exponentialRampToValueAtTime(330, t0 + 0.7);
+            const env = ctx.createGain();
+            env.gain.setValueAtTime(0.0001, t0);
+            env.gain.exponentialRampToValueAtTime(0.3, t0 + 0.05);
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, t0);
+            filter.frequency.exponentialRampToValueAtTime(2400, t0 + 0.7);
+            osc.connect(env);
+            env.connect(filter);
+            sfxOut(ctx, filter, 0, t0);
+            osc.start(t0);
+            smashChargeVoice = { osc, env };
+        } else if (smashChargeVoice) {
+            const ctx = getAudioContext();
+            const t = ctx.currentTime;
+            const { osc, env } = smashChargeVoice;
+            smashChargeVoice = null;
+            env.gain.cancelScheduledValues(t);
+            env.gain.setValueAtTime(Math.max(0.0001, env.gain.value), t);
+            env.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+            osc.stop(t + 0.05);
+        }
+    },
+    /** @param {HitInfo} [info] Se suelta el smash. */
+    smashRelease: (info = {}) => {
+        const pan = sfxPanX(info.x);
+        sfxNoise({ dur: 0.06, bandpass: 1200, gain: 0.5, pan });
+        sfxVoice({ type: 'square', freq: 220, freqEnd: 110, decay: 0.16, pan });
+    },
+    /** La energía del súper golpe está llena. */
+    superReady: () => sfxArpeggio([784, 988, 1175], 0.06, { type: 'triangle' }),
+    /** @param {HitInfo} [info] Súper golpe: el smash con un golpe grave debajo. */
+    superHit: (info = {}) => {
+        soundEffects.smashRelease(info);
+        sfxVoice({ type: 'sawtooth', freq: 110, freqEnd: 55, decay: 0.4, lowpass: 900, pan: sfxPanX(info.x) });
+    },
+    /** Empieza la fiebre del rally. */
+    feverStart: () => {
+        sfxNoise({ dur: 0.5, bandpass: 400, bandpassEnd: 4000, gain: 0.3 });
+        sfxVoice({ type: 'square', freq: 523, decay: 0.2 });
+        sfxVoice({ type: 'square', freq: 784, decay: 0.2 });
+    },
+    /** Se gasta un bloqueo del escudo. */
+    shieldCrack: () => {
+        sfxNoise({ dur: 0.04, bandpass: 3500 });
+        sfxVoice({ type: 'triangle', freq: 1200, freqEnd: 600, decay: 0.08 });
+    },
+    /** Power-up Congelar. */
+    freeze: () => {
+        sfxVoice({ type: 'sine', freq: 2400, freqEnd: 1200, decay: 0.25 });
+        sfxNoise({ dur: 0.15, bandpass: 7000, gain: 0.15 });
+    },
+    /** La bola atraviesa un portal. */
+    portalWarp: () => {
+        sfxVoice({ type: 'sine', freq: 300, freqEnd: 1200, decay: 0.18 });
+        sfxVoice({ type: 'sine', freq: 1200, freqEnd: 300, decay: 0.18, when: 0.18 });
+    },
+    /** La bola choca con el Muro. */
+    wallBlock: () => {
+        sfxVoice({ type: 'square', freq: 180, decay: 0.08 });
+        sfxNoise({ dur: 0.03 });
+    },
+    /** Misión completada. */
+    missionComplete: () => sfxSparkleArpeggio([659, 784, 1046], 0.07),
+    /** Recompensa recogida: como la compra, una quinta más arriba. */
+    rewardClaim: () => {
+        sfxVoice({ type: 'square', freq: 1200, decay: 0.08 });
+        sfxVoice({ type: 'triangle', freq: 1500, decay: 0.12, when: 0.06 });
+        sfxVoice({ type: 'triangle', freq: 1800, decay: 0.08, when: 0.12 });
+    }
 };
 
 /**

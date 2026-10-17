@@ -77,19 +77,19 @@ function crtTurnOn() {
     el.classList.remove('dot', 'shutdown');
     void el.offsetWidth;
     el.classList.add('turn-on');
-    playTone(90, 'square', 0.05);
-    setTimeout(() => playTone(1400, 'square', 0.03), 60);
+    sfxVoice({ type: 'square', freq: 90, decay: 0.05 });
+    sfxVoice({ type: 'square', freq: 1400, decay: 0.03, when: 0.06 });
     setTimeout(() => { el.className = 'hidden'; }, 900);
 }
 
-/** Zumbido descendente de un tubo apagándose. */
+/** Zumbido descendente de un tubo apagándose: 450 → 100 Hz y un golpe grave. */
 function playCrtShutdownSound() {
-    let f = 520;
-    const paso = setInterval(() => {
-        f -= 70;
-        if (f <= 60) { clearInterval(paso); playTone(45, 'sine', 0.5); return; }
-        playTone(f, 'sine', 0.09);
-    }, 55);
+    const PASO = 0.055;
+    let i = 1;
+    for (let f = 450; f > 60; f -= 70, i++) {
+        sfxVoice({ type: 'sine', freq: f, decay: 0.09, when: i * PASO });
+    }
+    sfxVoice({ type: 'sine', freq: 45, decay: 0.5, when: i * PASO });
 }
 
 /**
@@ -232,8 +232,7 @@ function resetMusicRate() {
 
 /** Fanfarria de victoria sintetizada: no hace falta un MP3 nuevo. */
 function playVictoryJingle() {
-    const notes = [523, 659, 784, 1046];
-    notes.forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.22), i * 160));
+    sfxArpeggio([523, 659, 784, 1046], 0.16, { type: 'triangle', decay: 0.22 });
 }
 
 /** Final verdadero, tras vencer al Creador. */

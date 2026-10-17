@@ -112,7 +112,7 @@ function updatePowerups(dt) {
                 }
 
                 // Efecto de sonido si existe
-                soundEffects.paddleHit();
+                soundEffects.paddleHit({ x: b.x });
             }
         }
     }

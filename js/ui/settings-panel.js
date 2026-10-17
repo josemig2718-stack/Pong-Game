@@ -33,7 +33,7 @@ function updateVolume(val) {
     setMasterVolume(parseInt(val, 10));
     document.getElementById('vol-display').textContent = `${val}%`;
     getAudioContext();
-    if (Number(val) > 0) playTone(400, 'square', 0.05);
+    if (Number(val) > 0) sfxVoice({ type: 'square', freq: 400, decay: 0.05 });
 }
 
 /**
@@ -91,7 +91,7 @@ function updateBallSpeed(val) {
 function toggleSfx(enabled) {
     setSfxEnabled(enabled);
     syncAudioToggles();
-    if (enabled) playTone(500, 'triangle', 0.05);
+    if (enabled) sfxVoice({ type: 'triangle', freq: 500, decay: 0.05 });
 }
 
 /**

@@ -205,7 +205,7 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
         if (b.x - b.radius < 0 || b.x + b.radius > GAME_WIDTH) {
             b.dx = -b.dx;
             b.x = Math.max(b.radius, Math.min(GAME_WIDTH - b.radius, b.x));
-            soundEffects.wallHit();
+            soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
         }
         // Impacto contra el Creador (franja superior): le quita vida.
@@ -218,7 +218,7 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
             // apuntar al hueco en vez de repetir siempre el mismo golpe.
             const blindado = bossSegmentArmored(b.x);
             if (blindado) {
-                soundEffects.wallHit();
+                soundEffects.wallHit({ x: b.x });
                 triggerShake(4, 120);
                 spawnParticles(b.x, b.y, '#9ca3af', 12);
             } else {
@@ -234,7 +234,7 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
         if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
             b.dy = -b.dy;
             b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
-            soundEffects.wallHit();
+            soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
         }
     }
@@ -286,7 +286,7 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
         b.x = direction === 1 ? targetPaddle.x + targetPaddle.width + b.radius : targetPaddle.x - b.radius;
     }
 
-    soundEffects.paddleHit();
+    soundEffects.paddleHit({ x: b.x, speedRatio: Math.min(1, b.speed / maxBallSpeed) });
     spawnParticles(b.x, b.y, '#ffffff', 16);
     triggerShake(4, 100);
 

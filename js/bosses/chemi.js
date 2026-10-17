@@ -91,7 +91,7 @@ const bossChemi = {
             b.dx = (b.dx / vel) * b.speed;
             b.dy = (b.dy / vel) * b.speed;
 
-            soundEffects.wallHit();
+            soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, '#a8a29e', 10);
             return true;
         }

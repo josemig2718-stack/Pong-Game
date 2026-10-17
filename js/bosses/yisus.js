@@ -38,7 +38,7 @@ const bossYisus = {
                 bossState.telekinesis = 600;
                 const dir = Math.random() > 0.5 ? 1 : -1;
                 b.dy = dir * b.speed * 0.65;
-                soundEffects.wallHit();
+                soundEffects.wallHit({ x: b.x });
                 triggerShake(4, 100);
             }
         }
