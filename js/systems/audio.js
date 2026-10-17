@@ -10,28 +10,55 @@
 'use strict';
 
 let audioCtx = null;
-let masterVolume = settings.volume / 100;
+/** @type {DynamicsCompressorNode|null} Compresor final: evita que se sature con varias cosas a la vez. */
+let masterComp = null;
+/** @type {GainNode|null} Bus de los efectos: su ganancia es el volumen de efectos. */
+let sfxBus = null;
+/** @type {GainNode|null} Bus de la música Web Audio: su ganancia es el volumen de música. */
+let musicBus = null;
 
 /**
  * Crea el AudioContext la primera vez y lo reanuda si el navegador lo suspendió.
+ * Con él se monta la cadena de mezcla:
+ *
+ *   voces de efectos → sfxBus  ─┐
+ *                               ├→ masterComp → destination
+ *   música Web Audio → musicBus ─┘
  * @returns {AudioContext}
  */
 function getAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
+
+        masterComp = audioCtx.createDynamicsCompressor();
+        masterComp.threshold.value = -14;
+        masterComp.knee.value = 12;
+        masterComp.ratio.value = 3;
+        masterComp.attack.value = 0.003;
+        masterComp.release.value = 0.25;
+        masterComp.connect(audioCtx.destination);
+
+        sfxBus = audioCtx.createGain();
+        sfxBus.gain.value = settings.volume / 100;
+        sfxBus.connect(masterComp);
+
+        musicBus = audioCtx.createGain();
+        musicBus.gain.value = settings.musicVolume / 100;
+        musicBus.connect(masterComp);
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
     return audioCtx;
 }
 
 /**
- * Toca un tono sintetizado con el volumen de efectos actual.
+ * Toca un tono sintetizado hacia el bus de efectos. Con los efectos
+ * desactivados (o a volumen 0) no crea ninguna voz.
  * @param {number} freq hercios
  * @param {OscillatorType} [type]
  * @param {number} [duration] segundos
  */
 function playTone(freq, type = 'square', duration = 0.1) {
-    if (!settings.sfxEnabled || masterVolume === 0) return;
+    if (!settings.sfxEnabled || settings.volume === 0) return;
     const ctx = getAudioContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
@@ -39,11 +66,11 @@ function playTone(freq, type = 'square', duration = 0.1) {
     oscillator.type = type;
     oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
 
-    gainNode.gain.setValueAtTime(masterVolume, ctx.currentTime);
+    gainNode.gain.setValueAtTime(1, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
 
     oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    gainNode.connect(sfxBus);
 
     oscillator.start();
     oscillator.stop(ctx.currentTime + duration);
@@ -108,8 +135,8 @@ const soundEffects = {
  * @param {number} val
  */
 function setMasterVolume(val) {
-    masterVolume = val / 100;
     settings.volume = val;
+    if (sfxBus) sfxBus.gain.value = val / 100;
     saveSettings();
 }
 
@@ -218,6 +245,7 @@ function pauseAllMusic() {
  */
 function setMusicVolume(val) {
     settings.musicVolume = val;
+    if (musicBus) musicBus.gain.value = val / 100;
     menuMusic.volume     = val / 100;
     gameplayMusic.volume = val / 100;
     hachepeMusic.volume  = val / 100;
