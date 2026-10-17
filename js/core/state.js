@@ -85,6 +85,8 @@
  * @property {number} shakeIntensity
  * @property {number} shakeTimeMs
  * @property {number} hitStopMs  congelación breve tras un golpe fuerte (ms reales); update() no avanza mientras dure
+ * @property {boolean} fever  fiebre del rally: desde MECH.feverRally golpes seguidos hasta el siguiente gol
+ * @property {number} feverHeat  intensidad visual de la fiebre, de 0 a 1 (sube y baja en MECH.feverFadeMs)
  * @property {Ball[]} balls
  * @property {Particle[]} particles
  */
@@ -107,6 +109,9 @@ const state = {
     shakeTimeMs: 0,
     /** Hit-stop: tras un golpe fuerte la partida se congela unos fotogramas (ms). */
     hitStopMs: 0,
+    /** Fiebre del rally y su intensidad visual (0–1). */
+    fever: false,
+    feverHeat: 0,
     /**
      * Bolas en juego (el power-up multi-bola añade hasta dos más).
      * resetBall() sustituye el array entero: no guardes una referencia a

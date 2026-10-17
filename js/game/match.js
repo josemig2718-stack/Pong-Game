@@ -114,6 +114,7 @@ function startGame(mode) {
     state.shakeTimeMs = 0;
     state.shakeIntensity = 0;
     state.hitStopMs = 0;
+    resetFever();
 
     // Restaurar geometría original de las paletas. Hay que reponer también
     // width y x: la arena rotada del Creador convierte a p1 en una paleta
@@ -197,6 +198,7 @@ function quitGame() {
     state.shakeTimeMs = 0;
     state.shakeIntensity = 0;
     state.hitStopMs = 0;
+    resetFever();
 
     // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;

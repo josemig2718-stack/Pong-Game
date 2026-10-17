@@ -2,7 +2,7 @@
  * game/render.js
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
- * fondo → red (o los corazones de la arena rotada) → jefe → estelas, aura
+ * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → estelas, aura
  * de la bola gigante, líneas de velocidad, aura del súper, bolas y su
  * efecto (MECH_FX.spin) → paletas y su carga de smash (MECH_FX.charge) →
  * power-ups y sus estallidos → partículas → anillos, textos y estallidos
@@ -237,6 +237,9 @@ function render() {
     gradient.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // Fiebre del rally: los bordes arden (solo visual)
+    MECH_FX.fever(ctx, themeColor, state.feverHeat);
 
     const rotatedArena = bossIsRotatedArena();
 

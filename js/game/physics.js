@@ -45,7 +45,8 @@ function update(dt) {
     slowmo = Math.min(slowmo, getGoalSlowmo());
     dt *= slowmo;
 
-    const maxBallSpeed = currentSpeedPreset().max;
+    // La fiebre del rally sube el tope de velocidad
+    const maxBallSpeed = currentSpeedPreset().max * (state.fever ? MECH.feverMaxSpeedK : 1);
 
     // Mecánicas del jefe de campaña
     bossUpdate(dt);
@@ -72,6 +73,7 @@ function update(dt) {
         tickServeCountdown(dt);
         // Los fondos animados, las partículas y la vibración siguen; la
         // bola y los power-ups esperan al saque.
+        tickFeverHeat(dt);
         updateVFX(dt);
         updateParticles(dt);
         updateShake(dt);
@@ -86,6 +88,7 @@ function update(dt) {
     if (updateBalls(dt, bcfg, rotatedArena, maxBallSpeed)) return;
 
     updatePowerups(dt);
+    tickFeverHeat(dt);
     updateVFX(dt);
     updateParticles(dt);
     updateShake(dt);
@@ -300,6 +303,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         if (b.y - b.radius > GAME_HEIGHT) {
             // El jugador falla: cuenta como fallo, no como punto del rival
             state.p2Score++;
+            endFever();
             soundEffects.score();
             triggerShake(10, 260);
             triggerGoalVFX(b.x, GAME_HEIGHT);
@@ -314,6 +318,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         if (b.power === 'super') SUPER_FX[superStyleId()].burst(0, b.y, sideColor('p2'));
         state.p2Score++;
         statsOnScore(false, b);
+        endFever();
         bossOnGoal(false);
         checkMidDialogue();
         soundEffects.score();
@@ -327,6 +332,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         if (b.power === 'super') SUPER_FX[superStyleId()].burst(GAME_WIDTH, b.y, sideColor('p1'));
         state.p1Score++;
         statsOnScore(true, b);
+        endFever();
         bossOnGoal(true);
         soundEffects.score();
         triggerShake(10, 260);

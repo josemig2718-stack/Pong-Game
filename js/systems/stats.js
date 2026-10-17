@@ -41,6 +41,13 @@ const DEFAULT_STATS = {
     // Power-ups
     totalPowerupsCollected: 0,
 
+    // Mecánicas de golpe (jugador 1)
+    totalPerfectHits: 0,
+    totalSpinHits:    0,
+    totalSmashGoals:  0,
+    totalSuperGoals:  0,
+    totalFevers:      0,
+
     // Temas usados (para logro "Explorador")
     themesUsed: [],
 
@@ -85,6 +92,13 @@ let gameStartTimeMs = -1;
 let matchElapsedMs  = 0;   // tiempo jugado en la partida (sin pausas, diálogos ni saques)
 let matchBestRally  = 0;   // rally más largo de la partida
 let matchReachedMaxSpeed = false;   // una bola llegó al máximo del preset en esta partida ("Demonio Veloz")
+// Mecánicas de golpe en la partida (del jugador 1; la fiebre, de los dos)
+let matchPerfect     = 0;   // golpes perfectos
+let matchSpin        = 0;   // golpes con efecto
+let matchSmashGoals  = 0;   // goles con la bola en smash
+let matchSuperGoals  = 0;   // goles con la bola en súper
+let matchFeverCount  = 0;   // fiebres del rally
+let matchFeverPoints = 0;   // puntos del jugador 1 durante la fiebre (XP doble, fase 4)
 
 /** Llamar al iniciar una nueva partida */
 function statsOnGameStart() {
@@ -94,6 +108,12 @@ function statsOnGameStart() {
     matchElapsedMs  = 0;
     matchBestRally  = 0;
     matchReachedMaxSpeed = false;
+    matchPerfect     = 0;
+    matchSpin        = 0;
+    matchSmashGoals  = 0;
+    matchSuperGoals  = 0;
+    matchFeverCount  = 0;
+    matchFeverPoints = 0;
 }
 
 /** Una bola acaba de alcanzar la velocidad máxima del preset (desde hitPaddles). */
@@ -126,6 +146,25 @@ function statsOnPaddleHit() {
 }
 
 /**
+ * Tipo de golpe (desde resolveHit): cuenta los perfectos y los golpes con
+ * efecto del jugador 1. Se guardan con el siguiente gol o al terminar.
+ * @param {'p1'|'p2'} side
+ * @param {HitType} type
+ * @param {number} spin
+ */
+function statsOnHitType(side, type, spin) {
+    if (side !== 'p1') return;
+    if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits++; }
+    if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits++; }
+}
+
+/** Empieza una fiebre del rally. */
+function statsOnFeverStart() {
+    matchFeverCount++;
+    gameStats.totalFevers++;
+}
+
+/**
  * Llamar cuando se anota un punto (antes de resetBall).
  * @param {boolean} scorerIsP1
  * @param {Ball} ball la bola que salió del campo (con multibola puede no ser la primera)
@@ -150,6 +189,13 @@ function statsOnScore(scorerIsP1, ball) {
 
     // Rastrear velocidad máxima de la bola que marcó
     statsRecordBallSpeed(ball.speed);
+
+    // Goles del jugador 1 con smash o súper, y puntos durante la fiebre
+    if (scorerIsP1 && ball.owner === 'p1') {
+        if (ball.power === 'smash') { matchSmashGoals++; gameStats.totalSmashGoals++; }
+        if (ball.power === 'super') { matchSuperGoals++; gameStats.totalSuperGoals++; }
+    }
+    if (scorerIsP1 && state.fever) matchFeverPoints++;
 
     saveStats();
 }

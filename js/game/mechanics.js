@@ -8,6 +8,8 @@
  *               (dedo, ratón y CPU)
  *   smash       updateSmash: carga mientras se mantiene, ventana corta
  *               al soltar
+ *   fiebre      startFever / endFever / tickFeverHeat: a los 25 golpes de
+ *               rally, bola más rápida, energía doble y su música
  *   golpe       resolveHit: tipo de golpe (súper, smash, perfecto,
  *               esquina, bloqueo, normal), rebote, efecto, energía y
  *               sensación (hit-stop, vibración del móvil, aplastamiento);
@@ -176,6 +178,51 @@ function resetSmashOnServe() {
         p.charge = 0;
         p.releaseMs = Infinity;
     }
+}
+
+// ------------------------------------------------------------------
+//  Fiebre del rally
+// ------------------------------------------------------------------
+
+/** Pista que sonaba al empezar la fiebre, para retomarla al terminar. */
+let feverPrevTrack = null;
+
+/** La fiebre cambia la música solo en VS CPU y local (en Hachepe y campaña, no). */
+function feverChangesMusic() {
+    return state.mode === 'cpu' || state.mode === 'local';
+}
+
+/** Empieza la fiebre del rally (al llegar a MECH.feverRally golpes). */
+function startFever() {
+    if (state.fever) return;
+    state.fever = true;
+    soundEffects.feverStart();
+    statsOnFeverStart();
+    if (feverChangesMusic()) {
+        feverPrevTrack = musicCurrent();
+        musicPlay('fiebre_rally', { fade: 0.5 });
+    }
+}
+
+/** Termina la fiebre (al marcar cualquiera): la pista anterior sigue donde iba. */
+function endFever() {
+    if (!state.fever) return;
+    state.fever = false;
+    if (feverPrevTrack) musicPlay(feverPrevTrack);
+    feverPrevTrack = null;
+}
+
+/** Sin fiebre ni su calor, sin tocar la música (al empezar o abandonar una partida). */
+function resetFever() {
+    state.fever = false;
+    state.feverHeat = 0;
+    feverPrevTrack = null;
+}
+
+/** El calor de la fiebre sube o baja en MECH.feverFadeMs. Es solo visual. */
+function tickFeverHeat(dt) {
+    const step = dt * MS_PER_FRAME / MECH.feverFadeMs;
+    state.feverHeat = state.fever ? Math.min(1, state.feverHeat + step) : Math.max(0, state.feverHeat - step);
 }
 
 // ------------------------------------------------------------------
@@ -357,7 +404,7 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
         if (holder.superArmed) holder.superArmed = false;
         else holder.energy = 0;
     }
-    addEnergy(holder, HIT_ENERGY[type]);
+    addEnergy(holder, HIT_ENERGY[type] * (state.fever ? MECH.energy.feverK : 1));
 
     // 8. Cualquier golpe cierra la carga del smash, se usara o no
     paddle.charge = 0;
@@ -391,10 +438,12 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     bossRefreshAim();
     setLastHitter(side);
     statsOnPaddleHit();
+    statsOnHitType(side, type, b.spin);
     if (currentRally % 10 === 0) {
         addEnergy(p1, MECH.energy.rally10);
         addEnergy(p2, MECH.energy.rally10);
     }
+    if (currentRally === MECH.feverRally) startFever();
     return type;
 }
 
