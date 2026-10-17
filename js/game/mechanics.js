@@ -378,6 +378,13 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     if (MECH.vibrate[type]) mechVibrate(side, MECH.vibrate[type]);
     b.squash = 1;
 
+    // 10. Efectos visuales (vfx/mechanics.js y vfx/super.js)
+    const fxColor = sideColor(side);
+    if (type === 'perfect') MECH_FX.perfect(b.x, b.y, fxColor);
+    else if (type === 'smash') MECH_FX.smash(b.x, b.y, fxColor);
+    else if (type === 'super') SUPER_FX[superStyleId()].burst(b.x, b.y, fxColor);
+    mechFlashPaddle(side);
+
     // 11. Nuevo intercambio: el jefe recalcula su puntería, el último en
     // golpear se queda los power-ups y el rally suma. Cada 10 golpes de
     // rally, los dos ganan energía.

@@ -3,11 +3,13 @@
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
  * fondo → red (o los corazones de la arena rotada) → jefe → estelas, aura
- * de la bola gigante, líneas de velocidad y bolas → paletas → power-ups y
- * sus estallidos → partículas → viñeta de cámara lenta → capa superior del
- * jefe → efecto de gol → cuenta atrás o "¡YA!" → scanlines. El marcador, el tiempo,
- * el rally y el efecto activo no se dibujan aquí: son el HUD del DOM
- * (updateHud y updatePowerupPill).
+ * de la bola gigante, líneas de velocidad, aura del súper, bolas y su
+ * efecto (MECH_FX.spin) → paletas y su carga de smash (MECH_FX.charge) →
+ * power-ups y sus estallidos → partículas → anillos, textos y estallidos
+ * de las mecánicas (MECH_FX.render) → viñeta de cámara lenta → capa
+ * superior del jefe → efecto de gol → cuenta atrás o "¡YA!" → scanlines.
+ * El marcador, el tiempo, el rally y el efecto activo no se dibujan aquí:
+ * son el HUD del DOM (updateHud y updatePowerupPill).
  *
  * La vibración y el glitch del Creador consumen Math.random, que comparte
  * generador con la física: no cambies el orden de las capas. Los
@@ -130,7 +132,17 @@ function drawGoText(msLeft, color) {
 }
 
 function drawBallTrail() {
-    for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius);
+    for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius, { spin: b.spin, power: b.power ? 1 : 0 });
+}
+
+/**
+ * Color de la paleta de cada lado: el jugador, el del tema; el rival, gris
+ * (CPU, Hachepe o jefe) o azul (jugador 2 en local).
+ * @param {'p1'|'p2'} side
+ */
+function sideColor(side) {
+    if (side === 'p1') return currentThemeHex();
+    return state.mode === 'local' ? '#38BDF8' : '#CBD5E1';
 }
 
 /** Partículas de impacto; con "menos movimiento", solo una de cada dos. */
@@ -250,14 +262,17 @@ function render() {
 
         if (bigBall) drawBigBallAura(ctx, b);
         drawSpeedLines(ctx, b, Math.hypot(b.dx, b.dy) / speedMax);
+        if (b.power === 'super') SUPER_FX[superStyleId()].aura(ctx, b, themeColor);
         drawBall(b, themeColor);
+        MECH_FX.spin(ctx, b, themeColor);
     }
 
-    // Paletas: el jugador en el color del tema; el rival gris (CPU, Hachepe
-    // o jefe) o azul (jugador 2 en local); el gemelo, rojo
-    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor);
-    if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, state.mode === 'local' ? '#38BDF8' : '#CBD5E1');
+    // Paletas (sideColor) y su carga de smash; el gemelo, rojo
+    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor, { charge: p1.charge, hit: mechPaddleHit.p1 });
+    if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
+    MECH_FX.charge(ctx, p1, themeColor, p1.charge);
+    if (!rotatedArena) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);
 
     // Power-ups
     renderPowerup(ctx);
@@ -267,6 +282,7 @@ function render() {
     updateHud();           // marcador, tiempo y rally del HUD (DOM)
 
     drawParticles();
+    MECH_FX.render(ctx);   // anillos, ¡PERFECTO!/¡SMASH! y estallidos del súper
     if (slowmoActive) drawSlowmoOverlay(ctx);
 
     // Capa superior del jefe: viñetas, tintes, avisos y glitch

@@ -24,6 +24,23 @@ function vfxRandom() {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
+/**
+ * Pseudoaleatorio ESTABLE en [0, 1) a partir de un número: el mismo n da
+ * siempre el mismo valor. Sirve para decorar sin que parpadee (las
+ * grietas del escudo, por ejemplo) y no consume vfxRandom.
+ * @param {number} n
+ */
+function vfxHash(n) {
+    let t = (Math.imul((n | 0) ^ 0x9E3779B9, 0x85EBCA6B)) >>> 0;
+    t = Math.imul(t ^ (t >>> 13), 0xC2B2AE35) >>> 0;
+    return ((t ^ (t >>> 16)) >>> 0) / 4294967296;
+}
+
+/** Segundos del reloj de los efectos (performance.now(), que los tests controlan). */
+function vfxT() {
+    return performance.now() / 1000;
+}
+
 // El audio tiene su propio generador, con el mismo algoritmo. Si usara
 // vfxRandom, cada golpe (y el buffer de ruido, que pide 44.100 números de
 // una vez) cambiaría lo que dibujan los cosméticos, y activar o desactivar

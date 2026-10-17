@@ -171,18 +171,23 @@ const PADDLE_RENDERERS = {
  * no existe). Los estilos están pensados en vertical: una paleta horizontal
  * (la del jugador en la arena rotada del Creador) se dibuja girada 90° sobre
  * su centro, con la misma caja.
+ *
+ * `fx` lleva el estado de las mecánicas para los estilos que reaccionan
+ * (fase 5): `charge` (smash cargando, 0–1) y `hit` (destello al golpear,
+ * 1 → 0). Los estilos actuales lo ignoran.
+ * @param {{charge: number, hit: number}} [fx]
  */
-function renderPaddleVFX(ctx, x, y, w, h, color) {
+function renderPaddleVFX(ctx, x, y, w, h, color, fx) {
     const paddleId = playerProgression.selectedPaddle || 'classic';
     const draw = PADDLE_RENDERERS[paddleId] || PADDLE_RENDERERS['classic'];
 
     if (w <= h) {
-        draw(ctx, x, y, w, h, color);
+        draw(ctx, x, y, w, h, color, fx);
         return;
     }
     ctx.save();
     ctx.translate(x + w / 2, y + h / 2);
     ctx.rotate(Math.PI / 2);
-    draw(ctx, -h / 2, -w / 2, h, w, color);
+    draw(ctx, -h / 2, -w / 2, h, w, color, fx);
     ctx.restore();
 }

@@ -141,7 +141,10 @@ function drawTrailRainbow(ctx, trail, radius, color) {
     ctx.restore();
 }
 
-/** Renderizador de cada estela, por `id` del catálogo de la tienda. */
+/**
+ * Renderizador de cada estela, por `id` del catálogo de la tienda.
+ * @type {Record<string, (ctx: CanvasRenderingContext2D, trail: Array<{x: number, y: number}>, radius: number, color: string, fx?: {spin: number, power: number}) => void>}
+ */
 const TRAIL_RENDERERS = {
     default: drawTrailDefault,
     neon:    drawTrailNeon,
@@ -153,14 +156,19 @@ const TRAIL_RENDERERS = {
 /**
  * Dibuja la estela de una bola con la estela equipada (o la clásica si el
  * id guardado no existe).
+ *
+ * `fx` lleva el estado de la bola para las estelas que reaccionan (fase
+ * 5): `spin` (efecto, -1–1) y `power` (1 en smash o súper). Las actuales
+ * lo ignoran.
+ * @param {{spin: number, power: number}} [fx]
  */
-function renderBallTrail(ctx, trail, radius) {
+function renderBallTrail(ctx, trail, radius, fx) {
     const color = currentThemeHex();
     const trailId = playerProgression.selectedTrail || 'default';
 
     if (TRAIL_RENDERERS[trailId]) {
-        TRAIL_RENDERERS[trailId](ctx, trail, radius, color);
+        TRAIL_RENDERERS[trailId](ctx, trail, radius, color, fx);
     } else {
-        TRAIL_RENDERERS['default'](ctx, trail, radius, color);
+        TRAIL_RENDERERS['default'](ctx, trail, radius, color, fx);
     }
 }
