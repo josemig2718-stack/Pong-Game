@@ -1957,6 +1957,9 @@ label.set-item__head { cursor: pointer; }
 .set-item__head .ico { color: var(--muted); }
 .set-item__head small { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--primary); }
 .set-range { display: flex; align-items: center; gap: 12px; }
+.set-help { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+/* Opciones con nombre largo (control del smash): el texto puede partirse */
+.option-pill-group--text .option-pill { height: auto; min-height: 40px; padding: 6px 6px; line-height: 1.6; }
 .set-range .px { flex: none; width: 40px; text-align: right; font-size: 9px; color: var(--muted); }
 
 /* Interruptor: el propio checkbox, sin envoltorio */

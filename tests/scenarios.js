@@ -457,7 +457,8 @@ const RAW_SCENARIOS = [
     {
         // Primera carga de la versión: las Novedades se abren solas encima
         // del menú; CÓMO JUGAR y VOLVER regresan a ellas, ¡A JUGAR! las
-        // cierra y el botón del documento las reabre (sin el punto)
+        // cierra y el botón del documento las reabre (sin el punto).
+        // Después, los ajustes de la sección Partida de la fase 3
         name: 'novedades',
         seed: 404,
         news: true,
@@ -471,7 +472,16 @@ const RAW_SCENARIOS = [
             { type: 'click', text: 'Cerrar' },
             { type: 'clickSel', sel: '#news-btn' },
             { type: 'key', code: 'Escape' },
-            { type: 'steps', n: 30 }
+            { type: 'steps', n: 30 },
+            { type: 'click', text: 'CONFIGURACIÓN' },
+            { type: 'click', text: 'Segundo dedo' },
+            { type: 'click', text: 'Automático (solo súper)' },
+            { type: 'click', text: 'Botón' },
+            { type: 'change', id: 'haptics-toggle', checked: false },
+            { type: 'change', id: 'haptics-toggle', checked: true },
+            { type: 'change', id: 'hints-toggle', checked: false },
+            { type: 'click', text: 'VOLVER' },
+            { type: 'steps', n: 10 }
         ],
         expect: ['screen:news-screen', 'screen:howto-menu']
     }

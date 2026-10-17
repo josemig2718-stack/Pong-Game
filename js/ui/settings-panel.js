@@ -142,6 +142,37 @@ function togglePowerups(enabled) {
     saveSettings();
 }
 
+/** Ayuda bajo el selector del smash táctil, según la opción elegida. */
+const SMASH_TOUCH_HELP = {
+    button: 'Mantén SMASH y suelta justo antes del golpe.',
+    finger: 'Apoya un segundo dedo en tu mitad para cargar y levántalo al golpear.',
+    auto:   'Sin smash: con la energía llena, tu siguiente golpe es súper.'
+};
+
+/**
+ * Cómo se hace el smash con pantalla táctil: botón, segundo dedo o súper
+ * automático. Resalta la opción y cambia la ayuda.
+ * @param {string} val 'button', 'finger' o 'auto'
+ */
+function updateSmashTouch(val) {
+    if (!(val in SMASH_TOUCH_HELP)) return;
+    settings.smashTouch = val;
+    saveSettings();
+    /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('[data-smash-touch]')).forEach(btn => {
+        btn.classList.toggle('option-pill--active', btn.dataset.smashTouch === settings.smashTouch);
+    });
+    document.getElementById('smash-touch-help').textContent = SMASH_TOUCH_HELP[settings.smashTouch];
+}
+
+/**
+ * Vibración del móvil en los golpes fuertes.
+ * @param {boolean} enabled
+ */
+function toggleHaptics(enabled) {
+    settings.haptics = enabled;
+    saveSettings();
+}
+
 /**
  * Avisos de primera vez en partida.
  * @param {boolean} enabled
@@ -184,9 +215,13 @@ function populateSettingsUI() {
         input('powerups-toggle').checked = settings.powerupsEnabled;
     }
     input('hints-toggle').checked         = settings.showHints;
+    input('haptics-toggle').checked       = settings.haptics;
+    // La vibración solo se ofrece donde existe
+    document.getElementById('haptics-row').classList.toggle('hidden', typeof navigator.vibrate !== 'function');
     document.body.classList.toggle('crt-effect', settings.crtEffect);
 
     updateWinningScore(settings.winningScore);
     updateBallSpeed(settings.ballSpeed);
+    updateSmashTouch(settings.smashTouch);
     refreshBindingButtons();
 }

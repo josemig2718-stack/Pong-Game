@@ -48,6 +48,7 @@ const CLICK_ACTIONS = {
     // Configuración, controles y estadísticas
     updateWinningScore:     (el) => updateWinningScore(Number(el.dataset.winningScore)),
     updateBallSpeed:        (el) => updateBallSpeed(Number(el.dataset.ballSpeed)),
+    updateSmashTouch:       (el) => updateSmashTouch(el.dataset.smashTouch),
     resetAllSettings:       () => resetAllSettings(),
     resetBindings:          () => resetBindings(),
     confirmResetStats:      () => confirmResetStats(),
@@ -72,7 +73,8 @@ const CHANGE_ACTIONS = {
     toggleScreenShake:  (el) => toggleScreenShake(el.checked),
     toggleMouseControl: (el) => toggleMouseControl(el.checked),
     togglePowerups:     (el) => togglePowerups(el.checked),
-    toggleHints:        (el) => toggleHints(el.checked)
+    toggleHints:        (el) => toggleHints(el.checked),
+    toggleHaptics:      (el) => toggleHaptics(el.checked)
 };
 
 /**

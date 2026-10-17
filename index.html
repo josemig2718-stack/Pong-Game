@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=68">
+    <link rel="stylesheet" href="css/style.css?v=69">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -697,6 +697,20 @@
                             Power-ups en partida
                             <input type="checkbox" class="tgl" id="powerups-toggle" aria-label="Power-ups en partida" checked data-change="togglePowerups">
                         </label>
+                        <div class="set-item">
+                            <div class="set-item__head">Control del smash (táctil)</div>
+                            <div class="option-pill-group option-pill-group--text">
+                                <button class="option-pill" data-smash-touch="button" data-action="updateSmashTouch">Botón</button>
+                                <button class="option-pill" data-smash-touch="finger" data-action="updateSmashTouch">Segundo dedo</button>
+                                <button class="option-pill" data-smash-touch="auto" data-action="updateSmashTouch">Automático (solo súper)</button>
+                            </div>
+                            <p id="smash-touch-help" class="set-help">Mantén SMASH y suelta justo antes del golpe.</p>
+                        </div>
+                        <label id="haptics-row" class="set-item set-item__head">
+                            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 9v6M21 9v6M11 18h2"/></svg>
+                            Vibración del móvil
+                            <input type="checkbox" class="tgl" id="haptics-toggle" aria-label="Vibración del móvil" checked data-change="toggleHaptics">
+                        </label>
                         <label class="set-item set-item__head">
                             <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>
                             Consejos en partida
@@ -1061,70 +1075,70 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=68"></script>
-    <script src="js/core/storage.js?v=68"></script>
-    <script src="js/core/settings.js?v=68"></script>
-    <script src="js/core/state.js?v=68"></script>
-    <script src="js/data/themes.js?v=68"></script>
-    <script src="js/data/lore.js?v=68"></script>
-    <script src="js/data/achievements.js?v=68"></script>
-    <script src="js/data/shop.js?v=68"></script>
-    <script src="js/data/levels.js?v=68"></script>
-    <script src="js/data/powerups.js?v=68"></script>
-    <script src="js/data/mechanics.js?v=68"></script>
-    <script src="js/data/music.js?v=68"></script>
-    <script src="js/data/news.js?v=68"></script>
-    <script src="js/systems/audio.js?v=68"></script>
-    <script src="js/systems/music.js?v=68"></script>
-    <script src="js/systems/theme.js?v=68"></script>
-    <script src="js/systems/stats.js?v=68"></script>
-    <script src="js/systems/achievements.js?v=68"></script>
-    <script src="js/systems/progression.js?v=68"></script>
-    <script src="js/systems/input.js?v=68"></script>
-    <script src="js/systems/pointer.js?v=68"></script>
-    <script src="js/game/canvas.js?v=68"></script>
-    <script src="js/game/draw.js?v=68"></script>
-    <script src="js/game/effects.js?v=68"></script>
-    <script src="js/game/balls.js?v=68"></script>
-    <script src="js/game/ai.js?v=68"></script>
-    <script src="js/game/mechanics.js?v=68"></script>
-    <script src="js/game/physics.js?v=68"></script>
-    <script src="js/game/match.js?v=68"></script>
-    <script src="js/game/hud.js?v=68"></script>
-    <script src="js/game/hints.js?v=68"></script>
-    <script src="js/game/render.js?v=68"></script>
-    <script src="js/game/loop.js?v=68"></script>
-    <script src="js/game/powerups.js?v=68"></script>
-    <script src="js/game/practice.js?v=68"></script>
-    <script src="js/vfx/random.js?v=68"></script>
-    <script src="js/vfx/trails.js?v=68"></script>
-    <script src="js/vfx/backgrounds.js?v=68"></script>
-    <script src="js/vfx/paddles.js?v=68"></script>
-    <script src="js/vfx/goal-fx.js?v=68"></script>
-    <script src="js/vfx/super.js?v=68"></script>
-    <script src="js/vfx/mechanics.js?v=68"></script>
-    <script src="js/vfx/index.js?v=68"></script>
-    <script src="js/bosses/shared.js?v=68"></script>
-    <script src="js/bosses/chemi.js?v=68"></script>
-    <script src="js/bosses/dani.js?v=68"></script>
-    <script src="js/bosses/duo.js?v=68"></script>
-    <script src="js/bosses/fano.js?v=68"></script>
-    <script src="js/bosses/yisus.js?v=68"></script>
-    <script src="js/bosses/creator.js?v=68"></script>
-    <script src="js/bosses/index.js?v=68"></script>
-    <script src="js/campaign/progress.js?v=68"></script>
-    <script src="js/campaign/menu.js?v=68"></script>
-    <script src="js/campaign/dialogue.js?v=68"></script>
-    <script src="js/campaign/finale.js?v=68"></script>
-    <script src="js/ui/screens.js?v=68"></script>
-    <script src="js/ui/howto.js?v=68"></script>
-    <script src="js/ui/news.js?v=68"></script>
-    <script src="js/ui/actions.js?v=68"></script>
-    <script src="js/ui/settings-panel.js?v=68"></script>
-    <script src="js/ui/stats-panel.js?v=68"></script>
-    <script src="js/ui/shop-ui.js?v=68"></script>
-    <script src="js/ui/progress-display.js?v=68"></script>
-    <script src="js/main.js?v=68"></script>
+    <script src="js/core/constants.js?v=69"></script>
+    <script src="js/core/storage.js?v=69"></script>
+    <script src="js/core/settings.js?v=69"></script>
+    <script src="js/core/state.js?v=69"></script>
+    <script src="js/data/themes.js?v=69"></script>
+    <script src="js/data/lore.js?v=69"></script>
+    <script src="js/data/achievements.js?v=69"></script>
+    <script src="js/data/shop.js?v=69"></script>
+    <script src="js/data/levels.js?v=69"></script>
+    <script src="js/data/powerups.js?v=69"></script>
+    <script src="js/data/mechanics.js?v=69"></script>
+    <script src="js/data/music.js?v=69"></script>
+    <script src="js/data/news.js?v=69"></script>
+    <script src="js/systems/audio.js?v=69"></script>
+    <script src="js/systems/music.js?v=69"></script>
+    <script src="js/systems/theme.js?v=69"></script>
+    <script src="js/systems/stats.js?v=69"></script>
+    <script src="js/systems/achievements.js?v=69"></script>
+    <script src="js/systems/progression.js?v=69"></script>
+    <script src="js/systems/input.js?v=69"></script>
+    <script src="js/systems/pointer.js?v=69"></script>
+    <script src="js/game/canvas.js?v=69"></script>
+    <script src="js/game/draw.js?v=69"></script>
+    <script src="js/game/effects.js?v=69"></script>
+    <script src="js/game/balls.js?v=69"></script>
+    <script src="js/game/ai.js?v=69"></script>
+    <script src="js/game/mechanics.js?v=69"></script>
+    <script src="js/game/physics.js?v=69"></script>
+    <script src="js/game/match.js?v=69"></script>
+    <script src="js/game/hud.js?v=69"></script>
+    <script src="js/game/hints.js?v=69"></script>
+    <script src="js/game/render.js?v=69"></script>
+    <script src="js/game/loop.js?v=69"></script>
+    <script src="js/game/powerups.js?v=69"></script>
+    <script src="js/game/practice.js?v=69"></script>
+    <script src="js/vfx/random.js?v=69"></script>
+    <script src="js/vfx/trails.js?v=69"></script>
+    <script src="js/vfx/backgrounds.js?v=69"></script>
+    <script src="js/vfx/paddles.js?v=69"></script>
+    <script src="js/vfx/goal-fx.js?v=69"></script>
+    <script src="js/vfx/super.js?v=69"></script>
+    <script src="js/vfx/mechanics.js?v=69"></script>
+    <script src="js/vfx/index.js?v=69"></script>
+    <script src="js/bosses/shared.js?v=69"></script>
+    <script src="js/bosses/chemi.js?v=69"></script>
+    <script src="js/bosses/dani.js?v=69"></script>
+    <script src="js/bosses/duo.js?v=69"></script>
+    <script src="js/bosses/fano.js?v=69"></script>
+    <script src="js/bosses/yisus.js?v=69"></script>
+    <script src="js/bosses/creator.js?v=69"></script>
+    <script src="js/bosses/index.js?v=69"></script>
+    <script src="js/campaign/progress.js?v=69"></script>
+    <script src="js/campaign/menu.js?v=69"></script>
+    <script src="js/campaign/dialogue.js?v=69"></script>
+    <script src="js/campaign/finale.js?v=69"></script>
+    <script src="js/ui/screens.js?v=69"></script>
+    <script src="js/ui/howto.js?v=69"></script>
+    <script src="js/ui/news.js?v=69"></script>
+    <script src="js/ui/actions.js?v=69"></script>
+    <script src="js/ui/settings-panel.js?v=69"></script>
+    <script src="js/ui/stats-panel.js?v=69"></script>
+    <script src="js/ui/shop-ui.js?v=69"></script>
+    <script src="js/ui/progress-display.js?v=69"></script>
+    <script src="js/main.js?v=69"></script>
 </body>
 
 </html>
