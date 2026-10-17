@@ -48,3 +48,9 @@ Fallos encontrados en la revisión previa a la actualización v2
 
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.
+
+## Conservados
+
+| Bug | Dónde | Por qué se conserva |
+|---|---|---|
+| El falso final no deforma ninguna música: `checkWin()` para la pista antes de `runFinaleSequence()`, así que `warpMusic()` no tiene nada que ralentizar | `game/match.js`, `campaign/finale.js` | Encontrado en la fase 1 v2 (audio). Se decidió que el reproductor nuevo sonara igual que antes; cambiarlo es una decisión de diseño pendiente |

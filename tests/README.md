@@ -42,7 +42,10 @@ runner lo detecta y falla con un mensaje claro).
    - `Date` y `performance.now` por un reloj virtual;
    - `setTimeout`/`setInterval` y `requestAnimationFrame` por colas virtuales;
    - `localStorage` por un almacén en memoria (no toca tu progreso real);
-   - el audio por versiones que registran lo que suena.
+   - el audio por versiones que registran lo que suena. El `AudioContext`
+     falso **no tiene `decodeAudioData` a propósito**: así el reproductor
+     de música elige siempre el motor de `<audio>` (que ya se registra)
+     y la música es determinista sin simular `fetch`.
 3. El juego **solo avanza cuando el runner llama a `step()`**: un fotograma del
    reloj virtual, con sus temporizadores y su `requestAnimationFrame`.
 4. Se maneja como una caja negra: un bot que pulsa teclas reales (o mueve el
@@ -75,7 +78,7 @@ fotograma (`rng`): si un cambio de código altera una sola llamada a
 | `campaign` | nivel, repetición, diálogo |
 | `storage` / `memory` | las tres claves de `localStorage` y los objetos en memoria |
 | `dom` | pantallas activas y su contenido visible, normalizado |
-| `audio` | tonos sintetizados y operaciones sobre la música |
+| `audio` | tonos (`tone`) y ráfagas de ruido (`noise`) sintetizados, y operaciones sobre los `<audio>` de la música (`media`) |
 | `canvas` | hash de los píxeles |
 
 El DOM se normaliza para no atarse a detalles que no se ven: la etiqueta de
