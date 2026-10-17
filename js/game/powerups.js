@@ -22,11 +22,16 @@
 let activePowerup = null;       // { type, x, y, ageMs, maxLifetime }
 let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
 let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
-let shieldWall = null;          // { x, y, width, height, owner }
+let shieldWall = null;          // { x, y, width, height, owner, hp }
 let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
 let powerupsThisGame = 0;       // Contador por partida (para logros)
 let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayuda")
 let slowmoActive = false;       // Indica si la cámara lenta está activa
+
+/** Espera hasta el próximo power-up: entre 6 y 12 segundos de juego. */
+function nextPowerupCooldown() {
+    return 6000 + Math.random() * 6000;
+}
 
 /**
  * Inicializa o reinicia el sistema de power-ups al empezar una partida
@@ -40,16 +45,17 @@ function initPowerups() {
     powerupsThisGame = 0;
     powerupsSpawnedThisGame = 0;
     powerupBursts = [];
-    // Tiempo inicial aleatorio entre 8 y 15 segundos
-    powerupCooldownMs = 8000 + Math.random() * 7000;
+    powerupCooldownMs = nextPowerupCooldown();
     updatePowerupPill();   // la de la partida anterior no sigue a la vista
 }
 
 /**
  * Actualiza la lógica de los power-ups (aparición, expiración, colisiones)
  * @param {number} dt Delta time normalizado a 60 FPS
+ * @param {number} realDt el mismo dt sin la cámara lenta: con él se
+ *     descuenta la propia cámara lenta, que dura 10 s reales
  */
-function updatePowerups(dt) {
+function updatePowerups(dt, realDt) {
     if (!settings.powerupsEnabled) return;
     if (state.isPaused) return;
     if (!state.isPlaying) return;
@@ -72,7 +78,7 @@ function updatePowerups(dt) {
         if (activePowerup.ageMs > activePowerup.maxLifetime) {
             activePowerup = null;
             // Nuevo cooldown tras desaparecer
-            powerupCooldownMs = 8000 + Math.random() * 7000;
+            powerupCooldownMs = nextPowerupCooldown();
         } else {
             // Comprobar colisiones con todas las pelotas
             for (let i = 0; i < state.balls.length; i++) {
@@ -87,7 +93,7 @@ function updatePowerups(dt) {
 
     // 3. Lógica de los efectos activos
     if (activeEffect) {
-        activeEffect.remainingMs -= dtMs;
+        activeEffect.remainingMs -= activeEffect.type.id === 'slowmo' ? realDt * MS_PER_FRAME : dtMs;
         if (activeEffect.remainingMs <= 0) {
             revertPowerup();
         }
@@ -111,8 +117,14 @@ function updatePowerups(dt) {
                     b.x = shieldWall.x - b.radius;
                 }
 
-                // Efecto de sonido si existe
+                // Cada bloqueo lo agrieta; al gastar el último, desaparece
                 soundEffects.paddleHit({ x: b.x });
+                soundEffects.shieldCrack();
+                shieldWall.hp--;
+                if (shieldWall.hp <= 0) {
+                    revertPowerup();
+                    break;
+                }
             }
         }
     }
@@ -141,7 +153,7 @@ function spawnPowerup() {
         x: 200 + Math.random() * 400, // Entre 200 y 600
         y: 100 + Math.random() * 400, // Entre 100 y 500
         ageMs: 0,
-        maxLifetime: 12000 // 12 segundos antes de desaparecer
+        maxLifetime: 15000 // 15 segundos antes de desaparecer
     };
     powerupsSpawnedThisGame++;
 
@@ -172,7 +184,7 @@ function collectPowerup() {
 
     // Limpiar entidad de power-up y establecer nuevo cooldown
     activePowerup = null;
-    powerupCooldownMs = 8000 + Math.random() * 7000;
+    powerupCooldownMs = nextPowerupCooldown();
 }
 
 /**
@@ -224,9 +236,9 @@ function applyPowerup(type, beneficiary) {
 
         case 'shield':
             if (beneficiary === 'p1') {
-                shieldWall = { x: 50, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p1' };
+                shieldWall = { x: 50, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p1', hp: SHIELD_HP };
             } else {
-                shieldWall = { x: GAME_WIDTH - 58, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p2' };
+                shieldWall = { x: GAME_WIDTH - 58, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p2', hp: SHIELD_HP };
             }
             break;
 
@@ -323,8 +335,9 @@ let powerupPillKey = '';
 
 /**
  * Píldora del efecto activo (#powerup-pill, sobre el campo y en el lado
- * del jugador afectado): icono, nombre, barra y segundos restantes. Los
- * efectos instantáneos no tienen píldora.
+ * del jugador afectado): icono, nombre, barra y segundos restantes (el
+ * escudo, los bloqueos que le quedan: "3/5"). Los efectos instantáneos no
+ * tienen píldora.
  */
 function updatePowerupPill() {
     const pill = document.getElementById('powerup-pill');
@@ -336,10 +349,15 @@ function updatePowerupPill() {
     }
 
     const type = activeEffect.type;
-    const pct = Math.max(0, Math.round(activeEffect.remainingMs / type.duration * 100));
-    const secs = Math.max(0, Math.ceil(activeEffect.remainingMs / 1000));
+    const shieldHp = type.id === 'shield' && shieldWall ? shieldWall.hp : null;
+    const pct = shieldHp !== null
+        ? Math.round(shieldHp / SHIELD_HP * 100)
+        : Math.max(0, Math.round(activeEffect.remainingMs / type.duration * 100));
+    const label = shieldHp !== null
+        ? `${shieldHp}/${SHIELD_HP}`
+        : `${Math.max(0, Math.ceil(activeEffect.remainingMs / 1000))}s`;
     const who = `${type.id}|${activeEffect.target}`;
-    const key = `${who}|${pct}|${secs}`;
+    const key = `${who}|${pct}|${label}`;
     if (key === powerupPillKey) return;
 
     if (!powerupPillKey.startsWith(who + '|')) {
@@ -351,7 +369,7 @@ function updatePowerupPill() {
         pill.classList.remove('hidden');
     }
     /** @type {HTMLElement} */ (pill.querySelector('.powerup-pill__bar i')).style.width = `${pct}%`;
-    pill.querySelector('.powerup-pill__secs').textContent = `${secs}s`;
+    pill.querySelector('.powerup-pill__secs').textContent = label;
     powerupPillKey = key;
 }
 
@@ -361,7 +379,7 @@ function updatePowerupPill() {
  */
 function renderShield(ctx) {
     if (!shieldWall) return;
-    drawShieldWall(ctx, shieldWall);
+    drawShieldWallV2(ctx, shieldWall, shieldWall.hp);
 }
 
 // ------------------------------------------------------------------
@@ -518,6 +536,59 @@ function drawShieldWall(ctx, wall) {
     ctx.fillStyle = hexToRgba(c, 0.85);
     ctx.fillRect(wall.x, wall.y, 2, wall.height);
     ctx.fillRect(wall.x + wall.width - 2, wall.y, 2, wall.height);
+    ctx.restore();
+}
+
+/**
+ * Escudo de SHIELD_HP bloqueos (laboratorio v2, vfx-v2-d.js): con cada
+ * bloqueo pierde brillo y se agrieta, y desde el tercero le faltan trozos.
+ * Los huecos se recortan del muro (no se borra el campo de debajo) y las
+ * marcas de al lado cuentan los bloqueos que quedan. Las grietas salen
+ * de vfxHash: siempre las mismas, sin parpadeo.
+ */
+function drawShieldWallV2(ctx, wall, hp, maxHp = SHIELD_HP) {
+    const k = hp / maxHp;
+    ctx.save();
+    // Huecos, unidos si se solapan (con evenodd, dos huecos solapados se anularían)
+    const holes = [];
+    for (let i = 0; i < Math.max(0, (maxHp - hp) - 2) * 2; i++) {
+        const y0 = wall.y + vfxHash(i * 31 + 9) * (wall.height - 30);
+        holes.push([y0, y0 + 10 + vfxHash(i) * 16]);
+    }
+    holes.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const h of holes) {
+        const last = merged[merged.length - 1];
+        if (last && h[0] <= last[1]) last[1] = Math.max(last[1], h[1]);
+        else merged.push([h[0], h[1]]);
+    }
+    if (merged.length) {
+        const clip = new Path2D();
+        clip.rect(wall.x - 30, wall.y, wall.width + 60, wall.height);
+        for (const [a, b] of merged) clip.rect(wall.x - 30, a, wall.width + 60, b - a);
+        ctx.clip(clip, 'evenodd');
+    }
+    ctx.globalAlpha = 0.45 + 0.55 * k;
+    drawShieldWall(ctx, wall);
+    ctx.globalAlpha = 1;
+    // Grietas: más cuantas más veces ha bloqueado
+    ctx.strokeStyle = 'rgba(239, 246, 255, 0.9)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < (maxHp - hp) * 3; i++) {
+        const y0 = wall.y + vfxHash(i * 13 + 1) * wall.height;
+        ctx.beginPath(); ctx.moveTo(wall.x, y0);
+        ctx.lineTo(wall.x + wall.width * 0.5, y0 + (vfxHash(i * 7) - 0.5) * 18);
+        ctx.lineTo(wall.x + wall.width, y0 + (vfxHash(i * 5) - 0.5) * 26);
+        ctx.stroke();
+    }
+    ctx.restore();
+    // Bloqueos que quedan, al lado del campo
+    ctx.save();
+    const side = wall.x < GAME_WIDTH / 2 ? wall.x + wall.width + 6 : wall.x - 11;
+    for (let i = 0; i < maxHp; i++) {
+        ctx.fillStyle = i < hp ? SHIELD_COLOR : hexToRgba(SHIELD_COLOR, 0.2);
+        ctx.fillRect(side, wall.y + wall.height / 2 - maxHp * 7 + i * 14, 5, 10);
+    }
     ctx.restore();
 }
 

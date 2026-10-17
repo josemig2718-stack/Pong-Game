@@ -87,7 +87,7 @@ function update(dt) {
     // ejecuta (con una sola bola sí: ver onBallOut).
     if (updateBalls(dt, bcfg, rotatedArena, maxBallSpeed)) return;
 
-    updatePowerups(dt);
+    updatePowerups(dt, realDt);
     tickFeverHeat(dt);
     updateVFX(dt);
     updateParticles(dt);
