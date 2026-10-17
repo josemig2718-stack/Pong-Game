@@ -17,6 +17,8 @@ const DEFAULT_BINDINGS = {
     p1Down: 'KeyS',
     p2Up:   'ArrowUp',
     p2Down: 'ArrowDown',
+    p1Smash: 'Space',
+    p2Smash: 'Enter',
     pause:  'Escape'
 };
 
@@ -25,7 +27,7 @@ const KEY_LABELS = {
     KeyW: 'W', KeyA: 'A', KeyS: 'S', KeyD: 'D',
     ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
     Escape: 'ESC', Space: 'ESPACIO', ShiftLeft: 'SHIFT IZQ', ShiftRight: 'SHIFT DER',
-    ControlLeft: 'CTRL IZQ', ControlRight: 'CTRL DER'
+    ControlLeft: 'CTRL IZQ', ControlRight: 'CTRL DER', Enter: 'ENTER'
 };
 
 /**
@@ -55,6 +57,8 @@ const DEFAULT_SETTINGS = {
     screenShake:  true,
     mouseControl: false,   // controlar paleta con mouse
     powerupsEnabled: true, // power-ups en partida
+    smashTouch:   'button', // smash en táctil: 'button' (botón), 'finger' (segundo dedo) o 'auto' (súper automático)
+    haptics:      true,    // vibración del móvil en los golpes fuertes
     bindings: { ...DEFAULT_BINDINGS }
 };
 
@@ -67,10 +71,19 @@ const SETTINGS_STORAGE_KEY = 'pongGame.settings.v1';
  */
 function loadSettings() {
     const saved = readJSON(SETTINGS_STORAGE_KEY, {}, 'No se pudo leer la configuración guardada:');
+    const savedBindings = saved.bindings || {};
+    const bindings = { ...DEFAULT_BINDINGS, ...savedBindings };
+    // Una acción nueva no puede quitarle la tecla a otra que el jugador ya
+    // tenía asignada: si su tecla por defecto está ocupada, queda libre.
+    for (const action in DEFAULT_BINDINGS) {
+        if (action in savedBindings) continue;
+        const taken = Object.keys(savedBindings).some((a) => savedBindings[a] === bindings[action]);
+        if (taken) bindings[action] = null;
+    }
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
-        bindings: { ...DEFAULT_BINDINGS, ...(saved.bindings || {}) }
+        bindings
     };
 }
 

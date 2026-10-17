@@ -15,13 +15,23 @@
 const SERVE_INITIAL = 3000;    // 3 segundos al iniciar partida
 const SERVE_AFTER_GOAL = 3000; // 3 segundos tras cada punto
 
+/** Velocidades de bola (base y tope) del ajuste en curso. */
+function currentSpeedPreset() {
+    return BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
+}
+
+/** @returns {Ball} una bola sin efecto, sin smash y sin dueño */
 function createBall(x, y, speed, dx, dy) {
     return {
         x: x, y: y,
         radius: ballRadius,
         speed: speed,
         dx: dx, dy: dy,
-        trail: []
+        trail: [],
+        spin: 0,
+        power: null,
+        owner: null,
+        squash: 0
     };
 }
 
@@ -31,7 +41,7 @@ function createBall(x, y, speed, dx, dy) {
  * @param {boolean} [initialServe] true en el primer saque de la partida
  */
 function resetBall(initialServe = false) {
-    const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
+    const speedPreset = currentSpeedPreset();
     const dir = Math.random() > 0.5 ? 1 : -1;
     const speed = speedPreset.base;
     let dy = (Math.random() * 2 - 1) * speed;

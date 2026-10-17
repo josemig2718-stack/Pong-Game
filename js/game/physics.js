@@ -38,8 +38,7 @@ function update(dt) {
     slowmo = Math.min(slowmo, getGoalSlowmo());
     dt *= slowmo;
 
-    const speedPreset = BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
-    const maxBallSpeed = speedPreset.max;
+    const maxBallSpeed = currentSpeedPreset().max;
 
     // Mecánicas del jefe de campaña
     bossUpdate(dt);

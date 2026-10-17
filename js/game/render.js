@@ -233,7 +233,7 @@ function render() {
     // Estelas + bolas
     const hideBall = bossHidesBall();
     if (!hideBall) drawBallTrail();
-    const speedMax = (BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2]).max;
+    const speedMax = currentSpeedPreset().max;
     const bigBall = !!activeEffect && activeEffect.type.id === 'big_ball';
     for (const b of state.balls) {
         if (hideBall) continue; // Fano oculta la bola real

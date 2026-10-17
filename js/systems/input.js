@@ -37,6 +37,9 @@ function handleKeyDown(e) {
 
     // Evita que el scroll de la página se dispare con flechas/espacio durante el juego
     if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+    // Enter es el smash del jugador 2: en partida no debe activar el botón
+    // que tenga el foco. En los menús sigue funcionando como siempre.
+    if (e.code === 'Enter' && state.isPlaying && !state.isPaused) e.preventDefault();
 }
 
 /** Registra el teclado de juego y de reasignación. */
@@ -49,7 +52,7 @@ function initInput() {
 
 /**
  * ¿Está pulsada la tecla asignada a esta acción?
- * @param {string} action p1Up, p1Down, p2Up, p2Down o pause
+ * @param {string} action p1Up, p1Down, p2Up, p2Down, p1Smash, p2Smash o pause
  * @returns {boolean}
  */
 function isActionPressed(action) {

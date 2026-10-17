@@ -30,7 +30,13 @@
  * @property {number} dx
  * @property {number} dy
  * @property {Array<{x: number, y: number}>} trail  últimas posiciones, para dibujar la estela
+ * @property {number} spin  efecto, de -1 a 1: curva la trayectoria (game/mechanics.js)
+ * @property {BallPower} power  smash o súper golpe en curso; null = golpe normal
+ * @property {'p1'|'p2'|null} owner  quién la golpeó por última vez (null hasta el primer golpe)
+ * @property {number} squash  aplastamiento del último golpe, de 1 a 0. Solo visual
  */
+
+/** @typedef {null | 'smash' | 'super'} BallPower */
 
 /**
  * Una paleta. touchX/touchY es la posición que pide el dedo o el ratón:
@@ -44,6 +50,16 @@
  * @property {number} [dx]  solo en la arena rotada, donde la paleta se mueve en X
  * @property {number|null} [touchY]
  * @property {number|null} [touchX]
+ * @property {number} vy  velocidad vertical real (px/fotograma): la integra el teclado o se mide con el dedo, el ratón y la CPU
+ * @property {number} prevY  posición del fotograma anterior, para medir vy
+ * @property {number} vx  como vy, en el eje X de la arena rotada
+ * @property {number} prevX
+ * @property {number} charge  carga del smash, de 0 a 1
+ * @property {boolean} smashHeld  se está manteniendo el smash
+ * @property {boolean} smashTouchHeld  el control táctil del smash está pulsado
+ * @property {number} releaseMs  ms desde que se soltó el smash (Infinity = no hay ventana abierta)
+ * @property {number} energy  energía del súper golpe, de 0 a MECH.energy.max
+ * @property {boolean} superArmed  el siguiente golpe es súper sin gastar energía
  */
 
 /**
@@ -101,10 +117,18 @@ const state = {
 };
 
 // --- Paletas ---
+/**
+ * Campos de las mecánicas de golpe con su valor de reposo. startGame()
+ * los repone con resetPaddleMechanics().
+ */
+function paddleMechanicsRest() {
+    return { vy: 0, prevY: 0, vx: 0, prevX: 0, charge: 0, smashHeld: false, smashTouchHeld: false, releaseMs: Infinity, energy: 0, superArmed: false };
+}
+
 /** @type {Paddle} */
-const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null, ...paddleMechanicsRest() };
 /** @type {Paddle} */
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null };
+const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null, ...paddleMechanicsRest() };
 
 /**
  * Paleta gemela del rival (Mario, en el combate del dúo). Las mecánicas
@@ -112,4 +136,9 @@ const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight
  * golpean game/ai.js y game/physics.js.
  * @type {Paddle & {active: boolean, retreatMs: number}}
  */
-const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0 };
+const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0, ...paddleMechanicsRest() };
+
+/** Repone los campos de las mecánicas de las tres paletas (al empezar una partida). */
+function resetPaddleMechanics() {
+    for (const p of [p1, p2, p2Twin]) Object.assign(p, paddleMechanicsRest());
+}
