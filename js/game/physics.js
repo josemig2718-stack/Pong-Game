@@ -52,10 +52,12 @@ function update(dt) {
     // El Creador invierte los controles en su fase 2
     const invert = (bossInvertsControls()) ? -1 : 1;
 
+    rememberPaddlePositions();
     movePlayer1(playerDt, rotatedArena, invert);
     if (state.mode === 'local') movePlayer2(dt);
     else moveCpu(dt, bcfg);
     clampPaddles(rotatedArena);
+    measurePaddleSpeeds(playerDt, dt, rotatedArena);
 
     if (state.serveCountdownMs > 0) {
         tickServeCountdown(dt);
@@ -85,52 +87,61 @@ function update(dt) {
 //  Paletas
 // ------------------------------------------------------------------
 
-/** Jugador 1: el dedo/ratón manda sobre el teclado. */
+/** Dirección que piden las teclas de un jugador: -1 arriba, 1 abajo, 0 ninguna. */
+function keyDirection(upAction, downAction) {
+    if (isActionPressed(upAction)) return -1;
+    if (isActionPressed(downAction)) return 1;
+    return 0;
+}
+
+/**
+ * Jugador 1: el dedo/ratón manda sobre el teclado. Con el teclado la
+ * paleta tiene inercia (movePaddleKeys); congelada, se para en seco.
+ */
 function movePlayer1(playerDt, rotatedArena, invert) {
     if (rotatedArena) {
         // Arena rotada: la paleta se mueve en X. Se respetan las teclas
         // reasignadas (p1Up = izquierda, p1Down = derecha).
         if (p1.touchX !== undefined && p1.touchX !== null) {
-            if (playerDt > 0) p1.x = p1.touchX;
+            if (playerDt > 0) followPointer(p1, p1.touchX, playerDt, 'x');
+        } else if (playerDt > 0) {
+            movePaddleKeys(p1, keyDirection('p1Up', 'p1Down') * invert, playerDt, 'x');
         } else {
-            if (isActionPressed('p1Up')) p1.dx = -paddleSpeed * invert;
-            else if (isActionPressed('p1Down')) p1.dx = paddleSpeed * invert;
-            else p1.dx = 0;
-            p1.x += p1.dx * playerDt;
+            p1.vx = 0;
         }
     } else {
         if (p1.touchY !== null) {
             // Congelado, el dedo sigue moviéndose pero la paleta no le hace caso
-            if (playerDt > 0) p1.y = p1.touchY;
+            if (playerDt > 0) followPointer(p1, p1.touchY, playerDt, 'y');
+        } else if (playerDt > 0) {
+            movePaddleKeys(p1, keyDirection('p1Up', 'p1Down'), playerDt, 'y');
         } else {
-            if (isActionPressed('p1Up')) p1.dy = -paddleSpeed;
-            else if (isActionPressed('p1Down')) p1.dy = paddleSpeed;
-            else p1.dy = 0;
-            p1.y += p1.dy * playerDt;
+            p1.vy = 0;
         }
     }
 }
 
 /** Jugador 2 humano (modo local). */
 function movePlayer2(dt) {
-    if (p2.touchY !== null) {
-        p2.y = p2.touchY;
-    } else {
-        if (isActionPressed('p2Up')) p2.dy = -paddleSpeed;
-        else if (isActionPressed('p2Down')) p2.dy = paddleSpeed;
-        else p2.dy = 0;
-        p2.y += p2.dy * dt;
-    }
+    if (p2.touchY !== null) followPointer(p2, p2.touchY, dt, 'y');
+    else movePaddleKeys(p2, keyDirection('p2Up', 'p2Down'), dt, 'y');
 }
 
-/** Mantiene las paletas dentro del campo (la gemela, salvo cuando se retira). */
+/**
+ * Mantiene las paletas dentro del campo (la gemela, salvo cuando se
+ * retira). Una paleta que choca con el borde se queda sin velocidad: si
+ * no, el teclado la daría por movida y sus golpes llevarían efecto.
+ */
 function clampPaddles(rotatedArena) {
     if (rotatedArena) {
-        p1.x = Math.max(0, Math.min(GAME_WIDTH - p1.width, p1.x));
+        const x = Math.max(0, Math.min(GAME_WIDTH - p1.width, p1.x));
+        if (x !== p1.x) { p1.x = x; p1.vx = 0; }
     } else {
-        p1.y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
+        const y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
+        if (y !== p1.y) { p1.y = y; p1.vy = 0; }
     }
-    p2.y = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
+    const y2 = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
+    if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
     if (p2Twin.active && p2Twin.retreatMs <= 0) {
         p2Twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2Twin.height, p2Twin.y));
     }

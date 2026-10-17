@@ -127,8 +127,6 @@ function startGame(mode) {
 
     p1.y = GAME_HEIGHT / 2 - p1.height / 2;
     p2.y = GAME_HEIGHT / 2 - p2.height / 2;
-    p1.dy = 0;
-    p2.dy = 0;
     // Inercia, carga del smash y energía: todo de cero
     resetPaddleMechanics();
     p1.touchY = null;

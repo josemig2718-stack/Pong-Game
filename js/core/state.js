@@ -46,8 +46,6 @@
  * @property {number} y
  * @property {number} width
  * @property {number} height
- * @property {number} dy
- * @property {number} [dx]  solo en la arena rotada, donde la paleta se mueve en X
  * @property {number|null} [touchY]
  * @property {number|null} [touchX]
  * @property {number} vy  velocidad vertical real (px/fotograma): la integra el teclado o se mide con el dedo, el ratón y la CPU
@@ -126,9 +124,9 @@ function paddleMechanicsRest() {
 }
 
 /** @type {Paddle} */
-const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null, ...paddleMechanicsRest() };
+const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, touchY: null, ...paddleMechanicsRest() };
 /** @type {Paddle} */
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0, touchY: null, ...paddleMechanicsRest() };
+const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, touchY: null, ...paddleMechanicsRest() };
 
 /**
  * Paleta gemela del rival (Mario, en el combate del dúo). Las mecánicas
@@ -136,7 +134,7 @@ const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight
  * golpean game/ai.js y game/physics.js.
  * @type {Paddle & {active: boolean, retreatMs: number}}
  */
-const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, dy: 0, active: false, retreatMs: 0, ...paddleMechanicsRest() };
+const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, active: false, retreatMs: 0, ...paddleMechanicsRest() };
 
 /** Repone los campos de las mecánicas de las tres paletas (al empezar una partida). */
 function resetPaddleMechanics() {
