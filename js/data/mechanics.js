@@ -73,7 +73,8 @@ const MECH = {
         /** @type {CpuPlanTuning} */
         hachepe: { spin: 0.60, smash: 0.50, useSuper: 1, aim: 10, read: 1 },
         spinFrames: 6,          // fotogramas antes del contacto en los que mueve la paleta para dar efecto
-        smashRange: 220,        // px: empieza a cargar cuando la bola está más cerca que esto
+        smashRange: 220,        // px: empieza a cargar cuando la bola está más cerca que esto...
+        smashLeadMs: 650,       // ...o cuando falta esto para el contacto: con bolas rápidas, 220 px no dan tiempo a cargar
         smashReleaseMs: 120     // suelta cuando falta esto para el contacto
     }
 };

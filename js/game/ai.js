@@ -8,10 +8,138 @@
  * apuntan con un desvío (bossAim) que se renueva en cada golpe: una zona
  * muerta menor que media paleta no provoca fallos por sí sola, así que
  * sin ese desvío la CPU sería imbatible.
+ *
+ * En VS CPU y en el Modo Hachepe la CPU usa además las mecánicas de
+ * golpe: cada vez que una bola empieza a venir hacia ella elige un plan
+ * (MECH.cpu, con Math.random) — dar efecto, smash, usar el súper y
+ * apuntar al centro de la paleta prediciendo el rebote. Los jefes de
+ * campaña no planifican: conservan su IA.
  * ------------------------------------------------------------------
  */
 
 'use strict';
+
+/**
+ * Plan de la CPU para la bola que viene hacia ella.
+ * @typedef {object} CpuPlan
+ * @property {boolean} spin       dar efecto al devolver
+ * @property {boolean} smash      intentar un smash
+ * @property {boolean} useSuper   usar el súper si la energía está llena
+ * @property {number|null} aimOffset  desvío al apuntar al centro de la paleta; null = persigue la bola
+ */
+
+/** @type {CpuPlan|null} */
+let cpuPlan = null;
+/** La bola objetivo venía hacia la CPU en el fotograma anterior. */
+let cpuBallWasComing = false;
+
+/** Sin plan: la próxima bola que venga hace elegir uno nuevo (al empezar partida). */
+function resetCpuPlan() {
+    cpuPlan = null;
+    cpuBallWasComing = false;
+}
+
+/** @returns {CpuPlanTuning} los números del plan según el modo y la dificultad */
+function cpuTuning() {
+    if (state.mode === 'hachepe') return MECH.cpu.hachepe;
+    return MECH.cpu.byDifficulty[settings.difficulty] || MECH.cpu.byDifficulty[2];
+}
+
+/**
+ * Elige el plan. Siempre pide los mismos cuatro números aleatorios, sea
+ * cual sea la dificultad.
+ * @param {CpuPlanTuning} t
+ * @returns {CpuPlan}
+ */
+function makeCpuPlan(t) {
+    const spinRoll = Math.random();
+    const smashRoll = Math.random();
+    const superRoll = Math.random();
+    const aimRoll = Math.random();
+    return {
+        spin: spinRoll < t.spin,
+        smash: smashRoll < t.smash,
+        useSuper: superRoll < t.useSuper,
+        aimOffset: t.aim === null ? null : (aimRoll * 2 - 1) * t.aim
+    };
+}
+
+/**
+ * Predice dónde llegará la bola a x = targetX simulando su vuelo
+ * fotograma a fotograma, con los rebotes en las paredes y su efecto
+ * (multiplicado por `read`: 0 lo ignora, 1 lo lee entero).
+ * @param {Ball} b
+ * @param {number} targetX
+ * @param {number} read
+ * @returns {{y: number, frames: number}}
+ */
+function predictBallY(b, targetX, read) {
+    let x = b.x, y = b.y, dx = b.dx, dy = b.dy, spin = b.spin * read;
+    const r = b.radius;
+    const lim = b.speed * MECH.spinMaxSlope;
+    for (let n = 1; n <= 600; n++) {
+        x += dx;
+        y += dy;
+        if (spin !== 0) {
+            dy = mechClamp(dy + spin * MECH.spinAccel, -lim, lim);
+            spin *= MECH.spinDecay;
+        }
+        if (y - r < 0 || y + r > GAME_HEIGHT) {
+            dy = -dy;
+            spin *= MECH.spinWallK;
+            y = mechClamp(y, r, GAME_HEIGHT - r);
+        }
+        if (x + r >= targetX) return { y, frames: n };
+    }
+    return { y, frames: 600 };
+}
+
+/**
+ * VS CPU y Hachepe: la CPU sigue su plan para la bola que viene. La
+ * velocidad y la zona muerta son las de su dificultad.
+ * @param {Ball|undefined} ball la bola objetivo
+ * @param {number} aiSpeed
+ * @param {number} errorMargin
+ * @param {number} dt
+ */
+function cpuPlay(ball, aiSpeed, errorMargin, dt) {
+    const t = cpuTuning();
+    const coming = !!ball && ball.dx > 0;
+    if (coming && !cpuBallWasComing) cpuPlan = makeCpuPlan(t);
+    cpuBallWasComing = coming;
+
+    const center = p2.y + p2.height / 2;
+    // Cargar el smash la ralentiza, como al jugador
+    const speed = aiSpeed * (p2.smashHeld ? MECH.smashSlowK : 1);
+    let holdSmash = false;
+
+    if (coming && cpuPlan) {
+        const pred = predictBallY(ball, p2.x, t.read);
+        const msLeft = pred.frames * MS_PER_FRAME;
+        // Con la energía llena, un smash sería súper: solo si el plan lo usa
+        const trySmash = superReadyFor(p2) ? cpuPlan.useSuper : cpuPlan.smash;
+        if (trySmash) {
+            const near = p2.x - ball.x < MECH.cpu.smashRange || msLeft <= MECH.cpu.smashLeadMs;
+            holdSmash = near && msLeft > MECH.cpu.smashReleaseMs;
+        }
+
+        if (cpuPlan.spin && !trySmash && pred.frames <= MECH.cpu.spinFrames) {
+            // Efecto: a toda velocidad, lejos de donde está el jugador
+            const away = p1.y + p1.height / 2 < GAME_HEIGHT / 2 ? 1 : -1;
+            p2.y += away * aiSpeed * dt;
+        } else {
+            // Apunta a que la bola dé en el centro de la paleta; sin
+            // puntería (Fácil), persigue la bola como siempre
+            const goal = cpuPlan.aimOffset === null ? ball.y : pred.y + cpuPlan.aimOffset;
+            if (center < goal - errorMargin) p2.y += speed * dt;
+            else if (center > goal + errorMargin) p2.y -= speed * dt;
+        }
+    } else {
+        if (center < GAME_HEIGHT / 2 - 5) p2.y += speed * 0.5 * dt;
+        else if (center > GAME_HEIGHT / 2 + 5) p2.y -= speed * 0.5 * dt;
+    }
+    updateSmash(p2, holdSmash, dt);
+}
 
 /**
  * Mueve la paleta de la CPU (p2) y, en el combate del dúo, la gemela.
@@ -44,6 +172,12 @@ function moveCpu(dt, bcfg) {
         }
     }
     if (!targetBall) targetBall = state.balls[0];
+
+    // VS CPU y Hachepe: con las mecánicas. Los jefes, con su IA de siempre.
+    if (!bcfg) {
+        cpuPlay(targetBall, aiSpeed, errorMargin, dt);
+        return;
+    }
 
     const p2Center = p2.y + p2.height / 2;
     // Los jefes apuntan con un desvío que se renueva en cada golpe: sin él
