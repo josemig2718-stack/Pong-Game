@@ -128,6 +128,7 @@ function startGame(mode) {
     p1.y = GAME_HEIGHT / 2 - p1.height / 2;
     p2.y = GAME_HEIGHT / 2 - p2.height / 2;
     // Inercia, carga del smash y energía: todo de cero
+    releaseSmashCharges();
     resetPaddleMechanics();
     p1.touchY = null;
     p2.touchY = null;
@@ -180,6 +181,7 @@ function restartCurrentGame() {
 function quitGame() {
     state.isPlaying = false;
     stopLoop();
+    releaseSmashCharges();
 
     // Guardar el tiempo jugado desde el último guardado y parar el reloj
     statsPauseClock();
@@ -218,6 +220,7 @@ function togglePause() {
         syncAudioToggles();
         document.getElementById('pause-menu').classList.add('active-screen');
         stopLoop();
+        releaseSmashCharges();
         statsPauseClock();
         musicSetDuck(true);
     } else {
@@ -270,6 +273,7 @@ function checkWin() {
     if (!finished) return false;
 
     state.isPlaying = false;
+    releaseSmashCharges();
 
     const gameOverScreen = document.getElementById('game-over-screen');
     const winnerText = document.getElementById('winner-text');

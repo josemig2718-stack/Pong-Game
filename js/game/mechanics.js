@@ -6,6 +6,8 @@
  *
  *   cinemática  la paleta con inercia (teclado) y la velocidad medida
  *               (dedo, ratón y CPU)
+ *   smash       updateSmash: carga mientras se mantiene, ventana corta
+ *               al soltar
  *   golpe       resolveHit: tipo de golpe (súper, smash, perfecto,
  *               esquina, bloqueo, normal), rebote, efecto y energía;
  *               applySpin curva la bola en vuelo
@@ -113,6 +115,66 @@ function measurePaddleSpeeds(playerDt, dt, rotatedArena) {
     }
     if (state.mode !== 'local' || p2.touchY !== null) measurePaddle(p2, dt, 'y');
     if (p2Twin.active) measurePaddle(p2Twin, dt, 'y');
+}
+
+// ------------------------------------------------------------------
+//  Smash
+// ------------------------------------------------------------------
+
+/**
+ * Carga del smash de una paleta humana (o de la CPU), después de moverla.
+ * Mantener carga; al soltar se abre una ventana de MECH.smashWindowMs en
+ * la que el golpe sale como smash (o súper). Si la bola llega mientras se
+ * mantiene, el golpe es normal y la carga se pierde: la gracia es soltar
+ * justo antes.
+ * @param {Paddle} p
+ * @param {boolean} held
+ * @param {number} dt
+ */
+function updateSmash(p, held, dt) {
+    if (held) {
+        if (!p.smashHeld) {
+            p.smashHeld = true;
+            p.releaseMs = Infinity;
+            soundEffects.smashCharge(true);
+        }
+        p.charge = Math.min(1, p.charge + dt * MS_PER_FRAME / MECH.smashChargeMs);
+        return;
+    }
+    if (p.smashHeld) {
+        p.smashHeld = false;
+        soundEffects.smashCharge(false);
+        if (p.charge > 0) p.releaseMs = 0;
+        return;
+    }
+    if (p.releaseMs !== Infinity) {
+        p.releaseMs += dt * MS_PER_FRAME;
+        if (p.releaseMs > MECH.smashWindowMs) {
+            p.charge = 0;
+            p.releaseMs = Infinity;
+        }
+    }
+}
+
+/**
+ * Corta las cargas en curso sin abrir ventana (pausa, fin o salida): el
+ * zumbido no sigue sonando con la partida parada. Al volver, si se sigue
+ * manteniendo la tecla, la carga continúa.
+ */
+function releaseSmashCharges() {
+    for (const p of [p1, p2]) {
+        if (!p.smashHeld) continue;
+        p.smashHeld = false;
+        soundEffects.smashCharge(false);
+    }
+}
+
+/** Un saque nuevo cierra la carga y la ventana del smash de los dos. */
+function resetSmashOnServe() {
+    for (const p of [p1, p2]) {
+        p.charge = 0;
+        p.releaseMs = Infinity;
+    }
 }
 
 // ------------------------------------------------------------------

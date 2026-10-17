@@ -58,6 +58,8 @@ function update(dt) {
     else moveCpu(dt, bcfg);
     clampPaddles(rotatedArena);
     measurePaddleSpeeds(playerDt, dt, rotatedArena);
+    updateSmash(p1, isActionPressed('p1Smash') || p1.smashTouchHeld, playerDt);
+    if (state.mode === 'local') updateSmash(p2, isActionPressed('p2Smash') || p2.smashTouchHeld, dt);
 
     if (state.serveCountdownMs > 0) {
         tickServeCountdown(dt);

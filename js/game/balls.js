@@ -62,6 +62,9 @@ function resetBall(initialServe = false) {
     const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dx, dy);
     state.balls = [newBall];
 
+    // La carga del smash no pasa de un punto al siguiente
+    resetSmashOnServe();
+
     // Congela la bola en el centro durante la cuenta regresiva
     state.serveCountdownMs = initialServe ? SERVE_INITIAL : SERVE_AFTER_GOAL;
 
