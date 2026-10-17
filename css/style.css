@@ -750,6 +750,9 @@ h1, h2, h3 { font-family: var(--font-display); }
     color: var(--muted);
 }
 .mode-note .ico { width: 16px; height: 16px; }
+/* Práctica: un botón pequeño y centrado bajo las tarjetas */
+.btn.mode-practice { align-self: center; width: auto; min-height: 44px; padding: 0 18px; gap: 10px; font-size: 10px; }
+.mode-practice .ico { width: 18px; height: 18px; color: var(--primary); }
 
 /* Tarjetas grandes: 2×2 en tablet, fila de cuatro en escritorio */
 @media (min-width: 768px) and (min-height: 600px) {
@@ -1177,6 +1180,11 @@ body[data-game-mode="local"] .hud-card--p2 { --hud-color: var(--p2); }
 .hud-pips i { flex: 0 1 16px; min-width: 3px; height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
 .hud-pips i.is-on { background: var(--hud-color); }
 .hud-card--p1 .hud-pips i.is-on { box-shadow: 0 0 6px var(--hud-color); }
+/* Práctica: en vez de marcas, qué cuenta la tarjeta (mejor rally, fallos) */
+.hud-pips__lbl { font-size: 7px; line-height: 6px; color: var(--muted); white-space: nowrap; }
+body[data-game-mode="practice"] #hud-energy-p2 { visibility: hidden; }
+/* La práctica no da XP: la fiebre no promete el doble */
+body[data-game-mode="practice"] .hud-chip--rally.is-fever .hud-fever-xp { display: none; }
 
 /* Energía del súper golpe: 10 segmentos (updateHud). Llena, la tarjeta,
    los segmentos y la etiqueta pasan a amarillo y dice SÚPER. El rival es
@@ -2161,6 +2169,8 @@ label.set-item__head { cursor: pointer; }
 .howto-practice__btn, .howto-head__practice { justify-content: space-between; font-size: 11px; padding: 0 20px; }
 .howto-practice__note { font-size: 12px; color: var(--muted); text-align: center; }
 .howto-head__practice { display: none; }
+/* Desde la pausa no se ofrece la práctica: abandonaría la partida */
+#howto-menu[data-from="pause-menu"] .howto-practice { display: none; }
 
 /* Teléfonos muy estrechos: el diagrama encima del texto */
 @media (max-width: 359px) {
@@ -2178,6 +2188,9 @@ label.set-item__head { cursor: pointer; }
         border: 1px solid var(--panel-border);
     }
     .howto-cards { display: grid; grid-template-columns: 1fr 1fr; }
+    .howto-practice { display: none; }
+    .howto-head__practice { display: flex; width: auto; min-height: 48px; gap: 14px; }
+    #howto-menu[data-from="pause-menu"] .howto-head__practice { display: none; }
 }
 
 /* ==================================================================

@@ -33,6 +33,7 @@ const CLICK_ACTIONS = {
     togglePause:            () => togglePause(),
     quitGame:               () => quitGame(),
     restartCurrentGame:     () => restartCurrentGame(),
+    startPractice:          (el) => startPractice(el.dataset.arg),
 
     // Campaña
     carouselMove:           (el) => carouselMove(Number(el.dataset.arg)),

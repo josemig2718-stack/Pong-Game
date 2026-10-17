@@ -56,7 +56,7 @@ function initPowerups() {
  *     descuenta la propia cámara lenta, que dura 10 s reales
  */
 function updatePowerups(dt, realDt) {
-    if (!settings.powerupsEnabled) return;
+    if (!settings.powerupsEnabled || state.mode === 'practice') return;
     if (state.isPaused) return;
     if (!state.isPlaying) return;
 
@@ -496,11 +496,13 @@ function renderPowerupBursts(ctx) {
     ctx.restore();
 }
 
-/** Escudo: muro de energía con panal hexagonal y bordes que laten. */
-function drawShieldWall(ctx, wall) {
+/**
+ * Escudo: muro de energía con panal hexagonal y bordes que laten.
+ * @param {string} [c] color (el del escudo, o el del tema en la pared de práctica)
+ */
+function drawShieldWall(ctx, wall, c = SHIELD_COLOR) {
     const now = performance.now();
     const pulse = 0.5 + 0.5 * Math.sin(now / 160);
-    const c = SHIELD_COLOR;
     ctx.save();
     const g = ctx.createLinearGradient(wall.x, 0, wall.x + wall.width, 0);
     g.addColorStop(0, hexToRgba(c, 0.1));
@@ -545,9 +547,11 @@ function drawShieldWall(ctx, wall) {
  * bloqueo pierde brillo y se agrieta, y desde el tercero le faltan trozos.
  * Los huecos se recortan del muro (no se borra el campo de debajo) y las
  * marcas de al lado cuentan los bloqueos que quedan. Las grietas salen
- * de vfxHash: siempre las mismas, sin parpadeo.
+ * de vfxHash: siempre las mismas, sin parpadeo. La pared del modo
+ * práctica lo reutiliza con su color y sin las marcas.
+ * @param {{color?: string, counter?: boolean}} [opts]
  */
-function drawShieldWallV2(ctx, wall, hp, maxHp = SHIELD_HP) {
+function drawShieldWallV2(ctx, wall, hp, maxHp = SHIELD_HP, opts = {}) {
     const k = hp / maxHp;
     ctx.save();
     // Huecos, unidos si se solapan (con evenodd, dos huecos solapados se anularían)
@@ -570,7 +574,7 @@ function drawShieldWallV2(ctx, wall, hp, maxHp = SHIELD_HP) {
         ctx.clip(clip, 'evenodd');
     }
     ctx.globalAlpha = 0.45 + 0.55 * k;
-    drawShieldWall(ctx, wall);
+    drawShieldWall(ctx, wall, opts.color);
     ctx.globalAlpha = 1;
     // Grietas: más cuantas más veces ha bloqueado
     ctx.strokeStyle = 'rgba(239, 246, 255, 0.9)';
@@ -583,6 +587,7 @@ function drawShieldWallV2(ctx, wall, hp, maxHp = SHIELD_HP) {
         ctx.stroke();
     }
     ctx.restore();
+    if (opts.counter === false) return;
     // Bloqueos que quedan, al lado del campo
     ctx.save();
     const side = wall.x < GAME_WIDTH / 2 ? wall.x + wall.width + 6 : wall.x - 11;

@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=66">
+    <link rel="stylesheet" href="css/style.css?v=67">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -197,6 +197,12 @@
                     <svg class="ico mode-card__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
                 </button>
             </div>
+
+            <!-- La práctica no es un modo de partida más: un botón pequeño -->
+            <button class="btn mode-practice" data-action="startPractice" data-arg="mode-select-menu">
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+                Práctica
+            </button>
 
             <p class="mode-note">
                 <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
@@ -414,7 +420,7 @@
                     <h2 class="px screen-head__title">CÓMO JUGAR</h2>
                 </div>
                 <!-- En escritorio PRACTICAR va aquí; en móvil, al pie -->
-                <button class="btn btn-p screen-head__end howto-head__practice hidden">PRACTICAR<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></button>
+                <button class="btn btn-p screen-head__end howto-head__practice" data-action="startPractice" data-arg="howto-menu">PRACTICAR<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></button>
             </header>
             <p class="howto-intro">Las mecánicas de la versión 2. Cada una avisa la primera vez que pasa en una partida.</p>
 
@@ -471,8 +477,8 @@
             </div>
 
             <!-- Modo práctica (desde la pausa no se ofrece: abandonaría la partida) -->
-            <div class="howto-practice hidden">
-                <button class="btn btn-p howto-practice__btn">PRACTICAR<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></button>
+            <div class="howto-practice">
+                <button class="btn btn-p howto-practice__btn" data-action="startPractice" data-arg="howto-menu">PRACTICAR<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></button>
                 <span class="howto-practice__note">Modo práctica: tú contra una pared, sin marcador ni recompensas.</span>
             </div>
         </div>
@@ -778,7 +784,7 @@
             <div class="pause-panel__actions">
                 <button class="btn btn-p" data-action="togglePause">CONTINUAR<svg class="ico ico--solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></button>
                 <button class="btn" data-action="openHowto" data-arg="pause-menu">CÓMO JUGAR<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></svg></button>
-                <button class="btn btn--danger" data-action="quitGame">RENDIRSE<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></button>
+                <button class="btn btn--danger" data-action="quitGame"><span id="pause-quit-label">RENDIRSE</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></button>
             </div>
 
             <div class="pause-panel__quick">
@@ -1021,67 +1027,68 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=66"></script>
-    <script src="js/core/storage.js?v=66"></script>
-    <script src="js/core/settings.js?v=66"></script>
-    <script src="js/core/state.js?v=66"></script>
-    <script src="js/data/themes.js?v=66"></script>
-    <script src="js/data/lore.js?v=66"></script>
-    <script src="js/data/achievements.js?v=66"></script>
-    <script src="js/data/shop.js?v=66"></script>
-    <script src="js/data/levels.js?v=66"></script>
-    <script src="js/data/powerups.js?v=66"></script>
-    <script src="js/data/mechanics.js?v=66"></script>
-    <script src="js/data/music.js?v=66"></script>
-    <script src="js/systems/audio.js?v=66"></script>
-    <script src="js/systems/music.js?v=66"></script>
-    <script src="js/systems/theme.js?v=66"></script>
-    <script src="js/systems/stats.js?v=66"></script>
-    <script src="js/systems/achievements.js?v=66"></script>
-    <script src="js/systems/progression.js?v=66"></script>
-    <script src="js/systems/input.js?v=66"></script>
-    <script src="js/systems/pointer.js?v=66"></script>
-    <script src="js/game/canvas.js?v=66"></script>
-    <script src="js/game/draw.js?v=66"></script>
-    <script src="js/game/effects.js?v=66"></script>
-    <script src="js/game/balls.js?v=66"></script>
-    <script src="js/game/ai.js?v=66"></script>
-    <script src="js/game/mechanics.js?v=66"></script>
-    <script src="js/game/physics.js?v=66"></script>
-    <script src="js/game/match.js?v=66"></script>
-    <script src="js/game/hud.js?v=66"></script>
-    <script src="js/game/hints.js?v=66"></script>
-    <script src="js/game/render.js?v=66"></script>
-    <script src="js/game/loop.js?v=66"></script>
-    <script src="js/game/powerups.js?v=66"></script>
-    <script src="js/vfx/random.js?v=66"></script>
-    <script src="js/vfx/trails.js?v=66"></script>
-    <script src="js/vfx/backgrounds.js?v=66"></script>
-    <script src="js/vfx/paddles.js?v=66"></script>
-    <script src="js/vfx/goal-fx.js?v=66"></script>
-    <script src="js/vfx/super.js?v=66"></script>
-    <script src="js/vfx/mechanics.js?v=66"></script>
-    <script src="js/vfx/index.js?v=66"></script>
-    <script src="js/bosses/shared.js?v=66"></script>
-    <script src="js/bosses/chemi.js?v=66"></script>
-    <script src="js/bosses/dani.js?v=66"></script>
-    <script src="js/bosses/duo.js?v=66"></script>
-    <script src="js/bosses/fano.js?v=66"></script>
-    <script src="js/bosses/yisus.js?v=66"></script>
-    <script src="js/bosses/creator.js?v=66"></script>
-    <script src="js/bosses/index.js?v=66"></script>
-    <script src="js/campaign/progress.js?v=66"></script>
-    <script src="js/campaign/menu.js?v=66"></script>
-    <script src="js/campaign/dialogue.js?v=66"></script>
-    <script src="js/campaign/finale.js?v=66"></script>
-    <script src="js/ui/screens.js?v=66"></script>
-    <script src="js/ui/howto.js?v=66"></script>
-    <script src="js/ui/actions.js?v=66"></script>
-    <script src="js/ui/settings-panel.js?v=66"></script>
-    <script src="js/ui/stats-panel.js?v=66"></script>
-    <script src="js/ui/shop-ui.js?v=66"></script>
-    <script src="js/ui/progress-display.js?v=66"></script>
-    <script src="js/main.js?v=66"></script>
+    <script src="js/core/constants.js?v=67"></script>
+    <script src="js/core/storage.js?v=67"></script>
+    <script src="js/core/settings.js?v=67"></script>
+    <script src="js/core/state.js?v=67"></script>
+    <script src="js/data/themes.js?v=67"></script>
+    <script src="js/data/lore.js?v=67"></script>
+    <script src="js/data/achievements.js?v=67"></script>
+    <script src="js/data/shop.js?v=67"></script>
+    <script src="js/data/levels.js?v=67"></script>
+    <script src="js/data/powerups.js?v=67"></script>
+    <script src="js/data/mechanics.js?v=67"></script>
+    <script src="js/data/music.js?v=67"></script>
+    <script src="js/systems/audio.js?v=67"></script>
+    <script src="js/systems/music.js?v=67"></script>
+    <script src="js/systems/theme.js?v=67"></script>
+    <script src="js/systems/stats.js?v=67"></script>
+    <script src="js/systems/achievements.js?v=67"></script>
+    <script src="js/systems/progression.js?v=67"></script>
+    <script src="js/systems/input.js?v=67"></script>
+    <script src="js/systems/pointer.js?v=67"></script>
+    <script src="js/game/canvas.js?v=67"></script>
+    <script src="js/game/draw.js?v=67"></script>
+    <script src="js/game/effects.js?v=67"></script>
+    <script src="js/game/balls.js?v=67"></script>
+    <script src="js/game/ai.js?v=67"></script>
+    <script src="js/game/mechanics.js?v=67"></script>
+    <script src="js/game/physics.js?v=67"></script>
+    <script src="js/game/match.js?v=67"></script>
+    <script src="js/game/hud.js?v=67"></script>
+    <script src="js/game/hints.js?v=67"></script>
+    <script src="js/game/render.js?v=67"></script>
+    <script src="js/game/loop.js?v=67"></script>
+    <script src="js/game/powerups.js?v=67"></script>
+    <script src="js/game/practice.js?v=67"></script>
+    <script src="js/vfx/random.js?v=67"></script>
+    <script src="js/vfx/trails.js?v=67"></script>
+    <script src="js/vfx/backgrounds.js?v=67"></script>
+    <script src="js/vfx/paddles.js?v=67"></script>
+    <script src="js/vfx/goal-fx.js?v=67"></script>
+    <script src="js/vfx/super.js?v=67"></script>
+    <script src="js/vfx/mechanics.js?v=67"></script>
+    <script src="js/vfx/index.js?v=67"></script>
+    <script src="js/bosses/shared.js?v=67"></script>
+    <script src="js/bosses/chemi.js?v=67"></script>
+    <script src="js/bosses/dani.js?v=67"></script>
+    <script src="js/bosses/duo.js?v=67"></script>
+    <script src="js/bosses/fano.js?v=67"></script>
+    <script src="js/bosses/yisus.js?v=67"></script>
+    <script src="js/bosses/creator.js?v=67"></script>
+    <script src="js/bosses/index.js?v=67"></script>
+    <script src="js/campaign/progress.js?v=67"></script>
+    <script src="js/campaign/menu.js?v=67"></script>
+    <script src="js/campaign/dialogue.js?v=67"></script>
+    <script src="js/campaign/finale.js?v=67"></script>
+    <script src="js/ui/screens.js?v=67"></script>
+    <script src="js/ui/howto.js?v=67"></script>
+    <script src="js/ui/actions.js?v=67"></script>
+    <script src="js/ui/settings-panel.js?v=67"></script>
+    <script src="js/ui/stats-panel.js?v=67"></script>
+    <script src="js/ui/shop-ui.js?v=67"></script>
+    <script src="js/ui/progress-display.js?v=67"></script>
+    <script src="js/main.js?v=67"></script>
 </body>
 
 </html>

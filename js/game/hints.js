@@ -7,7 +7,8 @@
  * partida; si salta otro mientras se ve uno, espera su turno.
  *
  * Las claves vistas se guardan en settings.seenHints (son preferencias,
- * no progreso). El ajuste «Consejos en partida» los apaga todos.
+ * no progreso). El ajuste «Consejos en partida» los apaga todos. En el
+ * modo práctica salen siempre, una vez por sesión.
  *
  * La energía llena usa su propio aviso, #super-hint (game/hud.js), que
  * solo sale las ENERGY_HINT_TIMES primeras veces.
@@ -36,6 +37,8 @@ const HINTS = {
 let hintQueue = [];
 /** Hasta cuándo (performance.now) se ve el aviso actual; 0 = no hay ninguno. */
 let hintUntil = 0;
+/** Claves ya mostradas en esta sesión de práctica. */
+const practiceHintsShown = new Set();
 
 /**
  * Texto de un aviso.
@@ -51,12 +54,13 @@ function hintText(key) {
 }
 
 /**
- * ¿Toca mostrar este aviso? Solo con los consejos activados y si no se
- * ha visto ya.
+ * ¿Toca mostrar este aviso? En práctica, una vez por sesión; si no, solo
+ * con los consejos activados y si no se ha visto ya.
  * @param {string} key
  * @param {number} [times] veces que puede salir (la energía, varias)
  */
 function hintDue(key, times = 1) {
+    if (state.mode === 'practice') return !practiceHintsShown.has(key);
     if (!settings.showHints) return false;
     return settings.seenHints.filter((k) => k === key).length < times;
 }
@@ -66,6 +70,7 @@ function hintDue(key, times = 1) {
  * @param {string} key
  */
 function markHintSeen(key) {
+    practiceHintsShown.add(key);
     settings.seenHints.push(key);
     saveSettings();
 }
@@ -104,9 +109,10 @@ function updateHintToast() {
     nextHint();
 }
 
-/** Al empezar una partida: sin avisos pendientes. */
+/** Al empezar una partida: sin avisos pendientes (y la práctica, de cero). */
 function resetHints() {
     hintQueue = [];
     hintUntil = 0;
+    practiceHintsShown.clear();
     document.getElementById('hint-toast').classList.add('hidden');
 }

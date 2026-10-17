@@ -187,9 +187,9 @@ function resetSmashOnServe() {
 /** Pista que sonaba al empezar la fiebre, para retomarla al terminar. */
 let feverPrevTrack = null;
 
-/** La fiebre cambia la música solo en VS CPU y local (en Hachepe y campaña, no). */
+/** La fiebre cambia la música en VS CPU, local y práctica (en Hachepe y campaña, no). */
 function feverChangesMusic() {
-    return state.mode === 'cpu' || state.mode === 'local';
+    return state.mode === 'cpu' || state.mode === 'local' || state.mode === 'practice';
 }
 
 /** Empieza la fiebre del rally (al llegar a MECH.feverRally golpes). */
@@ -462,14 +462,15 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 11. Nuevo intercambio: el jefe recalcula su puntería, el último en
     // golpear se queda los power-ups y el rally suma. Cada 10 golpes de
-    // rally, los dos ganan energía.
+    // rally, los dos ganan energía (en práctica, solo el jugador: la pared
+    // no tiene).
     bossRefreshAim();
     setLastHitter(side);
     statsOnPaddleHit();
     statsOnHitType(side, type, b.spin);
     if (currentRally % 10 === 0) {
         addEnergy(p1, MECH.energy.rally10);
-        addEnergy(p2, MECH.energy.rally10);
+        if (state.mode !== 'practice') addEnergy(p2, MECH.energy.rally10);
     }
     if (currentRally === MECH.feverRally) startFever();
     return type;

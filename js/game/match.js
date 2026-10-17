@@ -16,12 +16,13 @@
 /**
  * Puntos para ganar la partida en curso: el marcador del jefe, 10 en el
  * Modo Hachepe o el de Configuración. En los jefes con barra de vida son
- * los fallos que se le permiten al jugador.
+ * los fallos que se le permiten al jugador. La práctica no tiene meta (0).
  * @returns {number}
  */
 function matchTargetScore() {
     const bcfg = bossConfig();
     if (bcfg) return bcfg.targetScore;
+    if (state.mode === 'practice') return 0;
     if (state.mode === 'hachepe') return 10;
     return settings.winningScore;
 }
@@ -30,6 +31,7 @@ function matchTargetScore() {
 function matchModeLabel() {
     if (state.mode === 'hachepe') return 'Modo Hachepe';
     if (state.mode === 'local') return 'Local';
+    if (state.mode === 'practice') return 'Práctica';
     if (state.mode === 'campaign') return 'Campaña · ' + HACHEPES_LORE[currentCampaignLevel].name;
     return 'VS CPU';
 }
@@ -40,6 +42,7 @@ function matchModeLabel() {
  * @param {boolean} withTarget
  */
 function matchInfoText(withTarget) {
+    if (state.mode === 'practice') return `Práctica · mejor rally ${matchBestRally} · ${state.p2Score} ${state.p2Score === 1 ? 'fallo' : 'fallos'}`;
     const parts = [matchModeLabel()];
     if (state.mode === 'cpu') parts.push(DIFFICULTY_NAMES[settings.difficulty] || DIFFICULTY_NAMES[2]);
     if (withTarget) {
@@ -53,6 +56,7 @@ function matchInfoText(withTarget) {
 /** Nombres de los dos lados del marcador (el jefe, sin "Hachepe": "Dani"). */
 function matchSideNames() {
     if (state.mode === 'local') return ['J1', 'J2'];
+    if (state.mode === 'practice') return ['TÚ', 'PARED'];
     if (state.mode === 'hachepe') return ['TÚ', 'HACHEPE'];
     if (state.mode === 'campaign') return ['TÚ', HACHEPES_LORE[currentCampaignLevel].name.replace(/^Hachepe /, '')];
     return ['TÚ', 'CPU'];
@@ -70,7 +74,7 @@ function fillMatchScore(prefix) {
     document.getElementById(`${prefix}-score-p1`).textContent = String(state.p1Score);
     document.getElementById(`${prefix}-score-p2`).textContent = String(state.p2Score);
     const bcfg = bossConfig();
-    document.getElementById(`${prefix}-score`).classList.toggle('hidden', !!(bcfg && bcfg.useHealth));
+    document.getElementById(`${prefix}-score`).classList.toggle('hidden', !!(bcfg && bcfg.useHealth) || state.mode === 'practice');
 }
 
 /**
@@ -100,7 +104,7 @@ function syncResultClass() {
 
 /**
  * Empieza una partida.
- * @param {'cpu'|'local'|'hachepe'|'campaign'} mode
+ * @param {GameMode} mode
  */
 function startGame(mode) {
     getAudioContext();
@@ -181,8 +185,9 @@ function restartCurrentGame() {
     startGame(state.mode);
 }
 
-/** Abandona la partida y vuelve al menú principal. */
+/** Abandona la partida y vuelve al menú principal (la práctica, a donde se entró). */
 function quitGame() {
+    const returnTo = state.mode === 'practice' ? practiceReturnScreen : 'main-menu';
     state.isPlaying = false;
     stopLoop();
     releaseSmashCharges();
@@ -213,7 +218,7 @@ function quitGame() {
     stopGameplayMusic();
     playMenuMusic();
 
-    showScreen('main-menu');
+    showScreen(returnTo);
 }
 
 /** Pausa o reanuda la partida (ESC, botón de pausa, menú de pausa). */
@@ -228,6 +233,8 @@ function togglePause() {
     if (state.isPaused) {
         fillMatchScore('pause');
         document.getElementById('pause-info').textContent = matchInfoText(true);
+        // En práctica no hay nada que rendir: se sale
+        document.getElementById('pause-quit-label').textContent = state.mode === 'practice' ? 'SALIR' : 'RENDIRSE';
         syncAudioToggles();
         document.getElementById('pause-menu').classList.add('active-screen');
         stopLoop();
@@ -264,6 +271,8 @@ function playMatchEndSound(won) {
  * @returns {boolean} true si terminó
  */
 function checkWin() {
+    // La práctica no termina nunca: se sale desde la pausa
+    if (state.mode === 'practice') return false;
     const bcfg = bossConfig();
 
     // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.

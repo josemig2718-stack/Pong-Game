@@ -104,7 +104,7 @@ let matchFeverPoints = 0;   // puntos del jugador 1 durante la fiebre (XP doble,
 function statsOnGameStart() {
     currentRally    = 0;
     maxDeficit      = 0;
-    gameStartTimeMs = performance.now();
+    gameStartTimeMs = statsCountMatch() ? performance.now() : -1;
     matchElapsedMs  = 0;
     matchBestRally  = 0;
     matchReachedMaxSpeed = false;
@@ -139,6 +139,19 @@ function statsTickMatchClock(ms) {
     matchElapsedMs += ms;
 }
 
+/** El rally vuelve a cero sin guardar nada (un fallo en el modo práctica). */
+function statsResetRally() {
+    currentRally = 0;
+}
+
+/**
+ * ¿La partida cuenta para las estadísticas guardadas? La práctica no:
+ * ni tiempo jugado ni totales.
+ */
+function statsCountMatch() {
+    return state.mode !== 'practice';
+}
+
 /** Llamar cuando la bola golpea una paleta */
 function statsOnPaddleHit() {
     currentRally++;
@@ -154,14 +167,15 @@ function statsOnPaddleHit() {
  */
 function statsOnHitType(side, type, spin) {
     if (side !== 'p1') return;
-    if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits++; }
-    if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits++; }
+    const total = statsCountMatch() ? 1 : 0;
+    if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits += total; }
+    if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits += total; }
 }
 
 /** Empieza una fiebre del rally. */
 function statsOnFeverStart() {
     matchFeverCount++;
-    gameStats.totalFevers++;
+    if (statsCountMatch()) gameStats.totalFevers++;
 }
 
 /**
@@ -287,7 +301,7 @@ function statsPauseClock() {
 
 /** Vuelve a poner en marcha el reloj al reanudar: el tiempo en pausa no cuenta. */
 function statsResumeClock() {
-    gameStartTimeMs = performance.now();
+    gameStartTimeMs = statsCountMatch() ? performance.now() : -1;
 }
 
 /** Formatea milisegundos a texto legible "Xh Ym" */

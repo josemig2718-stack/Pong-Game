@@ -63,7 +63,7 @@ function update(dt) {
     rememberPaddlePositions();
     movePlayer1(playerDt, rotatedArena, invert);
     if (state.mode === 'local') movePlayer2(dt);
-    else moveCpu(dt, bcfg);
+    else if (state.mode !== 'practice') moveCpu(dt, bcfg);   // en práctica hay una pared
     clampPaddles(rotatedArena);
     measurePaddleSpeeds(playerDt, dt, rotatedArena);
     updateSmash(p1, isActionPressed('p1Smash') || p1.smashTouchHeld, playerDt);
@@ -207,6 +207,7 @@ function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
         bossCollide(b);
 
         hitPaddles(b, rotatedArena, maxBallSpeed);
+        if (state.mode === 'practice') bouncePracticeWall(b, maxBallSpeed);
 
         if (checkGoal(b, bi, rotatedArena, ballsToRemove)) return true;
     }
@@ -280,6 +281,7 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
     /** @type {Paddle} */
     let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
     if (rotatedArena) targetPaddle = p1; // En la arena rotada solo existe p1 (abajo)
+    if (targetPaddle === p2 && state.mode === 'practice') return;   // en práctica no hay rival
 
     let hit = false;
     if (collision(b, targetPaddle)) {
@@ -312,6 +314,8 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         // La victoria se decide en checkWin() leyendo la barra de vida
         return bossHealth() <= 0 && checkWin();
     }
+
+    if (b.x - b.radius < 0 && state.mode === 'practice') return practiceMiss(b, bi, ballsToRemove);
 
     if (b.x - b.radius < 0) {
         // CPU/P2 anota

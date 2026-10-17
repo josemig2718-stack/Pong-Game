@@ -69,6 +69,7 @@ export const STYLE_STATES = [
     { name: 'salir', run: (g) => g.showScreen('exit-menu') },
     { name: 'partida', run: (g) => g.startGame('cpu') },
     { name: 'pausa', run: (g) => { g.startGame('cpu'); g.togglePause(); } },
+    { name: 'practica', run: (g) => g.startPractice('mode-select-menu') },
     {
         name: 'fin-de-partida',
         run: (g) => { g.startGame('cpu'); g.state.p1Score = 5; g.checkWin(); }

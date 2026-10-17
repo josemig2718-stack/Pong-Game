@@ -241,6 +241,32 @@ export const SCENARIOS = [
         expect: ['start:cpu', 'effect:shield', 'shield:spent']
     },
 
+    {
+        // Modo práctica: contra la pared hasta la fiebre, un fallo y salir
+        // desde la pausa (vuelve a la selección de modo); después, otra vez
+        // desde «Cómo jugar», que es adonde vuelve entonces
+        name: 'practica',
+        seed: 601,
+        actions: [
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'Práctica' },
+            { type: 'play', bot: MECHANIC, until: 'event:mech:fever', max: 20000 },
+            { type: 'steps', n: 120 },
+            { type: 'play', bot: { react: 20, noise: 120 }, until: 'goal', max: 6000 },
+            { type: 'steps', n: 240 },
+            { type: 'key', code: 'Escape' },
+            { type: 'click', text: 'SALIR' },
+            { type: 'click', text: 'VOLVER' },
+            { type: 'click', text: 'CÓMO JUGAR' },
+            { type: 'click', text: 'PRACTICAR' },
+            { type: 'play', bot: STRONG, max: 600 },
+            { type: 'key', code: 'Escape' },
+            { type: 'click', text: 'SALIR' },
+            { type: 'steps', n: 30 }
+        ],
+        expect: ['start:practice', 'mech:perfect', 'mech:smash', 'mech:fever', 'paused', 'end:practice']
+    },
+
     // --------------------------------------------------------------
     //  Campaña
     // --------------------------------------------------------------

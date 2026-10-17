@@ -15,6 +15,9 @@
 
 'use strict';
 
+/** La pared del modo práctica: unos ladrillos. */
+const HUD_WALL_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9.3h18M3 14.7h18M9 4v5.3M15 9.3v5.4M9 14.7V20"/></svg>';
+
 const HUD_CPU_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>';
 
 let hudKey = '';
@@ -49,7 +52,8 @@ function setupHud() {
         diff.textContent = ` · ${DIFFICULTY_NAMES[settings.difficulty] || DIFFICULTY_NAMES[2]}`;
         mode.appendChild(diff);
     }
-    if (!useHealth) mode.appendChild(document.createTextNode(` · a ${target}`));
+    const practice = state.mode === 'practice';
+    if (!useHealth && !practice) mode.appendChild(document.createTextNode(` · a ${target}`));
 
     const [name1, name2] = matchSideNames();
     document.getElementById('hud-name-p1').textContent = name1;
@@ -60,6 +64,8 @@ function setupHud() {
     const badge2 = document.getElementById('hud-badge-p2');
     if (state.mode === 'local') {
         badge2.textContent = 'J2';
+    } else if (practice) {
+        badge2.innerHTML = HUD_WALL_ICON;
     } else if (state.mode === 'campaign' && !useHealth) {
         const img = document.createElement('img');
         img.src = HACHEPES_LORE[currentCampaignLevel].image;
@@ -69,9 +75,17 @@ function setupHud() {
         badge2.innerHTML = HUD_CPU_ICON;
     }
 
+    // Una marca por punto; en práctica, en su lugar, qué cuenta cada tarjeta
     for (const side of ['p1', 'p2']) {
         const pips = document.getElementById(`hud-pips-${side}`);
-        pips.replaceChildren(...Array.from({ length: target }, () => document.createElement('i')));
+        if (practice) {
+            const label = document.createElement('span');
+            label.className = 'px hud-pips__lbl';
+            label.textContent = side === 'p1' ? 'MEJOR RALLY' : 'FALLOS';
+            pips.replaceChildren(label);
+        } else {
+            pips.replaceChildren(...Array.from({ length: target }, () => document.createElement('i')));
+        }
     }
 
     hudKey = '';
@@ -104,7 +118,7 @@ function fillSuperHintText(el) {
 /**
  * La energía del jugador 1 acaba de llenarse: el aviso se ve
  * MECH.superHintMs, solo las ENERGY_HINT_TIMES primeras veces (y si los
- * consejos están activados).
+ * consejos están activados; en práctica, una vez por sesión).
  */
 function showSuperHint() {
     if (!hintDue('energy', ENERGY_HINT_TIMES)) return;
@@ -153,9 +167,12 @@ function updateHud() {
     if (key === hudKey) return;
     hudKey = key;
 
+    // En práctica: el mejor rally de la sesión y los fallos (p2Score)
+    const practice = state.mode === 'practice';
     for (const side of ['p1', 'p2']) {
-        const score = side === 'p1' ? state.p1Score : state.p2Score;
+        const score = side === 'p1' ? (practice ? matchBestRally : state.p1Score) : state.p2Score;
         document.getElementById(`hud-score-${side}`).textContent = String(score);
+        if (practice) continue;
         const pips = document.getElementById(`hud-pips-${side}`).children;
         for (let i = 0; i < pips.length; i++) pips[i].classList.toggle('is-on', i < score);
     }

@@ -17,7 +17,7 @@
 
 'use strict';
 
-/** @typedef {'cpu' | 'local' | 'hachepe' | 'campaign'} GameMode */
+/** @typedef {'cpu' | 'local' | 'hachepe' | 'campaign' | 'practice'} GameMode */
 
 /**
  * Una bola en juego. Posición y velocidad en píxeles lógicos; dx/dy en
