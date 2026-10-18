@@ -73,27 +73,33 @@ function levelReward(n) {
     };
 }
 
+/** Nombres de settings.difficulty, como en Configuración. */
+const DIFFICULTY_NAMES = { 1: 'Fácil', 2: 'Normal', 3: 'Imposible' };
+
 /** XP por partida (ver awardGameRewards en systems/progression.js). */
 const XP_REWARDS = {
-    winCpuEasy: 15,
-    winCpuNormal: 25,
-    winCpuHard: 40,
+    winCpu: { 1: 15, 2: 25, 3: 40 },   // por dificultad
     winHachepe: 100,
-    perfectGame: 20,
-    scorePoint: 2,
-    completeLocal: 10,
     winCampaignBase: 40,     // se multiplica por el nº de jefe (1 a 5)
-    winCreator: 300
+    winCreator: 300,
+    completeLocal: 10,
+    loss: 5,                 // consolación (VS CPU, Hachepe o campaña)
+    scorePoint: 2,           // ×2 los anotados en fiebre
+    perfectHit: 2,
+    perfectHitMax: 10,       // por partida
+    rally: [[30, 15], [20, 10], [10, 5]],   // [rally mínimo, XP], del mayor al menor
+    smashGoal: 3,
+    superGoal: 5,
+    perfectGame: 20
 };
 
 /** Chemi Coins por partida. El modo local no da monedas, para que no se pueda farmear. */
 const COIN_REWARDS = {
-    winCpu: 5,
-    winHachepe: 20,
-    // NO coins for local mode (user explicitly requested this to prevent exploitation)
-    perfectGame: 10,
+    winCpu: { 1: 5, 2: 8, 3: 12 },
+    winHachepe: 25,
     winCampaignBase: 10,     // se multiplica por el nº de jefe (1 a 5)
-    winCreator: 100
+    winCreator: 100,
+    perfectGame: 5
 };
 
 // Al repetir un jefe ya vencido solo se recibe esta fracción: evita farmear

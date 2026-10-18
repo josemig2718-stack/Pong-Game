@@ -43,6 +43,8 @@ let sessionXPGained = 0;
 let sessionCoinsGained = 0;
 let sessionLeveledUp = false;
 let sessionNewRank = false;   // alguna de las subidas estrenó rango
+/** Desglose de la XP de la partida (awardGameRewards): el fin de partida lo enseña tal cual. */
+let sessionBreakdown = [];
 
 /**
  * Carga la progresión desde localStorage y combina con los valores por defecto.
@@ -93,6 +95,7 @@ function resetSessionTrackers() {
     sessionCoinsGained = 0;
     sessionLeveledUp = false;
     sessionNewRank = false;
+    sessionBreakdown = [];
 }
 
 /**
@@ -257,45 +260,59 @@ function equippedId(cat) {
 }
 
 /**
- * Entrega recompensas de final de partida
+ * Entrega las recompensas de fin de partida (tablas en data/levels.js) y
+ * apunta su desglose en sessionBreakdown: una fila { label, xp } por
+ * concepto, sin las que no dan nada. La práctica no llega aquí.
+ * @param {GameMode} mode
+ * @param {boolean} p1Won
+ * @param {number} p1Score
+ * @param {number} p2Score
  */
 function awardGameRewards(mode, p1Won, p1Score, p2Score) {
-    addXP(p1Score * XP_REWARDS.scorePoint);
+    /** @type {{label: string, xp: number}[]} */
+    const rows = [];
+    const row = (label, xp) => { if (xp > 0) rows.push({ label, xp }); };
+    let coins = 0;
 
-    if (mode === 'cpu' && p1Won) {
-        let diff = (settings.difficulty) ? settings.difficulty : 2;
-        if (diff === 1) addXP(XP_REWARDS.winCpuEasy);
-        else if (diff === 3) addXP(XP_REWARDS.winCpuHard);
-        else addXP(XP_REWARDS.winCpuNormal);
-
-        addCoins(COIN_REWARDS.winCpu);
-    }
-    else if (mode === 'hachepe' && p1Won) {
-        addXP(XP_REWARDS.winHachepe);
-        addCoins(COIN_REWARDS.winHachepe);
-    }
-    else if (mode === 'local') {
-        addXP(XP_REWARDS.completeLocal);
-    }
-    else if (mode === 'campaign' && p1Won) {
+    if (mode === 'local') {
+        row('Partida local', XP_REWARDS.completeLocal);
+    } else if (!p1Won) {
+        row('Derrota · consolación', XP_REWARDS.loss);
+    } else if (mode === 'cpu') {
+        const diff = DIFFICULTY_NAMES[settings.difficulty] ? settings.difficulty : 2;
+        row(`Victoria · ${DIFFICULTY_NAMES[diff]}`, XP_REWARDS.winCpu[diff]);
+        coins += COIN_REWARDS.winCpu[diff];
+    } else if (mode === 'hachepe') {
+        row('Victoria · Modo Hachepe', XP_REWARDS.winHachepe);
+        coins += COIN_REWARDS.winHachepe;
+    } else if (mode === 'campaign') {
         const level = currentCampaignLevel;
         const isCreator = level === CAMPAIGN_CREATOR;
         // Repetir un jefe ya vencido paga mucho menos
-        const factor = (isReplayingBoss) ? CAMPAIGN_REPLAY_FACTOR : 1;
-
+        const factor = isReplayingBoss ? CAMPAIGN_REPLAY_FACTOR : 1;
         const xp = isCreator ? XP_REWARDS.winCreator : XP_REWARDS.winCampaignBase * level;
-        const coins = isCreator ? COIN_REWARDS.winCreator : COIN_REWARDS.winCampaignBase * level;
-
-        addXP(Math.round(xp * factor));
-        addCoins(Math.round(coins * factor));
+        const gain = isCreator ? COIN_REWARDS.winCreator : COIN_REWARDS.winCampaignBase * level;
+        row(`Victoria · ${HACHEPES_LORE[level].name}${isReplayingBoss ? ' (repetición)' : ''}`, Math.round(xp * factor));
+        coins += Math.round(gain * factor);
     }
+
+    // Lo que se hizo en la partida (del jugador 1)
+    row(`Puntos anotados × ${p1Score}`, (p1Score + matchFeverPoints) * XP_REWARDS.scorePoint);
+    row(`Golpes perfectos × ${matchPerfect}`, Math.min(matchPerfect * XP_REWARDS.perfectHit, XP_REWARDS.perfectHitMax));
+    const rally = XP_REWARDS.rally.find(([min]) => matchBestRally >= min);
+    if (rally) row(`Rally de ${matchBestRally}${matchFeverCount > 0 ? ' (fiebre)' : ''}`, rally[1]);
+    row(`Goles de smash × ${matchSmashGoals}`, matchSmashGoals * XP_REWARDS.smashGoal);
+    row(`Goles de súper golpe × ${matchSuperGoals}`, matchSuperGoals * XP_REWARDS.superGoal);
 
     if (p1Won && p2Score === 0) {
-        addXP(XP_REWARDS.perfectGame);
+        row('Juego perfecto', XP_REWARDS.perfectGame);
         // El modo local no da monedas, tampoco por juego perfecto
-        if (mode !== 'local') addCoins(COIN_REWARDS.perfectGame);
+        if (mode !== 'local') coins += COIN_REWARDS.perfectGame;
     }
 
+    sessionBreakdown.push(...rows);
+    addXP(rows.reduce((sum, r) => sum + r.xp, 0));
+    addCoins(coins);
     saveProgression();
 }
 

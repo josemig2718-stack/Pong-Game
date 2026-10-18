@@ -77,9 +77,6 @@ function updateMenuTiles() {
     setMenuText('menu-achievements-sub', `${getUnlockedCount()} de ${getVisibleAchievementsTotal()}`);
 }
 
-/** Nombres de settings.difficulty, como en Configuración. */
-const DIFFICULTY_NAMES = { 1: 'Fácil', 2: 'Normal', 3: 'Imposible' };
-
 /**
  * Datos de las tarjetas de Selección de modo. La campaña cuenta solo
  * los cinco Hachepes ("X / 5"): el Creador no existe hasta que la
