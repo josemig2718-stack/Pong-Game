@@ -30,17 +30,7 @@ function updateProgressionDisplay() {
     if (gameOverProgression) {
         if (sessionXPGained > 0 || sessionCoinsGained > 0) {
             gameOverProgression.classList.remove('hidden');
-
-            setMenuText('game-over-xp', `+${sessionXPGained}`);
-            setMenuText('game-over-coins', `+${sessionCoinsGained}`);
-            // Sin monedas (derrotas, modo local) solo queda la XP
-            document.getElementById('game-over-coins-chip').classList.toggle('hidden', sessionCoinsGained === 0);
-
-            // Nivel tras la partida, con los mismos datos que el menú
-            setMenuText('game-over-level', `${lvl.title} · Nivel ${lvl.level}`);
-            setMenuText('game-over-xp-text', `${prog.current} / ${prog.required}`);
-            const goBar = document.getElementById('game-over-xp-bar');
-            if (goBar) goBar.style.width = `${prog.percentage}%`;
+            renderGameOverRewards(lvl, prog);
 
             // Subida de nivel; si estrena rango, con su emblema
             const alertEl = document.getElementById('level-up-alert');
@@ -57,6 +47,57 @@ function updateProgressionDisplay() {
             gameOverProgression.classList.add('hidden');
         }
     }
+}
+
+/**
+ * Fin de partida: el desglose de la XP (filas de la partida y de las
+ * misiones completadas en ella), el total y las monedas; la tarjeta de
+ * nivel, con la barra en dos tramos (lo que había, del color del tema, y
+ * lo ganado, en amarillo) y lo que falta para la siguiente recompensa;
+ * y una tarjeta por misión completada.
+ * @param {{level: number, rank: number, sub: number, title: string}} lvl
+ * @param {{current: number, required: number, percentage: number}} prog
+ */
+function renderGameOverRewards(lvl, prog) {
+    const rows = [...sessionBreakdown, ...sessionMissions.map(m => ({ label: `Misión: ${m.text}`, xp: m.xp }))];
+    document.getElementById('game-over-xp-list').replaceChildren(...rows.map(r => {
+        const li = document.createElement('li');
+        li.innerHTML = '<span></span><span class="px"></span>';
+        li.firstElementChild.textContent = r.label;
+        li.lastElementChild.textContent = `+${r.xp}`;
+        return li;
+    }));
+    setMenuText('game-over-xp', `+${sessionXPGained} XP`);
+    setMenuText('game-over-coins', `+${sessionCoinsGained}`);
+    // Sin monedas (derrotas, modo local) solo queda la XP
+    document.getElementById('game-over-coins-row').classList.toggle('hidden', sessionCoinsGained === 0);
+
+    document.getElementById('game-over-emblem').innerHTML = rankEmblemSVG(lvl.rank, lvl.sub);
+    const title = document.getElementById('game-over-level');
+    title.textContent = `${lvl.title} · Nivel ${lvl.level}`;
+    title.style.color = RANKS[lvl.rank].color;
+    setMenuText('game-over-xp-text', `${prog.current} / ${prog.required}`);
+    // Lo ganado que cae en el nivel actual (si se subió, empieza en cero)
+    const gained = Math.min(sessionXPGained, prog.current);
+    const before = (prog.current - gained) / prog.required * 100;
+    document.getElementById('game-over-xp-bar').style.width = `${before}%`;
+    const gain = document.getElementById('game-over-xp-gain');
+    gain.style.left = `${before}%`;
+    gain.style.width = `${gained / prog.required * 100}%`;
+    const missing = prog.required - prog.current;
+    setMenuText('game-over-next', lvl.level < MAX_LEVEL
+        ? `${missing} XP para el nivel ${lvl.level + 1} · ${levelReward(lvl.level + 1).coins} monedas`
+        : `${missing} XP para la siguiente estrella · ${PRESTIGE_COINS} monedas`);
+
+    document.getElementById('game-over-missions').replaceChildren(...sessionMissions.map(m => {
+        const card = document.createElement('div');
+        card.className = 'go-mission';
+        card.innerHTML = `<span class="go-mission__check">${PROGRESS_CHECK}</span>`
+            + '<div class="go-mission__text"><span class="px go-mission__tag">MISIÓN COMPLETADA</span><span class="go-mission__name"></span></div>'
+            + `<span class="px go-mission__xp">+${m.xp} XP</span>`;
+        card.querySelector('.go-mission__name').textContent = m.text;
+        return card;
+    }));
 }
 
 /** Flecha del aviso de subir de nivel (sin rango nuevo). */
