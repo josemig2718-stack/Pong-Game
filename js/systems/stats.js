@@ -105,6 +105,7 @@ let matchSmashGoals  = 0;   // goles con la bola en smash
 let matchSuperGoals  = 0;   // goles con la bola en súper
 let matchFeverCount  = 0;   // fiebres del rally
 let matchFeverPoints = 0;   // puntos del jugador 1 durante la fiebre (XP doble, fase 4)
+let matchSmashUsed   = false;   // el jugador 1 hizo algún smash o súper (misión d_win_smash)
 
 /** Llamar al iniciar una nueva partida */
 function statsOnGameStart() {
@@ -120,6 +121,7 @@ function statsOnGameStart() {
     matchSuperGoals  = 0;
     matchFeverCount  = 0;
     matchFeverPoints = 0;
+    matchSmashUsed   = false;
 }
 
 /** Una bola acaba de alcanzar la velocidad máxima del preset (desde hitPaddles). */
@@ -162,11 +164,13 @@ function statsCountMatch() {
 function statsOnPaddleHit() {
     currentRally++;
     if (currentRally > matchBestRally) matchBestRally = currentRally;
+    missionEvent('rally', currentRally);
 }
 
 /**
  * Tipo de golpe (desde resolveHit): cuenta los perfectos y los golpes con
- * efecto del jugador 1. Se guardan con el siguiente gol o al terminar.
+ * efecto del jugador 1, y lo pasa a las misiones. Los totales se guardan
+ * con el siguiente gol o al terminar.
  * @param {'p1'|'p2'} side
  * @param {HitType} type
  * @param {number} spin
@@ -176,12 +180,17 @@ function statsOnHitType(side, type, spin) {
     const total = statsCountMatch() ? 1 : 0;
     if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits += total; }
     if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits += total; }
+    if (type === 'smash' || type === 'super') matchSmashUsed = true;
+
+    if (type === 'perfect' || type === 'block' || type === 'edge') missionEvent(type);
+    if (Math.abs(spin) > MECH.spinSoundMin) missionEvent('spin');
 }
 
 /** Empieza una fiebre del rally. */
 function statsOnFeverStart() {
     matchFeverCount++;
     if (statsCountMatch()) gameStats.totalFevers++;
+    missionEvent('fever');
 }
 
 /**
@@ -217,12 +226,16 @@ function statsOnScore(scorerIsP1, ball) {
     }
     if (scorerIsP1 && state.fever) matchFeverPoints++;
 
+    if (scorerIsP1) missionEvent('point');
+    if (scorerIsP1 && ball.owner === 'p1' && ball.power === 'smash') missionEvent('smash_goal');
+    if (scorerIsP1 && ball.owner === 'p1' && ball.power === 'super') missionEvent('super_goal');
+
     saveStats();
 }
 
 /**
  * Llamar cuando termina una partida (checkWin).
- * @param {string} mode
+ * @param {GameMode} mode
  * @param {boolean} p1Won
  * @param {number} p2FinalScore puntos del rival (0 = juego perfecto)
  */
@@ -271,6 +284,17 @@ function statsOnGameEnd(mode, p1Won, p2FinalScore) {
         gameStats.localGamesPlayed++;
         if (p1Won) gameStats.localP1Wins++;
         else       gameStats.localP2Wins++;
+    }
+
+    // Misiones: las de victoria solo cuentan contra la máquina
+    const info = { mode, difficulty: settings.difficulty, smashUsed: matchSmashUsed };
+    missionEvent('game_end', 1, info);
+    if (mode === 'local') {
+        missionEvent('local_end', 1, info);
+    } else if (p1Won) {
+        missionEvent('win', 1, info);
+        if (p2FinalScore === 0) missionEvent('perfect_game', 1, info);
+        if (mode === 'campaign') missionEvent('campaign_win', 1, info);
     }
 
     saveStats();

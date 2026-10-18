@@ -24,6 +24,8 @@
  * @property {string} desc
  * @property {string} icon       glifo: `d` de un <path> en 24×24
  * @property {boolean} [secret]  se muestra como "????" hasta desbloquearse
+ * @property {string} [color]    en lugar del de la categoría (el aviso de misión)
+ * @property {boolean} [mission] es el aviso de una misión completada, no un logro
  */
 
 /**

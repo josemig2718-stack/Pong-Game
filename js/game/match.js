@@ -172,6 +172,8 @@ function startGame(mode) {
     initVFX();
     statsOnGameStart();
     resetSessionTrackers();
+    refreshMissions();
+    resetSessionMissions();
 
     // Música
     stopMenuMusic();

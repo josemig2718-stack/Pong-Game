@@ -84,7 +84,7 @@ function filterAchievements(category) {
  * @param {Achievement} ach
  */
 function achievementColor(ach) {
-    return ACHIEVEMENT_CATEGORIES[ach.category].color;
+    return ach.color || ACHIEVEMENT_CATEGORIES[ach.category].color;
 }
 
 /**

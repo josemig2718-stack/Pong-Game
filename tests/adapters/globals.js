@@ -118,7 +118,8 @@
                 mechHits: { ...mechHits },
                 confetti: confettiParticles.length,
                 shockwave,
-                carouselIndex
+                carouselIndex,
+                missionsDone: playerProgression.missionsCompleted
             };
         }
     };

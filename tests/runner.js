@@ -97,6 +97,7 @@ class Recorder {
         this.diag = [];
         this.events = new Set();
         this.prev = null;
+        this.prevMissionsDone = 0;
         this.final = null;
     }
 
@@ -173,6 +174,10 @@ class Recorder {
         for (const id of ['game-over-screen', 'finale-screen', 'vs-screen', 'pause-menu', 'news-screen', 'howto-menu']) {
             if (this.isScreen(id)) ev('screen:' + id);
         }
+        // Misiones completadas (systems/missions.js)
+        const missionsDone = this.P.diag().missionsDone;
+        if (p && missionsDone > this.prevMissionsDone) ev('mission:done');
+        this.prevMissionsDone = missionsDone;
         // Aviso de reinicio del progreso (fase 4) dentro de las Novedades
         const reset = this.doc.getElementById('news-reset');
         if (this.isScreen('news-screen') && reset && !reset.classList.contains('hidden')) ev('news:reset');

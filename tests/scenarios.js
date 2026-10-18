@@ -513,6 +513,22 @@ const RAW_SCENARIOS = [
             { type: 'steps', n: 10 }
         ],
         expect: ['screen:news-screen', 'news:reset']
+    },
+    {
+        // Misiones con la fecha virtual del harness (15-01-2026): tocan
+        // d_win_hard, d_super_goal y d_points15, y la semanal w_hachepe.
+        // Ganar en Normal completa d_win_hard al terminar la partida (con
+        // la semilla 410 el bot STRONG gana; con la 406 perdía 2-3)
+        name: 'misiones',
+        seed: 410,
+        storage: settings({ difficulty: 2, winningScore: 3 }),
+        actions: [
+            { type: 'click', text: 'JUGAR' },
+            { type: 'click', text: 'VS CPU' },
+            { type: 'play', bot: STRONG, until: 'gameover', max: 20000 },
+            { type: 'steps', n: 240 }
+        ],
+        expect: ['start:cpu', 'end:cpu', 'mission:done', 'screen:game-over-screen']
     }
 ];
 

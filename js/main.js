@@ -20,5 +20,6 @@ initCanvas();            // redimensionado del canvas con la ventana
 initPointer();           // ratón y dedo sobre el canvas, botón de pausa
 initCarouselControls();  // teclado y deslizamiento del selector de jefes
 initActions();           // botones, sliders e interruptores del HTML (data-action…)
+refreshMissions();       // misiones del día y de la semana (antes de pintar nada)
 initUI();                // interfaz inicial y menú principal
 initNews();              // Novedades encima del menú, si esta versión es nueva

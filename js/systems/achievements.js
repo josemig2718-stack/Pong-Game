@@ -108,6 +108,23 @@ function unlockAchievement(id) {
     return true;
 }
 
+/** Glifo y color (el de Progreso) de la medalla del aviso de misión completada. */
+const MISSION_TOAST_COLOR = '#818CF8';
+const MISSION_TOAST_ICON = 'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9';
+
+/**
+ * Aviso de misión completada: con el estilo del de logro, en la misma
+ * cola.
+ * @param {Mission} mission
+ */
+function showMissionToast(mission) {
+    achievementQueue.push(/** @type {Achievement} */ ({
+        id: mission.id, category: 'especiales', name: 'Misión completada', desc: mission.text,
+        icon: MISSION_TOAST_ICON, color: MISSION_TOAST_COLOR, mission: true
+    }));
+    processAchievementQueue();
+}
+
 /** Muestra las notificaciones de logros una por una */
 function processAchievementQueue() {
     if (isShowingAchievement || achievementQueue.length === 0) return;
@@ -131,8 +148,8 @@ function showAchievementToast(achievement) {
     nameEl.textContent  = achievement.name;
     descEl.textContent  = achievement.desc;
 
-    // SFX
-    soundEffects.achievementUnlock();
+    // SFX (la misión ya sonó al completarse)
+    if (!achievement.mission) soundEffects.achievementUnlock();
 
     // Animación: aparecer
     toast.classList.remove('achievement-toast--hidden');

@@ -179,6 +179,7 @@ function collectPowerup() {
     powerupsThisGame++;
     gameStats.totalPowerupsCollected++;   // para el logro "Coleccionista"
     saveStats();
+    if (beneficiary === 'p1') missionEvent('powerup');
 
     // Aplicar efecto
     applyPowerup(type, beneficiary);

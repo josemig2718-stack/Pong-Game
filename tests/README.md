@@ -141,7 +141,9 @@ adaptador expone en `diag`), `mech:fever` y `shield:spent` (el escudo se
 rompe tras su último bloqueo); también `screen:news-screen` y
 `screen:howto-menu`. Todos los escenarios empiezan con las Novedades de esta
 versión ya vistas (`seenNewsVersion`), salvo los que llevan `news: true`
-(`novedades`, `reinicio`). `news:reset` señala el aviso de reinicio del
+(`novedades`, `reinicio`). `mission:done` marca que se completó una misión (contador `missionsDone` de
+`diag`); `misiones` lo exige. Las misiones salen de la fecha virtual del
+harness (15-01-2026, en la zona horaria del equipo). `news:reset` señala el aviso de reinicio del
 progreso dentro de las Novedades: `reinicio` arranca con las claves v1 de
 antes de la fase 4 y comprueba que se borran. `expectNot` declara eventos por
 los que no debe pasar: así `salir-tras-gol` vigila que una partida nunca
