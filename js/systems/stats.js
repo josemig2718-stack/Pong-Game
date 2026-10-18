@@ -8,7 +8,8 @@
 
 'use strict';
 
-const STATS_STORAGE_KEY = 'pongGame.stats.v1';
+const STATS_STORAGE_KEY = 'pongGame.stats.v2';
+const STATS_STORAGE_KEY_V1 = 'pongGame.stats.v1';   // borrada por el reinicio de la fase 4
 
 const DEFAULT_STATS = {
     // General
@@ -48,6 +49,9 @@ const DEFAULT_STATS = {
     totalSuperGoals:  0,
     totalFevers:      0,
 
+    // Misiones diarias completadas (systems/missions.js)
+    dailyMissionsDone: 0,
+
     // Temas usados (para logro "Explorador")
     themesUsed: [],
 
@@ -56,7 +60,9 @@ const DEFAULT_STATS = {
 };
 
 function loadStats() {
-    const saved = readJSON(STATS_STORAGE_KEY, {}, 'No se pudieron leer las estadísticas:');
+    const stored = readJSON(STATS_STORAGE_KEY, null, 'No se pudieron leer las estadísticas:');
+    if (!stored) discardOldSave(STATS_STORAGE_KEY_V1);
+    const saved = stored || {};
     return {
         ...DEFAULT_STATS,
         ...saved,

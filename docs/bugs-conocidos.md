@@ -49,6 +49,14 @@ Fallos encontrados en la revisión previa a la actualización v2
 Si aparece un bug nuevo que convenga conservar temporalmente, márcalo en el
 código con `BUG conocido (conservado)` y añádelo aquí en una sección propia.
 
+### Actualización v2 · Fase 4
+
+Arreglados de paso por el sistema de progreso nuevo (`design/actualizacion-v2/fase-4-progresion.md`).
+
+| Bug | Dónde | Arreglo | Commit |
+|---|---|---|---|
+| Las compras se guardaban sin su categoría, y hay ids repetidos (`classic` es paleta y efecto de gol): tener uno daba el otro | `systems/progression.js` | `owned` guarda `'categoría:id'` (clave `pongGame.progression.v2`) | 4.1 |
+
 ## Conservados
 
 | Bug | Dónde | Por qué se conserva |

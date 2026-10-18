@@ -187,7 +187,7 @@ function toggleHints(enabled) {
  * avisos vuelven a salir). Las Novedades ya vistas no vuelven a abrirse.
  */
 function resetAllSettings() {
-    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS }, seenHints: [], seenNewsVersion: settings.seenNewsVersion });
+    Object.assign(settings, DEFAULT_SETTINGS, { bindings: { ...DEFAULT_BINDINGS }, seenHints: [], seenNewsVersion: settings.seenNewsVersion, progressWasReset: settings.progressWasReset });
     saveSettings();
     setMasterVolume(settings.volume);   // el volumen de efectos vive aparte, en systems/audio.js
     populateSettingsUI();

@@ -164,7 +164,7 @@ const TRAIL_RENDERERS = {
  */
 function renderBallTrail(ctx, trail, radius, fx) {
     const color = currentThemeHex();
-    const trailId = playerProgression.selectedTrail || 'default';
+    const trailId = equippedId('trails') || 'default';
 
     if (TRAIL_RENDERERS[trailId]) {
         TRAIL_RENDERERS[trailId](ctx, trail, radius, color, fx);

@@ -54,20 +54,13 @@ function switchShopTab(categoryKey) {
 }
 
 /** ¿El jugador tiene este artículo? Los gratuitos son de todos. */
-function shopOwns(item) {
-    return item.price === 0 || hasItem(item.id);
+function shopOwns(categoryKey, item) {
+    return item.price === 0 || hasItem(categoryKey, item.id);
 }
 
 /** Id del artículo equipado en una pestaña. */
 function shopEquippedId(categoryKey) {
-    const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
-    switch (categoryInfo && categoryInfo.cosmKey) {
-        case 'trail':  return playerProgression.selectedTrail;
-        case 'bg':     return playerProgression.selectedBg;
-        case 'paddle': return playerProgression.selectedPaddle;
-        case 'goalFx': return playerProgression.selectedGoalFx;
-    }
-    return '';
+    return equippedId(categoryKey);
 }
 
 /**
@@ -87,7 +80,7 @@ function shopIconHTML(categoryKey, item) {
  * @param {string} className
  */
 function shopActionButton(categoryKey, item, className) {
-    const owned = shopOwns(item);
+    const owned = shopOwns(categoryKey, item);
     const equipped = owned && shopEquippedId(categoryKey) === item.id;
     const btn = document.createElement('button');
     btn.className = className;
@@ -121,7 +114,7 @@ function populateShopTab(categoryKey) {
     const equippedId = shopEquippedId(categoryKey);
 
     items.forEach(item => {
-        const isOwned = shopOwns(item);
+        const isOwned = shopOwns(categoryKey, item);
         const isEquipped = isOwned && equippedId === item.id;
         const rarity = shopRarity(item.price);
 
@@ -164,7 +157,7 @@ function updateShopMeta(categoryKey) {
     let owned = 0, total = 0;
     SHOP_CATEGORIES.forEach(cat => {
         const items = SHOP_CATALOG[cat.key];
-        const mine = items.filter(shopOwns).length;
+        const mine = items.filter(item => shopOwns(cat.key, item)).length;
         owned += mine;
         total += items.length;
         const counter = document.querySelector(`.shop-tab-btn[data-arg="${cat.key}"] [data-tab-count]`);
@@ -221,14 +214,14 @@ function renderShopPreview() {
         </div>`;
 
     actions.innerHTML = '';
-    if (!shopOwns(item) && playerProgression.chemiCoins >= item.price) {
+    if (!shopOwns(currentShopTab, item) && playerProgression.coins >= item.price) {
         const rest = document.createElement('div');
         rest.className = 'shop-preview__rest';
-        rest.innerHTML = `<span>Te quedarán</span><span>${playerProgression.chemiCoins - item.price} monedas</span>`;
+        rest.innerHTML = `<span>Te quedarán</span><span>${playerProgression.coins - item.price} monedas</span>`;
         actions.appendChild(rest);
     }
     const btn = shopActionButton(currentShopTab, item, 'shop-preview__btn');
-    if (!shopOwns(item)) btn.innerHTML = `${SHOP_COIN_IMG}COMPRAR · ${item.price}`;
+    if (!shopOwns(currentShopTab, item)) btn.innerHTML = `${SHOP_COIN_IMG}COMPRAR · ${item.price}`;
     actions.appendChild(btn);
 }
 
@@ -241,11 +234,10 @@ function buyShopItem(categoryKey, itemId) {
 
     if (!item) return;
 
-    if (purchaseItem(item.id, item.price)) {
+    if (purchaseItem(categoryKey, item.id, item.price)) {
         soundEffects.shopBuy();
 
-        const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
-        selectCosmetic(categoryInfo.cosmKey, item.id);
+        selectCosmetic(categoryKey, item.id);
 
         populateShopTab(currentShopTab);
         updateCoinDisplay();
@@ -270,9 +262,8 @@ function buyShopItem(categoryKey, itemId) {
  * Equipa un objeto
  */
 function equipShopItem(categoryKey, itemId) {
-    const categoryInfo = SHOP_CATEGORIES.find(c => c.key === categoryKey);
-    if (!categoryInfo) return;
+    if (!SHOP_CATALOG[categoryKey]) return;
 
-    selectCosmetic(categoryInfo.cosmKey, itemId);
+    selectCosmetic(categoryKey, itemId);
     populateShopTab(currentShopTab);
 }

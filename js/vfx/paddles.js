@@ -178,7 +178,7 @@ const PADDLE_RENDERERS = {
  * @param {{charge: number, hit: number}} [fx]
  */
 function renderPaddleVFX(ctx, x, y, w, h, color, fx) {
-    const paddleId = playerProgression.selectedPaddle || 'classic';
+    const paddleId = equippedId('paddles') || 'classic';
     const draw = PADDLE_RENDERERS[paddleId] || PADDLE_RENDERERS['classic'];
 
     if (w <= h) {

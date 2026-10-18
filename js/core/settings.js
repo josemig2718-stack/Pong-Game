@@ -62,6 +62,7 @@ const DEFAULT_SETTINGS = {
     showHints:    true,    // avisos de primera vez en partida (game/hints.js)
     seenHints:    [],      // claves de los avisos ya vistos ('energy' se repite: una entrada por vez)
     seenNewsVersion: null, // última versión de Novedades vista (ui/news.js)
+    progressWasReset: false, // se borró un progreso v1 al cargar: Novedades avisa una vez
     bindings: { ...DEFAULT_BINDINGS }
 };
 
@@ -99,4 +100,22 @@ function saveSettings() {
 
 // Objeto de configuración activo durante toda la sesión.
 const settings = loadSettings();
+
+/**
+ * Reinicio de la fase 4 (v2): la progresión y las estadísticas pasaron a
+ * claves v2. Lo llaman loadProgression() y loadStats() cuando no existe
+ * su clave v2: si queda la v1, se borra y las Novedades avisan una vez.
+ * @param {string} oldKey
+ */
+function discardOldSave(oldKey) {
+    try {
+        if (localStorage.getItem(oldKey) === null) return;
+        localStorage.removeItem(oldKey);
+    } catch (err) {
+        console.warn('No se pudo borrar el progreso anterior:', err);
+        return;
+    }
+    settings.progressWasReset = true;
+    saveSettings();
+}
 

@@ -141,7 +141,9 @@ adaptador expone en `diag`), `mech:fever` y `shield:spent` (el escudo se
 rompe tras su último bloqueo); también `screen:news-screen` y
 `screen:howto-menu`. Todos los escenarios empiezan con las Novedades de esta
 versión ya vistas (`seenNewsVersion`), salvo los que llevan `news: true`
-(`novedades`). `expectNot` declara eventos por
+(`novedades`, `reinicio`). `news:reset` señala el aviso de reinicio del
+progreso dentro de las Novedades: `reinicio` arranca con las claves v1 de
+antes de la fase 4 y comprueba que se borran. `expectNot` declara eventos por
 los que no debe pasar: así `salir-tras-gol` vigila que una partida nunca
 empiece con la cámara lenta del gol anterior (`slowmo-al-empezar`). `play`
 puede jugar hasta `goal` (el primer gol) o hasta un evento (`event:<nombre>`),

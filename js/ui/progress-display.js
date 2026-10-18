@@ -100,11 +100,11 @@ function updateModeCards() {
  */
 function updateCoinDisplay() {
     // En la tienda el monedero ya lleva la moneda: solo cambia el número
-    setMenuText('shop-coin-display', String(playerProgression.chemiCoins));
+    setMenuText('shop-coin-display', String(playerProgression.coins));
     ['menu-coins', 'mode-coins'].forEach(id => {
         const display = document.getElementById(id);
         if (display) {
-            display.innerHTML = `<img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> ${playerProgression.chemiCoins}`;
+            display.innerHTML = `<img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> ${playerProgression.coins}`;
         }
     });
 }

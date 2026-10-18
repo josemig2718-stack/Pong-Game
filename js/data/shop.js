@@ -5,8 +5,8 @@
  * tabla de vfx/ correspondiente y su icono en assets/shop/
  * (<prefijo><id>.svg). Los iconos que usan el color del tema van además
  * en línea en SHOP_ICONS: dentro de un <img> no heredan --primary.
- * SHOP_CATEGORIES enlaza cada pestaña con el campo de playerProgression
- * donde se guarda lo equipado.
+ * Lo comprado y lo equipado se guardan por clave de categoría
+ * (playerProgression.owned / equipped).
  * ------------------------------------------------------------------
  */
 
@@ -51,15 +51,12 @@ const SHOP_CATALOG = {
     ]
 };
 
-/**
- * Pestañas de la tienda: `key` en SHOP_CATALOG ↔ `cosmKey`, la categoría
- * que entiende selectCosmetic().
- */
+/** Pestañas de la tienda: `key` en SHOP_CATALOG y su nombre. */
 const SHOP_CATEGORIES = [
-    { key: 'trails',      label: 'Estelas',       cosmKey: 'trail' },
-    { key: 'backgrounds', label: 'Fondos',         cosmKey: 'bg' },
-    { key: 'paddles',     label: 'Paletas',        cosmKey: 'paddle' },
-    { key: 'goalEffects', label: 'Efectos Gol',    cosmKey: 'goalFx' }
+    { key: 'trails',      label: 'Estelas' },
+    { key: 'backgrounds', label: 'Fondos' },
+    { key: 'paddles',     label: 'Paletas' },
+    { key: 'goalEffects', label: 'Efectos Gol' }
 ];
 
 /**

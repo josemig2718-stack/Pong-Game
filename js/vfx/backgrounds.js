@@ -218,7 +218,7 @@ const BG_RENDERERS = {
 
 /** Arranca el fondo equipado (al empezar cada partida). */
 function initBackground() {
-    const bgId = playerProgression.selectedBg || 'none';
+    const bgId = equippedId('backgrounds') || 'none';
     currentBgId = bgId;
     if (BG_RENDERERS[bgId]) {
         BG_RENDERERS[bgId].init();

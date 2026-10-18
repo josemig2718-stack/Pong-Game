@@ -41,13 +41,13 @@ const FREEZE_CSS = `*, *::before, *::after {
  */
 const STORAGE = {
     'pongGame.settings.v1': JSON.stringify({ seenNewsVersion: '2.0' }),
-    'pongGame.progression.v1': JSON.stringify({
-        totalXP: 300, level: 3, chemiCoins: 85,
-        selectedTrail: 'neon', selectedBg: 'none', selectedPaddle: 'classic', selectedGoalFx: 'classic',
-        purchasedItems: ['default', 'none', 'classic', 'neon'],
+    'pongGame.progression.v2': JSON.stringify({
+        totalXP: 300, level: 3, coins: 85,
+        equipped: { trails: 'neon' },
+        owned: ['trails:neon'],
         campaignProgress: 3, campaignIntroSeen: true
     }),
-    'pongGame.stats.v1': JSON.stringify({
+    'pongGame.stats.v2': JSON.stringify({
         totalGamesPlayed: 12, cpuWins: 7, cpuLosses: 5, longestRally: 18, maxBallSpeed: 12.5,
         achievements: { first_win: '2026-01-10T12:00:00.000Z', games_10: '2026-01-12T12:00:00.000Z' }
     })

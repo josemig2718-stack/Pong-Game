@@ -264,7 +264,7 @@ const GOAL_FX = {
 
 /** Lanza el efecto de gol equipado en la posición del gol. */
 function triggerGoalVFX(goalX, goalY) {
-    const fxId = playerProgression.selectedGoalFx || 'classic';
+    const fxId = equippedId('goalEffects') || 'classic';
 
     if (GOAL_FX[fxId]) {
         GOAL_FX[fxId].trigger(goalX, goalY, currentThemeHex());
@@ -299,7 +299,7 @@ function updateGoalVFX(dt) {
  * @param {CanvasRenderingContext2D} ctx
  */
 function renderGoalVFX(ctx) {
-    const fxId = playerProgression.selectedGoalFx || 'classic';
+    const fxId = equippedId('goalEffects') || 'classic';
 
     if (GOAL_FX[fxId]) {
         GOAL_FX[fxId].render(ctx);

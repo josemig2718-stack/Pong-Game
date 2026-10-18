@@ -173,6 +173,9 @@ class Recorder {
         for (const id of ['game-over-screen', 'finale-screen', 'vs-screen', 'pause-menu', 'news-screen', 'howto-menu']) {
             if (this.isScreen(id)) ev('screen:' + id);
         }
+        // Aviso de reinicio del progreso (fase 4) dentro de las Novedades
+        const reset = this.doc.getElementById('news-reset');
+        if (this.isScreen('news-screen') && reset && !reset.classList.contains('hidden')) ev('news:reset');
     }
 
     /**

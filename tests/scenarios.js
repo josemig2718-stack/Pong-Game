@@ -37,7 +37,7 @@
 const settings = (values) => ({ 'pongGame.settings.v1': JSON.stringify(values) });
 
 /** @param {object} values */
-const progression = (values) => ({ 'pongGame.progression.v1': JSON.stringify(values) });
+const progression = (values) => ({ 'pongGame.progression.v2': JSON.stringify(values) });
 
 /** Progreso de campaña con la intro ya vista. */
 const campaign = (level, extra = {}) => progression({ campaignIntroSeen: true, campaignProgress: level, ...extra });
@@ -359,7 +359,7 @@ const RAW_SCENARIOS = [
     {
         name: 'interfaz',
         seed: 401,
-        storage: progression({ chemiCoins: 500, campaignIntroSeen: true }),
+        storage: progression({ coins: 500, campaignIntroSeen: true }),
         actions: [
             // Tienda: comprar y equipar en varias pestañas
             { type: 'click', text: 'TIENDA' },
@@ -437,7 +437,7 @@ const RAW_SCENARIOS = [
         // siguiente partida debe empezar sin ella ni restos del efecto
         name: 'salir-tras-gol',
         seed: 403,
-        storage: progression({ selectedGoalFx: 'epic_flash', purchasedItems: ['default', 'none', 'classic', 'epic_flash'] }),
+        storage: progression({ equipped: { goalEffects: 'epic_flash' }, owned: ['goalEffects:epic_flash'] }),
         actions: [
             { type: 'click', text: 'JUGAR' },
             { type: 'click', text: 'VS CPU' },
@@ -484,6 +484,35 @@ const RAW_SCENARIOS = [
             { type: 'steps', n: 10 }
         ],
         expect: ['screen:news-screen', 'screen:howto-menu']
+    },
+    {
+        // Datos de antes de la fase 4 (claves v1): al cargar se borran,
+        // se empieza de cero conservando los ajustes y las Novedades
+        // avisan del reinicio una sola vez
+        name: 'reinicio',
+        seed: 405,
+        news: true,
+        storage: {
+            ...settings({ theme: 'purple', difficulty: 3, seenNewsVersion: '1.0' }),
+            'pongGame.progression.v1': JSON.stringify({
+                totalXP: 900, level: 7, chemiCoins: 240, selectedTrail: 'fire',
+                purchasedItems: ['default', 'none', 'classic', 'fire'], campaignProgress: 4, campaignIntroSeen: true
+            }),
+            'pongGame.stats.v1': JSON.stringify({
+                totalGamesPlayed: 30, cpuWins: 18, longestRally: 22,
+                achievements: { first_win: '2025-12-01T12:00:00.000Z', games_10: '2025-12-10T12:00:00.000Z' }
+            })
+        },
+        actions: [
+            { type: 'steps', n: 30 },
+            { type: 'click', text: '¡A JUGAR!' },
+            { type: 'steps', n: 10 },
+            { type: 'clickSel', sel: '#news-btn' },
+            { type: 'steps', n: 10 },
+            { type: 'key', code: 'Escape' },
+            { type: 'steps', n: 10 }
+        ],
+        expect: ['screen:news-screen', 'news:reset']
     }
 ];
 

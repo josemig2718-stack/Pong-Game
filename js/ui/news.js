@@ -10,8 +10,8 @@
  * debajo (inert). En móvil la tapa entera; desde 900px es un diálogo
  * sobre el menú oscurecido.
  *
- * El aviso de reinicio solo sale la primera vez, y solo si la fase 4
- * reinició un progreso anterior (progressWasReset).
+ * El aviso de reinicio solo sale si la fase 4 reinició un progreso
+ * anterior (settings.progressWasReset), hasta que se cierran.
  * ------------------------------------------------------------------
  */
 
@@ -69,8 +69,9 @@ function hideNews() {
 function closeNews() {
     hideNews();
     newsResetPending = false;
-    if (settings.seenNewsVersion !== NEWS_VERSION) {
+    if (settings.seenNewsVersion !== NEWS_VERSION || settings.progressWasReset) {
         settings.seenNewsVersion = NEWS_VERSION;
+        settings.progressWasReset = false;
         saveSettings();
     }
     updateNewsButton();
@@ -88,10 +89,13 @@ function updateNewsButton() {
     document.getElementById('news-btn').classList.toggle('is-new', settings.seenNewsVersion !== NEWS_VERSION);
 }
 
-/** Al cargar (después de initUI): abre las Novedades si esta versión es nueva. */
+/**
+ * Al cargar (después de initUI): abre las Novedades si esta versión es
+ * nueva o si se acaba de reiniciar el progreso (con su aviso).
+ */
 function initNews() {
     updateNewsButton();
-    if (settings.seenNewsVersion === NEWS_VERSION) return;
-    newsResetPending = progressWasReset;
+    if (settings.seenNewsVersion === NEWS_VERSION && !settings.progressWasReset) return;
+    newsResetPending = settings.progressWasReset;
     openNews();
 }

@@ -3,7 +3,12 @@
  * ------------------------------------------------------------------
  * Progresión del jugador: XP, nivel, Chemi Coins, objetos comprados,
  * cosméticos equipados y avance de la campaña. Se guarda en
- * localStorage (clave pongGame.progression.v1).
+ * localStorage (clave pongGame.progression.v2).
+ *
+ * La fase 4 de la v2 reinició el progreso: una partida guardada con la
+ * clave v1 se borra al cargar (ver discardOldSave en core/settings.js).
+ * Las compras se guardan con su categoría ('trails:neon'): hay ids
+ * repetidos entre categorías ('classic' es paleta y efecto de gol).
  *
  * Las tablas de niveles y recompensas están en data/levels.js.
  * ------------------------------------------------------------------
@@ -11,28 +16,27 @@
 
 'use strict';
 
-const PROG_STORAGE_KEY = 'pongGame.progression.v1';
+const PROG_STORAGE_KEY = 'pongGame.progression.v2';
+const PROG_STORAGE_KEY_V1 = 'pongGame.progression.v1';
 
 const DEFAULT_PROGRESSION = {
     totalXP: 0,
-    level: 1,
-    chemiCoins: 0,
-    selectedTrail: 'default',
-    selectedBg: 'none',
-    selectedPaddle: 'classic',
-    selectedGoalFx: 'classic',
-    purchasedItems: ['default', 'none', 'classic'],  // Free items pre-purchased
-    campaignProgress: 1, // Nivel de la campaña (1 a 6)
-    campaignIntroSeen: false // Si ya vio la historia inicial
+    level: 1,                 // 1–50
+    prestige: 0,              // estrellas de prestigio
+    coins: 0,                 // Chemi Coins
+    owned: ['trails:default', 'backgrounds:none', 'paddles:classic', 'goalEffects:classic',
+            'balls:classic', 'super:energy', 'music:partida_synthwave'],
+    equipped: { trails: 'default', backgrounds: 'none', paddles: 'classic', goalEffects: 'classic',
+                balls: 'classic', super: 'energy', music: 'partida_synthwave' },
+    rewardedLevel: 1,         // hasta qué nivel se han cobrado ya las recompensas
+    campaignProgress: 1,      // nivel de la campaña (1 a 6)
+    campaignIntroSeen: false, // si ya vio la historia inicial
+    missions: null,           // misiones del día y de la semana (systems/missions.js)
+    missionsCompleted: 0,
+    weeklyCompleted: 0
 };
 
 const playerProgression = loadProgression();
-
-/**
- * true si al cargar se reinició el progreso de una versión anterior. Lo
- * pondrá el reinicio de la fase 4; Novedades lo lee para mostrar su aviso.
- */
-let progressWasReset = false;
 
 // Session trackers for end-of-game summary
 let sessionXPGained = 0;
@@ -44,22 +48,30 @@ let sessionNewTitle = '';
  * Carga la progresión desde localStorage y combina con los valores por defecto.
  * No usa readJSON(): aquí la combinación va dentro del try, así que una
  * partida guardada ilegible (incluido el JSON `null`) vuelve a los valores
- * por defecto en vez de romper la carga.
+ * por defecto en vez de romper la carga. Sin partida v2, se descarta la v1.
  */
 function loadProgression() {
     try {
         const saved = localStorage.getItem(PROG_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            const items = [...(parsed.purchasedItems || DEFAULT_PROGRESSION.purchasedItems)];
+            const owned = [...(parsed.owned || DEFAULT_PROGRESSION.owned)];
             // Los artículos gratuitos siempre están en propiedad
-            for (const list of Object.values(SHOP_CATALOG)) {
-                for (const item of list) {
-                    if (item.price === 0 && !items.includes(item.id)) items.push(item.id);
+            for (const cat in SHOP_CATALOG) {
+                for (const item of SHOP_CATALOG[cat]) {
+                    const key = `${cat}:${item.id}`;
+                    if (item.price === 0 && !owned.includes(key)) owned.push(key);
                 }
             }
-            return { ...DEFAULT_PROGRESSION, ...parsed, purchasedItems: items };
+            return {
+                ...DEFAULT_PROGRESSION,
+                ...parsed,
+                owned,
+                // Una categoría nueva toma su valor por defecto
+                equipped: { ...DEFAULT_PROGRESSION.equipped, ...parsed.equipped }
+            };
         }
+        discardOldSave(PROG_STORAGE_KEY_V1);
     } catch (e) {
         console.warn("Error cargando progresión:", e);
     }
@@ -99,7 +111,7 @@ function addXP(amount) {
  */
 function addCoins(amount) {
     if (amount <= 0) return;
-    playerProgression.chemiCoins += amount;
+    playerProgression.coins += amount;
     sessionCoinsGained += amount;
     saveProgression();
 }
@@ -108,8 +120,8 @@ function addCoins(amount) {
  * Gasta Chemi Coins
  */
 function spendCoins(amount) {
-    if (playerProgression.chemiCoins >= amount) {
-        playerProgression.chemiCoins -= amount;
+    if (playerProgression.coins >= amount) {
+        playerProgression.coins -= amount;
         saveProgression();
         return true;
     }
@@ -183,18 +195,23 @@ function getXPProgress() {
 }
 
 /**
- * Comprueba si tiene un objeto
+ * ¿Tiene el jugador este objeto?
+ * @param {string} cat clave de SHOP_CATALOG ('trails', 'paddles'…)
+ * @param {string} id
  */
-function hasItem(itemId) {
-    return playerProgression.purchasedItems.includes(itemId);
+function hasItem(cat, id) {
+    return playerProgression.owned.includes(`${cat}:${id}`);
 }
 
 /**
- * Compra un objeto de la tienda
+ * Compra un objeto de la tienda.
+ * @param {string} cat clave de SHOP_CATALOG
+ * @param {string} id
+ * @param {number} cost
  */
-function purchaseItem(itemId, cost) {
+function purchaseItem(cat, id, cost) {
     if (spendCoins(cost)) {
-        playerProgression.purchasedItems.push(itemId);
+        playerProgression.owned.push(`${cat}:${id}`);
         saveProgression();
 
         // Cuenta solo los objetos de pago: la lista guardada puede traer
@@ -208,25 +225,24 @@ function purchaseItem(itemId, cost) {
 }
 
 /**
- * Selecciona un cosmético para usar
+ * Equipa un cosmético.
+ * @param {string} cat clave de SHOP_CATALOG
+ * @param {string} id
  */
-function selectCosmetic(category, id) {
-    switch (category) {
-        case 'trail':
-            playerProgression.selectedTrail = id;
-            break;
-        case 'bg':
-            playerProgression.selectedBg = id;
-            setActiveBg(id);
-            break;
-        case 'paddle':
-            playerProgression.selectedPaddle = id;
-            break;
-        case 'goalFx':
-            playerProgression.selectedGoalFx = id;
-            break;
-    }
+function selectCosmetic(cat, id) {
+    playerProgression.equipped[cat] = id;
+    if (cat === 'backgrounds') setActiveBg(id);
     saveProgression();
+}
+
+/**
+ * Id del cosmético equipado en una categoría (lo leen los renderizadores
+ * de vfx/ en cada fotograma).
+ * @param {string} cat clave de SHOP_CATALOG
+ * @returns {string}
+ */
+function equippedId(cat) {
+    return playerProgression.equipped[cat];
 }
 
 /**
@@ -290,14 +306,10 @@ function getTotalShopItems() {
  */
 function getTotalPurchasedItems() {
     let count = 0;
-    playerProgression.purchasedItems.forEach(id => {
-        for (const key in SHOP_CATALOG) {
-            const item = SHOP_CATALOG[key].find(i => i.id === id);
-            if (item && item.price > 0) {
-                count++;
-                break;
-            }
-        }
+    playerProgression.owned.forEach(key => {
+        const [cat, id] = key.split(':');
+        const item = (SHOP_CATALOG[cat] || []).find(i => i.id === id);
+        if (item && item.price > 0) count++;
     });
     return count;
 }
