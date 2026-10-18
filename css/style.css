@@ -396,18 +396,9 @@ h1, h2, h3 { font-family: var(--font-display); }
     cursor: pointer;
 }
 .menu-progress__level { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-.menu-progress__badge {
-    flex: none;
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 10px;
-    background: rgba(var(--primary-rgb), 0.12);
-    border: 1px solid rgba(var(--primary-rgb), 0.5);
-    color: var(--primary);
-    font-size: 13px;
-}
+/* El emblema del rango (ui/progress-ui.js) */
+.menu-progress__badge { flex: none; width: 42px; height: 42px; display: grid; place-items: center; }
+.menu-progress__badge svg { width: 100%; height: 100%; }
 .menu-progress__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-progress__row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .menu-progress__title { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -520,7 +511,7 @@ h1, h2, h3 { font-family: var(--font-display); }
     .menu-panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
 
     .menu-progress { flex-direction: column; align-items: stretch; gap: 18px; }
-    .menu-progress__badge { width: 52px; height: 52px; font-size: 16px; }
+    .menu-progress__badge { width: 52px; height: 52px; }
     .menu-progress__info { gap: 8px; }
     .menu-progress__title { font-size: 16px; }
     .menu-progress__coins { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
@@ -2555,6 +2546,9 @@ label.set-item__head { cursor: pointer; }
     border: 1px dashed rgba(250, 204, 21, 0.45);
     color: var(--gold);
 }
+.go-levelup__icon { flex: none; display: grid; place-items: center; }
+.go-levelup--rank .go-levelup__icon { width: 40px; height: 40px; }
+.go-levelup--rank .go-levelup__icon svg { width: 100%; height: 100%; }
 .go-levelup__text { display: flex; flex-direction: column; gap: 5px; }
 .go-levelup__title { font-size: 9px; line-height: 1.5; }
 #level-up-text { font-size: 13px; font-weight: 600; color: var(--text); }

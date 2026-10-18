@@ -13,13 +13,14 @@
  * Actualiza la UI de progresión (barra XP, nivel, y el panel de fin de partida)
  */
 function updateProgressionDisplay() {
-    // 1. Menú principal: insignia de nivel, título y XP hacia el siguiente
+    // 1. Menú principal: emblema del rango, título y XP hacia el siguiente
+    // nivel (en el 50, hacia la siguiente estrella de prestigio)
     const lvl = getCurrentLevel();
     const prog = getXPProgress();
-    const isMaxLevel = lvl.level >= LEVELS.length;
-    setMenuText('menu-level-num', String(lvl.level));
+    const badge = document.getElementById('menu-level-num');
+    if (badge) badge.innerHTML = rankEmblemSVG(lvl.rank, lvl.sub);
     setMenuText('menu-level-title', lvl.title);
-    setMenuText('menu-xp-text', isMaxLevel ? 'Nivel máximo' : `${prog.current} / ${prog.required} XP`);
+    setMenuText('menu-xp-text', `${prog.current} / ${prog.required} XP`);
 
     const barEl = document.getElementById('menu-xp-bar');
     if (barEl) barEl.style.width = `${prog.percentage}%`;
@@ -36,23 +37,30 @@ function updateProgressionDisplay() {
             document.getElementById('game-over-coins-chip').classList.toggle('hidden', sessionCoinsGained === 0);
 
             // Nivel tras la partida, con los mismos datos que el menú
-            setMenuText('game-over-level', `Nivel ${lvl.level} · ${lvl.title}`);
-            setMenuText('game-over-xp-text', isMaxLevel ? 'Nivel máximo' : `${prog.current} / ${prog.required}`);
+            setMenuText('game-over-level', `${lvl.title} · Nivel ${lvl.level}`);
+            setMenuText('game-over-xp-text', `${prog.current} / ${prog.required}`);
             const goBar = document.getElementById('game-over-xp-bar');
             if (goBar) goBar.style.width = `${prog.percentage}%`;
 
+            // Subida de nivel; si estrena rango, con su emblema
             const alertEl = document.getElementById('level-up-alert');
+            alertEl.classList.toggle('hidden', !sessionLeveledUp);
+            alertEl.classList.toggle('go-levelup--rank', sessionNewRank);
             if (sessionLeveledUp) {
-                alertEl.classList.remove('hidden');
-                document.getElementById('level-up-text').textContent = sessionNewTitle;
-            } else {
-                alertEl.classList.add('hidden');
+                setMenuText('level-up-title', sessionNewRank ? '¡NUEVO RANGO!' : '¡SUBISTE DE NIVEL!');
+                document.getElementById('level-up-icon').innerHTML = sessionNewRank
+                    ? rankEmblemSVG(lvl.rank, lvl.sub)
+                    : LEVEL_UP_ICON;
+                setMenuText('level-up-text', `${lvl.title} · Nivel ${lvl.level}`);
             }
         } else {
             gameOverProgression.classList.add('hidden');
         }
     }
 }
+
+/** Flecha del aviso de subir de nivel (sin rango nuevo). */
+const LEVEL_UP_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 
 /** @param {string} id @param {string} text */
 function setMenuText(id, text) {

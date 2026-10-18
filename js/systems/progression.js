@@ -38,11 +38,11 @@ const DEFAULT_PROGRESSION = {
 
 const playerProgression = loadProgression();
 
-// Session trackers for end-of-game summary
+// Resumen de la partida en curso para el fin de partida
 let sessionXPGained = 0;
 let sessionCoinsGained = 0;
 let sessionLeveledUp = false;
-let sessionNewTitle = '';
+let sessionNewRank = false;   // alguna de las subidas estrenó rango
 
 /**
  * Carga la progresión desde localStorage y combina con los valores por defecto.
@@ -92,7 +92,7 @@ function resetSessionTrackers() {
     sessionXPGained = 0;
     sessionCoinsGained = 0;
     sessionLeveledUp = false;
-    sessionNewTitle = '';
+    sessionNewRank = false;
 }
 
 /**
@@ -129,27 +129,34 @@ function spendCoins(amount) {
 }
 
 /**
- * Comprueba si el jugador subió de nivel
+ * Comprueba si el jugador subió de nivel. Cobra todos los niveles
+ * pendientes (de rewardedLevel + 1 al nuevo), así una partida que sube
+ * dos niveles cobra los dos, y las estrellas de prestigio por encima del 50.
  */
 function checkLevelUp() {
-    let currentLevelObj = getCurrentLevel();
-
-    let newLevelObj = currentLevelObj;
-    for (let i = 0; i < LEVELS.length; i++) {
-        if (playerProgression.totalXP >= LEVELS[i].xpRequired) {
-            newLevelObj = LEVELS[i];
-        }
+    const p = playerProgression;
+    const level = levelForXP(p.totalXP);
+    if (level > p.level) {
+        p.level = level;
+        sessionLeveledUp = true;
+        soundEffects.levelUp();
     }
 
-    if (newLevelObj.level > playerProgression.level) {
-        playerProgression.level = newLevelObj.level;
-        sessionLeveledUp = true;
-        sessionNewTitle = newLevelObj.title;
+    for (let n = p.rewardedLevel + 1; n <= level; n++) {
+        const reward = levelReward(n);
+        p.rewardedLevel = n;
+        addCoins(reward.coins);
+        if (reward.rank !== null) sessionNewRank = true;
+        if (reward.exclusive) grantExclusive(reward.exclusive);
+    }
 
-        addCoins(newLevelObj.coinBonus);
+    const stars = prestigeForXP(p.totalXP);
+    while (p.prestige < stars) {
+        p.prestige++;
+        addCoins(PRESTIGE_COINS);
+    }
 
-        soundEffects.levelUp();
-
+    if (sessionLeveledUp) {
         // Los ids del catálogo son reach_level_*, no level_*
         if (achievementGoalMet('reach_level_5')) unlockAchievement('reach_level_5');
         if (achievementGoalMet('reach_level_10')) unlockAchievement('reach_level_10');
@@ -157,40 +164,44 @@ function checkLevelUp() {
 }
 
 /**
- * Devuelve el objeto del nivel actual
+ * Entrega un objeto exclusivo (no se vende en la tienda): la paleta
+ * Dorada del nivel 50. La fase 5 añade el objeto al catálogo.
+ * @param {string} key 'categoría:id'
  */
-function getCurrentLevel() {
-    let current = LEVELS[0];
-    for (let i = 0; i < LEVELS.length; i++) {
-        if (playerProgression.totalXP >= LEVELS[i].xpRequired) {
-            current = LEVELS[i];
-        } else {
-            break;
-        }
-    }
-    return current;
+function grantExclusive(key) {
+    if (!playerProgression.owned.includes(key)) playerProgression.owned.push(key);
+    saveProgression();
 }
 
 /**
- * Calcula el progreso hacia el siguiente nivel
+ * Nivel actual (1–50) con su rango, subnivel y título.
+ * @returns {{level: number, rank: number, sub: number, title: string}}
+ */
+function getCurrentLevel() {
+    const level = levelForXP(playerProgression.totalXP);
+    return { level, ...levelInfo(level) };
+}
+
+/**
+ * Progreso hacia el siguiente nivel; en el 50, hacia la siguiente
+ * estrella de prestigio.
+ * @returns {{current: number, required: number, percentage: number}}
  */
 function getXPProgress() {
-    let currentLvl = getCurrentLevel();
-    let nextLvlIndex = currentLvl.level; // porque el index es nivel-1
-
-    if (nextLvlIndex >= LEVELS.length) {
-        return { current: 0, required: 1, percentage: 100 };
+    const xp = playerProgression.totalXP;
+    const level = levelForXP(xp);
+    let current, required;
+    if (level >= MAX_LEVEL) {
+        current = (xp - xpForLevel(MAX_LEVEL)) % PRESTIGE_XP;
+        required = PRESTIGE_XP;
+    } else {
+        current = xp - xpForLevel(level);
+        required = xpToNext(level);
     }
-
-    let nextLvl = LEVELS[nextLvlIndex];
-    let xpInCurrentLevel = playerProgression.totalXP - currentLvl.xpRequired;
-    let xpNeededForNext = nextLvl.xpRequired - currentLvl.xpRequired;
-    let percentage = (xpInCurrentLevel / xpNeededForNext) * 100;
-
     return {
-        current: xpInCurrentLevel,
-        required: xpNeededForNext,
-        percentage: Math.min(Math.max(percentage, 0), 100)
+        current,
+        required,
+        percentage: Math.min(Math.max(current / required * 100, 0), 100)
     };
 }
 

@@ -55,7 +55,7 @@ Arreglados de paso por el sistema de progreso nuevo (`design/actualizacion-v2/fa
 
 | Bug | Dónde | Arreglo | Commit |
 |---|---|---|---|
-| Las compras se guardaban sin su categoría, y hay ids repetidos (`classic` es paleta y efecto de gol): tener uno daba el otro | `systems/progression.js` | `owned` guarda `'categoría:id'` (clave `pongGame.progression.v2`) | 4.1 |
+| Las compras se guardaban sin su categoría, y hay ids repetidos (`classic` es paleta y efecto de gol): tener uno daba el otro | `systems/progression.js` | `owned` guarda `'categoría:id'` (clave `pongGame.progression.v2`) | `38a3995` |
 
 ## Conservados
 
