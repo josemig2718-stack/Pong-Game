@@ -36,9 +36,19 @@ const ACHIEVEMENT_GOALS = {
     win_all_diff:      { target: 3,   value: () => [gameStats.cpuWinsEasy, gameStats.cpuWinsNormal, gameStats.cpuWinsHard].filter(n => n > 0).length },
     explorer:          { target: () => Object.keys(THEMES).length, value: () => gameStats.themesUsed.length },
     powerup_collector: { target: 50,  value: () => gameStats.totalPowerupsCollected },
-    reach_level_5:     { target: 5,   value: () => playerProgression.level },
-    reach_level_10:    { target: 10,  value: () => playerProgression.level },
-    fashionista:       { target: () => getTotalShopItems(), value: () => getTotalPurchasedItems() }
+    reach_level_5:     { target: 21,  value: () => playerProgression.level },   // rango Experto
+    reach_level_10:    { target: 50,  value: () => playerProgression.level },
+    level_25:          { target: 25,  value: () => playerProgression.level },
+    prestige_1:        { target: 1,   value: () => playerProgression.prestige },
+    // Solo los objetos de pago: los exclusivos no entran
+    fashionista:       { target: () => getTotalShopItems(), value: () => getTotalPurchasedItems() },
+    perfect_100:       { target: 100, value: () => gameStats.totalPerfectHits },
+    smash_goals_25:    { target: 25,  value: () => gameStats.totalSmashGoals },
+    super_goals_10:    { target: 10,  value: () => gameStats.totalSuperGoals },
+    rally_50:          { target: 50,  value: () => gameStats.longestRally },
+    missions_10:       { target: 10,  value: () => playerProgression.missionsCompleted },
+    missions_50:       { target: 50,  value: () => playerProgression.missionsCompleted },
+    weekly_first:      { target: 1,   value: () => playerProgression.weeklyCompleted }
 };
 
 /** Meta numérica de un logro acumulativo. */
@@ -224,12 +234,23 @@ function checkAllAchievements(mode, p1Won) {
         unlockAchievement('powerup_collector');
     }
 
+    // --- Mecánicas ---
+    if (s.totalSpinHits >= 1)                              unlockAchievement('spin_first');
+    if (matchPerfect >= 10)                                unlockAchievement('perfect_10');
+    if (achievementGoalMet('perfect_100'))                 unlockAchievement('perfect_100');
+    if (s.totalSmashGoals >= 1)                            unlockAchievement('smash_first');
+    if (achievementGoalMet('smash_goals_25'))              unlockAchievement('smash_goals_25');
+    if (s.totalSuperGoals >= 1)                            unlockAchievement('super_first');
+    if (achievementGoalMet('super_goals_10'))              unlockAchievement('super_goals_10');
+    if (s.totalFevers >= 1)                                unlockAchievement('fever_first');
+    if (achievementGoalMet('rally_50'))                    unlockAchievement('rally_50');
+
     // Nivel y tienda: también al terminar una partida (con `mode`), no solo
     // al subir de nivel o al comprar, para que se pongan al día. No al
     // estrenar un tema: eso pasa al abrir el juego y no debe dar avisos.
     if (mode) {
-        if (achievementGoalMet('reach_level_5'))  unlockAchievement('reach_level_5');
-        if (achievementGoalMet('reach_level_10')) unlockAchievement('reach_level_10');
+        checkLevelAchievements();
+        checkMissionAchievements();
         if (achievementGoalMet('fashionista'))    unlockAchievement('fashionista');
         if (getTotalPurchasedItems() >= 1)        unlockAchievement('grow_partner');
     }
@@ -243,7 +264,20 @@ function checkAllAchievements(mode, p1Won) {
     }
 }
 
-/** Cuenta cuántos logros están desbloqueados */
+/** Logros de nivel y prestigio (al subir de nivel y al terminar una partida). */
+function checkLevelAchievements() {
+    for (const id of ['reach_level_5', 'level_25', 'reach_level_10', 'prestige_1']) {
+        if (achievementGoalMet(id)) unlockAchievement(id);
+    }
+}
+
+/** Logros de misiones (al completar una y al terminar una partida). */
+function checkMissionAchievements() {
+    for (const id of ['missions_10', 'missions_50', 'weekly_first']) {
+        if (achievementGoalMet(id)) unlockAchievement(id);
+    }
+}
+
 /**
  * Total de logros a efectos de contador. Un secreto aún bloqueado no se
  * cuenta: si no, el marcador delataría que existe algo escondido.

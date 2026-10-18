@@ -13,7 +13,7 @@
 'use strict';
 
 /**
- * @typedef {'inicio'|'rachas'|'habilidad'|'veterania'|'especiales'|'tienda'|'campana'|'secreto'} AchievementCategory
+ * @typedef {'inicio'|'rachas'|'habilidad'|'veterania'|'especiales'|'mecanicas'|'progreso'|'tienda'|'campana'|'secreto'} AchievementCategory
  */
 
 /**
@@ -39,6 +39,8 @@ const ACHIEVEMENT_CATEGORIES = {
     habilidad:  { name: 'Habilidad',          color: '#38BDF8' },
     veterania:  { name: 'Veteranía',          color: '#C084FC' },
     especiales: { name: 'Especiales',         color: '#FACC15' },
+    mecanicas:  { name: 'Mecánicas',          color: '#2DD4BF' },
+    progreso:   { name: 'Progreso',           color: '#818CF8' },
     tienda:     { name: 'Power-ups y tienda', color: '#F472B6' },
     campana:    { name: 'Campaña',            color: '#EF4444' },
     secreto:    { name: 'Secreto',            color: '#34D399' }
@@ -104,19 +106,60 @@ const ACHIEVEMENTS = [
     { id: 'beat_hachepe', category: 'especiales', name: 'El Hachepe Definitivo', desc: 'Vence a la CPU en el Modo Hachepe',
       icon: 'M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5zM8 15h8' },
 
+    // Mecánicas
+    { id: 'spin_first', category: 'mecanicas', name: 'Con Efecto', desc: 'Da efecto a la bola por primera vez',
+      icon: 'M4 18c4-10 12-12 16-12M16 3l4 3-4 3' },
+    { id: 'perfect_10', category: 'mecanicas', name: 'Precisión', desc: 'Haz 10 golpes perfectos en una partida',
+      icon: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0M12 12h.01' },
+    { id: 'perfect_100', category: 'mecanicas', name: 'Cirujano', desc: 'Haz 100 golpes perfectos en total',
+      icon: 'M12 2v6M12 16v6M2 12h6M16 12h6M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0' },
+    { id: 'smash_first', category: 'mecanicas', name: '¡Smash!', desc: 'Marca tu primer gol de smash',
+      icon: 'M14 2L7 13h5l-1 9 7-11h-5zM2 8h3M2 12h2M2 16h3' },
+    { id: 'smash_goals_25', category: 'mecanicas', name: 'Cañonero', desc: 'Marca 25 goles de smash',
+      icon: 'M3 16l11-7 3 4-11 7zM14 9l3-2M5 21a2 2 0 1 0 0-4a2 2 0 1 0 0 4' },
+    { id: 'super_first', category: 'mecanicas', name: 'Súper', desc: 'Marca tu primer gol de súper golpe',
+      icon: 'M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z' },
+    { id: 'super_goals_10', category: 'mecanicas', name: 'Ultra', desc: 'Marca 10 goles de súper golpe',
+      icon: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8 0 4 3 7 7 7z' },
+    { id: 'fever_first', category: 'mecanicas', name: 'En Llamas', desc: 'Entra en fiebre del rally',
+      icon: 'M8 22c-3-2-4-5-3-8 1 1 2 1 3 0-1-4 1-8 5-10 0 3 2 5 4 7 2 2 3 5 2 8-1 2-3 3-5 3' },
+    { id: 'rally_50', category: 'mecanicas', name: 'Interminable', desc: 'Consigue un rally de 50 golpes',
+      icon: 'M7 9a3 3 0 1 0 0 6c2 0 3-1.5 5-3s3-3 5-3a3 3 0 1 1 0 6c-2 0-3-1.5-5-3S9 9 7 9z' },
+
+    // Progreso
+    { id: 'reach_level_5', category: 'progreso', name: 'Rango Experto', desc: 'Alcanza el nivel 21 (rango Experto)',
+      icon: 'M6 10l6-4 6 4M6 15l6-4 6 4M6 20l6-4 6 4' },
+    { id: 'level_25', category: 'progreso', name: 'A Medio Camino', desc: 'Alcanza el nivel 25',
+      icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM12 3v18' },
+    { id: 'reach_level_10', category: 'progreso', name: 'Leyenda Definitiva', desc: 'Alcanza el nivel 50',
+      icon: 'M12 5l1.6 3.2 3.4.5-2.5 2.4.6 3.4-3.1-1.6-3.1 1.6.6-3.4L7 8.7l3.4-.5zM5 8c-2 4-1 9 4 12M19 8c2 4 1 9-4 12' },
+    { id: 'prestige_1', category: 'progreso', name: 'Prestigio', desc: 'Consigue tu primera estrella de prestigio',
+      icon: 'M12 6l1.8 3.7 4 .6-2.9 2.8.7 4L12 15.2 8.4 17.1l.7-4-2.9-2.8 4-.6zM3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0' },
+    { id: 'missions_10', category: 'progreso', name: 'Cumplidor', desc: 'Completa 10 misiones',
+      icon: 'M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2' },
+    { id: 'missions_50', category: 'progreso', name: 'Incansable', desc: 'Completa 50 misiones',
+      icon: 'M4 5h16v16H4zM4 10h16M9 3v4M15 3v4M9 15l2 2 4-4' },
+    { id: 'weekly_first', category: 'progreso', name: 'Semana Redonda', desc: 'Completa una misión semanal',
+      icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M8 12l3 3 5-6' },
+
     // Power-ups y tienda
     { id: 'powerup_collector', category: 'tienda', name: 'Coleccionista', desc: 'Recoge 50 power-ups en total',
       icon: 'M6 3v8a6 6 0 0 0 12 0V3h-4v8a2 2 0 0 1-4 0V3zM6 7h4M14 7h4' },
     { id: 'no_powerups_win', category: 'tienda', name: 'Sin Ayuda', desc: 'Gana una partida sin recoger power-ups',
       icon: 'M13 3L7 12h5l-1 8 6-9h-5zM4 4l16 16' },
-    { id: 'reach_level_5', category: 'tienda', name: 'Rango Experto', desc: 'Alcanza el nivel 5',
-      icon: 'M6 10l6-4 6 4M6 15l6-4 6 4M6 20l6-4 6 4' },
-    { id: 'reach_level_10', category: 'tienda', name: 'Leyenda Definitiva', desc: 'Alcanza el nivel 10',
-      icon: 'M12 5l1.6 3.2 3.4.5-2.5 2.4.6 3.4-3.1-1.6-3.1 1.6.6-3.4L7 8.7l3.4-.5zM5 8c-2 4-1 9 4 12M19 8c2 4 1 9-4 12' },
     { id: 'fashionista', category: 'tienda', name: 'Fashionista', desc: 'Compra todos los items de la tienda',
       icon: 'M10 5a2 2 0 1 1 3 1.7c-.6.4-1 .9-1 1.6V9l-8.6 5.4A1.5 1.5 0 0 0 4.2 17h15.6a1.5 1.5 0 0 0 .8-2.6L12 9' },
     { id: 'grow_partner', category: 'tienda', name: 'Grow Partner', desc: 'Compra tu primer objeto en la tienda',
       icon: 'M3 4h2l2.5 11h10l2-8H6.5M7.5 19a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15.5 19a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0' },
+    // Para las fases 5, 6 y 7: se desbloquean cuando exista lo que miden
+    { id: 'exclusive_first', category: 'tienda', name: 'Exclusivo', desc: 'Consigue un objeto exclusivo',
+      icon: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M12 9v12' },
+    { id: 'buy_legendary', category: 'tienda', name: 'Leyenda de Tienda', desc: 'Compra un objeto legendario',
+      icon: 'M3 18h18M4 16l-1-9 5 4 4-7 4 7 5-4-1 9z' },
+    { id: 'rockola_dj', category: 'tienda', name: 'DJ', desc: 'Cambia la música en la Rockola',
+      icon: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M10 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0' },
+    { id: 'portal_goal', category: 'tienda', name: 'Atajo', desc: 'Marca un gol justo después de cruzar un portal',
+      icon: 'M2.5 12a3.5 6 0 1 0 7 0a3.5 6 0 1 0-7 0M14.5 12a3.5 6 0 1 0 7 0a3.5 6 0 1 0-7 0M6 12h12' },
 
     // Campaña
     { id: 'campaign_first', category: 'campana', name: 'La Primera Grieta', desc: 'Vence a tu primer Hachepe',

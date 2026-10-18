@@ -159,11 +159,7 @@ function checkLevelUp() {
         addCoins(PRESTIGE_COINS);
     }
 
-    if (sessionLeveledUp) {
-        // Los ids del catálogo son reach_level_*, no level_*
-        if (achievementGoalMet('reach_level_5')) unlockAchievement('reach_level_5');
-        if (achievementGoalMet('reach_level_10')) unlockAchievement('reach_level_10');
-    }
+    checkLevelAchievements();
 }
 
 /**
@@ -333,6 +329,7 @@ function getTotalShopItems() {
  * Obtiene el número de artículos comprados
  */
 function getTotalPurchasedItems() {
+    // Solo cuenta lo que se vende: los exclusivos no están en la tienda
     let count = 0;
     playerProgression.owned.forEach(key => {
         const [cat, id] = key.split(':');

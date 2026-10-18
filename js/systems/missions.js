@@ -168,4 +168,5 @@ function completeMission(entry, def, weekly) {
         saveStats();
         missionEvent('daily_done');
     }
+    checkMissionAchievements();
 }
