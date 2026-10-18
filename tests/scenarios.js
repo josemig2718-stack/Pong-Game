@@ -409,7 +409,7 @@ const RAW_SCENARIOS = [
             { type: 'click', text: 'VOLVER' },
             { type: 'click', text: 'LOGROS' },
             { type: 'click', text: 'VOLVER' },
-            { type: 'clickSel', sel: '#main-progression' },
+            { type: 'click', text: 'PROGRESO' },
             { type: 'click', text: 'VOLVER' },
             // Una partida con los cosméticos y ajustes nuevos
             { type: 'click', text: 'JUGAR' },
@@ -529,6 +529,29 @@ const RAW_SCENARIOS = [
             { type: 'steps', n: 240 }
         ],
         expect: ['start:cpu', 'end:cpu', 'mission:done', 'screen:game-over-screen']
+    },
+    {
+        // Pantalla de Progreso con nivel, prestigio y una misión a medias;
+        // la cuenta atrás avanza con la pantalla abierta. Las monedas del
+        // menú siguen llevando a la tienda
+        name: 'progreso',
+        seed: 407,
+        storage: progression({
+            totalXP: 1400, level: 8, rewardedLevel: 8, coins: 385, campaignIntroSeen: true,
+            missions: { day: '2026-01-15', week: '2026-W03',
+                daily: [{ id: 'd_win_hard', progress: 1, done: true }, { id: 'd_super_goal', progress: 0, done: false }, { id: 'd_points15', progress: 9, done: false }],
+                weekly: { id: 'w_hachepe', progress: 0, done: false } }
+        }),
+        actions: [
+            { type: 'click', text: 'PROGRESO' },
+            { type: 'steps', n: 130 },
+            { type: 'click', text: 'VOLVER' },
+            { type: 'clickSel', sel: '#main-progression .menu-progress__coins' },
+            { type: 'steps', n: 10 },
+            { type: 'click', text: 'VOLVER' },
+            { type: 'steps', n: 10 }
+        ],
+        expect: ['screen:progress-menu']
     }
 ];
 

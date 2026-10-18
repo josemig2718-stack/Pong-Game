@@ -71,6 +71,7 @@ export const STYLE_STATES = [
     { name: 'logros', run: (g) => g.showAchievementsScreen() },
     { name: 'configuracion', run: (g) => g.showScreen('settings-menu') },
     { name: 'tienda', run: (g) => g.showScreen('shop-menu') },
+    { name: 'progreso', run: (g) => g.showScreen('progress-menu') },
     { name: 'salir', run: (g) => g.showScreen('exit-menu') },
     { name: 'partida', run: (g) => g.startGame('cpu') },
     { name: 'pausa', run: (g) => { g.startGame('cpu'); g.togglePause(); } },

@@ -392,10 +392,19 @@ h1, h2, h3 { font-family: var(--font-display); }
     display: flex;
     align-items: center;
     gap: 12px;
-    min-height: 44px;    /* toda la fila lleva a la tienda */
+    min-height: 44px;
+}
+/* Dos botones: el nivel abre Progreso y las monedas, la Tienda */
+.menu-progress__level, .menu-progress__coins {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
     cursor: pointer;
 }
-.menu-progress__level { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.menu-progress__level { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 12px; }
 /* El emblema del rango (ui/progress-ui.js) */
 .menu-progress__badge { flex: none; width: 42px; height: 42px; display: grid; place-items: center; }
 .menu-progress__badge svg { width: 100%; height: 100%; }
@@ -1808,6 +1817,167 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
     .sub-cols { flex: 0 0 auto; flex-direction: row; gap: 20px; }
     .sub-col, .sub-col:last-child { flex: 1 1 0; min-width: 0; }
     .key-btn.sub-ghost-btn { margin-top: 0; }
+}
+
+/* ==================================================================
+   Progreso (ui/progress-ui.js): rango, rangos, camino de recompensas
+   y misiones. Móvil en una columna, con las filas de rangos y del
+   camino desplazables en horizontal; en escritorio, dos columnas.
+   ================================================================== */
+.prog-layout {
+    position: relative;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 560px;
+}
+.prog-cols, .prog-col { display: flex; flex-direction: column; gap: 16px; }
+.prog-sec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.prog-sec__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.prog-sec__hint { font-size: 12px; color: var(--muted); }
+.prog-desk { display: none; }
+
+/* Barra de XP y de las misiones */
+.prog-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.prog-bar i { display: block; height: 100%; border-radius: 4px; background: var(--mc, var(--primary)); }
+
+/* Tarjeta de rango */
+.prog-rank {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-color: color-mix(in srgb, var(--rank) 40%, transparent);
+}
+.prog-rank__emblem { flex: none; width: 64px; height: 64px; }
+.prog-rank__emblem svg { width: 100%; height: 100%; }
+.prog-rank__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 9px; }
+.prog-rank__title { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--rank); }
+.prog-rank__stars { display: inline-flex; gap: 2px; color: #FDE68A; }
+.prog-rank__stars .ico { width: 14px; height: 14px; fill: currentColor; stroke: none; }
+.prog-rank .prog-bar { height: 10px; }
+.prog-rank .prog-bar i { background: linear-gradient(90deg, var(--primary), var(--rank)); }
+.prog-rank__meta { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); }
+
+/* Los 10 rangos */
+.prog-ranks {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 80%, transparent);
+}
+.prog-ranks::-webkit-scrollbar { display: none; }
+.prog-ranks__item { flex: none; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.prog-ranks__item svg { width: 40px; height: 40px; }
+.prog-ranks__item span { font-size: 10px; font-weight: 600; text-align: center; color: var(--rank); }
+.prog-ranks__item.is-locked span { color: #5B6478; }
+
+/* Camino de recompensas */
+.prog-path {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 85%, transparent);
+}
+.prog-path::-webkit-scrollbar { display: none; }
+.prog-node { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.prog-node__lvl { font-size: 8px; color: #5B6478; }
+.prog-node__dot {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    background: #0E111A;
+}
+.prog-node__dot img { width: 30px; height: 30px; }
+.prog-node__dot svg { width: 40px; height: 40px; }
+.prog-node__dot .ico { width: 20px; height: 20px; color: #C084FC; }
+.prog-node small { font-size: 11px; line-height: 1.3; text-align: center; color: var(--muted); }
+.prog-node--done .prog-node__lvl { color: var(--primary); }
+.prog-node--done .prog-node__dot { border-color: var(--primary); }
+.prog-node--next .prog-node__lvl { color: #FDE047; }
+.prog-node--next .prog-node__dot { border-color: #FDE047; box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.15), 0 0 16px rgba(253, 224, 71, 0.3); }
+.prog-node__check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--on-primary);
+}
+.prog-node__dot .prog-node__check .ico { width: 12px; height: 12px; stroke-width: 3; color: inherit; }
+.prog-path__link { flex: 1 0 10px; height: 3px; margin-top: 44px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+.prog-path__link.is-done { background: var(--primary); }
+
+/* Prestigio (solo escritorio) */
+.prog-prestige {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-style: dashed;
+    border-color: rgba(253, 230, 138, 0.3);
+}
+.prog-prestige__stars { display: flex; gap: 4px; color: #FDE68A; }
+.prog-prestige__stars .ico { width: 22px; height: 22px; fill: currentColor; stroke: none; }
+.prog-prestige__stars .ico.is-empty { fill: rgba(253, 230, 138, 0.2); }
+.prog-prestige__text { display: flex; flex-direction: column; gap: 6px; }
+.prog-prestige__text b { font-size: 14px; color: #FDE68A; }
+.prog-prestige__text span { font-size: 13px; line-height: 1.4; color: var(--muted); }
+
+/* Misiones */
+.prog-timer { height: 26px; font-size: 11px; }
+.prog-timer .ico { width: 14px; height: 14px; }
+.prog-weekly-lbl { color: #C084FC; }
+.prog-missions { display: flex; flex-direction: column; gap: 10px; }
+.prog-mission {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(14, 17, 26, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.prog-mission.is-done { border-color: color-mix(in srgb, var(--mc) 45%, transparent); }
+.prog-mission__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.prog-mission__head b { font-size: 14px; }
+.prog-mission__count { flex: none; font-size: 12px; color: var(--muted); }
+.prog-mission__done, .prog-mission__xp, .prog-mission__coins { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; }
+.prog-mission__done { flex: none; color: var(--mc); }
+.prog-mission__done .ico { width: 16px; height: 16px; stroke-width: 3; }
+.prog-mission__rew { display: flex; gap: 14px; }
+.prog-mission__xp { color: var(--primary); }
+.prog-mission__coins { color: var(--gold); }
+.prog-mission__coins img { width: 18px; height: 18px; }
+
+/* Escritorio: dos columnas (rango, rangos, camino y prestigio | misiones) */
+@media (min-width: 1024px) and (min-height: 600px) {
+    .prog-layout { max-width: 1168px; gap: 22px; }
+    .prog-cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: start; }
+    .prog-col { gap: 20px; }
+    .prog-desk { display: inline; }
+    .prog-mobile { display: none; }
+    .prog-rank { padding: 20px; }
+    .prog-rank__emblem { width: 72px; height: 72px; }
+    .prog-rank__title { font-size: 16px; }
+    .prog-ranks { justify-content: space-between; padding: 14px; overflow: visible; mask-image: none; background: var(--panel, rgba(14, 17, 26, 0.92)); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; }
+    .prog-ranks__item { width: 62px; }
+    .prog-path { padding: 16px 14px; overflow: visible; mask-image: none; }
+    .prog-prestige { display: flex; }
+    .prog-timer { height: 30px; font-size: 12px; }
 }
 
 /* --- Controles --- */

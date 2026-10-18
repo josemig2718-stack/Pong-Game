@@ -16,7 +16,8 @@
  * Muestra una pantalla (un div.screen) y oculta las demás. Algunas
  * pantallas hacen algo al entrar: el menú principal oculta el juego y
  * refresca sus tiles, la selección de modo refresca sus tarjetas y
- * precarga la música de partida, y la tienda y la campaña se redibujan.
+ * precarga la música de partida, y la tienda, la campaña y Progreso se
+ * redibujan.
  * Cada pantalla pone su música (screenMusic).
  */
 function showScreen(screenId) {
@@ -35,6 +36,8 @@ function showScreen(screenId) {
         showShopScreen();
     } else if (screenId === 'campaign-menu') {
         renderCampaignMap();
+    } else if (screenId === 'progress-menu') {
+        renderProgressScreen();
     }
     const track = screenMusic(screenId);
     if (track) musicPlay(track);
@@ -51,6 +54,7 @@ const SCREEN_MUSIC = {
     'settings-menu':     'musica_menu',
     'exit-menu':         'musica_menu',
     'shop-menu':         'musica_tienda',
+    'progress-menu':     'musica_tienda',
     'achievements-menu': 'musica_tienda',
     'stats-menu':        'musica_tienda'
 };

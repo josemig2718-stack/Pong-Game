@@ -171,7 +171,7 @@ class Recorder {
                 if (bs.beamPhase === 'fire') ev('creator:beam');
             }
         }
-        for (const id of ['game-over-screen', 'finale-screen', 'vs-screen', 'pause-menu', 'news-screen', 'howto-menu']) {
+        for (const id of ['game-over-screen', 'finale-screen', 'vs-screen', 'pause-menu', 'news-screen', 'howto-menu', 'progress-menu']) {
             if (this.isScreen(id)) ev('screen:' + id);
         }
         // Misiones completadas (systems/missions.js)

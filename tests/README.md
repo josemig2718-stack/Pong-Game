@@ -104,7 +104,7 @@ antes de lo que necesita rompe la carga y fallan todos.
 ### Estilos computados
 
 `estilos-computados` (`styles.js`) protege los cambios de HTML y CSS que no
-deben verse: para 20 estados de la interfaz (cada pantalla, «Cómo jugar»,
+deben verse: para 21 estados de la interfaz (cada pantalla, Progreso incluida, «Cómo jugar»,
 las Novedades, la partida, la práctica, la pausa, el fin de partida, el
 diálogo, el aviso de logro, la intro y el falso final) y 4 tamaños de ventana (1280×800, 800×600, 390×844, 844×390), guarda
 un hash de **todas** las propiedades de `getComputedStyle` de cada elemento y
@@ -141,7 +141,7 @@ adaptador expone en `diag`), `mech:fever` y `shield:spent` (el escudo se
 rompe tras su último bloqueo); también `screen:news-screen` y
 `screen:howto-menu`. Todos los escenarios empiezan con las Novedades de esta
 versión ya vistas (`seenNewsVersion`), salvo los que llevan `news: true`
-(`novedades`, `reinicio`). `mission:done` marca que se completó una misión (contador `missionsDone` de
+(`novedades`, `reinicio`). `screen:progress-menu` (escenario `progreso`) y `mission:done`, que marca que se completó una misión (contador `missionsDone` de
 `diag`); `misiones` lo exige. Las misiones salen de la fecha virtual del
 harness (15-01-2026, en la zona horaria del equipo). `news:reset` señala el aviso de reinicio del
 progreso dentro de las Novedades: `reinicio` arranca con las claves v1 de

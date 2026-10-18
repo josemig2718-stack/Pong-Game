@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=74">
+    <link rel="stylesheet" href="css/style.css?v=75">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -45,9 +45,9 @@
             <!-- Panel: en móvil sus hijos se reparten por la pantalla
                  (la progresión sube a la cabecera) -->
             <div class="menu-panel">
-                <!-- Progresión y Chemi Coins: lleva a la Tienda -->
-                <div id="main-progression" class="menu-progress" data-action="showScreen" data-arg="shop-menu" title="Ir a la Tienda">
-                    <div class="menu-progress__level">
+                <!-- Progresión (lleva a Progreso) y Chemi Coins (a la Tienda) -->
+                <div id="main-progression" class="menu-progress">
+                    <button class="menu-progress__level" aria-label="PROGRESO" title="Ver tu progreso" data-action="showScreen" data-arg="progress-menu">
                         <span id="menu-level-num" class="menu-progress__badge" aria-hidden="true"></span>
                         <div class="menu-progress__info">
                             <div class="menu-progress__row">
@@ -58,11 +58,11 @@
                                 <div id="menu-xp-bar" class="xp-track__fill" style="width: 0%;"></div>
                             </div>
                         </div>
-                    </div>
-                    <div class="menu-progress__coins">
+                    </button>
+                    <button class="menu-progress__coins" aria-label="Chemi Coins: ir a la Tienda" title="Ir a la Tienda" data-action="showScreen" data-arg="shop-menu">
                         <span class="lbl">Chemi Coins</span>
                         <span id="menu-coins" class="chip"><img src="assets/chemi_coin.png" alt="" class="w-4 h-4 inline object-contain mr-1" style="vertical-align: text-top;"> 0</span>
-                    </div>
+                    </button>
                 </div>
 
                 <button class="btn btn-p menu-play" data-action="showScreen" data-arg="mode-select-menu">
@@ -758,6 +758,80 @@
     </section>
 
     <!-- ============================== TIENDA ============================== -->
+    <!-- ============================== PROGRESO ============================== -->
+    <!-- Rango, rangos, camino de recompensas y misiones (ui/progress-ui.js).
+         Móvil en una columna; escritorio en dos (misiones a la derecha). -->
+    <section id="progress-menu" class="screen z-20">
+        <div class="prog-layout">
+            <header class="screen-head">
+                <button class="icon-btn screen-head__back" aria-label="VOLVER" data-action="showScreen" data-arg="main-menu">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+                    <span class="px screen-head__back-text">VOLVER</span>
+                </button>
+                <div class="screen-head__titles">
+                    <h2 class="px screen-head__title">PROGRESO</h2>
+                </div>
+                <div class="wallet screen-head__end">
+                    <img src="assets/chemi_coin.png" alt="">
+                    <div class="wallet__text">
+                        <span class="lbl wallet__label">Chemi Coins</span>
+                        <span id="progress-coins" class="px wallet__value">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="prog-cols">
+                <div class="prog-col">
+                    <section id="progress-rank" class="panel prog-rank">
+                        <span id="progress-rank-emblem" class="prog-rank__emblem"></span>
+                        <div class="prog-rank__info">
+                            <span class="lbl">Rango</span>
+                            <span class="prog-rank__title"><span id="progress-rank-title" class="px">NOVATO I</span><span id="progress-stars" class="prog-rank__stars"></span></span>
+                            <div class="prog-bar"><i id="progress-xp-bar"></i></div>
+                            <div class="prog-rank__meta"><span id="progress-level">Nivel 1</span><span id="progress-xp">0 / 100 XP</span></div>
+                        </div>
+                    </section>
+
+                    <section class="prog-sec">
+                        <span class="lbl">Rangos · 5 niveles cada uno<span class="prog-desk"> · prestigio después del nivel 50</span></span>
+                        <div id="progress-ranks" class="prog-ranks"></div>
+                    </section>
+
+                    <section class="prog-sec">
+                        <div class="prog-sec__head"><span class="lbl">Camino de recompensas</span><span class="prog-sec__hint prog-mobile">Desliza →</span></div>
+                        <div id="progress-path" class="panel prog-path"></div>
+                    </section>
+
+                    <section class="panel prog-prestige">
+                        <div id="progress-prestige-stars" class="prog-prestige__stars"></div>
+                        <div class="prog-prestige__text">
+                            <b>Prestigio</b>
+                            <span>Al llegar a Leyenda V (nivel 50), cada 2.000 XP suma una estrella de prestigio y un cofre de monedas. El XP nunca deja de contar.</span>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="prog-col">
+                    <section class="prog-sec">
+                        <div class="prog-sec__head">
+                            <span class="lbl">Misiones diarias</span>
+                            <span class="chip prog-timer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><span class="prog-desk">Nuevas en </span><span id="progress-daily-timer">00:00:00</span></span></span>
+                        </div>
+                        <div id="progress-daily" class="prog-missions"></div>
+                    </section>
+
+                    <section class="prog-sec">
+                        <div class="prog-sec__head">
+                            <span class="lbl prog-weekly-lbl">Misión semanal</span>
+                            <span id="progress-weekly-left" class="prog-sec__hint">Quedan 7 días</span>
+                        </div>
+                        <div id="progress-weekly" class="prog-missions"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="shop-menu" class="screen z-20">
         <div class="shop-layout">
             <header class="shop-head">
@@ -1075,73 +1149,73 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css (tests/ lo comprueba). -->
-    <script src="js/core/constants.js?v=74"></script>
-    <script src="js/core/storage.js?v=74"></script>
-    <script src="js/core/settings.js?v=74"></script>
-    <script src="js/core/state.js?v=74"></script>
-    <script src="js/data/themes.js?v=74"></script>
-    <script src="js/data/lore.js?v=74"></script>
-    <script src="js/data/achievements.js?v=74"></script>
-    <script src="js/data/shop.js?v=74"></script>
-    <script src="js/data/levels.js?v=74"></script>
-    <script src="js/data/missions.js?v=74"></script>
-    <script src="js/data/powerups.js?v=74"></script>
-    <script src="js/data/mechanics.js?v=74"></script>
-    <script src="js/data/music.js?v=74"></script>
-    <script src="js/data/news.js?v=74"></script>
-    <script src="js/systems/audio.js?v=74"></script>
-    <script src="js/systems/music.js?v=74"></script>
-    <script src="js/systems/theme.js?v=74"></script>
-    <script src="js/systems/stats.js?v=74"></script>
-    <script src="js/systems/achievements.js?v=74"></script>
-    <script src="js/systems/progression.js?v=74"></script>
-    <script src="js/systems/missions.js?v=74"></script>
-    <script src="js/systems/input.js?v=74"></script>
-    <script src="js/systems/pointer.js?v=74"></script>
-    <script src="js/game/canvas.js?v=74"></script>
-    <script src="js/game/draw.js?v=74"></script>
-    <script src="js/game/effects.js?v=74"></script>
-    <script src="js/game/balls.js?v=74"></script>
-    <script src="js/game/ai.js?v=74"></script>
-    <script src="js/game/mechanics.js?v=74"></script>
-    <script src="js/game/physics.js?v=74"></script>
-    <script src="js/game/match.js?v=74"></script>
-    <script src="js/game/hud.js?v=74"></script>
-    <script src="js/game/hints.js?v=74"></script>
-    <script src="js/game/render.js?v=74"></script>
-    <script src="js/game/loop.js?v=74"></script>
-    <script src="js/game/powerups.js?v=74"></script>
-    <script src="js/game/practice.js?v=74"></script>
-    <script src="js/vfx/random.js?v=74"></script>
-    <script src="js/vfx/trails.js?v=74"></script>
-    <script src="js/vfx/backgrounds.js?v=74"></script>
-    <script src="js/vfx/paddles.js?v=74"></script>
-    <script src="js/vfx/goal-fx.js?v=74"></script>
-    <script src="js/vfx/super.js?v=74"></script>
-    <script src="js/vfx/mechanics.js?v=74"></script>
-    <script src="js/vfx/index.js?v=74"></script>
-    <script src="js/bosses/shared.js?v=74"></script>
-    <script src="js/bosses/chemi.js?v=74"></script>
-    <script src="js/bosses/dani.js?v=74"></script>
-    <script src="js/bosses/duo.js?v=74"></script>
-    <script src="js/bosses/fano.js?v=74"></script>
-    <script src="js/bosses/yisus.js?v=74"></script>
-    <script src="js/bosses/creator.js?v=74"></script>
-    <script src="js/bosses/index.js?v=74"></script>
-    <script src="js/campaign/progress.js?v=74"></script>
-    <script src="js/campaign/menu.js?v=74"></script>
-    <script src="js/campaign/dialogue.js?v=74"></script>
-    <script src="js/campaign/finale.js?v=74"></script>
-    <script src="js/ui/screens.js?v=74"></script>
-    <script src="js/ui/howto.js?v=74"></script>
-    <script src="js/ui/news.js?v=74"></script>
-    <script src="js/ui/actions.js?v=74"></script>
-    <script src="js/ui/settings-panel.js?v=74"></script>
-    <script src="js/ui/stats-panel.js?v=74"></script>
-    <script src="js/ui/shop-ui.js?v=74"></script>
-    <script src="js/ui/progress-display.js?v=74"></script>
-    <script src="js/ui/progress-ui.js?v=74"></script>
-    <script src="js/main.js?v=74"></script>
+    <script src="js/core/constants.js?v=75"></script>
+    <script src="js/core/storage.js?v=75"></script>
+    <script src="js/core/settings.js?v=75"></script>
+    <script src="js/core/state.js?v=75"></script>
+    <script src="js/data/themes.js?v=75"></script>
+    <script src="js/data/lore.js?v=75"></script>
+    <script src="js/data/achievements.js?v=75"></script>
+    <script src="js/data/shop.js?v=75"></script>
+    <script src="js/data/levels.js?v=75"></script>
+    <script src="js/data/missions.js?v=75"></script>
+    <script src="js/data/powerups.js?v=75"></script>
+    <script src="js/data/mechanics.js?v=75"></script>
+    <script src="js/data/music.js?v=75"></script>
+    <script src="js/data/news.js?v=75"></script>
+    <script src="js/systems/audio.js?v=75"></script>
+    <script src="js/systems/music.js?v=75"></script>
+    <script src="js/systems/theme.js?v=75"></script>
+    <script src="js/systems/stats.js?v=75"></script>
+    <script src="js/systems/achievements.js?v=75"></script>
+    <script src="js/systems/progression.js?v=75"></script>
+    <script src="js/systems/missions.js?v=75"></script>
+    <script src="js/systems/input.js?v=75"></script>
+    <script src="js/systems/pointer.js?v=75"></script>
+    <script src="js/game/canvas.js?v=75"></script>
+    <script src="js/game/draw.js?v=75"></script>
+    <script src="js/game/effects.js?v=75"></script>
+    <script src="js/game/balls.js?v=75"></script>
+    <script src="js/game/ai.js?v=75"></script>
+    <script src="js/game/mechanics.js?v=75"></script>
+    <script src="js/game/physics.js?v=75"></script>
+    <script src="js/game/match.js?v=75"></script>
+    <script src="js/game/hud.js?v=75"></script>
+    <script src="js/game/hints.js?v=75"></script>
+    <script src="js/game/render.js?v=75"></script>
+    <script src="js/game/loop.js?v=75"></script>
+    <script src="js/game/powerups.js?v=75"></script>
+    <script src="js/game/practice.js?v=75"></script>
+    <script src="js/vfx/random.js?v=75"></script>
+    <script src="js/vfx/trails.js?v=75"></script>
+    <script src="js/vfx/backgrounds.js?v=75"></script>
+    <script src="js/vfx/paddles.js?v=75"></script>
+    <script src="js/vfx/goal-fx.js?v=75"></script>
+    <script src="js/vfx/super.js?v=75"></script>
+    <script src="js/vfx/mechanics.js?v=75"></script>
+    <script src="js/vfx/index.js?v=75"></script>
+    <script src="js/bosses/shared.js?v=75"></script>
+    <script src="js/bosses/chemi.js?v=75"></script>
+    <script src="js/bosses/dani.js?v=75"></script>
+    <script src="js/bosses/duo.js?v=75"></script>
+    <script src="js/bosses/fano.js?v=75"></script>
+    <script src="js/bosses/yisus.js?v=75"></script>
+    <script src="js/bosses/creator.js?v=75"></script>
+    <script src="js/bosses/index.js?v=75"></script>
+    <script src="js/campaign/progress.js?v=75"></script>
+    <script src="js/campaign/menu.js?v=75"></script>
+    <script src="js/campaign/dialogue.js?v=75"></script>
+    <script src="js/campaign/finale.js?v=75"></script>
+    <script src="js/ui/screens.js?v=75"></script>
+    <script src="js/ui/howto.js?v=75"></script>
+    <script src="js/ui/news.js?v=75"></script>
+    <script src="js/ui/actions.js?v=75"></script>
+    <script src="js/ui/settings-panel.js?v=75"></script>
+    <script src="js/ui/stats-panel.js?v=75"></script>
+    <script src="js/ui/shop-ui.js?v=75"></script>
+    <script src="js/ui/progress-display.js?v=75"></script>
+    <script src="js/ui/progress-ui.js?v=75"></script>
+    <script src="js/main.js?v=75"></script>
 </body>
 
 </html>
