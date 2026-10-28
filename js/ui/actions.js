@@ -54,9 +54,23 @@ const CLICK_ACTIONS = {
     confirmResetStats:      () => confirmResetStats(),
     filterAchievements:     (el) => filterAchievements(el.dataset.arg),
 
-    // Tienda
-    switchShopTab:          (el) => switchShopTab(el.dataset.arg)
+    // Tienda (data-arg de los artículos: "categoría:id")
+    switchShopTab:          (el) => switchShopTab(el.dataset.arg),
+    buyShopItem:            (el) => buyShopItem(...shopArg(el)),
+    equipShopItem:          (el) => equipShopItem(...shopArg(el)),
+    previewShopItem:        (el) => previewShopItem(...shopArg(el)),
+    showShopOffer:          () => showShopOffer()
 };
+
+/**
+ * Categoría e id de un artículo de la tienda a partir de su data-arg.
+ * @param {HTMLElement} el
+ * @returns {[string, string]}
+ */
+function shopArg(el) {
+    const [cat, id] = el.dataset.arg.split(':');
+    return [cat, id];
+}
 
 /** @type {Record<string, (el: HTMLInputElement) => void>} */
 const INPUT_ACTIONS = {
@@ -74,7 +88,8 @@ const CHANGE_ACTIONS = {
     toggleMouseControl: (el) => toggleMouseControl(el.checked),
     togglePowerups:     (el) => togglePowerups(el.checked),
     toggleHints:        (el) => toggleHints(el.checked),
-    toggleHaptics:      (el) => toggleHaptics(el.checked)
+    toggleHaptics:      (el) => toggleHaptics(el.checked),
+    setShopSort:        (el) => setShopSort(el.value)
 };
 
 /**

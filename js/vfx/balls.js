@@ -186,9 +186,10 @@ const BALL_RENDERERS = {
  * @param {CanvasRenderingContext2D} ctx
  * @param {Ball} b
  * @param {string} color
+ * @param {string} [id] otra bola que la equipada (la vista previa de la tienda)
  */
-function renderBallVFX(ctx, b, color) {
-    const draw = BALL_RENDERERS[equippedId('balls')] || BALL_RENDERERS.classic;
+function renderBallVFX(ctx, b, color, id = equippedId('balls')) {
+    const draw = BALL_RENDERERS[id] || BALL_RENDERERS.classic;
     const fx = { spin: b.spin, power: b.power ? 1 : 0 };
     if (!(b.squash > 0.001)) {
         draw(ctx, b, color, fx);

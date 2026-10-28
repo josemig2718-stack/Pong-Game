@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=86">
+    <link rel="stylesheet" href="css/style.css?v=87">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -841,7 +841,7 @@
                 </button>
                 <div class="shop-head__titles">
                     <h2 class="px shop-head__title">TIENDA</h2>
-                    <span class="shop-head__sub">Personaliza la bola, la cancha, tu paleta y cada gol.</span>
+                    <span class="shop-head__sub">Personaliza la bola, la cancha, tu paleta, cada gol y tu súper golpe.</span>
                 </div>
                 <div class="wallet">
                     <img src="assets/chemi_coin.png" alt="">
@@ -852,37 +852,78 @@
                 </div>
             </header>
 
-            <!-- Pestañas: laterales con contador en escritorio, segmentadas en móvil -->
+            <!-- Oferta del día (ui/shop-ui.js): oculta si ya lo tienes todo o si hoy ya la compraste -->
+            <article id="shop-offer" class="shop-offer" aria-labelledby="shop-offer-name" hidden>
+                <div id="shop-offer-icon" class="shop-offer__tile shop-card__tile"></div>
+                <div class="shop-offer__info">
+                    <span class="px shop-offer__kicker">OFERTA DEL DÍA</span>
+                    <b id="shop-offer-name" class="shop-offer__name"></b>
+                    <div class="shop-offer__prices">
+                        <s id="shop-offer-old" class="shop-offer__old"></s>
+                        <span class="shop-offer__new"><img src="assets/chemi_coin.png" alt=""><span id="shop-offer-price" class="px"></span></span>
+                        <span class="shop-offer__chip">−30 %</span>
+                    </div>
+                </div>
+                <div class="shop-offer__side">
+                    <span id="shop-offer-timer" class="shop-offer__timer"></span>
+                    <button class="shop-offer__btn" aria-label="Ver la oferta del día" data-action="showShopOffer">VER</button>
+                </div>
+            </article>
+
+            <!-- Pestañas: laterales con contador en escritorio, en fila deslizable en móvil. Rockola llega en la fase 6. -->
             <nav class="shop-tabs" aria-label="Categorías">
-                <button class="shop-tab-btn active" aria-label="ESTELAS" data-action="switchShopTab" data-arg="trails">
+                <button class="shop-tab-btn active" aria-label="ESTELAS" aria-pressed="true" data-action="switchShopTab" data-arg="trails">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="17" cy="7" r="3"/><path d="M13 11l-3 3M9 15l-2.5 2.5M5.5 18.5L4 20"/></svg>
                     <span class="shop-tab-btn__label">ESTELAS</span><small data-tab-count></small>
                 </button>
-                <button class="shop-tab-btn" aria-label="FONDOS" data-action="switchShopTab" data-arg="backgrounds">
+                <button class="shop-tab-btn" aria-label="FONDOS" aria-pressed="false" data-action="switchShopTab" data-arg="backgrounds">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/></svg>
                     <span class="shop-tab-btn__label">FONDOS</span><small data-tab-count></small>
                 </button>
-                <button class="shop-tab-btn" aria-label="PALETAS" data-action="switchShopTab" data-arg="paddles">
+                <button class="shop-tab-btn" aria-label="PALETAS" aria-pressed="false" data-action="switchShopTab" data-arg="paddles">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="18" rx="2"/></svg>
                     <span class="shop-tab-btn__label">PALETAS</span><small data-tab-count></small>
                 </button>
-                <button class="shop-tab-btn" aria-label="GOLES" data-action="switchShopTab" data-arg="goalEffects">
+                <button class="shop-tab-btn" aria-label="GOLES" aria-pressed="false" data-action="switchShopTab" data-arg="goalEffects">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
                     <span class="shop-tab-btn__label">GOLES</span><small data-tab-count></small>
+                </button>
+                <button class="shop-tab-btn" aria-label="BOLAS" aria-pressed="false" data-action="switchShopTab" data-arg="balls">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8 9a5 5 0 0 1 4-2"/></svg>
+                    <span class="shop-tab-btn__label">BOLAS</span><small data-tab-count></small>
+                </button>
+                <button class="shop-tab-btn" aria-label="SÚPER" aria-pressed="false" data-action="switchShopTab" data-arg="super">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+                    <span class="shop-tab-btn__label">SÚPER</span><small data-tab-count></small>
+                </button>
+                <button class="shop-tab-btn" aria-label="ROCKOLA" aria-pressed="false" data-action="switchShopTab" data-arg="music" hidden>
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+                    <span class="shop-tab-btn__label">ROCKOLA</span><small data-tab-count></small>
                 </button>
                 <div id="shop-collection" class="shop-collection"></div>
             </nav>
 
             <div class="shop-main">
-                <p id="shop-section-title" class="lbl shop-main__title">Estelas</p>
+                <div class="shop-main__bar">
+                    <p id="shop-section-title" class="lbl shop-main__title">Estelas</p>
+                    <label class="shop-sort">
+                        <span>Ordenar:</span>
+                        <select id="shop-sort" data-change="setShopSort" aria-label="Ordenar los objetos">
+                            <option value="rarity">rareza</option>
+                            <option value="price">precio</option>
+                            <option value="unowned">sin comprar primero</option>
+                        </select>
+                    </label>
+                </div>
                 <div id="shop-grid" class="shop-grid">
                     <!-- Se rellena dinámicamente -->
                 </div>
             </div>
 
-            <!-- Vista previa del artículo elegido (escritorio ancho) -->
+            <!-- Vista previa del artículo elegido (escritorio ancho): el lienzo animado y la ficha -->
             <aside id="shop-preview" class="shop-preview">
                 <span class="lbl">Vista previa</span>
+                <div id="shop-preview-stage" class="shop-preview__stage"></div>
                 <div id="shop-preview-body" class="shop-preview__body"></div>
                 <div id="shop-preview-actions" class="shop-preview__actions"></div>
             </aside>
@@ -1156,74 +1197,75 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css. -->
-    <script src="js/core/constants.js?v=86"></script>
-    <script src="js/core/storage.js?v=86"></script>
-    <script src="js/core/settings.js?v=86"></script>
-    <script src="js/core/state.js?v=86"></script>
-    <script src="js/data/themes.js?v=86"></script>
-    <script src="js/data/lore.js?v=86"></script>
-    <script src="js/data/achievements.js?v=86"></script>
-    <script src="js/data/shop.js?v=86"></script>
-    <script src="js/data/levels.js?v=86"></script>
-    <script src="js/data/missions.js?v=86"></script>
-    <script src="js/data/powerups.js?v=86"></script>
-    <script src="js/data/mechanics.js?v=86"></script>
-    <script src="js/data/music.js?v=86"></script>
-    <script src="js/data/news.js?v=86"></script>
-    <script src="js/systems/audio.js?v=86"></script>
-    <script src="js/systems/music.js?v=86"></script>
-    <script src="js/systems/theme.js?v=86"></script>
-    <script src="js/systems/stats.js?v=86"></script>
-    <script src="js/systems/achievements.js?v=86"></script>
-    <script src="js/systems/progression.js?v=86"></script>
-    <script src="js/systems/missions.js?v=86"></script>
-    <script src="js/systems/input.js?v=86"></script>
-    <script src="js/systems/pointer.js?v=86"></script>
-    <script src="js/game/canvas.js?v=86"></script>
-    <script src="js/game/draw.js?v=86"></script>
-    <script src="js/game/effects.js?v=86"></script>
-    <script src="js/game/balls.js?v=86"></script>
-    <script src="js/game/ai.js?v=86"></script>
-    <script src="js/game/mechanics.js?v=86"></script>
-    <script src="js/game/physics.js?v=86"></script>
-    <script src="js/game/match.js?v=86"></script>
-    <script src="js/game/hud.js?v=86"></script>
-    <script src="js/game/hints.js?v=86"></script>
-    <script src="js/game/render.js?v=86"></script>
-    <script src="js/game/loop.js?v=86"></script>
-    <script src="js/game/powerups.js?v=86"></script>
-    <script src="js/game/practice.js?v=86"></script>
-    <script src="js/vfx/random.js?v=86"></script>
-    <script src="js/vfx/trails.js?v=86"></script>
-    <script src="js/vfx/backgrounds.js?v=86"></script>
-    <script src="js/vfx/paddles.js?v=86"></script>
-    <script src="js/vfx/balls.js?v=86"></script>
-    <script src="js/vfx/goal-fx.js?v=86"></script>
-    <script src="js/vfx/super.js?v=86"></script>
-    <script src="js/vfx/mechanics.js?v=86"></script>
-    <script src="js/vfx/index.js?v=86"></script>
-    <script src="js/bosses/shared.js?v=86"></script>
-    <script src="js/bosses/chemi.js?v=86"></script>
-    <script src="js/bosses/dani.js?v=86"></script>
-    <script src="js/bosses/duo.js?v=86"></script>
-    <script src="js/bosses/fano.js?v=86"></script>
-    <script src="js/bosses/yisus.js?v=86"></script>
-    <script src="js/bosses/creator.js?v=86"></script>
-    <script src="js/bosses/index.js?v=86"></script>
-    <script src="js/campaign/progress.js?v=86"></script>
-    <script src="js/campaign/menu.js?v=86"></script>
-    <script src="js/campaign/dialogue.js?v=86"></script>
-    <script src="js/campaign/finale.js?v=86"></script>
-    <script src="js/ui/screens.js?v=86"></script>
-    <script src="js/ui/howto.js?v=86"></script>
-    <script src="js/ui/news.js?v=86"></script>
-    <script src="js/ui/actions.js?v=86"></script>
-    <script src="js/ui/settings-panel.js?v=86"></script>
-    <script src="js/ui/stats-panel.js?v=86"></script>
-    <script src="js/ui/shop-ui.js?v=86"></script>
-    <script src="js/ui/progress-display.js?v=86"></script>
-    <script src="js/ui/progress-ui.js?v=86"></script>
-    <script src="js/main.js?v=86"></script>
+    <script src="js/core/constants.js?v=87"></script>
+    <script src="js/core/storage.js?v=87"></script>
+    <script src="js/core/settings.js?v=87"></script>
+    <script src="js/core/state.js?v=87"></script>
+    <script src="js/data/themes.js?v=87"></script>
+    <script src="js/data/lore.js?v=87"></script>
+    <script src="js/data/achievements.js?v=87"></script>
+    <script src="js/data/shop.js?v=87"></script>
+    <script src="js/data/levels.js?v=87"></script>
+    <script src="js/data/missions.js?v=87"></script>
+    <script src="js/data/powerups.js?v=87"></script>
+    <script src="js/data/mechanics.js?v=87"></script>
+    <script src="js/data/music.js?v=87"></script>
+    <script src="js/data/news.js?v=87"></script>
+    <script src="js/systems/audio.js?v=87"></script>
+    <script src="js/systems/music.js?v=87"></script>
+    <script src="js/systems/theme.js?v=87"></script>
+    <script src="js/systems/stats.js?v=87"></script>
+    <script src="js/systems/achievements.js?v=87"></script>
+    <script src="js/systems/progression.js?v=87"></script>
+    <script src="js/systems/missions.js?v=87"></script>
+    <script src="js/systems/input.js?v=87"></script>
+    <script src="js/systems/pointer.js?v=87"></script>
+    <script src="js/game/canvas.js?v=87"></script>
+    <script src="js/game/draw.js?v=87"></script>
+    <script src="js/game/effects.js?v=87"></script>
+    <script src="js/game/balls.js?v=87"></script>
+    <script src="js/game/ai.js?v=87"></script>
+    <script src="js/game/mechanics.js?v=87"></script>
+    <script src="js/game/physics.js?v=87"></script>
+    <script src="js/game/match.js?v=87"></script>
+    <script src="js/game/hud.js?v=87"></script>
+    <script src="js/game/hints.js?v=87"></script>
+    <script src="js/game/render.js?v=87"></script>
+    <script src="js/game/loop.js?v=87"></script>
+    <script src="js/game/powerups.js?v=87"></script>
+    <script src="js/game/practice.js?v=87"></script>
+    <script src="js/vfx/random.js?v=87"></script>
+    <script src="js/vfx/trails.js?v=87"></script>
+    <script src="js/vfx/backgrounds.js?v=87"></script>
+    <script src="js/vfx/paddles.js?v=87"></script>
+    <script src="js/vfx/balls.js?v=87"></script>
+    <script src="js/vfx/goal-fx.js?v=87"></script>
+    <script src="js/vfx/super.js?v=87"></script>
+    <script src="js/vfx/mechanics.js?v=87"></script>
+    <script src="js/vfx/index.js?v=87"></script>
+    <script src="js/bosses/shared.js?v=87"></script>
+    <script src="js/bosses/chemi.js?v=87"></script>
+    <script src="js/bosses/dani.js?v=87"></script>
+    <script src="js/bosses/duo.js?v=87"></script>
+    <script src="js/bosses/fano.js?v=87"></script>
+    <script src="js/bosses/yisus.js?v=87"></script>
+    <script src="js/bosses/creator.js?v=87"></script>
+    <script src="js/bosses/index.js?v=87"></script>
+    <script src="js/campaign/progress.js?v=87"></script>
+    <script src="js/campaign/menu.js?v=87"></script>
+    <script src="js/campaign/dialogue.js?v=87"></script>
+    <script src="js/campaign/finale.js?v=87"></script>
+    <script src="js/ui/screens.js?v=87"></script>
+    <script src="js/ui/howto.js?v=87"></script>
+    <script src="js/ui/news.js?v=87"></script>
+    <script src="js/ui/actions.js?v=87"></script>
+    <script src="js/ui/settings-panel.js?v=87"></script>
+    <script src="js/ui/stats-panel.js?v=87"></script>
+    <script src="js/ui/shop-ui.js?v=87"></script>
+    <script src="js/ui/shop-preview.js?v=87"></script>
+    <script src="js/ui/progress-display.js?v=87"></script>
+    <script src="js/ui/progress-ui.js?v=87"></script>
+    <script src="js/main.js?v=87"></script>
 </body>
 
 </html>

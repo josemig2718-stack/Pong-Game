@@ -272,6 +272,9 @@ const soundEffects = {
         sfxArpeggio([523, 659, 784, 1046, 1318], 0.09, { type: 'triangle', decay: 0.25 });
         sfxNoise({ when: 0.45, dur: 0.12, bandpass: 6000, gain: 0.12 });
     },
+    /** Compra sin monedas suficientes: un «no» corto y grave. */
+    denied: () => sfxVoice({ type: 'square', freq: 160, decay: 0.12, lowpass: 1200, gain: 0.3 }),
+
     shopBuy: () => {
         sfxVoice({ type: 'square', freq: 800, decay: 0.08 });
         sfxVoice({ type: 'triangle', freq: 1000, decay: 0.12, when: 0.06 });

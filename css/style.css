@@ -22,7 +22,8 @@
     --p2: #38BDF8;                /* jugador 2 / modo local / power-ups */
     --rare: #60A5FA;
     --epic: #C084FC;
-    --legend: #FACC15;
+    --legend: #FB923C;
+    --exclusive: #FACC15;
     --panel: rgba(14, 17, 26, 0.88);
     --panel-border: var(--line);
     --font-display: 'Press Start 2P', monospace;
@@ -2935,12 +2936,14 @@ body.has-result .achievement-toast--visible { transform: none; }
 /* ==================================================================
    Tienda
    ------------------------------------------------------------------
-   Móvil: cabecera con monedero, pestañas segmentadas, cuadrícula de 2
-   columnas y la colección como última casilla. Escritorio: pestañas
-   laterales con contador y la colección debajo; la cuadrícula hace
-   scroll por dentro y, en pantallas anchas, a la derecha va la vista
-   previa del artículo elegido. La rareza (según el precio) colorea el
-   borde del icono y la etiqueta.
+   Móvil: cabecera con monedero, oferta del día, pestañas en una fila que
+   se desliza, la línea de la pestaña con el orden, cuadrícula de 2
+   columnas (3 en tableta, 4 en escritorio) y la colección como última
+   casilla. Escritorio: pestañas laterales con contador y la colección
+   debajo; la columna central hace scroll por dentro y, en pantallas
+   anchas, a la derecha va la vista previa animada del artículo elegido
+   (en móvil y tableta se anima dentro del recuadro de la tarjeta). La
+   rareza (según el precio) colorea el borde del icono y la etiqueta.
    ================================================================== */
 .shop-layout {
     position: relative;
@@ -2974,17 +2977,25 @@ body.has-result .achievement-toast--visible { transform: none; }
 .wallet__label { display: none; font-size: 9px; color: #CDB25A; }
 .wallet__value { display: inline-block; font-size: 12px; line-height: 1; color: var(--gold); }
 
-/* Pestañas segmentadas (móvil) */
+/* Pestañas en una fila que se desliza en horizontal (móvil y tableta) */
 .shop-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
     gap: 4px;
     padding: 4px;
     border-radius: 12px;
     background: #0A0D14;
     border: 1px solid var(--line);
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, #000 88%, transparent);
 }
+.shop-tabs::-webkit-scrollbar { display: none; }
+.shop-tab-btn[hidden] { display: none; }
 .shop-tab-btn {
+    flex: 1 0 72px;
+    scroll-snap-align: start;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3015,7 +3026,58 @@ body.has-result .achievement-toast--visible { transform: none; }
 .shop-tab-btn.active .ico { color: var(--primary); }
 .shop-tabs .shop-collection { display: none; }
 
-.shop-main__title { margin: 0 0 12px; }
+/* Oferta del día */
+.shop-offer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(250, 204, 21, 0.45);
+    background: linear-gradient(110deg, rgba(250, 204, 21, 0.1), rgba(14, 17, 26, 0.92) 55%);
+}
+.shop-offer[hidden] { display: none; }
+.shop-offer__tile.shop-card__tile { flex: none; width: 88px; height: 76px; }
+.shop-offer__tile svg, .shop-offer__tile img { width: 80px; height: 80px; }
+.shop-offer__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.shop-offer__kicker { font-size: 8px; color: var(--gold); }
+.shop-offer__name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-offer__prices { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.shop-offer__old { font-size: 12px; color: #6B7280; }
+.shop-offer__new { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gold); }
+.shop-offer__new img { width: 18px; height: 18px; }
+.shop-offer__chip { padding: 2px 6px; border-radius: 4px; background: var(--gold); color: #1A1400; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.shop-offer__side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.shop-offer__timer { font-size: 11px; color: #CDB25A; white-space: nowrap; }
+.shop-offer__btn {
+    width: 64px;
+    height: 36px;
+    border-radius: 7px;
+    border: 1px solid rgba(250, 204, 21, 0.45);
+    background: rgba(250, 204, 21, 0.12);
+    color: var(--gold);
+    box-shadow: 0 3px 0 #3A2E05;
+    font-family: var(--font-display);
+    font-size: 9px;
+    cursor: pointer;
+}
+.shop-offer__btn:hover { filter: brightness(1.15); }
+.shop-offer__btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* Línea de la pestaña: «Estelas · 3 de 11» y el orden */
+.shop-main__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.shop-main__title { margin: 0; min-width: 0; }
+.shop-sort { flex: none; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.shop-sort select {
+    max-width: 150px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: #0A0D14;
+    color: #B6BDCC;
+    font: inherit;
+    cursor: pointer;
+}
 .shop-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; }
 
 /* Tarjeta de artículo */
@@ -3029,25 +3091,40 @@ body.has-result .achievement-toast--visible { transform: none; }
     background: var(--surface);
     border: 1px solid var(--line);
     box-shadow: 0 5px 0 #020305;
-    cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .shop-card:hover { border-color: rgba(255, 255, 255, 0.2); }
 .shop-card--equipped, .shop-card--equipped:hover { border-color: rgba(var(--primary-rgb), 0.6); }
+/* «VER» desde la oferta: la tarjeta destella en dorado */
+.shop-card--flash { animation: shop-card-flash 1.6s ease; }
+@keyframes shop-card-flash {
+    0%, 100% { box-shadow: 0 5px 0 #020305; }
+    20%, 60% { box-shadow: 0 5px 0 #020305, 0 0 0 3px rgba(250, 204, 21, 0.85), 0 0 26px rgba(250, 204, 21, 0.45); }
+}
 
-.shop-card__tile, .shop-preview__tile {
+/* El recuadro del icono es un botón: la vista previa animada se monta encima */
+.shop-card__tile {
+    position: relative;
     display: grid;
     place-items: center;
+    width: 100%;
     height: 110px;
+    padding: 0;
     border-radius: 9px;
     background: radial-gradient(circle at 50% 38%, #1B2233, #090B11 72%);
     border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: inherit;
     overflow: hidden;
+    cursor: pointer;
 }
-.shop-card__tile svg, .shop-card__tile img { display: block; width: 96px; height: 96px; }
+.shop-card__tile svg, .shop-card__tile img { display: block; width: 96px; height: 96px; max-width: 100%; }
 .shop-card__tile--rar { border-color: rgba(96, 165, 250, 0.6); box-shadow: inset 0 0 22px rgba(96, 165, 250, 0.16); }
 .shop-card__tile--epi { border-color: rgba(192, 132, 252, 0.65); box-shadow: inset 0 0 22px rgba(192, 132, 252, 0.2); }
-.shop-card__tile--leg { border-color: rgba(250, 204, 21, 0.75); box-shadow: inset 0 0 26px rgba(250, 204, 21, 0.22); }
+.shop-card__tile--leg { border-color: rgba(251, 146, 60, 0.75); box-shadow: inset 0 0 26px rgba(251, 146, 60, 0.25); }
+.shop-card__tile--exc { border-color: rgba(250, 204, 21, 0.6); border-style: dashed; }
+.shop-card__tile.is-live > svg, .shop-card__tile.is-live > img { visibility: hidden; }
+.shop-preview-canvas { display: block; width: 100%; height: 100%; }
+.shop-card__tile .shop-preview-canvas { position: absolute; inset: 0; object-fit: cover; }
 
 .shop-card__tag {
     position: absolute;
@@ -3065,13 +3142,15 @@ body.has-result .achievement-toast--visible { transform: none; }
     line-height: 1;
 }
 .shop-card__tag .ico { width: 10px; height: 10px; stroke-width: 3; }
-.shop-card__head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.shop-card__tag--offer { background: var(--gold); color: #1A1400; font-family: var(--font-body); font-size: 11px; font-weight: 700; }
+.shop-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 6px; }
 .shop-card__name { min-width: 0; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shop-card__rarity { flex: none; font-family: var(--font-display); font-size: 7px; letter-spacing: 0.08em; }
 .shop-card__rarity--ini { color: var(--muted); }
 .shop-card__rarity--rar { color: var(--rare); }
 .shop-card__rarity--epi { color: var(--epic); }
 .shop-card__rarity--leg { color: var(--legend); }
+.shop-card__rarity--exc { color: var(--exclusive); }
 .shop-card__desc { display: none; margin: 0; min-height: 34px; font-size: 12.5px; line-height: 1.35; color: var(--muted); }
 
 /* Botones: EQUIPADO, USAR y comprar */
@@ -3108,6 +3187,22 @@ body.has-result .achievement-toast--visible { transform: none; }
     color: #5B6478;
     cursor: default;
 }
+/* Candado de un exclusivo: su condición, en dorado apagado */
+.shop-card__btn--lock, .shop-preview__btn--lock {
+    gap: 6px;
+    padding: 0 6px;
+    background: transparent;
+    border: 1px dashed rgba(250, 204, 21, 0.3);
+    color: #CDB25A;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: default;
+}
+.shop-card__btn--lock .ico, .shop-preview__btn--lock .ico { width: 14px; height: 14px; }
+/* Sin monedas suficientes: apagado, pero se puede pulsar (tiembla el monedero) */
+.shop-card__btn--poor, .shop-preview__btn--poor { opacity: 0.45; filter: saturate(0.4); }
 .shop-card__btn--buy:hover, .shop-preview__btn--buy:hover { filter: brightness(1.15); }
 .shop-card__btn--use:hover, .shop-preview__btn--use:hover { border-color: var(--primary); }
 .shop-card__btn:active:not(:disabled), .shop-preview__btn:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
@@ -3141,6 +3236,8 @@ body.has-result .achievement-toast--visible { transform: none; }
     .wallet__value { font-size: 18px; }
     .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
     .shop-card__desc { display: block; }
+    .shop-offer { padding: 14px 18px; gap: 18px; }
+    .shop-offer__name { font-size: 17px; }
 }
 
 /* Escritorio: pestañas laterales y la cuadrícula con scroll propio */
@@ -3151,11 +3248,12 @@ body.has-result .achievement-toast--visible { transform: none; }
         max-width: 1152px;
         display: grid;
         grid-template-columns: 220px minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr);
-        grid-template-areas: "head head" "nav main";
+        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas: "head head" "nav offer" "nav main";
         gap: 26px 24px;
     }
     .shop-head { grid-area: head; }
+    .shop-offer { grid-area: offer; }
     .shop-tabs {
         grid-area: nav;
         display: flex;
@@ -3165,8 +3263,12 @@ body.has-result .achievement-toast--visible { transform: none; }
         background: none;
         border: 0;
         min-height: 0;
+        overflow: visible;
+        -webkit-mask-image: none;
+        mask-image: none;
     }
     .shop-tab-btn {
+        flex: none;
         flex-direction: row;
         justify-content: flex-start;
         gap: 12px;
@@ -3185,18 +3287,20 @@ body.has-result .achievement-toast--visible { transform: none; }
     .shop-tab-btn small { display: inline; margin-left: auto; font-family: var(--font-body); font-size: 12px; font-weight: 600; color: #5B6478; }
     .shop-tab-btn.active small { color: var(--primary); }
     .shop-tabs .shop-collection { display: flex; margin-top: auto; }
-    .shop-collection--inline, .shop-main__title { display: none; }
+    .shop-collection--inline { display: none; }
 
     .shop-main { grid-area: main; min-height: 0; overflow-y: auto; padding: 2px 4px 8px 2px; }
-    .shop-card__tile { height: 128px; }
-    .shop-card__tile svg, .shop-card__tile img { width: 112px; height: 112px; }
+    .shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .shop-card__tile { height: 120px; }
+    .shop-card__tile svg, .shop-card__tile img { width: 104px; height: 104px; }
 }
 
 /* Pantallas anchas: vista previa a la derecha */
 @media (min-width: 1200px) and (min-height: 600px) {
     .shop-layout {
-        grid-template-columns: 220px minmax(0, 1fr) 320px;
-        grid-template-areas: "head head head" "nav main preview";
+        grid-template-columns: 200px minmax(0, 1fr) 280px;
+        gap: 26px 20px;
+        grid-template-areas: "head head head" "nav offer preview" "nav main preview";
     }
     .shop-card--selected, .shop-card--selected:hover {
         border-color: rgba(255, 255, 255, 0.55);
@@ -3216,10 +3320,16 @@ body.has-result .achievement-toast--visible { transform: none; }
     }
     .shop-preview[data-rarity="rar"] { border-color: rgba(96, 165, 250, 0.35); }
     .shop-preview[data-rarity="epi"] { border-color: rgba(192, 132, 252, 0.35); }
-    .shop-preview[data-rarity="leg"] { border-color: rgba(250, 204, 21, 0.35); }
+    .shop-preview[data-rarity="leg"] { border-color: rgba(251, 146, 60, 0.35); }
+    .shop-preview[data-rarity="exc"] { border-color: rgba(250, 204, 21, 0.35); border-style: dashed; }
+    .shop-preview__stage {
+        aspect-ratio: 4 / 3;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #000;
+        overflow: hidden;
+    }
     .shop-preview__body { display: flex; flex-direction: column; gap: 16px; }
-    .shop-preview__tile { height: 200px; border-radius: 10px; }
-    .shop-preview__tile svg, .shop-preview__tile img { display: block; width: 168px; height: 168px; }
     .shop-preview__info { display: flex; flex-direction: column; gap: 8px; }
     .shop-preview__info .shop-card__rarity { font-size: 8px; }
     .shop-preview__name { font-size: 16px; line-height: 1.4; text-transform: uppercase; }
@@ -3239,6 +3349,7 @@ body.has-result .achievement-toast--visible { transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
     .shop-card, .shop-tab-btn { transition: none; }
+    .shop-card--flash { animation: none; outline: 3px solid rgba(250, 204, 21, 0.85); }
     .coin-error { animation: none; }
 }
 
@@ -4248,6 +4359,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     .theme-swatch { width: 44px; height: 44px; }
     .option-pill { height: 44px; }
     .shop-card__btn { min-height: 44px; }
+    .shop-offer__btn, .shop-sort select { min-height: 44px; }
     .ach-cat { height: 44px; }
     #orientation-hint-close { width: 44px; height: 44px; }
     .smash-btn { min-width: 44px; min-height: 44px; }
