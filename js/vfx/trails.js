@@ -84,7 +84,7 @@ function drawTrailFire(ctx, trail, radius, color) {
 function drawTrailIce(ctx, trail, radius, color) {
     const n = trail.length;
     if (n < 2) return;
-    const now = performance.now();
+    const now = vfxNow();
     ctx.save();
     ctx.lineCap = 'round';
     vfxEachSegment(trail, (a, b, pct) => {
@@ -141,6 +141,216 @@ function drawTrailRainbow(ctx, trail, radius, color) {
     ctx.restore();
 }
 
+/** Pixel: cuadrados alineados a una rejilla de 4 px que se apagan en escalón. */
+function drawTrailPixel(ctx, trail, radius, color) {
+    const n = trail.length;
+    if (n < 2) return;
+    const G = 4;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+        const k = (i + 1) / n;                       // 0 viejo → 1 nuevo
+        const step = Math.ceil(k * 4) / 4;           // 4 escalones de tamaño y alfa
+        const s = Math.max(G, Math.round(radius * 1.7 * step / G) * G);
+        const x = Math.round(trail[i].x / G) * G, y = Math.round(trail[i].y / G) * G;
+        ctx.globalAlpha = 0.18 + 0.7 * step;
+        ctx.fillStyle = step > 0.75 && i % 2 ? '#ffffff' : color;
+        ctx.fillRect(x - s / 2, y - s / 2, s, s);
+        if (step > 0.5) {                            // luz de 8 bits arriba a la izquierda
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.fillRect(x - s / 2, y - s / 2, s, G / 2);
+        }
+    }
+    ctx.restore();
+}
+
+/** Rayo: arco eléctrico que zigzaguea, con ramas y chispas. */
+const BOLT_GLOW = '#60A5FA', BOLT_CORE = '#E0F2FE';
+function drawTrailLightning(ctx, trail, radius, color, fx) {
+    const n = trail.length;
+    if (n < 3) return;
+    const pts = [];
+    for (let i = 0; i < n; i += 2) {
+        const p = trail[i], q = trail[Math.min(n - 1, i + 1)];
+        const dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1;
+        const k = i / n;
+        const amp = radius * (0.25 + 1.1 * (1 - k)) * (1 + (fx && fx.power || 0));
+        const off = (vfxRandom() - 0.5) * 2 * amp;
+        pts.push({ x: p.x - dy / L * off, y: p.y + dx / L * off, k });
+    }
+    pts.push({ x: trail[n - 1].x, y: trail[n - 1].y, k: 1 });
+    const stroke = (w, style, a) => {
+        ctx.lineWidth = w; ctx.strokeStyle = style; ctx.globalAlpha = a;
+        ctx.beginPath();
+        pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.stroke();
+    };
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.shadowColor = BOLT_GLOW; ctx.shadowBlur = 16;
+    stroke(radius * 1.1, hexToRgba(BOLT_GLOW, 0.35), 1);
+    ctx.shadowBlur = 0;
+    stroke(radius * 0.45, BOLT_GLOW, 0.9);
+    stroke(Math.max(1.5, radius * 0.18), BOLT_CORE, 1);
+    // Ramas cortas
+    for (let i = 2; i < pts.length - 2; i += 3) {
+        if (vfxRandom() > 0.55) continue;
+        const p = pts[i];
+        const a = vfxRandom() * Math.PI * 2, l = radius * (1 + vfxRandom() * 1.8);
+        ctx.globalAlpha = 0.7 * p.k + 0.2;
+        ctx.lineWidth = 1.5; ctx.strokeStyle = BOLT_CORE;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + Math.cos(a) * l * 0.5 + (vfxRandom() - 0.5) * 6, p.y + Math.sin(a) * l * 0.5 + (vfxRandom() - 0.5) * 6);
+        ctx.lineTo(p.x + Math.cos(a) * l, p.y + Math.sin(a) * l);
+        ctx.stroke();
+    }
+    // Chispas
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 4; i++) {
+        const p = trail[Math.floor(n * (0.5 + vfxRandom() * 0.5))];
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(p.x + (vfxRandom() - 0.5) * radius * 3, p.y + (vfxRandom() - 0.5) * radius * 3, 2, 2);
+    }
+    ctx.restore();
+}
+
+/** Fantasma: copias translúcidas de la bola, como un eco que se queda atrás. */
+function drawTrailGhost(ctx, trail, radius, color) {
+    const n = trail.length;
+    if (n < 2) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = n - 1, c = 0; i >= 0; i -= 3, c++) {
+        const k = i / (n - 1);
+        const p = trail[i];
+        const r = radius * (1.05 + (1 - k) * 0.35);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        g.addColorStop(0, `rgba(255, 255, 255, ${0.6 * k})`);
+        g.addColorStop(0.6, hexToRgba(color, 0.5 * k));
+        g.addColorStop(1, hexToRgba(color, 0));
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.25 + 0.65 * k;
+        ctx.strokeStyle = hexToRgba(color, 0.9);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.92, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+}
+
+/** Sakura: una cinta rosada suave y pétalos que caen y giran desde la estela. */
+const SAKURA_COLORS = ['#FBCFE8', '#F9A8D4', '#F472B6', '#FDF2F8'];
+function drawTrailSakura(ctx, trail, radius, color) {
+    const n = trail.length;
+    if (n < 2) return;
+    ctx.save();
+    // Cinta
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    vfxEachSegment(trail, (a, b, k) => {
+        ctx.strokeStyle = `rgba(249, 168, 212, ${0.4 * k})`;
+        ctx.lineWidth = radius * 1.4 * k;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    // Pétalos: cada punto de la estela suelta uno estable (hash por posición)
+    for (let i = 0; i < n - 1; i++) {
+        const p = trail[i];
+        const h = vfxPointHash(p);
+        if (h > 0.85) continue;
+        const age = n - 1 - i;                       // fotogramas desde que se soltó
+        const k = 1 - age / n;
+        const sway = Math.sin(age * 0.18 + h * 20) * (4 + age * 0.35);
+        const x = p.x + sway + (vfxPointHash(p, 1) - 0.5) * radius * 2;
+        const y = p.y + age * 0.9 + (vfxPointHash(p, 2) - 0.5) * radius * 2;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(h * 6.28 + age * 0.09);
+        ctx.scale(1, 0.55 + 0.45 * Math.abs(Math.cos(age * 0.12 + h * 9)));   // da vueltas
+        ctx.globalAlpha = Math.min(1, k * 1.4);
+        ctx.fillStyle = SAKURA_COLORS[Math.floor(vfxPointHash(p, 3) * SAKURA_COLORS.length)];
+        vfxPetal(ctx, radius * (0.75 + h * 0.5));
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(236, 72, 153, 0.55)'; ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.restore();
+    }
+    ctx.restore();
+}
+
+/** Galaxia: cola oscura con nebulosa violeta y estrellas que titilan dentro (la mitad con state.lowFx). */
+function drawTrailGalaxy(ctx, trail, radius, color) {
+    const n = trail.length;
+    if (n < 2) return;
+    const t = vfxT();
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // Halo exterior de nebulosa
+    ctx.globalCompositeOperation = 'lighter';
+    vfxEachSegment(trail, (a, b, k) => {
+        ctx.strokeStyle = vfxLerpColor([[0, '#7C3AED'], [0.6, '#C026D3'], [1, '#F472B6']], k, 0.5 * k);
+        ctx.lineWidth = radius * 3.6 * (0.3 + 0.7 * k);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    // Cuerpo oscuro
+    ctx.globalCompositeOperation = 'source-over';
+    vfxEachSegment(trail, (a, b, k) => {
+        ctx.strokeStyle = `rgba(30, 18, 72, ${0.9 * k})`;
+        ctx.lineWidth = radius * 1.9 * (0.3 + 0.7 * k);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    // Estrellas estables dentro de la cola
+    ctx.globalCompositeOperation = 'lighter';
+    const perPoint = state.lowFx ? 1 : 2;
+    for (let i = 0; i < n; i++) {
+        const p = trail[i], k = i / n;
+        for (let s = 0; s < perPoint; s++) {
+            const h = vfxPointHash(p, s + 5);
+            if (h > 0.75) continue;
+            const ox = (vfxPointHash(p, s + 7) - 0.5) * radius * 1.5 * k;
+            const oy = (vfxPointHash(p, s + 9) - 0.5) * radius * 1.5 * k;
+            const tw = 0.5 + 0.5 * Math.sin(t * 6 + h * 40);
+            ctx.globalAlpha = k * (0.4 + 0.6 * tw);
+            ctx.fillStyle = h < 0.12 ? '#F9A8D4' : '#ffffff';
+            if (h < 0.08) { vfxSparkle(ctx, p.x + ox, p.y + oy, 3.2 * k + 1); ctx.fill(); }
+            else ctx.fillRect(p.x + ox - 0.8, p.y + oy - 0.8, 1.6, 1.6);
+        }
+    }
+    ctx.restore();
+}
+
+/** Glitch: fragmentos RGB desplazados que cambian a saltos. Exclusivo. Con state.lowFx, la mitad de fragmentos. */
+function drawTrailGlitch(ctx, trail, radius, color) {
+    const n = trail.length;
+    if (n < 2) return;
+    const tick = Math.floor(vfxT() * 18);           // cambia a saltos, ~18 veces por segundo
+    const low = state.lowFx;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i += low ? 4 : 2) {
+        const p = trail[i], k = (i + 1) / n;
+        const h = vfxHash(tick * 131 + i * 7);
+        const off = (h - 0.5) * radius * 2.2 * (1 - k * 0.5);
+        const r = radius * (0.7 + 0.7 * k);
+        ctx.globalAlpha = 0.2 + 0.75 * k;
+        ctx.fillStyle = '#FF2D55';
+        ctx.fillRect(p.x - r + off - 3, p.y - r * 0.5, r * 2, r);
+        ctx.fillStyle = '#00E5FF';
+        ctx.fillRect(p.x - r - off + 3, p.y - r * 0.5, r * 2, r);
+    }
+    // Rebanadas horizontales sueltas
+    ctx.globalCompositeOperation = 'source-over';
+    for (let s = 0; s < (low ? 3 : 6); s++) {
+        const h = vfxHash(tick * 977 + s * 31);
+        const p = trail[Math.floor(h * n)];
+        const w = 8 + vfxHash(tick + s * 3) * radius * 4, hh = 2 + Math.floor(vfxHash(tick * 3 + s) * 3);
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = s % 3 === 0 ? '#ffffff' : s % 3 === 1 ? '#FF2D55' : '#00E5FF';
+        ctx.fillRect(p.x - w / 2 + (vfxHash(s + tick * 5) - 0.5) * 20, p.y + (vfxHash(s * 9 + tick) - 0.5) * radius * 3, w, hh);
+    }
+    ctx.restore();
+}
+
 /**
  * Renderizador de cada estela, por `id` del catálogo de la tienda.
  * @type {Record<string, (ctx: CanvasRenderingContext2D, trail: Array<{x: number, y: number}>, radius: number, color: string, fx?: {spin: number, power: number}) => void>}
@@ -150,16 +360,22 @@ const TRAIL_RENDERERS = {
     neon:    drawTrailNeon,
     fire:    drawTrailFire,
     ice:     drawTrailIce,
-    rainbow: drawTrailRainbow
+    rainbow: drawTrailRainbow,
+    pixel:     drawTrailPixel,
+    lightning: drawTrailLightning,
+    ghost:     drawTrailGhost,
+    sakura:    drawTrailSakura,
+    galaxy:    drawTrailGalaxy,
+    glitch:    drawTrailGlitch
 };
 
 /**
  * Dibuja la estela de una bola con la estela equipada (o la clásica si el
  * id guardado no existe).
  *
- * `fx` lleva el estado de la bola para las estelas que reaccionan (fase
- * 5): `spin` (efecto, -1–1) y `power` (1 en smash o súper). Las actuales
- * lo ignoran.
+ * `fx` lleva el estado de la bola para las estelas que reaccionan:
+ * `spin` (efecto, -1–1) y `power` (1 en smash o súper). Las que no lo
+ * usan lo ignoran.
  * @param {{spin: number, power: number}} [fx]
  */
 function renderBallTrail(ctx, trail, radius, fx) {

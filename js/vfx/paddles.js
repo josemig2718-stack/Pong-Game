@@ -113,7 +113,7 @@ function drawPaddleGradient(ctx, x, y, w, h, color) {
 /** Neón: contorno de 3 px, núcleo blanco y halo doble que pulsa. */
 function drawPaddleNeon(ctx, x, y, w, h, color) {
     const r = Math.min(7, w / 2);
-    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 260);
+    const pulse = 0.5 + 0.5 * Math.sin(vfxNow() / 260);
     ctx.save();
     ctx.fillStyle = hexToRgba(color, 0.06 + 0.05 * pulse);
     paddleRoundRect(ctx, x - 8, y - 8, w + 16, h + 16, r + 8);
@@ -157,13 +157,228 @@ function drawPaddleSlim(ctx, x, y, w, h, color) {
     ctx.restore();
 }
 
+/** Cristal: translúcida, con facetas, bordes brillantes y un destello que la recorre. */
+function drawPaddleCrystal(ctx, x, y, w, h, color, fx) {
+    const t = vfxT();
+    ctx.save();
+    paddleRoundRect(ctx, x, y, w, h, 3);
+    ctx.shadowColor = hexToRgba(color, 0.6); ctx.shadowBlur = 16;
+    ctx.fillStyle = hexToRgba(color, 0.22);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.clip();
+    // Facetas
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)'; ctx.lineWidth = 1;
+    for (let yy = y - w; yy < y + h; yy += 22) {
+        ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy + w); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + w, yy + 11); ctx.lineTo(x, yy + 11 + w); ctx.stroke();
+    }
+    ctx.fillStyle = hexToRgba(color, 0.25);
+    for (let yy = y; yy < y + h; yy += 22) ctx.fillRect(x, yy, w / 2, 11);
+    // Destello que la recorre
+    const sy = y + ((t * 70) % (h + 80)) - 40;
+    const g = ctx.createLinearGradient(0, sy - 26, 0, sy + 26);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, sy - 26, w, 52);
+    ctx.restore();
+    ctx.save();
+    paddleRoundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 3);
+    ctx.strokeStyle = hexToRgba('#ffffff', 0.8); ctx.lineWidth = 1.2;
+    ctx.stroke();
+    if (fx && fx.hit) { ctx.globalAlpha = fx.hit; ctx.fillStyle = '#ffffff'; ctx.fill(); }
+    ctx.restore();
+}
+
+/** Holograma: líneas de escaneo, borde que parpadea y alguna rebanada desplazada. */
+function drawPaddleHologram(ctx, x, y, w, h, color) {
+    const t = vfxT();
+    const flick = 0.75 + 0.25 * Math.sin(t * 31) * Math.sin(t * 7.3);
+    const tick = Math.floor(t * 9);
+    ctx.save();
+    ctx.globalAlpha = flick;
+    ctx.shadowColor = color; ctx.shadowBlur = 18;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    paddleRoundRect(ctx, x + 0.75, y + 0.75, w - 1.5, h - 1.5, 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = hexToRgba(color, 0.18);
+    ctx.fill();
+    // Líneas de escaneo que bajan
+    const off = (t * 40) % 4;
+    ctx.fillStyle = hexToRgba(color, 0.8);
+    for (let yy = y + off; yy < y + h; yy += 4) ctx.fillRect(x + 2, yy, w - 4, 1.4);
+    // Rebanada desplazada de vez en cuando
+    if (vfxHash(tick) < 0.35) {
+        const sy = y + vfxHash(tick * 7) * (h - 10);
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = hexToRgba('#ffffff', 0.7);
+        ctx.fillRect(x + (vfxHash(tick * 3) - 0.5) * 8, sy, w, 3);
+    }
+    // Base proyectora
+    ctx.globalAlpha = 0.5 * flick;
+    const g = ctx.createLinearGradient(0, y + h, 0, y + h + 14);
+    g.addColorStop(0, hexToRgba(color, 0.6)); g.addColorStop(1, hexToRgba(color, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 3, y + h, w + 6, 14);
+    ctx.restore();
+}
+
+/** Lava: costra oscura con grietas de magma que laten y fluyen. */
+function drawPaddleLava(ctx, x, y, w, h, color) {
+    const t = vfxT();
+    ctx.save();
+    ctx.shadowColor = 'rgba(249, 115, 22, 0.7)'; ctx.shadowBlur = 16;
+    paddleRoundRect(ctx, x, y, w, h, 4);
+    const base = ctx.createLinearGradient(x, 0, x + w, 0);
+    base.addColorStop(0, '#3B0D04'); base.addColorStop(0.5, '#1C0703'); base.addColorStop(1, '#2A0A03');
+    ctx.fillStyle = base;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.clip();
+    // Magma que fluye por debajo
+    const flow = (t * 25) % 40;
+    for (let yy = y - 40 + flow; yy < y + h; yy += 40) {
+        const g = ctx.createLinearGradient(0, yy, 0, yy + 40);
+        g.addColorStop(0, 'rgba(249, 115, 22, 0)'); g.addColorStop(0.5, 'rgba(249, 115, 22, 0.35)'); g.addColorStop(1, 'rgba(249, 115, 22, 0)');
+        ctx.fillStyle = g; ctx.fillRect(x, yy, w, 40);
+    }
+    // Grietas (patrón fijo en coordenadas de la paleta)
+    const pulse = 0.65 + 0.35 * Math.sin(t * 4);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let j = 0; j < Math.ceil(h / 16); j++) {
+        const yy = y + j * 16 + 4;
+        const a = vfxHash(j * 17), b = vfxHash(j * 29 + 3);
+        ctx.beginPath();
+        ctx.moveTo(x + w * a * 0.4, yy);
+        ctx.lineTo(x + w * (0.4 + b * 0.3), yy + 6);
+        ctx.lineTo(x + w * (0.7 + a * 0.3), yy + 4 + b * 8);
+        ctx.strokeStyle = `rgba(253, 224, 71, ${0.9 * pulse})`; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.strokeStyle = `rgba(249, 115, 22, ${0.55 * pulse})`; ctx.lineWidth = 3.5; ctx.stroke();
+    }
+    ctx.restore();
+    // Borde del color del jugador, fino, para seguir distinguiendo a cada lado
+    ctx.save();
+    ctx.strokeStyle = hexToRgba(color, 0.55); ctx.lineWidth = 1;
+    paddleRoundRect(ctx, x - 1.5, y - 1.5, w + 3, h + 3, 5);
+    ctx.stroke();
+    ctx.restore();
+}
+
+/** Circuito: placa oscura con pistas del color del jugador y pulsos que viajan; se ilumina al golpear. */
+function drawPaddleCircuit(ctx, x, y, w, h, color, fx) {
+    const t = vfxT();
+    const hit = (fx && fx.hit) || 0;
+    ctx.save();
+    ctx.shadowColor = hexToRgba(color, 0.5); ctx.shadowBlur = 10 + hit * 18;
+    paddleRoundRect(ctx, x, y, w, h, 3);
+    ctx.fillStyle = '#0A1220';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = hexToRgba(color, 0.9); ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.clip();
+    // Pistas
+    const cx = x + w / 2;
+    ctx.strokeStyle = hexToRgba(color, 0.55 + hit * 0.45); ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(cx, y + 4); ctx.lineTo(cx, y + h - 4);
+    for (let j = 0; j < Math.floor(h / 18); j++) {
+        const yy = y + 9 + j * 18, side = j % 2 ? -1 : 1;
+        ctx.moveTo(cx, yy); ctx.lineTo(cx + side * (w / 2 - 3), yy + 5); ctx.lineTo(cx + side * (w / 2 - 3), yy + 11);
+    }
+    ctx.stroke();
+    // Nodos
+    ctx.fillStyle = color;
+    for (let j = 0; j < Math.floor(h / 18); j++) {
+        const yy = y + 9 + j * 18, side = j % 2 ? -1 : 1;
+        ctx.fillRect(cx + side * (w / 2 - 3) - 1.5, yy + 10, 3, 3);
+    }
+    // Pulso que viaja por la pista central
+    const py = y + ((t * 120) % (h + 20)) - 10;
+    const g = ctx.createLinearGradient(0, py - 12, 0, py + 12);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - 1.5, py - 12, 3, 24);
+    if (hit) { ctx.globalAlpha = hit * 0.5; ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
+    ctx.restore();
+}
+
+/** Sable de energía: núcleo blanco y halo que vibra; más intenso al cargar el smash. */
+function drawPaddleSaber(ctx, x, y, w, h, color, fx) {
+    const t = vfxT();
+    const charge = (fx && fx.charge) || 0;
+    const jit = Math.sin(t * 60) * (0.6 + charge * 1.4);
+    const cx = x + w / 2 + jit * 0.4;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    // Halos
+    for (const [lw, a] of [[w * 2.6 + charge * 10, 0.12], [w * 1.6 + charge * 6, 0.25], [w * 1.0, 0.55]]) {
+        ctx.strokeStyle = hexToRgba(color, a + charge * 0.1);
+        ctx.lineWidth = lw + jit;
+        ctx.beginPath(); ctx.moveTo(cx, y + 4); ctx.lineTo(cx, y + h - 4); ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    // Núcleo
+    ctx.shadowColor = color; ctx.shadowBlur = 12 + charge * 14;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(3, w * 0.42);
+    ctx.beginPath(); ctx.moveTo(cx, y + 4); ctx.lineTo(cx, y + h - 4); ctx.stroke();
+    ctx.restore();
+}
+
+/** Dorada: oro con bandas metálicas, bisel y destellos. Exclusiva del nivel máximo. */
+function drawPaddleGold(ctx, x, y, w, h, color) {
+    const t = vfxT();
+    ctx.save();
+    ctx.shadowColor = 'rgba(250, 204, 21, 0.55)'; ctx.shadowBlur = 16;
+    paddleRoundRect(ctx, x, y, w, h, 4);
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#92400E'); g.addColorStop(0.22, '#FDE68A'); g.addColorStop(0.45, '#F59E0B');
+    g.addColorStop(0.7, '#FCD34D'); g.addColorStop(1, '#B45309');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.clip();
+    // Grabado: rombos sutiles
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.35)'; ctx.lineWidth = 1;
+    for (let yy = y + 8; yy < y + h - 4; yy += 14) {
+        ctx.beginPath(); ctx.moveTo(x + w / 2, yy - 5); ctx.lineTo(x + w - 3, yy); ctx.lineTo(x + w / 2, yy + 5); ctx.lineTo(x + 3, yy); ctx.closePath(); ctx.stroke();
+    }
+    // Brillo diagonal que pasa
+    const sy = y + ((t * 90) % (h + 120)) - 60;
+    const sh = ctx.createLinearGradient(x, sy - 20, x + w, sy + 20);
+    sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, 'rgba(255,255,255,0.8)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh;
+    ctx.fillRect(x, sy - 30, w, 60);
+    ctx.restore();
+    // Destellos
+    ctx.save();
+    ctx.fillStyle = '#FFFBEB';
+    for (let i = 0; i < 2; i++) {
+        const ph = (t * 0.9 + i * 0.5) % 1;
+        const a = Math.sin(ph * Math.PI);
+        ctx.globalAlpha = a;
+        vfxSparkle(ctx, x + (i ? w - 2 : 2), y + h * (0.2 + 0.6 * vfxHash(Math.floor(t * 0.9 + i * 0.5) * 7 + i)), 4 + 3 * a);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
 /** Renderizador de cada paleta, por `id` del catálogo de la tienda. */
 const PADDLE_RENDERERS = {
     classic:      drawPaddleClassic,
     pixel:        drawPaddlePixel,
     gradient:     drawPaddleGradient,
     neon_paddle:  drawPaddleNeon,
-    slim:         drawPaddleSlim
+    slim:         drawPaddleSlim,
+    crystal:      drawPaddleCrystal,
+    hologram:     drawPaddleHologram,
+    lava:         drawPaddleLava,
+    circuit:      drawPaddleCircuit,
+    saber:        drawPaddleSaber,
+    gold:         drawPaddleGold
 };
 
 /**
@@ -172,9 +387,9 @@ const PADDLE_RENDERERS = {
  * (la del jugador en la arena rotada del Creador) se dibuja girada 90° sobre
  * su centro, con la misma caja.
  *
- * `fx` lleva el estado de las mecánicas para los estilos que reaccionan
- * (fase 5): `charge` (smash cargando, 0–1) y `hit` (destello al golpear,
- * 1 → 0). Los estilos actuales lo ignoran.
+ * `fx` lleva el estado de las mecánicas para los estilos que reaccionan:
+ * `charge` (smash cargando, 0–1) y `hit` (destello al golpear, 1 → 0).
+ * Los que no lo usan lo ignoran.
  * @param {{charge: number, hit: number}} [fx]
  */
 function renderPaddleVFX(ctx, x, y, w, h, color, fx) {

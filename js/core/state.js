@@ -87,6 +87,7 @@
  * @property {number} hitStopMs  congelación breve tras un golpe fuerte (ms reales); update() no avanza mientras dure
  * @property {boolean} fever  fiebre del rally: desde MECH.feverRally golpes seguidos hasta el siguiente gol
  * @property {number} feverHeat  intensidad visual de la fiebre, de 0 a 1 (sube y baja en MECH.feverFadeMs)
+ * @property {boolean} lowFx  el dispositivo no llega a 45 fps: los cosméticos más pesados dibujan la mitad (solo visual; dura hasta salir de la partida)
  * @property {Ball[]} balls
  * @property {Particle[]} particles
  */
@@ -112,6 +113,8 @@ const state = {
     /** Fiebre del rally y su intensidad visual (0–1). */
     fever: false,
     feverHeat: 0,
+    /** Efectos ligeros: lo pone measureFxLoad() (game/loop.js) si los fps caen; startGame() lo quita. */
+    lowFx: false,
     /**
      * Bolas en juego (el power-up multi-bola añade hasta dos más).
      * resetBall() sustituye el array entero: no guardes una referencia a

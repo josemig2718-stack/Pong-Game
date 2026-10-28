@@ -15,7 +15,7 @@
  * Cada archivo tiene una tabla id → renderizador. Añadir un cosmético es
  * añadir su renderizador a la tabla, su entrada en data/shop.js con el
  * mismo `id` y su icono SVG en assets/shop/. Los renderizadores leen lo
- * equipado (playerProgression.selected*) en cada fotograma.
+ * equipado (equippedId(cat)) en cada fotograma, y la hora de vfxNow().
  *
  * Este archivo solo agrupa lo que game/ llama cada partida y cada
  * fotograma.
@@ -38,8 +38,9 @@ function resetVFX() {
     clearMechFX();
 }
 
-/** Avanza los efectos con estado: el fondo, el efecto de gol, los estallidos de los power-ups y los de las mecánicas. */
+/** Avanza el reloj de los efectos y los efectos con estado: el fondo, el efecto de gol, los estallidos de los power-ups y los de las mecánicas. */
 function updateVFX(dt) {
+    vfxTick(dt);
     updateBackground(dt);
     updateGoalVFX(dt);
     updatePowerupBursts(dt);

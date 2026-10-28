@@ -35,9 +35,44 @@ function vfxHash(n) {
     return ((t ^ (t >>> 16)) >>> 0) / 4294967296;
 }
 
-/** Segundos del reloj de los efectos (performance.now()). */
+/**
+ * Reloj de los efectos (ms). Avanza con updateVFX(fxDt), así que se para
+ * en la pausa, el hit-stop y los diálogos, y va despacio con la cámara
+ * lenta. Los renderizadores leen la hora de aquí, nunca de
+ * performance.now() ni de Date.now().
+ */
+let vfxClockMs = 0;
+
+/** Milisegundos del reloj de los efectos. */
+function vfxNow() {
+    return vfxClockMs;
+}
+
+/** Segundos del reloj de los efectos. */
 function vfxT() {
-    return performance.now() / 1000;
+    return vfxClockMs / 1000;
+}
+
+/** Avanza el reloj de los efectos (dt en fotogramas de 60 FPS). */
+function vfxTick(dt) {
+    vfxClockMs += dt * MS_PER_FRAME;
+}
+
+/** Hash estable de un punto de la estela: decora sin parpadear (los puntos no se mueven, solo cambian de índice). */
+function vfxPointHash(p, k = 0) {
+    return vfxHash(Math.round(p.x * 7.31) * 92821 + Math.round(p.y * 3.17) * 68917 + k * 1013);
+}
+
+/** Abre un trazado con un pétalo de sakura centrado en (0, 0), de largo s. */
+function vfxPetal(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(0, -s);
+    ctx.bezierCurveTo(s * 0.75, -s * 0.55, s * 0.6, s * 0.55, 0, s);
+    ctx.bezierCurveTo(-s * 0.6, s * 0.55, -s * 0.75, -s * 0.55, 0, -s);
+    ctx.moveTo(0, -s);
+    ctx.lineTo(s * 0.18, -s * 0.72);
+    ctx.lineTo(-s * 0.18, -s * 0.72);
+    ctx.closePath();
 }
 
 // El audio tiene su propio generador, con el mismo algoritmo. Si usara

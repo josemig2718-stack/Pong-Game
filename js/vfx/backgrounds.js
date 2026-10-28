@@ -46,7 +46,7 @@ function updateStars(dt) {
     bgSparkles = bgSparkles.filter((sp) => sp.life < 1);
 }
 function renderStars(ctx) {
-    const t = performance.now() / 1000;
+    const t = vfxT();
     ctx.save();
     for (const L of bgStarLayers) {
         for (const s of L.stars) {
@@ -166,7 +166,7 @@ function initAurora() {
     }));
 }
 function renderAurora(ctx) {
-    const t = performance.now();
+    const t = vfxNow();
     ctx.save();
     // Cielo nocturno que se funde con el negro del campo
     const sky = ctx.createLinearGradient(0, 0, 0, 440);

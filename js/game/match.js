@@ -169,6 +169,8 @@ function startGame(mode) {
 
     initPowerups();
     initVFX();
+    state.lowFx = false;
+    resetFxLoad();
     statsOnGameStart();
     resetSessionTrackers();
     refreshMissions();
