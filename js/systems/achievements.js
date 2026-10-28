@@ -108,6 +108,7 @@ function unlockAchievement(id) {
 
     gameStats.achievements[id] = new Date().toISOString();
     saveStats();
+    syncExclusives();   // algunos logros entregan un objeto exclusivo de la tienda
 
     // Encolar notificación
     const achievement = ACHIEVEMENTS.find(a => a.id === id);
@@ -136,6 +137,23 @@ function showMissionToast(mission) {
     processAchievementQueue();
 }
 
+/** Color del aviso de objeto exclusivo (el de la rareza exclusiva de la tienda). */
+const EXCLUSIVE_TOAST_COLOR = '#FACC15';
+
+/**
+ * Aviso de objeto exclusivo conseguido: en la misma cola que los logros,
+ * con el icono del objeto en lugar de la medalla.
+ * @param {string} cat clave de SHOP_CATALOG
+ * @param {ShopItem} item
+ */
+function showExclusiveToast(cat, item) {
+    achievementQueue.push(/** @type {Achievement} */ ({
+        id: `${cat}:${item.id}`, category: 'tienda', name: item.name, desc: 'Ya es tuyo: équipalo en la Tienda',
+        icon: '', color: EXCLUSIVE_TOAST_COLOR, shopItem: { cat, item }
+    }));
+    processAchievementQueue();
+}
+
 /** Muestra las notificaciones de logros una por una */
 function processAchievementQueue() {
     if (isShowingAchievement || achievementQueue.length === 0) return;
@@ -155,14 +173,16 @@ function showAchievementToast(achievement) {
     const nameEl  = toast.querySelector('.achievement-toast__name');
     const descEl  = toast.querySelector('.achievement-toast__desc');
 
-    medalEl.innerHTML = achievementMedalSVG(achievement, 'unlocked');
+    const shopItem = achievement.shopItem;
+    medalEl.innerHTML = shopItem ? shopIconHTML(shopItem.cat, shopItem.item) : achievementMedalSVG(achievement, 'unlocked');
+    medalEl.classList.toggle('achievement-toast__medal--item', !!shopItem);
     toast.style.setProperty('--ach-color', achievementColor(achievement));
-    titleEl.textContent = achievement.mission ? '¡MISIÓN COMPLETADA!' : '¡LOGRO DESBLOQUEADO!';
+    titleEl.textContent = achievement.mission ? '¡MISIÓN COMPLETADA!' : shopItem ? '¡OBJETO EXCLUSIVO!' : '¡LOGRO DESBLOQUEADO!';
     nameEl.textContent  = achievement.name;
     descEl.textContent  = achievement.desc;
 
-    // SFX (la misión ya sonó al completarse)
-    if (!achievement.mission) soundEffects.achievementUnlock();
+    // SFX (la misión y el exclusivo ya sonaron al conseguirse)
+    if (!achievement.mission && !shopItem) soundEffects.achievementUnlock();
 
     // Animación: aparecer
     toast.classList.remove('achievement-toast--hidden');

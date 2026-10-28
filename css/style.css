@@ -2881,6 +2881,9 @@ label.set-item__head { cursor: pointer; }
 
 .achievement-toast__medal { flex: none; width: 52px; height: 52px; }
 .achievement-toast__medal .ach-medal { width: 52px; height: 52px; }
+/* Aviso de objeto exclusivo: el icono de la tienda en una casilla dorada discontinua */
+.achievement-toast__medal--item { display: grid; place-items: center; border-radius: 10px; border: 1.5px dashed rgba(250, 204, 21, 0.6); background: radial-gradient(circle at 50% 38%, #1B2233, #090B11 72%); overflow: hidden; }
+.achievement-toast__medal--item svg, .achievement-toast__medal--item img { display: block; width: 48px; height: 48px; }
 
 .achievement-toast__text {
     display: flex;

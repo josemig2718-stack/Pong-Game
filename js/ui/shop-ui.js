@@ -21,7 +21,8 @@ let shopPreviewId = null;
 let shopIconUid = 0;
 
 /** Nombre en singular de lo que vende cada pestaña (vista previa). */
-const SHOP_ITEM_KIND = { trails: 'Estela', backgrounds: 'Fondo', paddles: 'Paleta', goalEffects: 'Efecto de gol' };
+const SHOP_ITEM_KIND = { trails: 'Estela', backgrounds: 'Fondo', paddles: 'Paleta', goalEffects: 'Efecto de gol',
+                         balls: 'Bola', super: 'Súper golpe', music: 'Canción' };
 
 const SHOP_COIN_IMG = '<img src="assets/chemi_coin.png" alt="" class="shop-coin">';
 const SHOP_CHECK_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
@@ -53,9 +54,9 @@ function switchShopTab(categoryKey) {
     populateShopTab(currentShopTab);
 }
 
-/** ¿El jugador tiene este artículo? Los gratuitos son de todos. */
+/** ¿El jugador tiene este artículo? Los gratuitos son de todos; los exclusivos, de quien los consiguió. */
 function shopOwns(categoryKey, item) {
-    return item.price === 0 || hasItem(categoryKey, item.id);
+    return shopIsFree(item) || hasItem(categoryKey, item.id);
 }
 
 /** Id del artículo equipado en una pestaña. */
@@ -93,6 +94,10 @@ function shopActionButton(categoryKey, item, className) {
         btn.classList.add(`${className}--use`);
         btn.textContent = 'USAR';
         btn.addEventListener('click', () => equipShopItem(categoryKey, item.id));
+    } else if (item.exclusive) {
+        btn.classList.add(`${className}--equipped`);
+        btn.textContent = shopLockLabel(item);
+        btn.disabled = true;
     } else {
         btn.classList.add(`${className}--buy`);
         btn.innerHTML = `${SHOP_COIN_IMG}${item.price}`;
@@ -116,7 +121,7 @@ function populateShopTab(categoryKey) {
     items.forEach(item => {
         const isOwned = shopOwns(categoryKey, item);
         const isEquipped = isOwned && equippedId === item.id;
-        const rarity = shopRarity(item.price);
+        const rarity = shopRarity(item);
 
         const card = document.createElement('div');
         card.className = 'shop-card';
@@ -198,7 +203,7 @@ function renderShopPreview() {
     const items = SHOP_CATALOG[currentShopTab];
     const id = shopPreviewId || shopEquippedId(currentShopTab);
     const item = items.find(i => i.id === id) || items[0];
-    const rarity = shopRarity(item.price);
+    const rarity = shopRarity(item);
 
     document.querySelectorAll('#shop-grid .shop-card').forEach(card => {
         card.classList.toggle('shop-card--selected', /** @type {HTMLElement} */ (card).dataset.id === item.id);
@@ -214,14 +219,14 @@ function renderShopPreview() {
         </div>`;
 
     actions.innerHTML = '';
-    if (!shopOwns(currentShopTab, item) && playerProgression.coins >= item.price) {
+    if (!shopOwns(currentShopTab, item) && !item.exclusive && playerProgression.coins >= item.price) {
         const rest = document.createElement('div');
         rest.className = 'shop-preview__rest';
         rest.innerHTML = `<span>Te quedarán</span><span>${playerProgression.coins - item.price} monedas</span>`;
         actions.appendChild(rest);
     }
     const btn = shopActionButton(currentShopTab, item, 'shop-preview__btn');
-    if (!shopOwns(currentShopTab, item)) btn.innerHTML = `${SHOP_COIN_IMG}COMPRAR · ${item.price}`;
+    if (!shopOwns(currentShopTab, item) && !item.exclusive) btn.innerHTML = `${SHOP_COIN_IMG}COMPRAR · ${item.price}`;
     actions.appendChild(btn);
 }
 

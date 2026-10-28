@@ -13,57 +13,113 @@
 'use strict';
 
 /**
+ * Cómo se consigue un objeto exclusivo (no se vende): `check()` dice si
+ * ya se cumple la condición y `label` es el texto del candado.
+ * @typedef {object} ShopExclusive
+ * @property {string} label
+ * @property {() => boolean} check
+ */
+
+/**
  * Artículo de la tienda (un cosmético).
  * @typedef {object} ShopItem
  * @property {string} id       clave en la tabla de vfx/ y nombre del icono
  * @property {string} name
  * @property {string} desc
- * @property {number} price    en Chemi Coins; 0 = gratuito (siempre en propiedad); fija la rareza
+ * @property {number} price    en Chemi Coins; 0 = gratuito (siempre en propiedad), salvo los exclusivos; fija la rareza
+ * @property {ShopExclusive} [exclusive]  no se compra: se consigue (ver syncExclusives en systems/progression.js)
  */
 
 /** @type {Record<string, ShopItem[]>} */
 const SHOP_CATALOG = {
     trails: [
-        { id: 'default',  name: 'Clásica',   desc: 'Círculos blancos que se encogen',               price: 0 },
-        { id: 'neon',     name: 'Neón',       desc: 'Línea brillante con resplandor intenso',         price: 30 },
-        { id: 'fire',     name: 'Fuego',      desc: 'Llama que parpadea, con brasas',                 price: 60 },
-        { id: 'ice',      name: 'Hielo',      desc: 'Destellos celestes cristalinos',                 price: 60 },
-        { id: 'rainbow',  name: 'Arcoíris',   desc: 'Seis bandas paralelas a la trayectoria',         price: 100 }
+        { id: 'default',   name: 'Clásica',    desc: 'Círculos blancos que se encogen',                   price: 0 },
+        { id: 'neon',      name: 'Neón',       desc: 'Línea brillante con resplandor intenso',             price: 60 },
+        { id: 'pixel',     name: 'Pixel',      desc: 'Cuadrados en rejilla que se apagan a saltos',        price: 60 },
+        { id: 'fire',      name: 'Fuego',      desc: 'Llama que parpadea, con brasas',                     price: 150 },
+        { id: 'ice',       name: 'Hielo',      desc: 'Destellos celestes cristalinos',                     price: 150 },
+        { id: 'lightning', name: 'Rayo',       desc: 'Arco eléctrico en zigzag, con ramas y chispas',      price: 150 },
+        { id: 'ghost',     name: 'Fantasma',   desc: 'Ecos translúcidos de la bola que se quedan atrás',   price: 150 },
+        { id: 'sakura',    name: 'Sakura',     desc: 'Cinta rosada y pétalos que caen girando',            price: 180 },
+        { id: 'rainbow',   name: 'Arcoíris',   desc: 'Seis bandas paralelas a la trayectoria',             price: 300 },
+        { id: 'galaxy',    name: 'Galaxia',    desc: 'Cola de nebulosa violeta con estrellas dentro',      price: 300 },
+        { id: 'glitch',    name: 'Glitch',     desc: 'Fragmentos RGB desplazados que saltan sin aviso',    price: 0,
+          exclusive: { label: 'Logro The Creator', check: () => !!gameStats.achievements.the_creator } }
     ],
     backgrounds: [
-        { id: 'none',    name: 'Clásico',       desc: 'Fondo negro puro',                            price: 0 },
-        { id: 'stars',   name: 'Estrellas',      desc: 'Tres capas en paralaje y destellos',          price: 40 },
-        { id: 'rain',    name: 'Lluvia Digital', desc: 'Caracteres cayendo estilo Matrix',            price: 80 },
-        { id: 'aurora',  name: 'Aurora Boreal',  desc: 'Cielo nocturno con cortinas de luz',          price: 120 }
+        { id: 'none',          name: 'Clásico',          desc: 'Fondo negro puro',                                   price: 0 },
+        { id: 'stars',         name: 'Estrellas',        desc: 'Tres capas en paralaje y destellos',                 price: 80 },
+        { id: 'rain',          name: 'Lluvia Digital',   desc: 'Caracteres cayendo estilo Matrix',                   price: 160 },
+        { id: 'synthwave',     name: 'Synthwave',        desc: 'Sol retro, montañas y cuadrícula en perspectiva',    price: 200 },
+        { id: 'abyss',         name: 'Abismo',           desc: 'Rayos de luz, burbujas y medusas en lo hondo',       price: 200 },
+        { id: 'neon_city',     name: 'Ciudad neón',      desc: 'Rascacielos con ventanas, letreros y lluvia',        price: 220 },
+        { id: 'aurora',        name: 'Aurora Boreal',    desc: 'Cielo nocturno con cortinas de luz',                 price: 320 },
+        { id: 'nebula',        name: 'Nebulosa',         desc: 'Gas de colores que deriva despacio entre estrellas', price: 350 },
+        { id: 'forest',        name: 'Bosque nocturno',  desc: 'Luna, pinos y luciérnagas que huyen de la bola',     price: 350 },
+        { id: 'hachepe_walls', name: 'Murallas Hachepe', desc: 'La arena de piedra de la campaña',                   price: 0,
+          exclusive: { label: 'Vence al Modo Hachepe', check: () => !!gameStats.achievements.beat_hachepe } }
     ],
     paddles: [
-        { id: 'classic',      name: 'Clásica',      desc: 'Rectángulo redondeado sólido',             price: 0 },
-        { id: 'pixel',        name: 'Pixel',         desc: 'Bloques de 5 px con luces y sombras de 8 bits', price: 25 },
-        { id: 'gradient',     name: 'Gradiente',     desc: 'Del blanco al color del jugador',          price: 50 },
-        { id: 'neon_paddle',  name: 'Neón',          desc: 'Paleta con resplandor pulsante',           price: 70 },
-        { id: 'slim',         name: 'Delgada Pro',   desc: 'Visualmente delgada, mismo golpe',         price: 45 }
+        { id: 'classic',     name: 'Clásica',          desc: 'Rectángulo redondeado sólido',                   price: 0 },
+        { id: 'pixel',       name: 'Pixel',            desc: 'Bloques de 5 px con luces y sombras de 8 bits',  price: 50 },
+        { id: 'crystal',     name: 'Cristal',          desc: 'Translúcida, con facetas y un destello',         price: 80 },
+        { id: 'gradient',    name: 'Gradiente',        desc: 'Del blanco al color del jugador',                price: 90 },
+        { id: 'slim',        name: 'Delgada Pro',      desc: 'Visualmente delgada, mismo golpe',               price: 90 },
+        { id: 'neon_paddle', name: 'Neón',             desc: 'Paleta con resplandor pulsante',                 price: 150 },
+        { id: 'hologram',    name: 'Holograma',        desc: 'Líneas de escaneo y un borde que parpadea',      price: 160 },
+        { id: 'circuit',     name: 'Circuito',         desc: 'Pistas con pulsos que se encienden al golpear',  price: 160 },
+        { id: 'lava',        name: 'Lava',             desc: 'Costra oscura con grietas de magma que laten',   price: 180 },
+        { id: 'saber',       name: 'Sable de energía', desc: 'Núcleo blanco y halo que vibra al cargar',       price: 320 },
+        { id: 'gold',        name: 'Dorada',           desc: 'Oro con bandas metálicas, bisel y destellos',    price: 0,
+          exclusive: { label: 'Nivel 50', check: () => playerProgression.level >= MAX_LEVEL } }
     ],
     goalEffects: [
-        { id: 'classic',     name: 'Clásico',        desc: 'Anillo del tema y cuadrados disparados',   price: 0 },
-        { id: 'epic_flash',  name: 'Flash Épico',    desc: 'Destello blanco + cámara lenta',           price: 50 },
-        { id: 'confetti',    name: 'Confeti',         desc: 'Explosión de partículas multicolor',      price: 65 },
-        { id: 'shockwave',   name: 'Onda Expansiva',  desc: 'Tres anillos con retraso y un destello',   price: 80 }
-    ]
+        { id: 'classic',    name: 'Clásico',             desc: 'Anillo del tema y cuadrados disparados',     price: 0 },
+        { id: 'epic_flash', name: 'Flash Épico',         desc: 'Destello blanco + cámara lenta',             price: 90 },
+        { id: 'goal_8bit',  name: 'GOOOL 8-bit',         desc: 'Letras pixeladas gigantes que rebotan',      price: 90 },
+        { id: 'confetti',   name: 'Confeti',             desc: 'Explosión de partículas multicolor',         price: 130 },
+        { id: 'shockwave',  name: 'Onda Expansiva',      desc: 'Tres anillos con retraso y un destello',     price: 160 },
+        { id: 'fireworks',  name: 'Fuegos artificiales', desc: 'Cohetes que estallan en palmeras de color',  price: 180 },
+        { id: 'shatter',    name: 'Pantalla rota',       desc: 'El campo se agrieta y se recompone',         price: 200 },
+        { id: 'storm',      name: 'Tormenta',            desc: 'Rayos que caen sobre la portería',           price: 300 },
+        { id: 'black_hole', name: 'Agujero negro',       desc: 'Lo absorbe todo hacia la portería',          price: 320 },
+        { id: 'crown',      name: 'Corona',              desc: 'Una corona dorada baja sobre quien marca',   price: 0,
+          exclusive: { label: 'Completa la campaña', check: () => !!gameStats.achievements.campaign_clear } }
+    ],
+    balls: [
+        { id: 'classic', name: 'Clásica', desc: 'Bola blanca con el brillo del tema',          price: 0 },
+        { id: 'pixel',   name: 'Pixel',   desc: 'Círculo de bloques con luz de 8 bits',        price: 70 },
+        { id: 'soccer',  name: 'Balón',   desc: 'Blanco con pentágonos negros que giran',      price: 90 },
+        { id: 'eye',     name: 'Ojo',     desc: 'Mira siempre hacia donde va',                 price: 150 },
+        { id: 'planet',  name: 'Planeta', desc: 'Esfera con bandas y un anillo inclinado',     price: 160 },
+        { id: 'comet',   name: 'Cometa',  desc: 'Núcleo helado con una llamarada a su espalda', price: 300 }
+    ],
+    super: [
+        { id: 'energy',    name: 'Energía', desc: 'Anillos del color del tema que giran',     price: 0 },
+        { id: 'fire',      name: 'Llamas',  desc: 'La bola arde y estalla en brasas',         price: 200 },
+        { id: 'ice',       name: 'Hielo',   desc: 'Escarcha que gira y cristales alrededor',  price: 200 },
+        { id: 'lightning', name: 'Rayo',    desc: 'Arcos eléctricos que saltan de la bola',   price: 320 }
+    ],
+    music: []   // Rockola: la llena la fase 6
 };
 
-/** Pestañas de la tienda: `key` en SHOP_CATALOG y su nombre. */
+/** Pestañas de la tienda: `key` en SHOP_CATALOG y su nombre. Rockola sigue oculta hasta la fase 6. */
 const SHOP_CATEGORIES = [
     { key: 'trails',      label: 'Estelas' },
     { key: 'backgrounds', label: 'Fondos' },
     { key: 'paddles',     label: 'Paletas' },
-    { key: 'goalEffects', label: 'Efectos Gol' }
+    { key: 'goalEffects', label: 'Goles' },
+    { key: 'balls',       label: 'Bolas' },
+    { key: 'super',       label: 'Súper' },
+    { key: 'music',       label: 'Rockola' }
 ];
 
 /**
  * Prefijo del nombre de icono de cada pestaña: assets/shop/<prefijo><id>.svg
  * @type {Record<string, string>}
  */
-const SHOP_ICON_PREFIX = { trails: 'trail_', backgrounds: 'bg_', paddles: 'paddle_', goalEffects: 'goal_' };
+const SHOP_ICON_PREFIX = { trails: 'trail_', backgrounds: 'bg_', paddles: 'paddle_', goalEffects: 'goal_',
+                           balls: 'ball_', super: 'super_', music: 'music_' };
 
 /**
  * Iconos que toman el color del tema (var(--primary)), en línea. Son los
@@ -85,13 +141,34 @@ const SHOP_ICONS = {
 
 /**
  * Rareza según el precio (no se guarda en el catálogo): se ve en el
- * borde del icono y en la etiqueta de cada artículo.
- * @param {number} price
- * @returns {{key: 'ini'|'rar'|'epi'|'leg', label: string}}
+ * borde del icono y en la etiqueta de cada artículo. Los exclusivos van
+ * aparte, sea cual sea su precio.
+ * @param {ShopItem} item
+ * @returns {{key: 'ini'|'rar'|'epi'|'leg'|'exc', label: string}}
  */
-function shopRarity(price) {
-    if (price === 0) return { key: 'ini', label: 'Inicial' };
-    if (price <= 50) return { key: 'rar', label: 'Raro' };
-    if (price < 100) return { key: 'epi', label: 'Épico' };
+function shopRarity(item) {
+    if (item.exclusive) return { key: 'exc', label: 'Exclusivo' };
+    if (item.price === 0) return { key: 'ini', label: 'Inicial' };
+    if (item.price < 100) return { key: 'rar', label: 'Raro' };
+    if (item.price < 300) return { key: 'epi', label: 'Épico' };
     return { key: 'leg', label: 'Legendario' };
+}
+
+/**
+ * ¿Es de todos desde el principio? Los gratuitos sí; los exclusivos
+ * (también a precio 0) hay que conseguirlos.
+ * @param {ShopItem} item
+ */
+function shopIsFree(item) {
+    return item.price === 0 && !item.exclusive;
+}
+
+/**
+ * Texto del candado de un exclusivo. El de Glitch no nombra al Creador
+ * mientras la campaña no lo haya revelado.
+ * @param {ShopItem} item
+ */
+function shopLockLabel(item) {
+    if (item.id === 'glitch' && playerProgression.campaignProgress < CAMPAIGN_CREATOR) return 'Logro secreto';
+    return item.exclusive.label;
 }

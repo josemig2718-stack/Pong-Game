@@ -23,3 +23,4 @@ initActions();           // botones, sliders e interruptores del HTML (data-acti
 refreshMissions();       // misiones del día y de la semana (antes de pintar nada)
 initUI();                // interfaz inicial y menú principal
 initNews();              // Novedades encima del menú, si esta versión es nueva
+syncExclusives();        // exclusivos cuya condición ya se cumplía (con su aviso)

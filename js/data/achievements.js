@@ -26,6 +26,7 @@
  * @property {boolean} [secret]  se muestra como "????" hasta desbloquearse
  * @property {string} [color]    en lugar del de la categoría (el aviso de misión)
  * @property {boolean} [mission] es el aviso de una misión completada, no un logro
+ * @property {{cat: string, item: ShopItem}} [shopItem] es el aviso de un objeto exclusivo conseguido
  */
 
 /**

@@ -33,7 +33,8 @@ const DEFAULT_PROGRESSION = {
     campaignIntroSeen: false, // si ya vio la historia inicial
     missions: null,           // misiones del día y de la semana (systems/missions.js)
     missionsCompleted: 0,
-    weeklyCompleted: 0
+    weeklyCompleted: 0,
+    dailyOfferBought: null    // día ('AAAA-MM-DD') en que se compró la oferta del día (ui/shop-ui.js)
 };
 
 const playerProgression = loadProgression();
@@ -62,7 +63,7 @@ function loadProgression() {
             for (const cat in SHOP_CATALOG) {
                 for (const item of SHOP_CATALOG[cat]) {
                     const key = `${cat}:${item.id}`;
-                    if (item.price === 0 && !owned.includes(key)) owned.push(key);
+                    if (shopIsFree(item) && !owned.includes(key)) owned.push(key);
                 }
             }
             return {
@@ -163,13 +164,33 @@ function checkLevelUp() {
 }
 
 /**
- * Entrega un objeto exclusivo (no se vende en la tienda): la paleta
- * Dorada del nivel 50. La fase 5 añade el objeto al catálogo.
+ * Entrega un objeto exclusivo (no se vende en la tienda): suena, sale el
+ * aviso «¡Objeto exclusivo!» y cuenta para el logro Exclusivo. Si ya lo
+ * tenía no hace nada, así que se puede llamar cuantas veces haga falta.
  * @param {string} key 'categoría:id'
  */
 function grantExclusive(key) {
-    if (!playerProgression.owned.includes(key)) playerProgression.owned.push(key);
+    if (playerProgression.owned.includes(key)) return;
+    playerProgression.owned.push(key);
     saveProgression();
+    const [cat, id] = key.split(':');
+    const item = (SHOP_CATALOG[cat] || []).find(i => i.id === id);
+    soundEffects.rewardClaim();
+    if (item) showExclusiveToast(cat, item);
+    unlockAchievement('exclusive_first');
+}
+
+/**
+ * Entrega los exclusivos cuya condición ya se cumple: al cargar (por si
+ * el logro se consiguió antes de que existiera el objeto) y cada vez que
+ * se desbloquea un logro.
+ */
+function syncExclusives() {
+    for (const cat in SHOP_CATALOG) {
+        for (const item of SHOP_CATALOG[cat]) {
+            if (item.exclusive && item.exclusive.check()) grantExclusive(`${cat}:${item.id}`);
+        }
+    }
 }
 
 /**
@@ -319,7 +340,7 @@ function getTotalShopItems() {
     let count = 0;
     for (const key in SHOP_CATALOG) {
         SHOP_CATALOG[key].forEach(item => {
-            if (item.price > 0) count++;
+            if (item.price > 0 && !item.exclusive) count++;
         });
     }
     return count;
@@ -334,7 +355,7 @@ function getTotalPurchasedItems() {
     playerProgression.owned.forEach(key => {
         const [cat, id] = key.split(':');
         const item = (SHOP_CATALOG[cat] || []).find(i => i.id === id);
-        if (item && item.price > 0) count++;
+        if (item && item.price > 0 && !item.exclusive) count++;
     });
     return count;
 }
