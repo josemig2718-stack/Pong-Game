@@ -309,7 +309,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
             endFever();
             soundEffects.score();
             triggerShake(10, 260);
-            triggerGoalVFX(b.x, GAME_HEIGHT);
+            triggerGoalVFX(b.x, GAME_HEIGHT, goalPower(b));
             if (onBallOut(bi, ballsToRemove)) return true;
         }
         // La victoria se decide en checkWin() leyendo la barra de vida
@@ -328,7 +328,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         checkMidDialogue();
         soundEffects.score();
         triggerShake(10, 260);
-        triggerGoalVFX(0, b.y);
+        triggerGoalVFX(0, b.y, goalPower(b));
         return onBallOut(bi, ballsToRemove);
     }
 
@@ -341,7 +341,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         bossOnGoal(true);
         soundEffects.score();
         triggerShake(10, 260);
-        triggerGoalVFX(GAME_WIDTH, b.y);
+        triggerGoalVFX(GAME_WIDTH, b.y, goalPower(b));
         return onBallOut(bi, ballsToRemove);
     }
     return false;

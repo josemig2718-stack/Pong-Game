@@ -263,6 +263,7 @@ function purchaseItem(cat, id, cost) {
 function selectCosmetic(cat, id) {
     playerProgression.equipped[cat] = id;
     if (cat === 'backgrounds') setActiveBg(id);
+    if (cat === 'goalEffects') resetGoalVFX();   // que no quede medio efecto del anterior
     saveProgression();
 }
 
