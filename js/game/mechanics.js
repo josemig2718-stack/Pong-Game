@@ -444,7 +444,7 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     const fxColor = sideColor(side);
     if (type === 'perfect') MECH_FX.perfect(b.x, b.y, fxColor);
     else if (type === 'smash') MECH_FX.smash(b.x, b.y, fxColor);
-    else if (type === 'super') SUPER_FX[superStyleId()].burst(b.x, b.y, fxColor);
+    else if (type === 'super') SUPER_FX[superStyleId(side)].burst(b.x, b.y, fxColor);
     mechFlashPaddle(side);
 
     // 11. Nuevo intercambio: el jefe recalcula su puntería, el último en

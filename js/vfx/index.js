@@ -7,6 +7,7 @@
  *   trails.js       estelas de la bola
  *   backgrounds.js  fondos animados (los únicos con estado propio)
  *   paddles.js      estilos de paleta
+ *   balls.js        bolas
  *   goal-fx.js      efectos de gol
  *   super.js        aura y estallido del súper golpe
  *   mechanics.js    lo que se ve de las mecánicas de golpe (perfecto,

@@ -320,7 +320,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
 
     if (b.x - b.radius < 0) {
         // CPU/P2 anota
-        if (b.power === 'super') SUPER_FX[superStyleId()].burst(0, b.y, sideColor('p2'));
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(0, b.y, sideColor('p2'));
         state.p2Score++;
         statsOnScore(false, b);
         endFever();
@@ -334,7 +334,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
 
     if (b.x + b.radius > GAME_WIDTH) {
         // P1 anota
-        if (b.power === 'super') SUPER_FX[superStyleId()].burst(GAME_WIDTH, b.y, sideColor('p1'));
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(GAME_WIDTH, b.y, sideColor('p1'));
         state.p1Score++;
         statsOnScore(true, b);
         endFever();

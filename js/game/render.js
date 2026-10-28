@@ -3,7 +3,7 @@
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
  * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → estelas, aura
- * de la bola gigante, líneas de velocidad, aura del súper, bolas y su
+ * de la bola gigante, líneas de velocidad, aura del súper, bolas (la equipada) y su
  * efecto (MECH_FX.spin) → paletas (o la pared de práctica) y su carga de smash (MECH_FX.charge) →
  * power-ups y sus estallidos → partículas → anillos, textos y estallidos
  * de las mecánicas (MECH_FX.render) → viñeta de cámara lenta → capa
@@ -57,25 +57,11 @@ function drawLives(vidas) {
 }
 
 /**
- * Bola blanca con el brillo del tema. Tras un golpe se aplasta: se
- * estira en la dirección del movimiento y se estrecha en la otra.
+ * Una bola con la bola equipada en la tienda (vfx/balls.js), aplastada
+ * tras un golpe. La usan todas las bolas, multibola incluida.
  */
 function drawBall(b, color) {
-    ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    if (b.squash > 0.001) {
-        ctx.translate(b.x, b.y);
-        ctx.rotate(Math.atan2(b.dy, b.dx));
-        ctx.scale(1 + 0.25 * b.squash, 1 - 0.2 * b.squash);
-        ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
-    } else {
-        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-    }
-    ctx.fill();
-    ctx.restore();
+    renderBallVFX(ctx, b, color);
 }
 
 /**
@@ -265,7 +251,7 @@ function render() {
 
         if (bigBall) drawBigBallAura(ctx, b);
         drawSpeedLines(ctx, b, Math.hypot(b.dx, b.dy) / speedMax);
-        if (b.power === 'super') SUPER_FX[superStyleId()].aura(ctx, b, themeColor);
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].aura(ctx, b, themeColor);
         drawBall(b, themeColor);
         MECH_FX.spin(ctx, b, themeColor);
     }
