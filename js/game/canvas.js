@@ -68,6 +68,9 @@ function resizeCanvas() {
     wrapper.style.height = `${drawHeight}px`;
     container.style.setProperty('--field-w', `${drawWidth}px`);
     container.style.setProperty('--field-h', `${drawHeight}px`);
+
+    // El fondo se regenera (lienzos fuera de pantalla incluidos) al cambiar de tamaño
+    if (state.isPlaying) refreshBackground();
 }
 
 /** Reajusta el canvas cuando cambia el tamaño de la ventana. */
