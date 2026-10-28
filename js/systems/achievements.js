@@ -124,12 +124,13 @@ const MISSION_TOAST_ICON = 'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V
 
 /**
  * Aviso de misión completada: con el estilo del de logro, en la misma
- * cola.
+ * cola, pero con su propia cabecera, el texto de la misión y lo que paga.
  * @param {Mission} mission
  */
 function showMissionToast(mission) {
+    const reward = `+${mission.xp} XP` + (mission.coins > 0 ? ` · +${mission.coins} monedas` : '');
     achievementQueue.push(/** @type {Achievement} */ ({
-        id: mission.id, category: 'especiales', name: 'Misión completada', desc: mission.text,
+        id: mission.id, category: 'especiales', name: mission.text, desc: reward,
         icon: MISSION_TOAST_ICON, color: MISSION_TOAST_COLOR, mission: true
     }));
     processAchievementQueue();
@@ -150,11 +151,13 @@ function showAchievementToast(achievement) {
     if (!toast) { isShowingAchievement = false; return; }
 
     const medalEl = toast.querySelector('.achievement-toast__medal');
+    const titleEl = toast.querySelector('.achievement-toast__title');
     const nameEl  = toast.querySelector('.achievement-toast__name');
     const descEl  = toast.querySelector('.achievement-toast__desc');
 
     medalEl.innerHTML = achievementMedalSVG(achievement, 'unlocked');
     toast.style.setProperty('--ach-color', achievementColor(achievement));
+    titleEl.textContent = achievement.mission ? '¡MISIÓN COMPLETADA!' : '¡LOGRO DESBLOQUEADO!';
     nameEl.textContent  = achievement.name;
     descEl.textContent  = achievement.desc;
 
