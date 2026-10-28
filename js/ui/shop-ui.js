@@ -70,9 +70,23 @@ function switchShopTab(categoryKey) {
         const on = btn.dataset.arg === categoryKey;
         btn.classList.toggle('active', on);
         btn.setAttribute('aria-pressed', String(on));
+        if (on) shopRevealTab(btn);
     });
 
     populateShopTab(currentShopTab);
+}
+
+/**
+ * En la fila deslizable (móvil y tableta), centra la pestaña activa: si
+ * no, al saltar a Súper desde la oferta quedaría fuera de la vista. Solo
+ * mueve la fila, nunca la página.
+ * @param {HTMLElement} btn
+ */
+function shopRevealTab(btn) {
+    const nav = btn.parentElement;
+    if (nav.scrollWidth <= nav.clientWidth) return;
+    const b = btn.getBoundingClientRect(), n = nav.getBoundingClientRect();
+    nav.scrollLeft += (b.left + b.width / 2) - (n.left + n.width / 2);
 }
 
 /** Cambia el orden de la rejilla (el selector «Ordenar»). */
