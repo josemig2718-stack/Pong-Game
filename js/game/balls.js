@@ -72,6 +72,27 @@ function resetBall(initialServe = false) {
     enforcePowerups();
 }
 
+/**
+ * Velocidad de una bola extra. Sumado al ángulo de un roce, el desvío
+ * podía dejarla casi paralela a las porterías, rebotando de pared a pared
+ * cientos de fotogramas sin llegar a ninguna. Si se abre más que el
+ * ángulo de roce respecto al eje del juego, se refleja sobre ese límite.
+ * @param {number} speed
+ * @param {number} angle radianes, como Math.atan2(dy, dx)
+ * @param {boolean} rotated arena rotada del Creador (el eje es vertical)
+ * @returns {{dx: number, dy: number}}
+ */
+function extraBallVelocity(speed, angle, rotated) {
+    const maxAngle = rotated ? MECH.rotatedEdgeAngle : MECH.edgeAngle;
+    const along = rotated ? Math.sin(angle) : Math.cos(angle);
+    const across = rotated ? Math.cos(angle) : Math.sin(angle);
+    let off = Math.atan2(Math.abs(across), Math.abs(along));
+    if (off > maxAngle) off = 2 * maxAngle - off;
+    const a = (along < 0 ? -1 : 1) * speed * Math.cos(off);
+    const c = (across < 0 ? -1 : 1) * speed * Math.sin(off);
+    return rotated ? { dx: c, dy: a } : { dx: a, dy: c };
+}
+
 /** Divide la primera bola en dos o tres (multi-bola). */
 function spawnExtraBalls() {
     if (state.balls.length === 0) return;
@@ -85,12 +106,9 @@ function spawnExtraBalls() {
         const speed = source.speed;
         const origAngle = Math.atan2(source.dy, source.dx);
         const newAngle = origAngle + angleOffset;
+        const v = extraBallVelocity(speed, newAngle, bossIsRotatedArena());
 
-        const extra = createBall(
-            source.x, source.y, speed,
-            speed * Math.cos(newAngle),
-            speed * Math.sin(newAngle)
-        );
+        const extra = createBall(source.x, source.y, speed, v.dx, v.dy);
         extra.radius = source.radius; // Respetar bola gigante si está activa
         state.balls.push(extra);
     }
