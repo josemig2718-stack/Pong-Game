@@ -184,13 +184,17 @@ In a clean Playwright context (`localStorage.clear()` and reload first):
    function runTrace(equip) {
        Object.assign(playerProgression.equipped, equip);
        const real = Math.random; Math.random = seeded(1234);
-       startGame('cpu');
+       startGame('cpu'); stopLoop();
        let trace = '';
-       for (let i = 0; i < 3000; i++) {
-           state.serveCountdownMs = 0; update(1); render();
+       for (let i = 0; i < 6000 && state.isPlaying; i++) {
+           state.serveCountdownMs = 0;
+           const t = state.balls[0];   // p1 follows the ball without Math.random, so there are rallies
+           if (t) p1.touchY = Math.max(0, Math.min(GAME_HEIGHT - p1.height, t.y - p1.height / 2 + 22));
+           update(1); render();
            const b = state.balls[0]; if (b) trace += b.x.toFixed(3) + ',' + b.y.toFixed(3) + ';';
        }
        Math.random = real;
+       if (state.isPlaying) quitGame();
        return trace.length + ':' + [...trace].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
    }
    const a = runTrace({ trails: 'default', paddles: 'classic', backgrounds: 'none', goalEffects: 'classic' });
@@ -198,7 +202,7 @@ In a clean Playwright context (`localStorage.clear()` and reload first):
    [a, b, a === b];
    ```
 
-   If `a !== b`, a visual or sound effect is using `Math.random`: find it before going on. Add the categories a phase introduces to both sets.
+   If `a !== b`, a visual or sound effect is using `Math.random`: find it before going on. Add the categories a phase introduces to both sets. Stop at the end of the match: `update()` does not check `state.isPlaying` (the loop does), so calling it after the final goal keeps scoring and runs the whole `checkWin()` again on every goal, which takes minutes.
 5. **The phase's own checks** («Verificación con Playwright» / «Comprobación a mano» in its guide).
 6. **Report** to the owner: what was checked, which captures were looked at, what failed and how it was fixed, and what is left for the manual check (above all sound and feel on a real phone).
 
