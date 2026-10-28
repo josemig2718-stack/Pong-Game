@@ -327,17 +327,6 @@ function hitSpeed(type, b, paddle, maxBallSpeed) {
     return speed;
 }
 
-/**
- * Golpes de cada tipo en la partida, de los dos jugadores (spin: los que
- * salen con efecto). Solo los leen los tests (eventos mech:*); se ponen a
- * cero en startGame.
- */
-const mechHits = { normal: 0, perfect: 0, edge: 0, block: 0, smash: 0, super: 0, spin: 0 };
-
-function resetMechHits() {
-    for (const k of Object.keys(mechHits)) mechHits[k] = 0;
-}
-
 /** Energía que gana el que golpea, según el tipo de golpe (el súper no suma: la gasta). */
 const HIT_ENERGY = {
     normal: MECH.energy.hit, edge: MECH.energy.hit, block: MECH.energy.hit,
@@ -421,8 +410,6 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     }
     b.owner = side;
     b.power = type === 'smash' || type === 'super' ? type : null;
-    mechHits[type]++;
-    if (Math.abs(b.spin) > MECH.spinSoundMin) mechHits.spin++;
     // Avisos de primera vez del jugador 1
     if (side === 'p1' && type === 'perfect') showHint('perfect');
     if (side === 'p1' && Math.abs(b.spin) > MECH.spinSoundMin) showHint('spin');

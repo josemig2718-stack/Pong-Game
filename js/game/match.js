@@ -162,7 +162,6 @@ function startGame(mode) {
     p2Twin.retreatMs = 0;
     bossInit();
     resetCpuPlan();
-    resetMechHits();
 
     setupHud();
     resizeCanvas();

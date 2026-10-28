@@ -1,9 +1,8 @@
 /**
  * vfx/random.js
  * ------------------------------------------------------------------
- * Azar propio de los efectos visuales. Math.random lo comparten la
- * física y los tests (que lo siembran): si una estela o un fondo lo
- * consumiera, cambiaría la partida. Los efectos usan vfxRandom(), un
+ * Azar propio de los efectos visuales. Math.random es de la física: si
+ * una estela o un fondo lo consumiera, cambiaría la partida. Los efectos usan vfxRandom(), un
  * generador aparte, y nunca Math.random.
  * ------------------------------------------------------------------
  */
@@ -36,7 +35,7 @@ function vfxHash(n) {
     return ((t ^ (t >>> 16)) >>> 0) / 4294967296;
 }
 
-/** Segundos del reloj de los efectos (performance.now(), que los tests controlan). */
+/** Segundos del reloj de los efectos (performance.now()). */
 function vfxT() {
     return performance.now() / 1000;
 }

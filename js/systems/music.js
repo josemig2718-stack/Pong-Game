@@ -10,9 +10,9 @@
  *   A · Web Audio: AudioBufferSourceNode con loopStart/loopEnd exactos.
  *       Solo con http(s), decodeAudioData y fetch; si la carga falla,
  *       la pista pasa al motor B.
- *   B · <audio>: con file:// (donde fetch de un MP3 local falla), en los
- *       tests (su AudioContext falso no tiene decodeAudioData) o como
- *       respaldo. Un vigilante salta de loopEnd a loopStart.
+ *   B · <audio>: con file:// (donde fetch de un MP3 local falla), sin
+ *       decodeAudioData o como respaldo. Un vigilante salta de loopEnd
+ *       a loopStart.
  *
  * El reproductor respeta settings.musicEnabled: con la música apagada,
  * musicPlay() solo anota qué pista toca y musicResume() la arranca.

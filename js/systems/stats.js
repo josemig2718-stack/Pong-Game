@@ -92,8 +92,7 @@ const gameStats = loadStats();
 let currentRally    = 0;   // golpes consecutivos en la ronda actual
 let maxDeficit      = 0;   // mayor diferencia adversa (para logro remontada)
 // Desde cuándo corre el reloj del tiempo jugado; -1 = parado (pausa, fuera de
-// partida). No vale 0 como "parado": performance.now() puede valer 0 (el
-// reloj virtual de los tests empieza ahí).
+// partida). No vale 0 como "parado": performance.now() puede valer 0.
 let gameStartTimeMs = -1;
 let matchElapsedMs  = 0;   // tiempo jugado en la partida (sin pausas, diálogos ni saques)
 let matchBestRally  = 0;   // rally más largo de la partida

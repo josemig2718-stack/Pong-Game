@@ -68,7 +68,7 @@ pong-game/
 │   ├── bosses/           # Un archivo por jefe + la tabla que los despacha
 │   ├── campaign/         # Avance, selector de jefes, diálogos y finales
 │   └── ui/               # Pantallas, botones (data-action), configuración, stats, tienda
-├── tests/                # Tests de regresión (una página web) y su servidor de desarrollo
+├── tools/serve.py        # Servidor de desarrollo sin caché
 ├── docs/
 │   └── bugs-conocidos.md # Registro de los bugs encontrados en la refactorización y su arreglo
 ├── assets/
@@ -104,7 +104,7 @@ Es una aplicación 100% frontend (*Static Web App*): no requiere servidor ni com
 2. Abre `index.html` en cualquier navegador moderno (doble clic).
 3. O publica la carpeta tal cual en **GitHub Pages**.
 
-> Para desarrollar y pasar los tests, sirve la carpeta con `python tests/serve.py` (<http://127.0.0.1:8000/>): desactiva la caché, así el navegador nunca usa JS viejo tras editarlo.
+> Para desarrollar, sirve la carpeta con `python tools/serve.py` (<http://127.0.0.1:8000/>): desactiva la caché, así el navegador nunca usa JS viejo tras editarlo.
 
 ## 🧑‍💻 Notas de desarrollo
 
@@ -112,9 +112,9 @@ No hay build ni dependencias. Se edita y se recarga. Lo que conviene saber antes
 
 - **Tiene que funcionar abriendo `index.html`.** Por eso no se usan módulos ES (`import`/`export`), que los navegadores no cargan desde `file://`: cada archivo de `js/` es un script clásico y todos comparten el ámbito global. Los nombres de primer nivel deben ser únicos, y el código que se ejecuta al cargar un archivo solo puede usar lo cargado antes.
 - **La caché se invalida a mano, con un solo número.** Cada `<script>` de `index.html` y el `<link>` del CSS llevan el mismo `?v=N`. **Después de editar cualquier JS o CSS hay que subir N en todos**, o GitHub Pages seguirá sirviendo la versión vieja a quien ya haya entrado. Un archivo nuevo de `js/` hay que añadirlo a la lista, en su capa.
-- **Tests de regresión.** Con el servidor en marcha, <http://127.0.0.1:8000/tests/> → *Ejecutar todos*. Reproduce partidas deterministas fotograma a fotograma, compara los estilos de cada pantalla en cuatro tamaños de ventana y comprueba la lista de scripts, todo contra referencias grabadas. Tarda unos 5 minutos. Ver `tests/README.md`.
+- **Verificación.** No hay suite de tests: cada cambio se comprueba en un navegador real con Playwright MCP (configurado en `.mcp.json`), en dos niveles: tipos y carga sin errores en cada commit; capturas en cuatro tamaños, partidas simuladas y determinismo al acabar cada fase. Playwright es solo una herramienta de desarrollo: el juego sigue sin `package.json` ni dependencias. Ver «Verifying changes» en `CLAUDE.md`.
 - **Tipos sin compilar.** `jsconfig.json` activa la comprobación de tipos de los editores a partir de los comentarios JSDoc. Para revisarla entera: `npx -y -p typescript@5 tsc -p jsconfig.json` (debe dar cero errores).
-- **Bugs conocidos.** `docs/bugs-conocidos.md` registra los fallos que encontró la refactorización y cómo se arreglaron. Un arreglo cambia el comportamiento: va en su propio commit, regrabando solo las referencias de los tests que explica.
+- **Bugs conocidos.** `docs/bugs-conocidos.md` registra los fallos que encontró la refactorización y cómo se arreglaron. Un arreglo cambia el comportamiento: va en su propio commit, que explica por qué.
 
 `CLAUDE.md` recoge la arquitectura en detalle: las capas, el estado compartido, la tabla de jefes, los tres almacenes de `localStorage`, el flujo de la campaña y varias trampas del código que ya costaron un bug.
 

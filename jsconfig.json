@@ -8,5 +8,5 @@
         "noEmit": true,
         "strict": false
     },
-    "include": ["js/**/*.js", "tests/**/*.js"]
+    "include": ["js/**/*.js"]
 }
