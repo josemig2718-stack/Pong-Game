@@ -39,11 +39,12 @@ function update(dt) {
     // El reloj de la partida cuenta tiempo real, sin la cámara lenta
     const realDt = dt;
 
-    // Cámara lenta: manda la más lenta entre la del power-up y la del gol épico
-    let slowmo = 1.0;
-    slowmo = Math.min(slowmo, getSlowmoMultiplier());
-    slowmo = Math.min(slowmo, getGoalSlowmo());
-    dt *= slowmo;
+    // Cámara lenta del power-up: frena la partida, que es su efecto
+    dt *= getSlowmoMultiplier();
+    // La del gol épico es un cosmético: solo frena lo que se ve (efectos y
+    // partículas). Si frenara la partida, la CPU y la cuenta del saque
+    // irían a otro ritmo y la vibración pediría otros Math.random.
+    const fxDt = dt * getGoalSlowmo();
 
     // La fiebre del rally sube el tope de velocidad
     const maxBallSpeed = currentSpeedPreset().max * (state.fever ? MECH.feverMaxSpeedK : 1);
@@ -74,8 +75,8 @@ function update(dt) {
         // Los fondos animados, las partículas y la vibración siguen; la
         // bola y los power-ups esperan al saque.
         tickFeverHeat(dt);
-        updateVFX(dt);
-        updateParticles(dt);
+        updateVFX(fxDt);
+        updateParticles(fxDt);
         updateShake(dt);
         return;
     }
@@ -89,8 +90,8 @@ function update(dt) {
 
     updatePowerups(dt, realDt);
     tickFeverHeat(dt);
-    updateVFX(dt);
-    updateParticles(dt);
+    updateVFX(fxDt);
+    updateParticles(fxDt);
     updateShake(dt);
     if (state.goTextMs > 0) state.goTextMs = Math.max(0, state.goTextMs - dt * MS_PER_FRAME);
 }
