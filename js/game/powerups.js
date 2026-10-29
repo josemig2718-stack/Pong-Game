@@ -3,11 +3,18 @@
  * ------------------------------------------------------------------
  * Power-ups en partida: aparición, recogida, efectos y su reversión.
  *
- * Solo hay un power-up en el campo y un efecto activo a la vez. Los
- * efectos que cambian el tamaño de las paletas o de las bolas guardan el
- * valor original en activeEffect.originalValues y revertPowerup() lo
- * restaura; por eso startGame/quitGame/checkWin también reponen el
- * tamaño de las paletas por si una partida acaba con un efecto activo.
+ * Hay como mucho un orbe en el campo y POWERUP_MAX_ACTIVE efectos
+ * activos a la vez (activeEffects): el orbe solo sale si queda sitio.
+ * Recoger un efecto que ya está activo lo renueva, sin acumularlo; la
+ * paleta grande y la mini sobre la misma paleta se sustituyen. Turbo y
+ * multibola son instantáneos y no ocupan sitio.
+ *
+ * Los efectos que cambian el tamaño de las paletas o de las bolas
+ * guardan el valor original en effect.originalValues, enforcePowerups()
+ * los reaplica en cada fotograma y revertPowerup(effect) restaura solo
+ * ese. Al empezar una partida (también al cambiar de jefe) y al salir se
+ * revierten todos; startGame/quitGame/checkWin además reponen el tamaño
+ * de las paletas.
  *
  * Los tipos están en data/powerups.js. El orbe del campo, el estallido
  * al recogerlo y el dibujo de los efectos (escudo, aura de la bola
@@ -18,15 +25,40 @@
 
 'use strict';
 
+/**
+ * Muro del escudo delante de una portería.
+ * @typedef {object} ShieldWall
+ * @property {number} x
+ * @property {number} y
+ * @property {number} width
+ * @property {number} height
+ * @property {'p1'|'p2'} owner
+ * @property {number} hp  bloqueos que le quedan
+ */
+
+/**
+ * Un efecto activo.
+ * @typedef {object} PowerupEffect
+ * @property {PowerupType} type
+ * @property {'p1'|'p2'} beneficiary  quien lo recogió: su píldora va en su lado
+ * @property {'p1'|'p2'} target  la paleta a la que afecta (en la paleta mini, la del rival)
+ * @property {number} remainingMs
+ * @property {{height?: number, radius?: number}} originalValues
+ * @property {{wall?: ShieldWall}} data  lo propio de cada tipo (el muro del escudo)
+ */
+
 // Variables de estado del sistema de power-ups
 let activePowerup = null;       // { type, x, y, ageMs, maxLifetime }
-let activeEffect = null;        // { type, target, remainingMs, originalValues: {} }
+/** @type {PowerupEffect[]} */
+let activeEffects = [];         // como mucho POWERUP_MAX_ACTIVE
 let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
-let shieldWall = null;          // { x, y, width, height, owner, hp }
-let lastHitter = 'p1';          // Último jugador en golpear la pelota ('p1' o 'p2')
+/** @type {'p1'|'p2'} */
+let lastHitter = 'p1';          // Último jugador en golpear la pelota
 let powerupsThisGame = 0;       // Contador por partida (para logros)
 let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayuda")
-let slowmoActive = false;       // Indica si la cámara lenta está activa
+
+/** Tipos que afectan a todo el campo: hay uno de cada como mucho, sea quien sea el que lo recoja. */
+const GLOBAL_POWERUPS = ['big_ball', 'slowmo'];
 
 /** Espera hasta el próximo power-up: entre 6 y 12 segundos de juego. */
 function nextPowerupCooldown() {
@@ -37,16 +69,14 @@ function nextPowerupCooldown() {
  * Inicializa o reinicia el sistema de power-ups al empezar una partida
  */
 function initPowerups() {
+    revertAllPowerups();
     activePowerup = null;
-    activeEffect = null;
-    shieldWall = null;
-    slowmoActive = false;
     lastHitter = 'p1';
     powerupsThisGame = 0;
     powerupsSpawnedThisGame = 0;
     powerupBursts = [];
     powerupCooldownMs = nextPowerupCooldown();
-    updatePowerupPill();   // la de la partida anterior no sigue a la vista
+    updatePowerupPills();   // las de la partida anterior no siguen a la vista
 }
 
 /**
@@ -62,8 +92,8 @@ function updatePowerups(dt, realDt) {
 
     const dtMs = dt * MS_PER_FRAME;
 
-    // 1. Manejo del cooldown y aparición
-    if (!activePowerup && !activeEffect) {
+    // 1. Manejo del cooldown y aparición: solo si queda sitio para otro efecto
+    if (!activePowerup && activeEffects.length < POWERUP_MAX_ACTIVE) {
         powerupCooldownMs -= dtMs;
         if (powerupCooldownMs <= 0 && state.serveCountdownMs <= 0) {
             spawnPowerup();
@@ -92,42 +122,46 @@ function updatePowerups(dt, realDt) {
     }
 
     // 3. Lógica de los efectos activos
-    if (activeEffect) {
-        activeEffect.remainingMs -= activeEffect.type.id === 'slowmo' ? realDt * MS_PER_FRAME : dtMs;
-        if (activeEffect.remainingMs <= 0) {
-            revertPowerup();
+    for (const effect of activeEffects.slice()) {
+        effect.remainingMs -= effect.type.id === 'slowmo' ? realDt * MS_PER_FRAME : dtMs;
+        if (effect.remainingMs <= 0) {
+            revertPowerup(effect);
         }
     }
 
-    // 4. Lógica del escudo
-    if (shieldWall) {
+    // 4. Lógica de los escudos
+    for (const effect of effectsOf('shield')) {
+        const wall = effect.data.wall;
         for (let i = 0; i < state.balls.length; i++) {
             const b = state.balls[i];
             // Detección de colisión AABB simple
-            if (b.x + b.radius > shieldWall.x &&
-                b.x - b.radius < shieldWall.x + shieldWall.width &&
-                b.y + b.radius > shieldWall.y &&
-                b.y - b.radius < shieldWall.y + shieldWall.height) {
+            if (b.x + b.radius > wall.x &&
+                b.x - b.radius < wall.x + wall.width &&
+                b.y + b.radius > wall.y &&
+                b.y - b.radius < wall.y + wall.height) {
 
                 // Rebotar y reposicionar para evitar que se quede pegado
                 b.dx *= -1;
-                if (shieldWall.owner === 'p1') {
-                    b.x = shieldWall.x + shieldWall.width + b.radius;
+                if (wall.owner === 'p1') {
+                    b.x = wall.x + wall.width + b.radius;
                 } else {
-                    b.x = shieldWall.x - b.radius;
+                    b.x = wall.x - b.radius;
                 }
 
                 // Cada bloqueo lo agrieta; al gastar el último, desaparece
                 soundEffects.paddleHit({ x: b.x });
                 soundEffects.shieldCrack();
-                shieldWall.hp--;
-                if (shieldWall.hp <= 0) {
-                    revertPowerup();
+                wall.hp--;
+                if (wall.hp <= 0) {
+                    revertPowerup(effect);
                     break;
                 }
             }
         }
     }
+
+    // 5. Los efectos activos se reaplican en cada fotograma
+    enforcePowerups();
 }
 
 /**
@@ -190,43 +224,36 @@ function collectPowerup() {
 }
 
 /**
+ * ¿Es el mismo efecto? Los globales, por tipo; los de una paleta, por
+ * tipo y paleta (la paleta grande de cada jugador es un efecto distinto).
+ * @param {PowerupEffect} effect
+ * @param {string} id
+ * @param {'p1'|'p2'} target
+ */
+function samePowerup(effect, id, target) {
+    return effect.type.id === id && (GLOBAL_POWERUPS.includes(id) || effect.target === target);
+}
+
+/** @param {string} id @returns {PowerupEffect[]} los efectos activos de ese tipo */
+function effectsOf(id) {
+    return activeEffects.filter((e) => e.type.id === id);
+}
+
+/** @param {string} id ¿Hay algún efecto activo de ese tipo? */
+function powerupActive(id) {
+    return activeEffects.some((e) => e.type.id === id);
+}
+
+/**
  * Aplica los efectos del power-up a los jugadores o la pelota
- * @param {Object} type Tipo de power-up (de POWERUP_TYPES)
- * @param {string} beneficiary 'p1' o 'p2'
+ * @param {PowerupType} type Tipo de power-up (de POWERUP_TYPES)
+ * @param {'p1'|'p2'} beneficiary
  */
 function applyPowerup(type, beneficiary) {
     const rival = beneficiary === 'p1' ? 'p2' : 'p1';
 
-    // Preparar el estado del efecto si tiene duración
-    if (type.duration > 0) {
-        activeEffect = {
-            type: type,
-            target: beneficiary,
-            remainingMs: type.duration,
-            originalValues: {}
-        };
-    }
-
+    // Instantáneos: no ocupan sitio
     switch (type.id) {
-        case 'paddle_xl':
-            const targetPaddle = beneficiary === 'p1' ? p1 : p2;
-            activeEffect.originalValues.height = targetPaddle.height;
-            targetPaddle.height = paddleHeight * 1.6;
-            break;
-
-        case 'paddle_mini':
-            const rivalPaddle = rival === 'p1' ? p1 : p2;
-            activeEffect.target = rival; // El objetivo visual es el rival
-            activeEffect.originalValues.height = rivalPaddle.height;
-            rivalPaddle.height = paddleHeight * 0.6;
-            break;
-
-        case 'big_ball':
-            activeEffect.target = rival; // Cuenta como efecto negativo visualmente
-            activeEffect.originalValues.radius = state.balls[0].radius; // Asume que todas tienen el mismo radio base
-            state.balls.forEach(b => b.radius = 27); // 9 * 3 = 27
-            break;
-
         case 'turbo':
             // Acelera, pero no cuenta como smash
             state.balls.forEach(b => {
@@ -234,72 +261,124 @@ function applyPowerup(type, beneficiary) {
                 b.dy *= 1.4;
                 b.power = null;
             });
-            break;
-
-        case 'shield':
-            if (beneficiary === 'p1') {
-                shieldWall = { x: 50, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p1', hp: SHIELD_HP };
-            } else {
-                shieldWall = { x: GAME_WIDTH - 58, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p2', hp: SHIELD_HP };
-            }
-            break;
-
-        case 'slowmo':
-            slowmoActive = true;
-            break;
+            return;
 
         case 'multi_ball':
             spawnExtraBalls();
-            break;
+            return;
     }
-}
 
-/**
- * Revierte los efectos activos y restaura valores originales
- */
-function revertPowerup() {
-    if (!activeEffect) return;
+    const target = type.id === 'paddle_mini' ? rival : beneficiary;
 
-    const type = activeEffect.type;
+    // El mismo efecto otra vez: se renueva, no se acumula
+    const same = activeEffects.find((e) => samePowerup(e, type.id, target));
+    if (same) {
+        renewPowerup(same);
+        return;
+    }
+
+    // Paleta grande y mini sobre la misma paleta: el nuevo sustituye al viejo
+    if (type.id === 'paddle_xl' || type.id === 'paddle_mini') {
+        const other = activeEffects.find((e) => (e.type.id === 'paddle_xl' || e.type.id === 'paddle_mini') && e.target === target);
+        if (other) revertPowerup(other, { silent: true });
+    }
+
+    /** @type {PowerupEffect} */
+    const effect = { type, beneficiary, target, remainingMs: type.duration, originalValues: {}, data: {} };
+    activeEffects.push(effect);
 
     switch (type.id) {
-        case 'paddle_xl':
-        case 'paddle_mini':
-            const targetPaddle = activeEffect.target === 'p1' ? p1 : p2;
-            targetPaddle.height = activeEffect.originalValues.height;
+        case 'paddle_xl': {
+            const paddle = sidePaddle(target);
+            effect.originalValues.height = paddle.height;
+            paddle.height = paddleHeight * 1.6;
             break;
+        }
+
+        case 'paddle_mini': {
+            const paddle = sidePaddle(target);
+            effect.originalValues.height = paddle.height;
+            paddle.height = paddleHeight * 0.6;
+            break;
+        }
 
         case 'big_ball':
-            state.balls.forEach(b => b.radius = activeEffect.originalValues.radius);
+            effect.originalValues.radius = state.balls[0].radius; // Asume que todas tienen el mismo radio base
+            state.balls.forEach(b => b.radius = 27); // 9 * 3 = 27
             break;
 
         case 'shield':
-            shieldWall = null;
-            break;
-
-        case 'slowmo':
-            slowmoActive = false;
+            effect.data.wall = target === 'p1'
+                ? { x: 50, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p1', hp: SHIELD_HP }
+                : { x: GAME_WIDTH - 58, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p2', hp: SHIELD_HP };
             break;
     }
-
-    soundEffects.powerupExpire();
-
-    activeEffect = null;
 }
 
 /**
- * Fuerza los efectos activos sobre las bolas (útil después de un resetBall)
+ * Un efecto que ya estaba activo vuelve a empezar: su tiempo entero y, el
+ * escudo, sus SHIELD_HP bloqueos.
+ * @param {PowerupEffect} effect
+ */
+function renewPowerup(effect) {
+    effect.remainingMs = effect.type.duration;
+    if (effect.data.wall) effect.data.wall.hp = SHIELD_HP;
+}
+
+/**
+ * Revierte un efecto activo (solo ese) y restaura sus valores originales.
+ * @param {PowerupEffect} effect
+ * @param {{silent?: boolean}} [opts] silent: sin el sonido de fin
+ */
+function revertPowerup(effect, { silent = false } = {}) {
+    const i = activeEffects.indexOf(effect);
+    if (i === -1) return;
+    activeEffects.splice(i, 1);
+
+    switch (effect.type.id) {
+        case 'paddle_xl':
+        case 'paddle_mini':
+            sidePaddle(effect.target).height = effect.originalValues.height;
+            break;
+
+        case 'big_ball':
+            state.balls.forEach(b => b.radius = effect.originalValues.radius);
+            break;
+    }
+
+    if (!silent) soundEffects.powerupExpire();
+}
+
+/** Revierte todos los efectos, sin sonido (al empezar una partida o al salir). */
+function revertAllPowerups() {
+    for (const effect of activeEffects.slice()) revertPowerup(effect, { silent: true });
+}
+
+/**
+ * Reaplica los efectos activos en cada fotograma (y después de un
+ * resetBall): la altura de las paletas y el radio de la bola gigante. En
+ * la arena rotada del Creador la paleta es horizontal y cada saque le
+ * repone su forma: ahí no se reaplica la altura.
  */
 function enforcePowerups() {
-    if (!activeEffect) return;
-    if (activeEffect.type.id === 'big_ball') {
-        state.balls.forEach(b => b.radius = 27);
+    for (const effect of activeEffects) {
+        switch (effect.type.id) {
+            case 'paddle_xl':
+                if (!bossIsRotatedArena()) sidePaddle(effect.target).height = paddleHeight * 1.6;
+                break;
+            case 'paddle_mini':
+                if (!bossIsRotatedArena()) sidePaddle(effect.target).height = paddleHeight * 0.6;
+                break;
+            case 'big_ball':
+                state.balls.forEach(b => b.radius = 27);
+                break;
+        }
     }
 }
 
 /**
  * Establece el último jugador en golpear la pelota
- * @param {string} player 'p1' o 'p2'
+ * @param {'p1'|'p2'} player
  */
 function setLastHitter(player) {
     lastHitter = player;
@@ -310,7 +389,7 @@ function setLastHitter(player) {
  * @returns {number} 0.5 si está activo, 1.0 si no
  */
 function getSlowmoMultiplier() {
-    return slowmoActive ? 0.5 : 1.0;
+    return powerupActive('slowmo') ? 0.5 : 1.0;
 }
 
 /**
@@ -332,56 +411,70 @@ function renderPowerup(ctx) {
     drawPowerupOrb(ctx, activePowerup.type, activePowerup.x, activePowerup.y, activePowerup.ageMs, activePowerup.maxLifetime);
 }
 
-/** Lo último que se pintó en la píldora, para tocar el DOM solo si cambia. */
-let powerupPillKey = '';
+/** Qué efectos tienen píldora, en orden, para rehacerlas solo si cambian. */
+let powerupPillsKey = null;
+/** @type {{bar: HTMLElement, secs: Element, last: string}[]} una por efecto, en el orden de activeEffects */
+let powerupPillEls = [];
 
 /**
- * Píldora del efecto activo (#powerup-pill, sobre el campo y en el lado
- * del jugador afectado): icono, nombre, barra y segundos restantes (el
- * escudo, los bloqueos que le quedan: "3/5"). Los efectos instantáneos no
- * tienen píldora.
+ * Píldoras de los efectos activos (capturas/54): una por efecto, en el
+ * contenedor del lado del que lo recogió (#powerup-pills-p1/-p2): icono,
+ * nombre, barra y segundos restantes (el escudo, los bloqueos que le
+ * quedan: "3/5"). Solo toca el DOM cuando algo cambia.
  */
-function updatePowerupPill() {
-    const pill = document.getElementById('powerup-pill');
-    if (!pill) return;
-    if (!activeEffect || activeEffect.type.duration === 0) {
-        if (powerupPillKey) pill.classList.add('hidden');
-        powerupPillKey = '';
-        return;
+function updatePowerupPills() {
+    const key = activeEffects.map((e) => `${e.type.id}|${e.beneficiary}|${e.target}`).join(',');
+    if (key !== powerupPillsKey) {
+        powerupPillsKey = key;
+        document.getElementById('powerup-pills-p1').replaceChildren();
+        document.getElementById('powerup-pills-p2').replaceChildren();
+        powerupPillEls = activeEffects.map(buildPowerupPill);
     }
 
-    const type = activeEffect.type;
-    const shieldHp = type.id === 'shield' && shieldWall ? shieldWall.hp : null;
-    const pct = shieldHp !== null
-        ? Math.round(shieldHp / SHIELD_HP * 100)
-        : Math.max(0, Math.round(activeEffect.remainingMs / type.duration * 100));
-    const label = shieldHp !== null
-        ? `${shieldHp}/${SHIELD_HP}`
-        : `${Math.max(0, Math.ceil(activeEffect.remainingMs / 1000))}s`;
-    const who = `${type.id}|${activeEffect.target}`;
-    const key = `${who}|${pct}|${label}`;
-    if (key === powerupPillKey) return;
-
-    if (!powerupPillKey.startsWith(who + '|')) {
-        pill.style.setProperty('--pu-color', type.color);
-        pill.dataset.side = activeEffect.target;
-        pill.querySelector('.powerup-pill__icon').innerHTML =
-            `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${type.icon}"/></svg>`;
-        pill.querySelector('.powerup-pill__name').textContent = type.name;
-        pill.classList.remove('hidden');
-    }
-    /** @type {HTMLElement} */ (pill.querySelector('.powerup-pill__bar i')).style.width = `${pct}%`;
-    pill.querySelector('.powerup-pill__secs').textContent = label;
-    powerupPillKey = key;
+    activeEffects.forEach((effect, i) => {
+        const shieldHp = effect.data.wall ? effect.data.wall.hp : null;
+        const pct = shieldHp !== null
+            ? Math.round(shieldHp / SHIELD_HP * 100)
+            : Math.max(0, Math.round(effect.remainingMs / effect.type.duration * 100));
+        const label = shieldHp !== null
+            ? `${shieldHp}/${SHIELD_HP}`
+            : `${Math.max(0, Math.ceil(effect.remainingMs / 1000))}s`;
+        const el = powerupPillEls[i];
+        const last = `${pct}|${label}`;
+        if (el.last === last) return;
+        el.last = last;
+        el.bar.style.width = `${pct}%`;
+        el.secs.textContent = label;
+    });
 }
 
 /**
- * Renderiza el escudo si está activo
+ * Crea la píldora de un efecto en el contenedor de su lado.
+ * @param {PowerupEffect} effect
+ */
+function buildPowerupPill(effect) {
+    const pill = document.createElement('div');
+    pill.className = 'powerup-pill';
+    pill.style.setProperty('--pu-color', effect.type.color);
+    pill.innerHTML =
+        `<span class="powerup-pill__icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${effect.type.icon}"/></svg></span>` +
+        '<span class="powerup-pill__body"><span class="px powerup-pill__name"></span><span class="powerup-pill__bar"><i></i></span></span>' +
+        '<span class="px powerup-pill__secs"></span>';
+    pill.querySelector('.powerup-pill__name').textContent = effect.type.name;
+    document.getElementById(`powerup-pills-${effect.beneficiary}`).appendChild(pill);
+    return {
+        bar: /** @type {HTMLElement} */ (pill.querySelector('.powerup-pill__bar i')),
+        secs: pill.querySelector('.powerup-pill__secs'),
+        last: ''
+    };
+}
+
+/**
+ * Renderiza los escudos activos
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  */
 function renderShield(ctx) {
-    if (!shieldWall) return;
-    drawShieldWallV2(ctx, shieldWall, shieldWall.hp);
+    for (const effect of effectsOf('shield')) drawShieldWallV2(ctx, effect.data.wall, effect.data.wall.hp);
 }
 
 // ------------------------------------------------------------------

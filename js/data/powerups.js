@@ -28,6 +28,9 @@
 /** Bloqueos que aguanta el escudo antes de romperse. */
 const SHIELD_HP = 5;
 
+/** Efectos con duración que pueden estar activos a la vez (los instantáneos no cuentan). */
+const POWERUP_MAX_ACTIVE = 2;
+
 /** @type {PowerupType[]} */
 const POWERUP_TYPES = [
     { id: 'paddle_xl',   name: 'Paleta grande', hint: 'agranda la paleta del último que golpeó', icon: 'M10 7h4v10h-4zM12 1.5v3M9.8 3.3L12 1.2l2.2 2.1M12 22.5v-3M9.8 20.7L12 22.8l2.2-2.1', color: '#4ADE80', duration: 15000, weight: 20 },

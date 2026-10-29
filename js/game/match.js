@@ -265,6 +265,7 @@ function quitGame() {
     state.hitStopMs = 0;
     resetFever();
     resetMatchMusic();
+    revertAllPowerups();
 
     // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;

@@ -9,7 +9,7 @@
  * de las mecánicas (MECH_FX.render) → viñeta de cámara lenta → capa
  * superior del jefe → efecto de gol → cuenta atrás o "¡YA!" → scanlines.
  * El marcador, el tiempo, el rally y el efecto activo no se dibujan aquí:
- * son el HUD del DOM (updateHud y updatePowerupPill).
+ * son el HUD del DOM (updateHud y updatePowerupPills).
  *
  * La vibración y el glitch del Creador consumen Math.random, que comparte
  * generador con la física: no cambies el orden de las capas. Los
@@ -245,7 +245,7 @@ function render() {
     const hideBall = bossHidesBall();
     if (!hideBall) drawBallTrail();
     const speedMax = currentSpeedPreset().max;
-    const bigBall = !!activeEffect && activeEffect.type.id === 'big_ball';
+    const bigBall = powerupActive('big_ball');
     for (const b of state.balls) {
         if (hideBall) continue; // Fano oculta la bola real
 
@@ -270,12 +270,12 @@ function render() {
     renderPowerup(ctx);
     renderShield(ctx);
     renderPowerupBursts(ctx);
-    updatePowerupPill();   // el efecto activo se muestra en el DOM, no en el canvas
+    updatePowerupPills();  // los efectos activos se muestran en el DOM, no en el canvas
     updateHud();           // marcador, tiempo y rally del HUD (DOM)
 
     drawParticles();
     MECH_FX.render(ctx);   // anillos, ¡PERFECTO!/¡SMASH! y estallidos del súper
-    if (slowmoActive) drawSlowmoOverlay(ctx);
+    if (powerupActive('slowmo')) drawSlowmoOverlay(ctx);
 
     // Capa superior del jefe: viñetas, tintes, avisos y glitch
     bossRenderOverlay(ctx);

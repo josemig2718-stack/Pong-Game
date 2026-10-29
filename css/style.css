@@ -1448,11 +1448,22 @@ body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
 #mobile-pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #020305; }
 #mobile-pause-btn .ico { width: 20px; height: 20px; }
 
-/* Píldora del power-up activo. --pu-color y data-side los pone
-   updatePowerupPill(). */
-.powerup-pill {
+/* Píldoras de los efectos activos (capturas/54): un contenedor por lado
+   (#powerup-pills-p1/-p2) con una .powerup-pill por efecto. Las crea
+   updatePowerupPills(), que pone --pu-color. */
+.powerup-pills {
     grid-area: pill;
     z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    pointer-events: none;
+}
+.powerup-pills:empty { display: none; }
+.powerup-pills[data-side="p2"] { align-items: flex-end; }
+.powerup-pill {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1606,8 +1617,8 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 #game-container[data-layout="top"] #canvas-wrapper { margin-top: 6px; }
 #game-container[data-layout="top"] .hud-card { grid-row: 1 / 3; }
 #game-container[data-layout="top"] #mobile-pause-btn { grid-row: 1 / 3; }
-#game-container[data-layout="top"] .powerup-pill { grid-area: field; align-self: end; justify-self: start; margin: 16px; }
-#game-container[data-layout="top"] .powerup-pill[data-side="p2"] { justify-self: end; }
+#game-container[data-layout="top"] .powerup-pills { grid-area: field; align-self: end; justify-self: start; margin: 16px; }
+#game-container[data-layout="top"] .powerup-pills[data-side="p2"] { justify-self: end; }
 /* Smash táctil (tableta): una fila más, bajo el campo, en las esquinas */
 #game-container[data-layout="top"] .smash-btn { grid-row: 4; align-self: start; }
 #game-container[data-layout="top"] #smash-btn-p1 { grid-column: 1; justify-self: start; }
@@ -1674,21 +1685,22 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 #game-container[data-layout="sides"] .super-hint kbd,
 #game-container[data-layout="stack"] .super-hint kbd { font-size: 10px; padding: 1px 6px; }
 #game-container[data-layout="sides"] #mobile-pause-btn { align-self: end; justify-self: center; margin-bottom: 8px; border-radius: 14px; }
-#game-container[data-layout="sides"] .powerup-pill { align-self: end; margin: 0 12px 8px; gap: 8px; padding: 7px 10px 7px 7px; }
-#game-container[data-layout="sides"] .powerup-pill__icon { width: 26px; height: 26px; border-radius: 7px; }
-#game-container[data-layout="sides"] .powerup-pill__icon .ico { width: 16px; height: 16px; }
-#game-container[data-layout="sides"] .powerup-pill__body { flex: 1; }
+/* Píldoras: apiladas sobre el campo, en la esquina de abajo del jugador
+   beneficiado (capturas/55) */
+#game-container[data-layout="sides"] .powerup-pills { grid-area: field; align-self: end; justify-self: start; gap: 6px; margin: 0 0 10px 10px; }
+#game-container[data-layout="sides"] .powerup-pills[data-side="p2"] { justify-self: end; margin: 0 10px 10px 0; }
+#game-container[data-layout="sides"] .powerup-pill { gap: 8px; padding: 6px 10px 6px 6px; }
+#game-container[data-layout="sides"] .powerup-pill__icon { width: 24px; height: 24px; border-radius: 7px; }
+#game-container[data-layout="sides"] .powerup-pill__icon .ico { width: 15px; height: 15px; }
+#game-container[data-layout="sides"] .powerup-pill__body { gap: 5px; }
 #game-container[data-layout="sides"] .powerup-pill__name { font-size: 7px; }
-#game-container[data-layout="sides"] .powerup-pill__bar { width: 100%; }
+#game-container[data-layout="sides"] .powerup-pill__bar { width: 80px; }
 #game-container[data-layout="sides"] .powerup-pill__secs { font-size: 8px; }
-/* Smash táctil: al pie de cada columna (el del J2, junto a la pausa); la
-   píldora del power-up pasa al campo, como en escritorio */
+/* Smash táctil: al pie de cada columna (el del J2, junto a la pausa) */
 #game-container[data-layout="sides"] .smash-btn { width: 70px; height: 70px; grid-row: 3; align-self: end; margin-bottom: 8px; }
 #game-container[data-layout="sides"] #smash-btn-p1 { grid-column: 1; justify-self: center; }
 #game-container[data-layout="sides"] #smash-btn-p2 { grid-column: 3; justify-self: end; margin-right: 6px; }
 #game-container[data-layout="sides"][data-smash="2"] #mobile-pause-btn { justify-self: start; margin-left: 6px; margin-bottom: 21px; }
-#game-container[data-layout="sides"][data-smash] .powerup-pill { grid-area: field; justify-self: start; margin: 0 0 10px 10px; }
-#game-container[data-layout="sides"][data-smash] .powerup-pill[data-side="p2"] { justify-self: end; margin: 0 10px 10px 0; }
 
 /* --- stack: vertical ----------------------------------------------- */
 #game-container[data-layout="stack"] {
@@ -1735,7 +1747,12 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 #game-container[data-layout="stack"] .hud-card--p2 .hud-crew { justify-content: flex-end; }
 #game-container[data-layout="stack"] .hud-crew img { width: 22px; height: 22px; }
 #game-container[data-layout="stack"] .hud-chip { height: 28px; padding: 0 11px; }
-#game-container[data-layout="stack"] .powerup-pill { align-self: center; padding-right: 12px; }
+/* Píldoras: en su fila, bajo el campo; las del J1 a la izquierda y las
+   del J2 a la derecha, cada una como mucho media fila (nunca hay más de
+   dos, así que no se pisan) */
+#game-container[data-layout="stack"] .powerup-pills { flex-direction: row; justify-self: stretch; align-self: center; gap: 10px; }
+#game-container[data-layout="stack"] .powerup-pills[data-side="p2"] { justify-content: flex-end; }
+#game-container[data-layout="stack"] .powerup-pill { flex: 0 1 calc(50% - 5px); min-width: 0; padding-right: 12px; }
 #game-container[data-layout="stack"] .powerup-pill__body { flex: 1; }
 #game-container[data-layout="stack"] .powerup-pill__bar { width: 100%; }
 
