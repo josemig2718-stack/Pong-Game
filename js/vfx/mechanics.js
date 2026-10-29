@@ -13,8 +13,9 @@
  * mechPaddleHit guarda el destello de cada paleta al golpear (1 → 0),
  * que los estilos de paleta reciben como fx.hit.
  *
- * Azar: vfxRandom; tiempo: vfxT(). Nunca Math.random. Con "menos
- * movimiento" la fiebre se queda en el degradado, sin llamas.
+ * Azar: vfxRandom y vfxHash; tiempo: vfxT(). Nunca Math.random. Con
+ * "menos movimiento" las llamas de la fiebre se quedan quietas y sin
+ * brasas.
  * ------------------------------------------------------------------
  */
 
@@ -140,28 +141,42 @@ const MECH_FX = {
         ctx.restore();
     },
     /**
-     * Fiebre del rally: bordes del campo que arden en el color del tema.
+     * Fiebre del rally: bordes del campo que arden en el color del tema,
+     * con lenguas de fuego y brasas que suben. Con "menos movimiento", las
+     * lenguas quedan quietas (misma forma, sin t) y no hay brasas. Desde
+     * MUSIC_DYNAMIC.feverBoostRally golpes (boost) las llamas crecen un 30 %.
      * @param {CanvasRenderingContext2D} ctx
      * @param {string} color
      * @param {number} heat 0..1
+     * @param {boolean} [boost]
      */
-    fever(ctx, color, heat) {
+    fever(ctx, color, heat, boost = false) {
         if (heat <= 0) return;
         const t = vfxT();
-        const flames = !prefersReducedMotion();
+        const still = prefersReducedMotion();
+        const grow = boost ? 1.3 : 1;
+        const n = Math.ceil(GAME_WIDTH / 32) + 1;
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        for (const [y0, dir] of [[0, 1], [GAME_HEIGHT, -1]]) {
+        for (const [y0, dir, edge] of [[0, 1, 0], [GAME_HEIGHT, -1, 1]]) {
             const g = ctx.createLinearGradient(0, y0, 0, y0 + dir * 70);
-            g.addColorStop(0, hexToRgba(color, 0.35 * heat)); g.addColorStop(1, hexToRgba(color, 0));
+            g.addColorStop(0, hexToRgba(color, 0.45 * heat)); g.addColorStop(1, hexToRgba(color, 0));
             ctx.fillStyle = g; ctx.fillRect(0, Math.min(y0, y0 + dir * 70), GAME_WIDTH, 70);
-            if (!flames) continue;
             // Lenguas que suben
-            for (let i = 0; i < 26; i++) {
-                const x = i * 32 + 16, fl = 0.5 + 0.5 * Math.sin(t * 9 + i * 1.7);
-                const h = (14 + 26 * fl) * heat;
-                ctx.fillStyle = hexToRgba(i % 3 ? color : '#FDE047', 0.25 * heat);
+            for (let i = 0; i < n; i++) {
+                const x = i * 32 + 16, fl = 0.5 + 0.5 * Math.sin((still ? 0 : t * 9) + i * 1.7);
+                const h = (14 + 26 * fl) * heat * grow;
+                ctx.fillStyle = hexToRgba(i % 3 ? color : '#FDE047', 0.4 * heat);
                 ctx.beginPath(); ctx.moveTo(x - 10, y0); ctx.quadraticCurveTo(x, y0 + dir * h * 1.4, x + 10, y0); ctx.closePath(); ctx.fill();
+            }
+            if (still) continue;
+            // Brasas: suben desde el borde hasta 60 px y se apagan
+            for (let i = 0; i < 12; i++) {
+                const seed = i + edge * 31;
+                const ph = (t * (0.6 + 0.5 * vfxHash(seed + 211)) + vfxHash(seed + 97)) % 1;
+                const x = vfxHash(seed) * GAME_WIDTH + Math.sin(t * 3 + i) * 4;
+                ctx.fillStyle = hexToRgba(i % 2 ? color : '#FDE047', (1 - ph) * heat);
+                ctx.fillRect(x - 1, y0 + dir * ph * 60 - 1, 2, 2);
             }
         }
         ctx.restore();

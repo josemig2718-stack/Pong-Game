@@ -225,8 +225,8 @@ function render() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Fiebre del rally: los bordes arden (solo visual)
-    MECH_FX.fever(ctx, themeColor, state.feverHeat);
+    // Fiebre del rally: los bordes arden (solo visual); en la fiebre larga, más
+    MECH_FX.fever(ctx, themeColor, state.feverHeat, state.fever && currentRally >= MUSIC_DYNAMIC.feverBoostRally);
 
     const rotatedArena = bossIsRotatedArena();
 
