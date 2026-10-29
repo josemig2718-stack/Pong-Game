@@ -184,10 +184,7 @@ function resetSmashOnServe() {
 //  Fiebre del rally
 // ------------------------------------------------------------------
 
-/** Pista que sonaba al empezar la fiebre, para retomarla al terminar. */
-let feverPrevTrack = null;
-
-/** La fiebre cambia la música en VS CPU, local y práctica (en Hachepe y campaña, no). */
+/** La fiebre cambia la música en VS CPU, local y práctica (en Hachepe y campaña, no): los modos de la Rockola. */
 function feverChangesMusic() {
     return state.mode === 'cpu' || state.mode === 'local' || state.mode === 'practice';
 }
@@ -199,25 +196,20 @@ function startFever() {
     soundEffects.feverStart();
     statsOnFeverStart();
     showHint('fever');
-    if (feverChangesMusic()) {
-        feverPrevTrack = musicCurrent();
-        musicPlay('fiebre_rally', { fade: 0.5 });
-    }
+    if (feverChangesMusic()) musicPlay('fiebre_rally', { fade: 0.5 });
 }
 
-/** Termina la fiebre (al marcar cualquiera): la pista anterior sigue donde iba. */
+/** Termina la fiebre (al marcar cualquiera): la pista de la partida sigue donde iba. */
 function endFever() {
     if (!state.fever) return;
     state.fever = false;
-    if (feverPrevTrack) musicPlay(feverPrevTrack);
-    feverPrevTrack = null;
+    if (feverChangesMusic() && state.matchTrack) musicPlay(state.matchTrack);
 }
 
 /** Sin fiebre ni su calor, sin tocar la música (al empezar o abandonar una partida). */
 function resetFever() {
     state.fever = false;
     state.feverHeat = 0;
-    feverPrevTrack = null;
 }
 
 /** El calor de la fiebre sube o baja en MECH.feverFadeMs. Es solo visual. */

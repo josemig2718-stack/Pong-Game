@@ -444,8 +444,38 @@ function stopMenuMusic() {
 }
 
 /**
+ * La pista de la Rockola para una partida: la equipada o, con
+ * «Aleatoria», una de las propias.
+ * @returns {string} clave de MUSIC_TRACKS
+ */
+function matchTrack() {
+    const eq = equippedId('music');
+    if (eq === SHOP_RANDOM_MUSIC) return pickRandomTrack();
+    return MUSIC_TRACKS[eq] ? eq : 'partida_synthwave';
+}
+
+/**
+ * «Aleatoria»: una de las pistas que tiene el jugador, sin repetir la de
+ * la vez anterior (state.lastRandomTrack). Elige con vfxRandom(), nunca
+ * con Math.random: ese lo comparte la física.
+ * @returns {string}
+ */
+function pickRandomTrack() {
+    const owned = SHOP_CATALOG.music
+        .filter(item => MUSIC_TRACKS[item.id] && (shopIsFree(item) || hasItem('music', item.id)))
+        .map(item => item.id);
+    if (!owned.length) return 'partida_synthwave';
+    const fresh = owned.filter(id => id !== state.lastRandomTrack);
+    const pool = fresh.length ? fresh : owned;
+    const pick = pool[Math.floor(vfxRandom() * pool.length)];
+    state.lastRandomTrack = pick;
+    return pick;
+}
+
+/**
  * Música de partida según el modo: el rap de los Hachepes en Hachepe y
- * campaña, silencio contra el Creador y la Synthwave en el resto.
+ * campaña, silencio contra el Creador y la de la Rockola
+ * (state.matchTrack) en el resto.
  * @param {string} [mode]
  */
 function playGameplayMusic(mode = 'cpu') {
@@ -456,7 +486,7 @@ function playGameplayMusic(mode = 'cpu') {
         return;
     }
     // El resto de jefes comparten el rap de los Hachepes
-    musicPlay(mode === 'hachepe' || mode === 'campaign' ? 'hachepe_rap' : 'partida_synthwave');
+    musicPlay(mode === 'hachepe' || mode === 'campaign' ? 'hachepe_rap' : (state.matchTrack || 'partida_synthwave'));
 }
 
 /** Para la música de partida (la de los menús no la toca). */

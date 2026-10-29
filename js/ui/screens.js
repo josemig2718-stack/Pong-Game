@@ -16,7 +16,7 @@
  * Muestra una pantalla (un div.screen) y oculta las demás. Algunas
  * pantallas hacen algo al entrar: el menú principal oculta el juego y
  * refresca sus tiles, la selección de modo refresca sus tarjetas y
- * precarga la música de partida, y la tienda, la campaña y Progreso se
+ * precarga la pista de la Rockola, y la tienda, la campaña y Progreso se
  * redibujan.
  * Cada pantalla pone su música (screenMusic).
  */
@@ -31,7 +31,9 @@ function showScreen(screenId) {
         updateMenuTiles();
     } else if (screenId === 'mode-select-menu') {
         updateModeCards();
-        musicPreload('partida_synthwave');
+        // La pista de la Rockola (con «Aleatoria» se sabe al empezar)
+        const eq = equippedId('music');
+        if (MUSIC_TRACKS[eq]) musicPreload(eq);
     } else if (screenId === 'shop-menu') {
         showShopScreen();
     } else if (screenId === 'campaign-menu') {

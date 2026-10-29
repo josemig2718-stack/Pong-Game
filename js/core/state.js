@@ -88,6 +88,8 @@
  * @property {boolean} fever  fiebre del rally: desde MECH.feverRally golpes seguidos hasta el siguiente gol
  * @property {number} feverHeat  intensidad visual de la fiebre, de 0 a 1 (sube y baja en MECH.feverFadeMs)
  * @property {boolean} lowFx  el dispositivo no llega a 45 fps: los cosméticos más pesados dibujan la mitad (solo visual; dura hasta salir de la partida)
+ * @property {string|null} matchTrack  pista de la Rockola de esta partida (VS CPU, local y práctica); null en el resto
+ * @property {string|null} lastRandomTrack  la última que eligió «Aleatoria», para no repetirla
  * @property {Ball[]} balls
  * @property {Particle[]} particles
  */
@@ -115,6 +117,9 @@ const state = {
     feverHeat: 0,
     /** Efectos ligeros: lo pone measureFxLoad() (game/loop.js) si los fps caen; startGame() lo quita. */
     lowFx: false,
+    /** Pista de la Rockola elegida al empezar la partida (startGame) y la última aleatoria. */
+    matchTrack: null,
+    lastRandomTrack: null,
     /**
      * Bolas en juego (el power-up multi-bola añade hasta dos más).
      * resetBall() sustituye el array entero: no guardes una referencia a

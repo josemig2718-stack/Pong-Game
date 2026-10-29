@@ -176,7 +176,9 @@ function startGame(mode) {
     refreshMissions();
     resetSessionMissions();
 
-    // Música
+    // Música: la Rockola manda en VS CPU, local y práctica. La revancha
+    // vuelve a pasar por aquí: repite la equipada o, si es aleatoria, elige otra.
+    state.matchTrack = (mode === 'cpu' || mode === 'local' || mode === 'practice') ? matchTrack() : null;
     stopMenuMusic();
     playGameplayMusic(mode);
 
