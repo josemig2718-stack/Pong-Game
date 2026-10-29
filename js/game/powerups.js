@@ -341,6 +341,11 @@ function applyPowerup(type, beneficiary) {
             mechVibrate(target, FREEZE_VIBRATE_MS);
             break;
         }
+
+        case 'bolt':
+            // El siguiente golpe de esa paleta sale súper (classifyHit)
+            sidePaddle(target).boltReady = true;
+            break;
     }
 }
 
@@ -377,9 +382,24 @@ function revertPowerup(effect, { silent = false } = {}) {
         case 'freeze':
             freezeImmuneMs[effect.target] = FREEZE_IMMUNE_MS;
             break;
+
+        case 'bolt':
+            sidePaddle(effect.target).boltReady = false;
+            break;
     }
 
     if (!silent) soundEffects.powerupExpire();
+}
+
+/**
+ * El Rayo se gasta en el golpe (resolveHit): su efecto termina sin el
+ * sonido de fin, que ya suena el súper golpe.
+ * @param {'p1'|'p2'} side
+ */
+function useBolt(side) {
+    const effect = activeEffects.find((e) => e.type.id === 'bolt' && e.target === side);
+    if (effect) revertPowerup(effect, { silent: true });
+    sidePaddle(side).boltReady = false;
 }
 
 /** Revierte todos los efectos, sin sonido (al empezar una partida o al salir). */
@@ -446,14 +466,15 @@ function renderPowerup(ctx) {
 
 /** Qué efectos tienen píldora, en orden, para rehacerlas solo si cambian. */
 let powerupPillsKey = null;
-/** @type {{bar: HTMLElement, secs: Element, last: string}[]} una por efecto, en el orden de activeEffects */
+/** @type {{bar: HTMLElement|null, secs: Element, last: string}[]} una por efecto, en el orden de activeEffects */
 let powerupPillEls = [];
 
 /**
  * Píldoras de los efectos activos (capturas/54): una por efecto, en el
  * contenedor del lado del que lo recogió (#powerup-pills-p1/-p2): icono,
  * nombre, barra y segundos restantes (el escudo, los bloqueos que le
- * quedan: "3/5"). Solo toca el DOM cuando algo cambia.
+ * quedan: "3/5"; el Rayo, que dura hasta el golpe, solo lo que hace).
+ * Solo toca el DOM cuando algo cambia.
  */
 function updatePowerupPills() {
     const key = activeEffects.map((e) => `${e.type.id}|${e.beneficiary}|${e.target}`).join(',');
@@ -473,6 +494,7 @@ function updatePowerupPills() {
             ? `${shieldHp}/${SHIELD_HP}`
             : `${Math.max(0, Math.ceil(effect.remainingMs / 1000))}s`;
         const el = powerupPillEls[i];
+        if (!el.bar) return;
         const last = `${pct}|${label}`;
         if (el.last === last) return;
         el.last = last;
@@ -489,14 +511,18 @@ function buildPowerupPill(effect) {
     const pill = document.createElement('div');
     pill.className = 'powerup-pill';
     pill.style.setProperty('--pu-color', effect.type.color);
+    // El Rayo no tiene tiempo que mostrar (sus 20 s son un tope): dice lo que hace
+    const detail = effect.type.id === 'bolt'
+        ? '<span class="powerup-pill__note">Siguiente golpe: súper</span>'
+        : '<span class="powerup-pill__bar"><i></i></span>';
     pill.innerHTML =
         `<span class="powerup-pill__icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${effect.type.icon}"/></svg></span>` +
-        '<span class="powerup-pill__body"><span class="px powerup-pill__name"></span><span class="powerup-pill__bar"><i></i></span></span>' +
+        `<span class="powerup-pill__body"><span class="px powerup-pill__name"></span>${detail}</span>` +
         '<span class="px powerup-pill__secs"></span>';
     pill.querySelector('.powerup-pill__name').textContent = effect.type.name;
     document.getElementById(`powerup-pills-${effect.beneficiary}`).appendChild(pill);
     return {
-        bar: /** @type {HTMLElement} */ (pill.querySelector('.powerup-pill__bar i')),
+        bar: /** @type {HTMLElement|null} */ (pill.querySelector('.powerup-pill__bar i')),
         secs: pill.querySelector('.powerup-pill__secs'),
         last: ''
     };
@@ -504,12 +530,13 @@ function buildPowerupPill(effect) {
 
 /**
  * Lo que los efectos dibujan sobre las paletas (después de ellas): el
- * hielo de Congelar.
+ * hielo de Congelar y la carga del Rayo.
  * @param {CanvasRenderingContext2D} ctx
  */
 function renderPowerupPaddles(ctx) {
     for (const effect of activeEffects) {
         if (effect.type.id === 'freeze') drawFrozenPaddle(ctx, sidePaddle(effect.target), effect.remainingMs / effect.type.duration);
+        else if (effect.type.id === 'bolt') drawRayoCharge(ctx, sidePaddle(effect.target));
     }
 }
 
@@ -791,6 +818,42 @@ function drawFrozenPaddle(ctx, p, k) {
         }
         ctx.restore();
     }
+}
+
+/** Color del Rayo, el mismo que su orbe y su píldora. */
+const BOLT_COLOR = POWERUP_TYPES.find((t) => t.id === 'bolt').color;
+
+/**
+ * Rayo (laboratorio v2): la paleta lleva el súper golpe cargado, con un
+ * halo y chispas que saltan a los lados.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Paddle} p
+ */
+function drawRayoCharge(ctx, p) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = hexToRgba(BOLT_COLOR, 0.5);
+    ctx.lineWidth = 8;
+    ctx.shadowColor = BOLT_COLOR;
+    ctx.shadowBlur = 16;
+    roundRectHelper(ctx, p.x - 3, p.y - 3, p.width + 6, p.height + 6, 6);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#E0E7FF';
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < 3; i++) {
+        const side = vfxRandom() < 0.5 ? p.x - 3 : p.x + p.width + 3;
+        let y = p.y + vfxRandom() * p.height, x = side;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let s = 0; s < 3; s++) {
+            x += (side < p.x ? -1 : 1) * (2 + vfxRandom() * 4);
+            y += (vfxRandom() - 0.5) * 10;
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
 }
 
 /** Cámara lenta: viñeta naranja en los bordes y líneas de escaneo que bajan despacio. */

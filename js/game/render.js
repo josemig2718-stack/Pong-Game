@@ -266,7 +266,7 @@ function render() {
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
     MECH_FX.charge(ctx, p1, themeColor, p1.charge);
     if (!rotatedArena && !practice) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);
-    renderPowerupPaddles(ctx);   // hielo de Congelar
+    renderPowerupPaddles(ctx);   // hielo de Congelar y carga del Rayo
 
     // Power-ups
     renderPowerup(ctx);

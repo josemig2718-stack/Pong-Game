@@ -58,6 +58,7 @@
  * @property {number} releaseMs  ms desde que se soltó el smash (Infinity = no hay ventana abierta)
  * @property {number} energy  energía del súper golpe, de 0 a MECH.energy.max
  * @property {boolean} superArmed  el siguiente golpe es súper sin gastar energía
+ * @property {boolean} boltReady  power-up Rayo: el siguiente golpe es súper sin gastar energía (game/powerups.js)
  */
 
 /**
@@ -136,7 +137,7 @@ const state = {
  * los repone con resetPaddleMechanics().
  */
 function paddleMechanicsRest() {
-    return { vy: 0, prevY: 0, vx: 0, prevX: 0, charge: 0, smashHeld: false, smashTouchHeld: false, releaseMs: Infinity, energy: 0, superArmed: false };
+    return { vy: 0, prevY: 0, vx: 0, prevX: 0, charge: 0, smashHeld: false, smashTouchHeld: false, releaseMs: Infinity, energy: 0, superArmed: false, boltReady: false };
 }
 
 /** @type {Paddle} */

@@ -243,7 +243,8 @@ function superReadyFor(p) {
 /**
  * Tipo de golpe, por orden de prioridad: súper, smash, perfecto,
  * esquina, bloqueo y normal. El bloqueo coincide a veces con la
- * esquina; entonces manda la esquina.
+ * esquina; entonces manda la esquina. Con el Rayo (boltReady) el golpe
+ * es súper siempre, antes que todo lo demás.
  * En el modo táctil automático no hay smash: con la energía llena, el
  * siguiente golpe del que juega con el dedo es súper.
  * @param {Paddle} paddle
@@ -254,6 +255,7 @@ function superReadyFor(p) {
  * @returns {HitType}
  */
 function classifyHit(paddle, holder, side, c, rawV) {
+    if (holder.boltReady) return 'super';
     const windowOpen = paddle.releaseMs <= MECH.smashWindowMs;
     if (windowOpen && paddle.charge >= MECH.superMinCharge && superReadyFor(holder)) return 'super';
     if (settings.smashTouch === 'auto' && superReadyFor(holder) && isFingerOn(side)) return 'super';
@@ -407,9 +409,11 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
     if (side === 'p1' && type === 'perfect') showHint('perfect');
     if (side === 'p1' && Math.abs(b.spin) > MECH.spinSoundMin) showHint('spin');
 
-    // 7. Energía del que golpea; el súper la gasta (o gasta el súper regalado)
+    // 7. Energía del que golpea; el súper la gasta (o gasta el Rayo o el
+    // súper regalado, que la dejan como estaba)
     if (type === 'super') {
-        if (holder.superArmed) holder.superArmed = false;
+        if (holder.boltReady) useBolt(side);
+        else if (holder.superArmed) holder.superArmed = false;
         else holder.energy = 0;
     }
     addEnergy(holder, HIT_ENERGY[type] * (state.fever ? MECH.energy.feverK : 1));

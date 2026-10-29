@@ -1492,6 +1492,8 @@ body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
 .powerup-pill__secs { font-size: 10px; }
 .powerup-pill__bar { display: block; width: 120px; max-width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .powerup-pill__bar i { display: block; height: 100%; border-radius: 2px; background: var(--pu-color, #38BDF8); }
+/* El Rayo, en vez de la barra, dice lo que hace */
+.powerup-pill__note { font-size: 12px; line-height: 1.2; color: rgba(229, 233, 242, 0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Botones de smash táctiles (capturas/55). Solo existen con data-smash
    en el contenedor (setupHud: pantalla táctil y ajuste "botón"); el del
@@ -1696,6 +1698,7 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 #game-container[data-layout="sides"] .powerup-pill__name { font-size: 7px; }
 #game-container[data-layout="sides"] .powerup-pill__bar { width: 80px; }
 #game-container[data-layout="sides"] .powerup-pill__secs { font-size: 8px; }
+#game-container[data-layout="sides"] .powerup-pill__note { font-size: 10px; }
 /* Smash táctil: al pie de cada columna (el del J2, junto a la pausa) */
 #game-container[data-layout="sides"] .smash-btn { width: 70px; height: 70px; grid-row: 3; align-self: end; margin-bottom: 8px; }
 #game-container[data-layout="sides"] #smash-btn-p1 { grid-column: 1; justify-self: center; }
