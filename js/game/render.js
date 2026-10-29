@@ -2,7 +2,7 @@
  * game/render.js
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
- * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → estelas, aura
+ * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → portales → estelas, aura
  * de la bola gigante, líneas de velocidad, aura del súper, bolas (la equipada) y su
  * efecto (MECH_FX.spin) → paletas (o la pared de práctica), su carga de smash (MECH_FX.charge)
  * y lo que los power-ups ponen sobre ellas (renderPowerupPaddles) →
@@ -241,6 +241,9 @@ function render() {
 
     // Capa propia del jefe: escombros, escudo, franja del Creador...
     bossRender(ctx);
+
+    // Portales, debajo de las bolas
+    renderPortals(ctx);
 
     // Estelas + bolas
     const hideBall = bossHidesBall();

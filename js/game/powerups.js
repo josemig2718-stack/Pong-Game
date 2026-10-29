@@ -54,7 +54,8 @@
  * @property {'p1'|'p2'} target  la paleta a la que afecta (en la paleta mini, la del rival)
  * @property {number} remainingMs
  * @property {{height?: number, radius?: number}} originalValues
- * @property {{wall?: ShieldWall, goalWall?: GoalWall}} data  lo propio de cada tipo (el muro del escudo, el del Muro)
+ * @property {{wall?: ShieldWall, goalWall?: GoalWall, portals?: {x: number, y: number}[]}} data
+ *     lo propio de cada tipo: el muro del escudo, el del Muro, la entrada y la salida de los Portales
  */
 
 // Variables de estado del sistema de power-ups
@@ -70,7 +71,7 @@ let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayu
 const freezeImmuneMs = { p1: 0, p2: 0 };
 
 /** Tipos que afectan a todo el campo: hay uno de cada como mucho, sea quien sea el que lo recoja. */
-const GLOBAL_POWERUPS = ['big_ball', 'slowmo'];
+const GLOBAL_POWERUPS = ['big_ball', 'slowmo', 'portals'];
 
 /** Espera hasta el próximo power-up: entre 6 y 12 segundos de juego. */
 function nextPowerupCooldown() {
@@ -388,6 +389,18 @@ function applyPowerup(type, beneficiary) {
             };
             break;
         }
+
+        case 'portals': {
+            // Entrada arriba y salida abajo, en la franja central (35–65 %
+            // del ancho) y como mucho a 80 px en horizontal. Se eligen con
+            // Math.random al activarse: son parte de la partida, como el orbe
+            const x1 = GAME_WIDTH * (0.35 + Math.random() * 0.3);
+            const x2 = mechClamp(x1 + (Math.random() * 2 - 1) * 80, GAME_WIDTH * 0.35, GAME_WIDTH * 0.65);
+            const yTop = 70 + Math.random() * (GAME_HEIGHT / 2 - 140);
+            const yBottom = GAME_HEIGHT / 2 + 70 + Math.random() * (GAME_HEIGHT / 2 - 140);
+            effect.data.portals = [{ x: x1, y: yTop }, { x: x2, y: yBottom }];
+            break;
+        }
     }
 }
 
@@ -580,6 +593,14 @@ function renderPowerupPaddles(ctx) {
         if (effect.type.id === 'freeze') drawFrozenPaddle(ctx, sidePaddle(effect.target), effect.remainingMs / effect.type.duration);
         else if (effect.type.id === 'bolt') drawRayoCharge(ctx, sidePaddle(effect.target));
     }
+}
+
+/**
+ * Los Portales, si están activos (debajo de las bolas).
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function renderPortals(ctx) {
+    for (const effect of effectsOf('portals')) drawPortals(ctx, effect.data.portals[0], effect.data.portals[1]);
 }
 
 /**
@@ -895,6 +916,54 @@ function drawGoalWall(ctx, wall, k) {
         ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
     }
     ctx.restore();
+}
+
+/** Portales: la entrada es del color del orbe; la salida, violeta. */
+const PORTAL_IN_COLOR = POWERUP_TYPES.find((t) => t.id === 'portals').color;
+const PORTAL_OUT_COLOR = '#A78BFA';
+
+/**
+ * Un portal (laboratorio v2): óvalo oscuro con anillos que giran y un
+ * remolino de chispas.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} x
+ * @param {number} y
+ * @param {string} hue color del portal
+ * @param {number} phase desfase de su giro (s)
+ */
+function drawPortal(ctx, x, y, hue, phase) {
+    const t = vfxT() + phase;
+    ctx.save();
+    ctx.translate(x, y);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 34);
+    g.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+    g.addColorStop(0.6, hexToRgba(hue, 0.35));
+    g.addColorStop(1, hexToRgba(hue, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, 0, 22, 36, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = i === 1 ? hexToRgba('#ffffff', 0.65) : hexToRgba(hue, 0.85 - i * 0.2);
+        ctx.lineWidth = 3 - i * 0.7;
+        ctx.beginPath(); ctx.ellipse(0, 0, 18 + i * 3, 31 + i * 4, 0, t * (2 + i) + i, t * (2 + i) + i + Math.PI * 1.4); ctx.stroke();
+    }
+    ctx.fillStyle = hexToRgba(PORTAL_IN_COLOR, 0.8);
+    for (let i = 0; i < 8; i++) {
+        const a = t * 3 + i * 0.8, r = 4 + ((t * 30 + i * 7) % 18);
+        ctx.fillRect(Math.cos(a) * r * 0.6, Math.sin(a) * r, 2, 2);
+    }
+    ctx.restore();
+}
+
+/**
+ * Portales: entrada (turquesa) y salida (violeta).
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {{x: number, y: number}} a
+ * @param {{x: number, y: number}} b
+ */
+function drawPortals(ctx, a, b) {
+    drawPortal(ctx, a.x, a.y, PORTAL_IN_COLOR, 0);
+    drawPortal(ctx, b.x, b.y, PORTAL_OUT_COLOR, 1.3);
 }
 
 /** Color del Rayo, el mismo que su orbe y su píldora. */

@@ -20,7 +20,7 @@ function currentSpeedPreset() {
     return BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
 }
 
-/** @returns {Ball} una bola sin efecto, sin smash y sin dueño */
+/** @returns {Ball} una bola sin efecto, sin smash, sin dueño y sin cruzar portales */
 function createBall(x, y, speed, dx, dy) {
     return {
         x: x, y: y,
@@ -31,7 +31,8 @@ function createBall(x, y, speed, dx, dy) {
         spin: 0,
         power: null,
         owner: null,
-        squash: 0
+        squash: 0,
+        warpMs: Infinity
     };
 }
 

@@ -34,6 +34,7 @@
  * @property {BallPower} power  smash o súper golpe en curso; null = golpe normal
  * @property {'p1'|'p2'|null} owner  quién la golpeó por última vez (null hasta el primer golpe)
  * @property {number} squash  aplastamiento del último golpe, de 1 a 0. Solo visual
+ * @property {number} warpMs  ms de juego desde que cruzó un portal (Infinity si no ha cruzado ninguno)
  */
 
 /** @typedef {null | 'smash' | 'super'} BallPower */

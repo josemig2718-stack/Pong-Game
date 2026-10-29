@@ -12,8 +12,9 @@
  * En VS CPU y en el Modo Hachepe la CPU usa además las mecánicas de
  * golpe: cada vez que una bola empieza a venir hacia ella elige un plan
  * (MECH.cpu, con Math.random) — dar efecto, smash, usar el súper y
- * apuntar al centro de la paleta prediciendo el rebote. Los jefes de
- * campaña no planifican: conservan su IA.
+ * apuntar al centro de la paleta prediciendo el rebote. La predicción no
+ * tiene en cuenta los portales. Los jefes de campaña no planifican:
+ * conservan su IA.
  * ------------------------------------------------------------------
  */
 
@@ -32,11 +33,27 @@
 let cpuPlan = null;
 /** La bola objetivo venía hacia la CPU en el fotograma anterior. */
 let cpuBallWasComing = false;
+/** ms desde que la bola objetivo empezó a venir hacia la CPU. */
+let cpuComingMs = 0;
+/** La última llegada prevista antes de que la bola cruzara un portal. */
+/** @type {number|null} */
+let cpuLastPredY = null;
 
 /** Sin plan: la próxima bola que venga hace elegir uno nuevo (al empezar partida). */
 function resetCpuPlan() {
     cpuPlan = null;
     cpuBallWasComing = false;
+    cpuComingMs = 0;
+    cpuLastPredY = null;
+}
+
+/**
+ * Tras un cruce de portal, cuánto sigue la CPU yendo a donde iba la bola:
+ * en Imposible y en el Modo Hachepe recalcula enseguida; en el resto, ya
+ * no corrige en esa jugada (es intencionado: los portales la engañan).
+ */
+function cpuPortalBlindMs() {
+    return state.mode === 'hachepe' || settings.difficulty === 3 ? CPU_PORTAL_RECALC_MS : Infinity;
 }
 
 /** @returns {CpuPlanTuning} los números del plan según el modo y la dificultad */
@@ -125,8 +142,12 @@ function cpuSpinSweep(contactY, aiSpeed) {
 function cpuPlay(ball, aiSpeed, errorMargin, dt) {
     const t = cpuTuning();
     const coming = !!ball && ball.dx > 0;
-    if (coming && !cpuBallWasComing) cpuPlan = makeCpuPlan(t);
+    if (coming && !cpuBallWasComing) {
+        cpuPlan = makeCpuPlan(t);
+        cpuComingMs = 0;
+    }
     cpuBallWasComing = coming;
+    if (coming) cpuComingMs += dt * MS_PER_FRAME;
 
     const center = p2.y + p2.height / 2;
     // Cargar el smash la ralentiza, como al jugador
@@ -134,7 +155,12 @@ function cpuPlay(ball, aiSpeed, errorMargin, dt) {
     let holdSmash = false;
 
     if (coming && cpuPlan) {
-        const pred = predictBallY(ball, p2.x, t.read);
+        // La predicción no sabe de portales: si la bola ha cruzado uno en
+        // esta jugada, la CPU sigue apuntando a donde iba a llegar antes
+        const fresh = predictBallY(ball, p2.x, t.read);
+        const blind = cpuLastPredY !== null && ball.warpMs < Math.min(cpuComingMs, cpuPortalBlindMs());
+        const pred = blind ? { y: cpuLastPredY, frames: fresh.frames } : fresh;
+        if (!blind) cpuLastPredY = fresh.y;
         const msLeft = pred.frames * MS_PER_FRAME;
         // Con la energía llena, un smash sería súper: solo si el plan lo usa
         const trySmash = superReadyFor(p2) ? cpuPlan.useSuper : cpuPlan.smash;

@@ -226,6 +226,8 @@ function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
         // Obstáculos propios del jefe (escombros de Chemi, escudo de Dani)
         bossCollide(b);
 
+        warpThroughPortals(b, dt);
+
         hitPaddles(b, rotatedArena, maxBallSpeed);
         if (state.mode === 'practice') bouncePracticeWall(b, maxBallSpeed);
         bounceGoalWalls(b);
@@ -284,6 +286,32 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
             b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
             soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
+        }
+    }
+}
+
+/**
+ * Power-up Portales: si el centro de la bola entra en un portal, sale por
+ * el otro con la misma velocidad y dirección, en los dos sentidos y con
+ * todas las bolas. Tras cruzar, ningún portal la atrapa en
+ * PORTAL_LOCK_MS (sale justo en el centro del otro). b.warpMs cuenta
+ * siempre, para el logro «Atajo».
+ * @param {Ball} b
+ * @param {number} dt
+ */
+function warpThroughPortals(b, dt) {
+    b.warpMs += dt * MS_PER_FRAME;
+    if (b.warpMs < PORTAL_LOCK_MS) return;
+    for (const effect of effectsOf('portals')) {
+        const [a, z] = effect.data.portals;
+        for (const [from, to] of [[a, z], [z, a]]) {
+            if (Math.hypot(b.x - from.x, b.y - from.y) >= PORTAL_RADIUS) continue;
+            b.x = to.x;
+            b.y = to.y;
+            b.trail = [];   // la estela no cruza el campo de un portal a otro
+            b.warpMs = 0;
+            soundEffects.portalWarp();
+            return;
         }
     }
 }
@@ -382,6 +410,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(GAME_WIDTH, b.y, sideColor('p1'));
         state.p1Score++;
         statsOnScore(true, b);
+        if (b.warpMs < PORTAL_GOAL_MS) unlockAchievement('portal_goal');   // «Atajo»
         endFever();
         goalMusic();
         bossOnGoal(true);
