@@ -521,7 +521,7 @@ function renderPowerup(ctx) {
 
 /** Qué efectos tienen píldora, en orden, para rehacerlas solo si cambian. */
 let powerupPillsKey = null;
-/** @type {{bar: HTMLElement|null, secs: Element, last: string}[]} una por efecto, en el orden de activeEffects */
+/** @type {{bar: HTMLElement|null, secs: Element|null, last: string}[]} una por efecto, en el orden de activeEffects */
 let powerupPillEls = [];
 
 /**
@@ -538,6 +538,8 @@ function updatePowerupPills() {
         document.getElementById('powerup-pills-p1').replaceChildren();
         document.getElementById('powerup-pills-p2').replaceChildren();
         powerupPillEls = activeEffects.map(buildPowerupPill);
+        // En vertical, una píldora sola ocupa toda su fila (CSS)
+        document.getElementById('game-container').dataset.pills = String(activeEffects.length);
     }
 
     activeEffects.forEach((effect, i) => {
@@ -567,13 +569,14 @@ function buildPowerupPill(effect) {
     pill.className = 'powerup-pill';
     pill.style.setProperty('--pu-color', effect.type.color);
     // El Rayo no tiene tiempo que mostrar (sus 20 s son un tope): dice lo que hace
-    const detail = effect.type.id === 'bolt'
+    const bolt = effect.type.id === 'bolt';
+    const detail = bolt
         ? '<span class="powerup-pill__note">Siguiente golpe: súper</span>'
         : '<span class="powerup-pill__bar"><i></i></span>';
     pill.innerHTML =
         `<span class="powerup-pill__icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${effect.type.icon}"/></svg></span>` +
         `<span class="powerup-pill__body"><span class="px powerup-pill__name"></span>${detail}</span>` +
-        '<span class="px powerup-pill__secs"></span>';
+        (bolt ? '' : '<span class="px powerup-pill__secs"></span>');
     pill.querySelector('.powerup-pill__name').textContent = effect.type.name;
     document.getElementById(`powerup-pills-${effect.beneficiary}`).appendChild(pill);
     return {

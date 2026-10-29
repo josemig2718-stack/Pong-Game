@@ -1756,8 +1756,19 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 #game-container[data-layout="stack"] .powerup-pills { flex-direction: row; justify-self: stretch; align-self: center; gap: 10px; }
 #game-container[data-layout="stack"] .powerup-pills[data-side="p2"] { justify-content: flex-end; }
 #game-container[data-layout="stack"] .powerup-pill { flex: 0 1 calc(50% - 5px); min-width: 0; padding-right: 12px; }
+#game-container[data-layout="stack"][data-pills="1"] .powerup-pill { flex: 1 1 auto; }
 #game-container[data-layout="stack"] .powerup-pill__body { flex: 1; }
 #game-container[data-layout="stack"] .powerup-pill__bar { width: 100%; }
+/* Teléfono en vertical: dos píldoras en media fila cada una, más compactas
+   para que quepan los nombres largos («PALETA GRANDE») */
+@media (max-width: 520px) {
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill { gap: 7px; padding: 6px 9px 6px 6px; }
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill__icon { width: 24px; height: 24px; border-radius: 7px; }
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill__icon .ico { width: 15px; height: 15px; }
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill__name { font-size: 7px; }
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill__secs { font-size: 8px; }
+    #game-container[data-layout="stack"][data-pills="2"] .powerup-pill__note { font-size: 10px; }
+}
 
 /* ==================================================================
    Responsive para pantallas pequeñas (móvil)
