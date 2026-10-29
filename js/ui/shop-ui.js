@@ -13,6 +13,10 @@
  * icono (vista previa) y el de la acción (comprar, USAR, EQUIPADO o el
  * candado de un exclusivo). Todos llevan data-action (ui/actions.js) con
  * data-arg "categoría:id".
+ *
+ * La Rockola (categoría music) no tiene lienzo animado: tocar una tarjeta
+ * pone la pista a sonar en la tienda en lugar de musica_tienda, y en vez
+ * de la rareza enseña la duración del bucle y el BPM.
  * ------------------------------------------------------------------
  */
 
@@ -33,6 +37,9 @@ let shopIconUid = 0;
 /** Intervalo de la cuenta atrás de la oferta (se para al salir de la tienda). */
 let shopOfferTimer = null;
 
+/** Pista de la Rockola que suena en la tienda; null = suena musica_tienda. */
+let shopListenId = null;
+
 /** Nombre en singular de lo que vende cada pestaña (vista previa). */
 const SHOP_ITEM_KIND = { trails: 'Estela', backgrounds: 'Fondo', paddles: 'Paleta', goalEffects: 'Efecto de gol',
                          balls: 'Bola', super: 'Súper golpe', music: 'Canción' };
@@ -52,6 +59,7 @@ const SHOP_LOCK_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
  */
 function showShopScreen() {
     shopPreviewId = null;
+    if (shopListenId) stopShopListen(false);
     renderShopOffer();
     populateShopTab(currentShopTab);
     tickShopOffer();
@@ -62,6 +70,8 @@ function showShopScreen() {
  * Cambia la pestaña de la tienda
  */
 function switchShopTab(categoryKey) {
+    // La pista que se escuchaba es solo de la pestaña Rockola
+    if (shopListenId) stopShopListen(false);
     currentShopTab = categoryKey;
     shopPreviewId = null;
 
@@ -103,6 +113,11 @@ function shopOwns(categoryKey, item) {
 /** Id del artículo equipado en una pestaña. */
 function shopEquippedId(categoryKey) {
     return equippedId(categoryKey);
+}
+
+/** ¿Cuenta en los contadores? «Aleatoria» no es una pista: la Rockola tiene 5, no 6. */
+function shopCounts(categoryKey, item) {
+    return !(categoryKey === 'music' && item.id === SHOP_RANDOM_MUSIC);
 }
 
 /** Busca un artículo por categoría e id. */
@@ -253,9 +268,10 @@ function shopActionButton(categoryKey, item, className) {
     return btn;
 }
 
-/** Los artículos de una pestaña en el orden elegido (a igualdad, el del catálogo). */
+/** Los artículos de una pestaña en el orden elegido (a igualdad, el del catálogo). La Rockola va siempre en el suyo. */
 function shopSortedItems(categoryKey) {
     const items = SHOP_CATALOG[categoryKey].slice();
+    if (categoryKey === 'music') return items;
     const rank = (item) => SHOP_RARITY_ORDER[shopRarity(item).key];
     const price = (item) => item.exclusive ? Infinity : item.price;
     const byRarity = (a, b) => rank(a) - rank(b) || price(a) - price(b);
@@ -276,6 +292,11 @@ function populateShopTab(categoryKey) {
 
     grid.innerHTML = '';
     if (!SHOP_CATALOG[categoryKey]) return;
+    const isMusic = categoryKey === 'music';
+    if (isMusic) claimFreeMusic();
+    // En la Rockola no hay rarezas ni precios que ordenar
+    const sort = /** @type {HTMLElement} */ (document.querySelector('.shop-sort'));
+    if (sort) sort.hidden = isMusic;
     const equippedId = shopEquippedId(categoryKey);
     const offer = shopDailyOffer();
 
@@ -292,14 +313,35 @@ function populateShopTab(categoryKey) {
         if (isOffer) card.classList.add('shop-card--offer');
         card.dataset.id = item.id;
 
-        card.innerHTML = `
+        const tag = isEquipped ? `<span class="shop-card__tag">${SHOP_CHECK_ICON}EN USO</span>` : isOffer ? '<span class="shop-card__tag shop-card__tag--offer">−30 %</span>' : '';
+        if (isMusic) {
+            const playing = shopListenId === item.id;
+            const canListen = item.id !== SHOP_RANDOM_MUSIC;
+            card.classList.add('shop-card--music');
+            if (playing) card.classList.add('shop-card--playing');
+            if (item.color) card.style.setProperty('--track', item.color);
+            const label = !canListen ? item.name : playing ? `Parar ${item.name}` : `Escuchar ${item.name}`;
+            card.innerHTML = `
+            <div class="shop-card__media">
+                <button class="shop-card__tile shop-card__tile--${rarity.key}" data-action="previewShopItem" data-arg="music:${item.id}" aria-label="${label}"${canListen ? ` aria-pressed="${playing}"` : ''}>${shopIconHTML(categoryKey, item)}${playing ? '<span class="shop-eq" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}</button>
+                ${playing ? '<button class="shop-card__stop" data-action="stopShopListen" aria-label="Parar la canción">■</button>' : ''}
+            </div>
+            ${tag}
+            <div class="shop-card__head">
+                <span class="shop-card__name">${item.name}</span>
+                <span class="shop-card__rarity shop-card__rarity--${rarity.key === 'exc' ? 'exc' : 'ini'}">${shopMusicMeta(item)}</span>
+            </div>
+            <p class="shop-card__desc">${item.desc}</p>`;
+        } else {
+            card.innerHTML = `
             <button class="shop-card__tile shop-card__tile--${rarity.key}" data-action="previewShopItem" data-arg="${categoryKey}:${item.id}" aria-label="Vista previa: ${item.name}">${shopIconHTML(categoryKey, item)}</button>
-            ${isEquipped ? `<span class="shop-card__tag">${SHOP_CHECK_ICON}EN USO</span>` : isOffer ? '<span class="shop-card__tag shop-card__tag--offer">−30 %</span>' : ''}
+            ${tag}
             <div class="shop-card__head">
                 <span class="shop-card__name">${item.name}</span>
                 <span class="shop-card__rarity shop-card__rarity--${rarity.key}">${rarity.label.toUpperCase()}</span>
             </div>
             <p class="shop-card__desc">${item.desc}</p>`;
+        }
         card.appendChild(shopActionButton(categoryKey, item, 'shop-card__btn'));
         grid.appendChild(card);
     });
@@ -311,13 +353,14 @@ function populateShopTab(categoryKey) {
 /**
  * Contadores: cuántos objetos tienes de cada pestaña, la línea de la
  * pestaña («Estelas · 3 de 11») y la colección completa. La colección
- * cuenta todos los artículos; el logro Fashionista pide comprar todos los
- * de pago (los exclusivos no se venden).
+ * cuenta todos los artículos (menos «Aleatoria», que no es una pista); el
+ * logro Fashionista pide comprar todos los de pago (los exclusivos no se
+ * venden).
  */
 function updateShopMeta(categoryKey) {
     let owned = 0, total = 0;
     SHOP_CATEGORIES.forEach(cat => {
-        const items = SHOP_CATALOG[cat.key];
+        const items = SHOP_CATALOG[cat.key].filter(item => shopCounts(cat.key, item));
         const mine = items.filter(item => shopOwns(cat.key, item)).length;
         owned += mine;
         total += items.length;
@@ -370,6 +413,14 @@ function renderShopPreview() {
     });
     document.getElementById('shop-preview').dataset.rarity = rarity.key;
 
+    const stage = document.getElementById('shop-preview-stage');
+    if (currentShopTab === 'music') {
+        renderRockolaPreview(item, box, actions, stage);
+        return;
+    }
+    const disc = stage.querySelector('.shop-disc');
+    if (disc) disc.remove();
+
     box.innerHTML = `
         <div class="shop-preview__info">
             <span class="shop-card__rarity shop-card__rarity--${rarity.key}">${rarity.label.toUpperCase()} · ${SHOP_ITEM_KIND[currentShopTab].toUpperCase()}</span>
@@ -401,6 +452,10 @@ function renderShopPreview() {
  */
 function previewShopItem(categoryKey, itemId) {
     if (categoryKey !== currentShopTab) switchShopTab(categoryKey);
+    if (categoryKey === 'music') {
+        toggleShopListen(itemId);
+        return;
+    }
     if (!shopPreviewPanelVisible() && shopPreviewId === itemId && shopPreviewRunning()) {
         stopShopPreview();
         return;
@@ -461,7 +516,112 @@ function equipShopItem(categoryKey, itemId) {
     const item = shopFindItem(categoryKey, itemId);
     if (!item || !shopOwns(categoryKey, item)) return;
 
+    const changed = shopEquippedId(categoryKey) !== itemId;
     selectCosmetic(categoryKey, itemId);
+    if (categoryKey === 'music' && changed) unlockAchievement('rockola_dj');
     shopPreviewId = itemId;
     populateShopTab(currentShopTab);
+}
+
+// --- Rockola ---
+
+/**
+ * Lo que la tarjeta de una pista enseña en vez de la rareza: lo que dura
+ * el bucle («1:48») y el BPM si se conoce. «Aleatoria» no tiene pista.
+ * @param {ShopItem} item
+ */
+function shopMusicMeta(item) {
+    const track = MUSIC_TRACKS[item.id];
+    if (!track) return 'AL AZAR';
+    const end = track.loopEnd === null ? track.duration : track.loopEnd;
+    const secs = Math.round(end - track.loopStart);
+    return `${Math.floor(secs / 60)}:${missionPad(secs % 60)}${track.bpm ? ` · ${track.bpm} BPM` : ''}`;
+}
+
+/**
+ * Las pistas gratuitas pasan a estar en propiedad la primera vez que se
+ * abre la Rockola (shopOwns ya las da por tuyas; así lo guardado coincide).
+ */
+function claimFreeMusic() {
+    let added = false;
+    for (const item of SHOP_CATALOG.music) {
+        const key = `music:${item.id}`;
+        if (shopIsFree(item) && !playerProgression.owned.includes(key)) {
+            playerProgression.owned.push(key);
+            added = true;
+        }
+    }
+    if (added) saveProgression();
+}
+
+/**
+ * Toca una tarjeta de la Rockola: la elige y la pone a sonar en lugar de
+ * musica_tienda (con fundido); si ya sonaba, la para. «Aleatoria» solo se
+ * elige.
+ * @param {string} itemId
+ */
+function toggleShopListen(itemId) {
+    shopPreviewId = itemId;
+    if (shopListenId === itemId) {
+        stopShopListen();
+        return;
+    }
+    if (itemId !== SHOP_RANDOM_MUSIC && MUSIC_TRACKS[itemId]) {
+        if (shopListenId) musicStop();   // la anterior se olvida, como al parar
+        shopListenId = itemId;
+        musicPlay(itemId);
+    }
+    populateShopTab(currentShopTab);
+}
+
+/**
+ * Para la pista que se escucha y vuelve musica_tienda. La escuchada se
+ * olvida (musicStop): la partida la empieza desde el principio.
+ * @param {boolean} [repaint] volver a pintar la pestaña
+ */
+function stopShopListen(repaint = true) {
+    if (!shopListenId) return;
+    shopListenId = null;
+    musicStop();
+    musicPlay('musica_tienda');
+    if (repaint) populateShopTab(currentShopTab);
+}
+
+/** Al salir de la tienda: la pista escuchada se para y se olvida (la pantalla nueva pone la suya). */
+function endShopListen() {
+    if (!shopListenId) return;
+    shopListenId = null;
+    musicStop();
+}
+
+/**
+ * Ficha de la Rockola en el panel lateral: el disco (gira mientras
+ * suena), la duración y el BPM, ESCUCHAR / PARAR y el botón de siempre.
+ * @param {ShopItem} item
+ * @param {HTMLElement} box
+ * @param {HTMLElement} actions
+ * @param {HTMLElement} stage
+ */
+function renderRockolaPreview(item, box, actions, stage) {
+    stopShopPreview();
+    const playing = shopListenId === item.id;
+    stage.innerHTML = `<div class="shop-disc${playing ? ' is-playing' : ''}">${shopIconHTML('music', item)}</div>`;
+
+    box.innerHTML = `
+        <div class="shop-preview__info">
+            <span class="shop-card__rarity shop-card__rarity--${item.exclusive ? 'exc' : 'ini'}">${shopMusicMeta(item)} · ${SHOP_ITEM_KIND.music.toUpperCase()}</span>
+            <span class="px shop-preview__name">${item.name}</span>
+            <p class="shop-preview__desc">${item.desc}</p>
+        </div>`;
+
+    actions.innerHTML = '';
+    if (item.id !== SHOP_RANDOM_MUSIC) {
+        const listen = document.createElement('button');
+        listen.className = 'shop-preview__btn shop-preview__btn--listen';
+        listen.dataset.action = playing ? 'stopShopListen' : 'previewShopItem';
+        listen.dataset.arg = `music:${item.id}`;
+        listen.textContent = playing ? '■ PARAR' : '▶ ESCUCHAR';
+        actions.appendChild(listen);
+    }
+    actions.appendChild(shopActionButton('music', item, 'shop-preview__btn'));
 }

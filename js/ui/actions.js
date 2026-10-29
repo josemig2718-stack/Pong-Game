@@ -59,6 +59,7 @@ const CLICK_ACTIONS = {
     buyShopItem:            (el) => buyShopItem(...shopArg(el)),
     equipShopItem:          (el) => equipShopItem(...shopArg(el)),
     previewShopItem:        (el) => previewShopItem(...shopArg(el)),
+    stopShopListen:         () => stopShopListen(),
     showShopOffer:          () => showShopOffer()
 };
 

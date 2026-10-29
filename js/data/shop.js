@@ -28,6 +28,7 @@
  * @property {string} desc
  * @property {number} price    en Chemi Coins; 0 = gratuito (siempre en propiedad), salvo los exclusivos; fija la rareza
  * @property {ShopExclusive} [exclusive]  no se compra: se consigue (ver syncExclusives en systems/progression.js)
+ * @property {string} [color]  solo la Rockola: el color de la etiqueta del disco
  */
 
 /** @type {Record<string, ShopItem[]>} */
@@ -100,10 +101,23 @@ const SHOP_CATALOG = {
         { id: 'ice',       name: 'Hielo',   desc: 'Escarcha que gira y cristales alrededor',  price: 200 },
         { id: 'lightning', name: 'Rayo',    desc: 'Arcos eléctricos que saltan de la bola',   price: 320 }
     ],
-    music: []   // Rockola: la llena la fase 6
+    // Rockola: la música de las partidas. Cada id es una pista de
+    // MUSIC_TRACKS (data/music.js) salvo 'random'. No cuesta monedas.
+    music: [
+        { id: 'partida_synthwave', name: 'Synthwave',   desc: 'Sintes de los 80 y batería con eco',       price: 0, color: '#F472B6' },
+        { id: 'partida_chiptune',  name: 'Chiptune',    desc: 'Ondas cuadradas de consola de 8 bits',     price: 0, color: '#22D3EE' },
+        { id: 'partida_funk',      name: 'Funk',        desc: 'Bajo saltarín y guitarra con wah',         price: 0, color: '#FB923C' },
+        { id: 'musica_gameplay',   name: 'Clásica',     desc: 'La música de la primera versión',          price: 0, color: '#94A3B8' },
+        { id: 'hachepe_rap',       name: 'Rap Hachepe', desc: 'El tema de los Hachepes',                  price: 0, color: '#EF4444',
+          exclusive: { label: 'Vence al Modo Hachepe', check: () => !!gameStats.achievements.beat_hachepe } },
+        { id: 'random',            name: 'Aleatoria',   desc: 'Cada partida, una de tus pistas sin repetir', price: 0 }
+    ]
 };
 
-/** Pestañas de la tienda: `key` en SHOP_CATALOG y su nombre. Rockola sigue oculta hasta la fase 6. */
+/** Id de la opción «Aleatoria» de la Rockola: no es una pista, así que no cuenta en los contadores. */
+const SHOP_RANDOM_MUSIC = 'random';
+
+/** Pestañas de la tienda: `key` en SHOP_CATALOG y su nombre. */
 const SHOP_CATEGORIES = [
     { key: 'trails',      label: 'Estelas' },
     { key: 'backgrounds', label: 'Fondos' },

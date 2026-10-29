@@ -39,6 +39,8 @@ function showScreen(screenId) {
     } else if (screenId === 'progress-menu') {
         renderProgressScreen();
     }
+    // Lo que se escuchaba en la Rockola no sale de la tienda
+    if (screenId !== 'shop-menu') endShopListen();
     const track = screenMusic(screenId);
     if (track) musicPlay(track);
     soundEffects.uiClick();
