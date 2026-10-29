@@ -52,6 +52,9 @@ const SHOP_OFFER_DISCOUNT = 0.3;
 
 const SHOP_COIN_IMG = '<img src="assets/chemi_coin.png" alt="" class="shop-coin">';
 const SHOP_CHECK_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+/** Escuchar y parar en la Rockola: iconos, no glifos (la fuente pixel no tiene ■ ni ▶). */
+const SHOP_PLAY_ICON = '<svg class="ico ico--solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const SHOP_STOP_ICON = '<svg class="ico ico--solid" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
 const SHOP_LOCK_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 
 /**
@@ -324,7 +327,7 @@ function populateShopTab(categoryKey) {
             card.innerHTML = `
             <div class="shop-card__media">
                 <button class="shop-card__tile shop-card__tile--${rarity.key}" data-action="previewShopItem" data-arg="music:${item.id}" aria-label="${label}"${canListen ? ` aria-pressed="${playing}"` : ''}>${shopIconHTML(categoryKey, item)}${playing ? '<span class="shop-eq" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}</button>
-                ${playing ? '<button class="shop-card__stop" data-action="stopShopListen" aria-label="Parar la canción">■</button>' : ''}
+                ${playing ? `<button class="shop-card__stop" data-action="stopShopListen" aria-label="Parar la canción">${SHOP_STOP_ICON}</button>` : ''}
             </div>
             ${tag}
             <div class="shop-card__head">
@@ -620,7 +623,7 @@ function renderRockolaPreview(item, box, actions, stage) {
         listen.className = 'shop-preview__btn shop-preview__btn--listen';
         listen.dataset.action = playing ? 'stopShopListen' : 'previewShopItem';
         listen.dataset.arg = `music:${item.id}`;
-        listen.textContent = playing ? '■ PARAR' : '▶ ESCUCHAR';
+        listen.innerHTML = playing ? `${SHOP_STOP_ICON}PARAR` : `${SHOP_PLAY_ICON}ESCUCHAR`;
         actions.appendChild(listen);
     }
     actions.appendChild(shopActionButton('music', item, 'shop-preview__btn'));
