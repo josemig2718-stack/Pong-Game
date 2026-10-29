@@ -51,6 +51,7 @@ const DEFAULT_SETTINGS = {
     sfxEnabled:   true,
     musicEnabled: true,
     musicVolume:  50,      // 0-100 (música de fondo)
+    dynamicMusic: true,    // la música reacciona al juego: baja en goles, súper golpes y punto de partido (systems/music.js)
     winningScore: 5,       // 3, 5, 7, 11
     ballSpeed:    2,       // 1 Lenta, 2 Normal, 3 Rápida
     crtEffect:    true,    // efecto de escaneo estilo monitor CRT

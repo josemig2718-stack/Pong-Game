@@ -83,6 +83,8 @@ function update(dt) {
 
     // Antes de las bolas: el fotograma del gol que cierra la partida cuenta
     statsTickMatchClock(realDt * MS_PER_FRAME);
+    // Punto de partido: la música baja y late (solo sonido, sin Math.random)
+    tickMatchPointMusic(realDt * MS_PER_FRAME);
 
     // Si un gol termina la partida en multi-bola, el resto del paso no se
     // ejecuta (con una sola bola sí: ver onBallOut).
@@ -307,6 +309,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
             // El jugador falla: cuenta como fallo, no como punto del rival
             state.p2Score++;
             endFever();
+            goalMusic();
             soundEffects.score();
             triggerShake(10, 260);
             triggerGoalVFX(b.x, GAME_HEIGHT, goalPower(b));
@@ -324,6 +327,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         state.p2Score++;
         statsOnScore(false, b);
         endFever();
+        goalMusic();
         bossOnGoal(false);
         checkMidDialogue();
         soundEffects.score();
@@ -338,6 +342,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         state.p1Score++;
         statsOnScore(true, b);
         endFever();
+        goalMusic();
         bossOnGoal(true);
         soundEffects.score();
         triggerShake(10, 260);

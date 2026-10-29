@@ -34,3 +34,18 @@ const MUSIC_TRACKS = {
     jingle_victoria:   { file: 'assets/audio/jingle_victoria.mp3',   loop: false, loopStart: 0, loopEnd: null },
     jingle_derrota:    { file: 'assets/audio/jingle_derrota.mp3',    loop: false, loopStart: 0, loopEnd: null }
 };
+
+/**
+ * Música dinámica (systems/music.js, musicDuck): cuánto baja o sube la
+ * música y durante cuánto en cada reacción.
+ */
+const MUSIC_DYNAMIC = {
+    goalDb: 6,             // gol: −6 dB durante 0,6 s
+    goalHoldMs: 600,
+    superDb: 4,            // súper golpe: −4 dB durante 0,3 s
+    superHoldMs: 300,
+    matchPointDb: 3,       // punto de partido: −3 dB mientras la bola esté en juego
+    heartbeatMs: 900,      // un latido cada 0,9 s en el punto de partido
+    feverBoostDb: 2,       // la pista de la fiebre sube 2 dB…
+    feverBoostRally: 40    // …al llegar a 40 golpes
+};

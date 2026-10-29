@@ -56,6 +56,18 @@ function toggleMusic(enabled) {
 }
 
 /**
+ * Música dinámica: baja en goles, súper golpes y punto de partido. Al
+ * apagarla se quita lo que hubiera en curso (la fiebre sigue cambiando de
+ * pista igual).
+ * @param {boolean} enabled
+ */
+function toggleDynamicMusic(enabled) {
+    settings.dynamicMusic = enabled;
+    saveSettings();
+    if (!enabled) musicDuckReset();
+}
+
+/**
  * Puntos para ganar; resalta la opción elegida.
  * @param {number|string} val
  */
@@ -209,6 +221,7 @@ function populateSettingsUI() {
     input('crt-toggle').checked           = settings.crtEffect;
     input('shake-toggle').checked         = settings.screenShake;
     input('music-volume-slider').value    = String(settings.musicVolume);
+    input('dynamic-music-toggle').checked = settings.dynamicMusic;
     document.getElementById('music-vol-display').textContent = `${settings.musicVolume}%`;
     input('mouse-toggle').checked         = settings.mouseControl;
     if (input('powerups-toggle')) {

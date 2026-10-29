@@ -66,6 +66,7 @@ function practiceMiss(b, bi, ballsToRemove) {
     state.p2Score++;
     statsResetRally();
     endFever();
+    goalMusic();
     soundEffects.score();
     triggerShake(10, 260);
     triggerGoalVFX(0, b.y, goalPower(b));

@@ -203,6 +203,7 @@ function startFever() {
 function endFever() {
     if (!state.fever) return;
     state.fever = false;
+    musicSetBoost(0);
     if (feverChangesMusic() && state.matchTrack) musicPlay(state.matchTrack);
 }
 
@@ -419,8 +420,10 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 9. Sensación: sonido, chispas y vibración de pantalla
     const info = { x: b.x, speedRatio: Math.min(1, b.speed / maxBallSpeed) };
-    if (type === 'super') soundEffects.superHit(info);
-    else if (type === 'smash') soundEffects.smashRelease(info);
+    if (type === 'super') {
+        soundEffects.superHit(info);
+        musicDuck(MUSIC_DYNAMIC.superDb, MUSIC_DYNAMIC.superHoldMs);   // que destaque el impacto
+    } else if (type === 'smash') soundEffects.smashRelease(info);
     else if (type === 'perfect') soundEffects.perfectHit(info);
     else if (Math.abs(b.spin) > MECH.spinSoundMin) soundEffects.spinHit(info);
     else soundEffects.paddleHit(info);
@@ -452,6 +455,8 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
         if (state.mode !== 'practice') addEnergy(p2, MECH.energy.rally10);
     }
     if (currentRally === MECH.feverRally) startFever();
+    // Fiebre larga: su pista sube
+    if (state.fever && currentRally === MUSIC_DYNAMIC.feverBoostRally && feverChangesMusic()) musicSetBoost(MUSIC_DYNAMIC.feverBoostDb);
     return type;
 }
 

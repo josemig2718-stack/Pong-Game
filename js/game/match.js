@@ -102,6 +102,59 @@ function syncResultClass() {
     document.body.classList.toggle('has-result', shown('pause-menu') || shown('game-over-screen'));
 }
 
+// ------------------------------------------------------------------
+//  Música dinámica de la partida (los números están en MUSIC_DYNAMIC)
+// ------------------------------------------------------------------
+
+/** ¿Suena ya el punto de partido? Y ms hasta el siguiente latido. */
+let matchPointOn = false;
+let matchPointBeatMs = 0;
+
+/** Punto de partido: a alguien le falta uno para ganar. Solo VS CPU y local (Hachepe y los jefes tienen su tensión). */
+function isMatchPoint() {
+    if (state.mode !== 'cpu' && state.mode !== 'local') return false;
+    const target = matchTargetScore();
+    return state.p1Score === target - 1 || state.p2Score === target - 1;
+}
+
+/**
+ * Un paso del punto de partido, con la bola en juego (update()): la música
+ * baja y suena un latido cada MUSIC_DYNAMIC.heartbeatMs. No usa Math.random.
+ * @param {number} ms tiempo real
+ */
+function tickMatchPointMusic(ms) {
+    if (!settings.dynamicMusic || !isMatchPoint()) return;
+    if (!matchPointOn) {
+        matchPointOn = true;
+        matchPointBeatMs = 0;
+        musicDuckHold(MUSIC_DYNAMIC.matchPointDb);
+    }
+    matchPointBeatMs -= ms;
+    if (matchPointBeatMs <= 0) {
+        soundEffects.heartbeat();
+        matchPointBeatMs += MUSIC_DYNAMIC.heartbeatMs;
+    }
+}
+
+/** Quita el punto de partido (al marcar: si sigue, vuelve con el saque siguiente). */
+function endMatchPointMusic() {
+    if (!matchPointOn) return;
+    matchPointOn = false;
+    musicDuckHold(0);
+}
+
+/** Un gol, en cualquier modo: fuera el punto de partido y la música baja para que se oiga el gol. */
+function goalMusic() {
+    endMatchPointMusic();
+    musicDuck(MUSIC_DYNAMIC.goalDb, MUSIC_DYNAMIC.goalHoldMs);
+}
+
+/** Sin música dinámica de la partida anterior (al empezar y al abandonar). */
+function resetMatchMusic() {
+    matchPointOn = false;
+    musicDuckReset();
+}
+
 /**
  * Empieza una partida.
  * @param {GameMode} mode
@@ -119,6 +172,7 @@ function startGame(mode) {
     state.shakeIntensity = 0;
     state.hitStopMs = 0;
     resetFever();
+    resetMatchMusic();
 
     // Restaurar geometría original de las paletas. Hay que reponer también
     // width y x: la arena rotada del Creador convierte a p1 en una paleta
@@ -210,6 +264,7 @@ function quitGame() {
     state.shakeIntensity = 0;
     state.hitStopMs = 0;
     resetFever();
+    resetMatchMusic();
 
     // Restaurar paletas (incluida la posición si la arena estaba rotada)
     p1.height = paddleHeight;

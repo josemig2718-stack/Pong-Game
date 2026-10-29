@@ -16,6 +16,13 @@
  *
  * El reproductor respeta settings.musicEnabled: con la música apagada,
  * musicPlay() solo anota qué pista toca y musicResume() la arranca.
+ *
+ * Música dinámica (settings.dynamicMusic): un multiplicador más sobre las
+ * pistas en bucle (los jingles no se tocan) que baja con musicDuck() y
+ * musicDuckHold() —manda la bajada más fuerte— y sube con musicSetBoost().
+ * En el motor A es un GainNode entre las pistas y musicBus; en el B
+ * multiplica el volume de cada <audio>, a pasos de 50 ms. El volumen de la
+ * configuración y la bajada de la pausa van aparte y se multiplican.
  * ------------------------------------------------------------------
  */
 
@@ -64,6 +71,18 @@ let musicVolumeLevel = settings.musicVolume / 100;
 /** ¿Está la música rebajada (pausa)? */
 let musicDucked = false;
 
+/** @type {{ gain: number }[]} Bajadas con tiempo en curso (musicDuck), como multiplicadores. */
+const musicDucks = [];
+/** Bajada sin tiempo (punto de partido) y subida (fiebre larga), como multiplicadores. */
+let musicHoldGain = 1;
+let musicBoostGain = 1;
+/** Multiplicador dinámico que aplica el motor B ahora mismo (avanza a pasos hacia el objetivo). */
+let musicDynLevel = 1;
+/** Intervalo de esos pasos. */
+let musicDynTimer = null;
+/** @type {GainNode|null} El multiplicador dinámico del motor A, entre las pistas en bucle y musicBus. */
+let musicDynNode = null;
+
 /** ¿Puede usarse el motor A en esta página? */
 function musicCanUseWebAudio() {
     if (location.protocol !== 'http:' && location.protocol !== 'https:') return false;
@@ -96,10 +115,15 @@ function musicDuckFor(ch) {
     return musicDucked && ch.id === musicCurrentId ? MUSIC_DUCK_GAIN : 1;
 }
 
-/** Aplica volumen, fundido y pausa al elemento <audio> de un canal. */
+/** Multiplicador de la música dinámica para un canal: solo las pistas en bucle. */
+function musicDynFor(ch) {
+    return MUSIC_TRACKS[ch.id].loop ? musicDynLevel : 1;
+}
+
+/** Aplica volumen, fundido, pausa y música dinámica al elemento <audio> de un canal. */
 function musicApplyVolume(ch) {
     if (!ch.el) return;
-    ch.el.volume = Math.max(0, Math.min(1, musicVolumeLevel * ch.level * musicDuckFor(ch)));
+    ch.el.volume = Math.max(0, Math.min(1, musicVolumeLevel * ch.level * musicDuckFor(ch) * musicDynFor(ch)));
 }
 
 /** Aplica volumen y pausa al bus de la música Web Audio. */
@@ -224,7 +248,7 @@ function musicBeginWebAudio(ch) {
     const track = MUSIC_TRACKS[ch.id];
     if (!ch.gain) {
         ch.gain = ctx.createGain();
-        ch.gain.connect(musicBus);
+        ch.gain.connect(track.loop ? musicDynBus() : musicBus);
     }
     const src = ctx.createBufferSource();
     src.buffer = ch.buffer;
@@ -494,6 +518,123 @@ function musicSetDuck(on) {
     musicDucked = !!on;
     musicApplyBus();
     if (musicCurrentId && musicChannels[musicCurrentId]) musicApplyVolume(musicChannels[musicCurrentId]);
+}
+
+// -----------------------------------------------------------------
+//  Música dinámica
+// -----------------------------------------------------------------
+
+/** Decibelios a multiplicador de ganancia. */
+function musicDbGain(db) {
+    return Math.pow(10, db / 20);
+}
+
+/** El multiplicador al que tiene que ir la música: la bajada más fuerte por la subida. */
+function musicDynTarget() {
+    let g = musicHoldGain;
+    for (const d of musicDucks) g = Math.min(g, d.gain);
+    return g * musicBoostGain;
+}
+
+/** El GainNode dinámico del motor A, creado la primera vez. */
+function musicDynBus() {
+    if (!musicDynNode) {
+        musicDynNode = getAudioContext().createGain();
+        musicDynNode.gain.value = musicDynLevel;
+        musicDynNode.connect(musicBus);
+    }
+    return musicDynNode;
+}
+
+/**
+ * Lleva el multiplicador dinámico a su objetivo en `seconds`: rampa en el
+ * reloj de audio (motor A) y pasos de 50 ms sobre cada <audio> (motor B).
+ * @param {number} seconds
+ */
+function musicDynRetarget(seconds) {
+    const target = musicDynTarget();
+    if (musicDynNode) {
+        const g = musicDynNode.gain;
+        const now = getAudioContext().currentTime;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(g.value, now);
+        g.linearRampToValueAtTime(target, now + Math.max(0.001, seconds));
+    }
+    if (musicDynTimer !== null) {
+        clearInterval(musicDynTimer);
+        musicDynTimer = null;
+    }
+    const apply = () => { for (const ch of Object.values(musicChannels)) musicApplyVolume(ch); };
+    const from = musicDynLevel;
+    if (seconds <= 0 || from === target) {
+        musicDynLevel = target;
+        apply();
+        return;
+    }
+    const steps = Math.max(1, Math.round(seconds * 1000 / MUSIC_FADE_STEP_MS));
+    let i = 0;
+    musicDynTimer = setInterval(() => {
+        i++;
+        musicDynLevel = from + (target - from) * (i / steps);
+        apply();
+        if (i >= steps) {
+            clearInterval(musicDynTimer);
+            musicDynTimer = null;
+        }
+    }, MUSIC_FADE_STEP_MS);
+}
+
+/**
+ * Baja la música `db` decibelios durante `holdMs`, con fundidos (gol,
+ * súper golpe). Varios a la vez: manda el más fuerte. Sin música dinámica
+ * no hace nada.
+ * @param {number} db
+ * @param {number} holdMs
+ * @param {{ attack?: number, release?: number }} [opts] segundos del fundido al bajar y al subir
+ */
+function musicDuck(db, holdMs, { attack = 0.08, release = 0.4 } = {}) {
+    if (!settings.dynamicMusic || db <= 0) return;
+    const duck = { gain: musicDbGain(-db) };
+    musicDucks.push(duck);
+    musicDynRetarget(attack);
+    setTimeout(() => {
+        const i = musicDucks.indexOf(duck);
+        if (i < 0) return;   // musicDuckReset() ya la quitó
+        musicDucks.splice(i, 1);
+        musicDynRetarget(release);
+    }, attack * 1000 + holdMs);
+}
+
+/**
+ * Bajada sin tiempo (el punto de partido): se queda hasta que se pida 0.
+ * Cuenta con las de musicDuck: manda la más fuerte.
+ * @param {number} db 0 la quita
+ */
+function musicDuckHold(db) {
+    const g = db > 0 && settings.dynamicMusic ? musicDbGain(-db) : 1;
+    if (g === musicHoldGain) return;
+    musicHoldGain = g;
+    musicDynRetarget(g < 1 ? 0.3 : 0.4);
+}
+
+/**
+ * Subida de la música (la fiebre larga). Con el motor B no pasa del
+ * volumen 1 del <audio>.
+ * @param {number} db 0 la quita
+ */
+function musicSetBoost(db) {
+    const g = db > 0 && settings.dynamicMusic ? musicDbGain(db) : 1;
+    if (g === musicBoostGain) return;
+    musicBoostGain = g;
+    musicDynRetarget(0.4);
+}
+
+/** Quita toda la música dinámica al momento (empezar o abandonar una partida, apagar el ajuste). */
+function musicDuckReset() {
+    musicDucks.length = 0;
+    musicHoldGain = 1;
+    musicBoostGain = 1;
+    musicDynRetarget(0);
 }
 
 /**

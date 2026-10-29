@@ -401,6 +401,11 @@ const soundEffects = {
         sfxVoice({ type: 'square', freq: 180, decay: 0.08 });
         sfxNoise({ dur: 0.03 });
     },
+    /** Punto de partido: dos golpes graves de 55 Hz, como un latido. */
+    heartbeat: () => {
+        sfxVoice({ type: 'sine', freq: 55, attack: 0.005, decay: 0.085, gain: 0.5 });
+        sfxVoice({ type: 'sine', freq: 55, attack: 0.005, decay: 0.085, gain: 0.5, when: 0.18 });
+    },
     /** Misión completada. */
     missionComplete: () => sfxSparkleArpeggio([659, 784, 1046], 0.07),
     /** Recompensa recogida: como la compra, una quinta más arriba. */

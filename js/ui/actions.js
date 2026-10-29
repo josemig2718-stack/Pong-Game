@@ -90,6 +90,7 @@ const CHANGE_ACTIONS = {
     togglePowerups:     (el) => togglePowerups(el.checked),
     toggleHints:        (el) => toggleHints(el.checked),
     toggleHaptics:      (el) => toggleHaptics(el.checked),
+    toggleDynamicMusic: (el) => toggleDynamicMusic(el.checked),
     setShopSort:        (el) => setShopSort(el.value)
 };
 
