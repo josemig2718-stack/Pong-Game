@@ -34,8 +34,8 @@ function startPractice(from) {
 
 /**
  * La bola rebota en la pared con un pequeño desvío, sin cambiar de
- * velocidad. Un smash o un súper se quedan en ella: vuelve como mucho a
- * la velocidad máxima normal (si no, volvería siempre a la del súper).
+ * velocidad. Un smash se queda en ella: vuelve como mucho a la velocidad
+ * máxima normal (si no, volvería siempre a la del smash).
  * @param {Ball} b
  * @param {number} maxBallSpeed
  */

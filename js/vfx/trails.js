@@ -374,7 +374,7 @@ const TRAIL_RENDERERS = {
  * id guardado no existe).
  *
  * `fx` lleva el estado de la bola para las estelas que reaccionan:
- * `spin` (efecto, -1–1) y `power` (1 en smash o súper). Las que no lo
+ * `spin` (efecto, -1–1) y `power` (1 en un smash). Las que no lo
  * usan lo ignoran.
  * @param {{spin: number, power: number}} [fx]
  */

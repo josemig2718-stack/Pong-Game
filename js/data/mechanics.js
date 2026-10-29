@@ -2,7 +2,7 @@
  * data/mechanics.js
  * ------------------------------------------------------------------
  * Números de las mecánicas de golpe: inercia de la paleta, zonas de la
- * paleta, efecto, smash, súper golpe, energía, sensación (hit-stop,
+ * paleta, efecto, smash (en el código, 'super'), energía, sensación (hit-stop,
  * vibración de pantalla y del móvil), fiebre del rally y lo que hace la
  * CPU con todo ello. Todo se ajusta aquí; el código no repite ninguno
  * de estos valores como literal.
@@ -17,8 +17,7 @@
  * Plan de la CPU por dificultad (VS CPU) y en el Modo Hachepe.
  * @typedef {object} CpuPlanTuning
  * @property {number} spin      probabilidad de dar efecto al devolver
- * @property {number} smash     probabilidad de intentar un smash
- * @property {number} useSuper  probabilidad de usar el súper si está listo
+ * @property {number} useSmash  probabilidad de usar el smash si la energía está llena
  * @property {number|null} aim  desvío máximo (px) al apuntar al centro de la paleta; null = no apunta
  * @property {number} read      peso del efecto de la bola en su predicción (0 = lo ignora)
  */
@@ -51,31 +50,31 @@ const MECH = {
     spinSoundMin: 0.3,          // a partir de aquí suena (y cuenta) como golpe con efecto
     // Golpe perfecto
     perfectBonus: 1.0,          // velocidad extra (además del +0.5 de siempre)
-    // Smash
-    smashChargeMs: 700, smashSlowK: 0.6, smashWindowMs: 180, smashMinCharge: 0.5,
-    smashSpeedK: 0.4, smashAngleK: 0.35, smashCapK: 1.15,
-    // Súper golpe
-    superMinCharge: 0.3, superSpeedK: 1.55, superCapK: 1.3, superAngleK: 0.25,
+    // Smash (solo con la energía llena): carga, freno de la paleta mientras
+    // se carga, ventana al soltar y carga mínima
+    smashChargeMs: 700, smashSlowK: 0.6, smashWindowMs: 180, superMinCharge: 0.3,
+    // El golpe del smash
+    superSpeedK: 1.55, superCapK: 1.3, superAngleK: 0.25,
     // Energía (0–100)
-    energy: { max: 100, hit: 6, perfect: 15, smash: 10, rally10: 10, feverK: 2 },
+    energy: { max: 100, hit: 6, perfect: 15, rally10: 10, feverK: 2 },
     // Sensación
-    hitStopMs: { perfect: 33, smash: 50, super: 83 },
-    shake: { perfect: [5, 110], smash: [7, 150], super: [10, 240] },
-    vibrate: { perfect: 15, smash: 25, super: 40 },
+    hitStopMs: { perfect: 33, super: 83 },
+    shake: { perfect: [5, 110], super: [10, 240] },
+    vibrate: { perfect: 15, super: 40 },
     // Fiebre del rally
     feverRally: 25, feverMaxSpeedK: 1.1, feverFadeMs: 500,
-    // Aviso de súper listo (HUD)
+    // Aviso de smash listo (HUD)
     superHintMs: 2500,
     // CPU (VS CPU y Hachepe; los jefes de campaña no planifican)
     cpu: {
         /** @type {Record<number, CpuPlanTuning>} */
         byDifficulty: {
-            1: { spin: 0.10, smash: 0,    useSuper: 0.3, aim: null, read: 0 },
-            2: { spin: 0.35, smash: 0.15, useSuper: 0.7, aim: 25,   read: 0.5 },
-            3: { spin: 0.60, smash: 0.35, useSuper: 1,   aim: 8,    read: 1 }
+            1: { spin: 0.10, useSmash: 0.3, aim: null, read: 0 },
+            2: { spin: 0.35, useSmash: 0.7, aim: 25,   read: 0.5 },
+            3: { spin: 0.60, useSmash: 1,   aim: 8,    read: 1 }
         },
         /** @type {CpuPlanTuning} */
-        hachepe: { spin: 0.60, smash: 0.50, useSuper: 1, aim: 10, read: 1 },
+        hachepe: { spin: 0.60, useSmash: 1, aim: 10, read: 1 },
         spinFrames: 6,          // fotogramas antes del contacto en los que mueve la paleta para dar efecto
         spinMaxContact: 0.7,    // al barrer, la bola no debe caer más allá de esta fracción de media paleta
         smashRange: 220,        // px: empieza a cargar cuando la bola está más cerca que esto...

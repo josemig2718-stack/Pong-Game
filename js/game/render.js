@@ -3,7 +3,7 @@
  * ------------------------------------------------------------------
  * Dibuja un fotograma de la partida, por capas:
  * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → portales → estelas, aura
- * de la bola gigante, líneas de velocidad, aura del súper, bolas (la equipada) y su
+ * de la bola gigante, líneas de velocidad, aura del smash, bolas (la equipada) y su
  * efecto (MECH_FX.spin) → paletas (o la pared de práctica), su carga de smash (MECH_FX.charge)
  * y lo que los power-ups ponen sobre ellas (renderPowerupPaddles) →
  * power-ups y sus estallidos → partículas → anillos, textos y estallidos
@@ -279,7 +279,7 @@ function render() {
     updateHud();           // marcador, tiempo y rally del HUD (DOM)
 
     drawParticles();
-    MECH_FX.render(ctx);   // anillos, ¡PERFECTO!/¡SMASH! y estallidos del súper
+    MECH_FX.render(ctx);   // anillos, ¡PERFECTO! y estallidos del smash
     if (powerupActive('slowmo')) drawSlowmoOverlay(ctx);
 
     // Capa superior del jefe: viñetas, tintes, avisos y glitch

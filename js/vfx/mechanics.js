@@ -3,12 +3,12 @@
  * ------------------------------------------------------------------
  * Lo que se ve de las mecánicas de golpe (laboratorio v2, vfx-v2-d.js):
  *
- *   MECH_FX.perfect / smash  anillo y texto flotante (¡PERFECTO!, ¡SMASH!)
+ *   MECH_FX.perfect          anillo y texto flotante (¡PERFECTO!)
  *   MECH_FX.spin             flechas que giran alrededor de una bola con efecto
  *   MECH_FX.charge           anillo de carga del smash junto a la paleta
  *   MECH_FX.fever            bordes del campo que arden en la fiebre del rally
  *   MECH_FX.update / render  avanzan y dibujan anillos, textos y los
- *                            estallidos del súper golpe (vfx/super.js)
+ *                            estallidos del smash (vfx/super.js)
  *
  * mechPaddleHit guarda el destello de cada paleta al golpear (1 → 0),
  * que los estilos de paleta reciben como fx.hit.
@@ -24,7 +24,7 @@
 /** @typedef {{ x: number, y: number, text: string, color: string, t: number }} MechText */
 /** @typedef {{ x: number, y: number, t: number, color: string, w: number, max: number }} MechRing */
 
-/** Textos flotantes: ¡PERFECTO!, ¡SMASH! @type {MechText[]} */
+/** Textos flotantes: ¡PERFECTO! @type {MechText[]} */
 let mechTexts = [];
 /** @type {MechRing[]} */
 let mechRings = [];
@@ -54,11 +54,6 @@ const MECH_FX = {
     perfect(x, y, color) {
         mechRings.push({ x, y, t: 0, color: '#ffffff', w: 3, max: 60 });
         mechPopText(x + (x < GAME_WIDTH / 2 ? 110 : -110), y - 30, '¡PERFECTO!', color);
-    },
-    /** Salida del smash: onda y "¡SMASH!". */
-    smash(x, y, color) {
-        mechRings.push({ x, y, t: 0, color, w: 5, max: 110 });
-        mechPopText(x + (x < GAME_WIDTH / 2 ? 110 : -110), y - 30, '¡SMASH!', '#FDE047');
     },
     update(dt) {
         for (const r of mechRings) r.t += dt;

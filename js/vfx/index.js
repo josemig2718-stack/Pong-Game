@@ -9,9 +9,9 @@
  *   paddles.js      estilos de paleta
  *   balls.js        bolas
  *   goal-fx.js      efectos de gol
- *   super.js        aura y estallido del súper golpe
+ *   super.js        aura y estallido del smash (categoría 'super')
  *   mechanics.js    lo que se ve de las mecánicas de golpe (perfecto,
- *                   smash, efecto, carga, fiebre)
+ *                   efecto, carga, fiebre)
  *
  * Cada archivo tiene una tabla id → renderizador. Añadir un cosmético es
  * añadir su renderizador a la tabla, su entrada en data/shop.js con el

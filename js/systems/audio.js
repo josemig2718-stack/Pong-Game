@@ -329,8 +329,9 @@ const soundEffects = {
      * Carga del smash: con `true` arranca un zumbido que sube; con `false`
      * lo apaga con un fundido de 40 ms.
      * @param {boolean} on
+     * @param {'p1'|'p2'} side
      */
-    smashCharge: (on) => {
+    smashCharge: (on, side) => {
         if (on) {
             if (smashChargeVoice || !sfxActive()) return;
             const ctx = getAudioContext();
@@ -362,18 +363,14 @@ const soundEffects = {
             osc.stop(t + 0.05);
         }
     },
-    /** @param {HitInfo} [info] Se suelta el smash. */
-    smashRelease: (info = {}) => {
+    /** La energía del smash está llena. */
+    superReady: () => sfxArpeggio([784, 988, 1175], 0.06, { type: 'triangle' }),
+    /** @param {HitInfo} [info] Smash: el impacto con un golpe grave debajo. */
+    superHit: (info = {}) => {
         const pan = sfxPanX(info.x);
         sfxNoise({ dur: 0.06, bandpass: 1200, gain: 0.5, pan });
         sfxVoice({ type: 'square', freq: 220, freqEnd: 110, decay: 0.16, pan });
-    },
-    /** La energía del súper golpe está llena. */
-    superReady: () => sfxArpeggio([784, 988, 1175], 0.06, { type: 'triangle' }),
-    /** @param {HitInfo} [info] Súper golpe: el smash con un golpe grave debajo. */
-    superHit: (info = {}) => {
-        soundEffects.smashRelease(info);
-        sfxVoice({ type: 'sawtooth', freq: 110, freqEnd: 55, decay: 0.4, lowpass: 900, pan: sfxPanX(info.x) });
+        sfxVoice({ type: 'sawtooth', freq: 110, freqEnd: 55, decay: 0.4, lowpass: 900, pan });
     },
     /** Empieza la fiebre del rally. */
     feverStart: () => {

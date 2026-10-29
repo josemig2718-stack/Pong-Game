@@ -259,7 +259,7 @@ function fwLaunch(gx, gy, delay, tx, ty, col) {
 function triggerFireworks(gx, gy, color, power = 0) {
     fwRockets = []; fwSparks = [];
     const side = gx < GAME_WIDTH / 2 ? 1 : -1;
-    const n = 3 + power;                             // un cohete más por smash y otro por súper
+    const n = 3 + power;                             // dos cohetes más en un gol de smash
     for (let i = 0; i < n; i++) {
         fwLaunch(gx, gy, i * 7, gx + side * (150 + i * 90 + vfxRandom() * 40), 90 + vfxRandom() * 160, i === 0 ? color : FW_COLORS[Math.floor(vfxRandom() * FW_COLORS.length)]);
     }
@@ -606,8 +606,8 @@ function resetCrown() { goalCrown = null; }
 /**
  * Efecto de cada gol, por `id` del catálogo: trigger(x, y, color del tema,
  * power), update(dt), render(ctx) y reset(). `power` es 0 en un gol
- * normal, 1 de smash y 2 de súper golpe (goalPower): a más poder, efecto
- * más grande. Las partículas y la vibración del gol las pone siempre
+ * normal y 2 en uno de smash (goalPower): a más poder, efecto más
+ * grande. Las partículas y la vibración del gol las pone siempre
  * game/. El destello blanco y su cámara lenta se desvanecen en
  * updateGoalVFX(), no en su update(), para que no se queden congelados si
  * se cambia de efecto a mitad de la animación.
@@ -627,11 +627,12 @@ const GOAL_FX = {
 };
 
 /**
- * Poder de un gol para su efecto: 0 normal, 1 de smash, 2 de súper golpe.
+ * Poder de un gol para su efecto: 0 normal, 2 de smash (el 1 era el
+ * antiguo smash sin energía, que ya no existe).
  * @param {Ball} b
  */
 function goalPower(b) {
-    return b.power === 'super' ? 2 : b.power === 'smash' ? 1 : 0;
+    return b.power === 'super' ? 2 : 0;
 }
 
 /**

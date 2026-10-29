@@ -179,7 +179,7 @@ function statsOnHitType(side, type, spin) {
     const total = statsCountMatch() ? 1 : 0;
     if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits += total; }
     if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits += total; }
-    if (type === 'smash' || type === 'super') matchSmashUsed = true;
+    if (type === 'super') matchSmashUsed = true;
 
     if (type === 'perfect' || type === 'block' || type === 'edge') missionEvent(type);
     if (Math.abs(spin) > MECH.spinSoundMin) missionEvent('spin');
@@ -220,13 +220,11 @@ function statsOnScore(scorerIsP1, ball) {
 
     // Goles del jugador 1 con smash o súper, y puntos durante la fiebre
     if (scorerIsP1 && ball.owner === 'p1') {
-        if (ball.power === 'smash') { matchSmashGoals++; gameStats.totalSmashGoals++; }
         if (ball.power === 'super') { matchSuperGoals++; gameStats.totalSuperGoals++; }
     }
     if (scorerIsP1 && state.fever) matchFeverPoints++;
 
     if (scorerIsP1) missionEvent('point');
-    if (scorerIsP1 && ball.owner === 'p1' && ball.power === 'smash') missionEvent('smash_goal');
     if (scorerIsP1 && ball.owner === 'p1' && ball.power === 'super') missionEvent('super_goal');
 
     saveStats();

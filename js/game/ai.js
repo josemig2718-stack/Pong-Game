@@ -11,8 +11,8 @@
  *
  * En VS CPU y en el Modo Hachepe la CPU usa además las mecánicas de
  * golpe: cada vez que una bola empieza a venir hacia ella elige un plan
- * (MECH.cpu, con Math.random) — dar efecto, smash, usar el súper y
- * apuntar al centro de la paleta prediciendo el rebote. La predicción no
+ * (MECH.cpu, con Math.random) — dar efecto, usar el smash si su energía
+ * está llena y apuntar al centro de la paleta prediciendo el rebote. La predicción no
  * tiene en cuenta los portales. Los jefes de campaña no planifican:
  * conservan su IA.
  * ------------------------------------------------------------------
@@ -24,8 +24,7 @@
  * Plan de la CPU para la bola que viene hacia ella.
  * @typedef {object} CpuPlan
  * @property {boolean} spin       dar efecto al devolver
- * @property {boolean} smash      intentar un smash
- * @property {boolean} useSuper   usar el súper si la energía está llena
+ * @property {boolean} useSmash   usar el smash si la energía está llena
  * @property {number|null} aimOffset  desvío al apuntar al centro de la paleta; null = persigue la bola
  */
 
@@ -63,7 +62,7 @@ function cpuTuning() {
 }
 
 /**
- * Elige el plan. Siempre pide los mismos cuatro números aleatorios, sea
+ * Elige el plan. Siempre pide los mismos tres números aleatorios, sea
  * cual sea la dificultad.
  * @param {CpuPlanTuning} t
  * @returns {CpuPlan}
@@ -71,12 +70,10 @@ function cpuTuning() {
 function makeCpuPlan(t) {
     const spinRoll = Math.random();
     const smashRoll = Math.random();
-    const superRoll = Math.random();
     const aimRoll = Math.random();
     return {
         spin: spinRoll < t.spin,
-        smash: smashRoll < t.smash,
-        useSuper: superRoll < t.useSuper,
+        useSmash: smashRoll < t.useSmash,
         aimOffset: t.aim === null ? null : (aimRoll * 2 - 1) * t.aim
     };
 }
@@ -162,8 +159,8 @@ function cpuPlay(ball, aiSpeed, errorMargin, dt) {
         const pred = blind ? { y: cpuLastPredY, frames: fresh.frames } : fresh;
         if (!blind) cpuLastPredY = fresh.y;
         const msLeft = pred.frames * MS_PER_FRAME;
-        // Con la energía llena, un smash sería súper: solo si el plan lo usa
-        const trySmash = superReadyFor(p2) ? cpuPlan.useSuper : cpuPlan.smash;
+        // El smash solo se carga con la energía llena, y si el plan lo usa
+        const trySmash = superReadyFor(p2) && cpuPlan.useSmash;
         if (trySmash) {
             const near = p2.x - ball.x < MECH.cpu.smashRange || msLeft <= MECH.cpu.smashLeadMs;
             holdSmash = near && msLeft > MECH.cpu.smashReleaseMs;

@@ -31,13 +31,13 @@
  * @property {number} dy
  * @property {Array<{x: number, y: number}>} trail  últimas posiciones, para dibujar la estela
  * @property {number} spin  efecto, de -1 a 1: curva la trayectoria (game/mechanics.js)
- * @property {BallPower} power  smash o súper golpe en curso; null = golpe normal
+ * @property {BallPower} power  'super' = smash en curso; null = golpe normal
  * @property {'p1'|'p2'|null} owner  quién la golpeó por última vez (null hasta el primer golpe)
  * @property {number} squash  aplastamiento del último golpe, de 1 a 0. Solo visual
  * @property {number} warpMs  ms de juego desde que cruzó un portal (Infinity si no ha cruzado ninguno)
  */
 
-/** @typedef {null | 'smash' | 'super'} BallPower */
+/** @typedef {null | 'super'} BallPower 'super' es el smash */
 
 /**
  * Una paleta. touchX/touchY es la posición que pide el dedo o el ratón:
@@ -57,9 +57,9 @@
  * @property {boolean} smashHeld  se está manteniendo el smash
  * @property {boolean} smashTouchHeld  el control táctil del smash está pulsado
  * @property {number} releaseMs  ms desde que se soltó el smash (Infinity = no hay ventana abierta)
- * @property {number} energy  energía del súper golpe, de 0 a MECH.energy.max
- * @property {boolean} superArmed  el siguiente golpe es súper sin gastar energía
- * @property {boolean} boltReady  power-up Rayo: el siguiente golpe es súper sin gastar energía (game/powerups.js)
+ * @property {number} energy  energía del smash, de 0 a MECH.energy.max
+ * @property {boolean} superArmed  el siguiente golpe es smash sin gastar energía
+ * @property {boolean} boltReady  power-up Rayo: el siguiente golpe es smash sin gastar energía (game/powerups.js)
  */
 
 /**
