@@ -37,6 +37,16 @@
  */
 
 /**
+ * Muro del power-up Muro: media portería tapada.
+ * @typedef {object} GoalWall
+ * @property {number} x
+ * @property {number} y
+ * @property {number} width
+ * @property {number} height
+ * @property {'p1'|'p2'} owner  de quién es la portería
+ */
+
+/**
  * Un efecto activo.
  * @typedef {object} PowerupEffect
  * @property {PowerupType} type
@@ -44,7 +54,7 @@
  * @property {'p1'|'p2'} target  la paleta a la que afecta (en la paleta mini, la del rival)
  * @property {number} remainingMs
  * @property {{height?: number, radius?: number}} originalValues
- * @property {{wall?: ShieldWall}} data  lo propio de cada tipo (el muro del escudo)
+ * @property {{wall?: ShieldWall, goalWall?: GoalWall}} data  lo propio de cada tipo (el muro del escudo, el del Muro)
  */
 
 // Variables de estado del sistema de power-ups
@@ -142,6 +152,11 @@ function updatePowerups(dt, realDt) {
         const wall = effect.data.wall;
         for (let i = 0; i < state.balls.length; i++) {
             const b = state.balls[i];
+            // Solo para las bolas que van hacia su portería; la mitad que
+            // tapa un Muro del mismo jugador la para el muro, sin gastar
+            // bloqueos (y la bola que vuelve de detrás tampoco los gasta)
+            if (wall.owner === 'p1' ? b.dx >= 0 : b.dx <= 0) continue;
+            if (goalWallCovers(wall.owner, b.y)) continue;
             // Detección de colisión AABB simple
             if (b.x + b.radius > wall.x &&
                 b.x - b.radius < wall.x + wall.width &&
@@ -254,6 +269,18 @@ function powerupActive(id) {
     return activeEffects.some((e) => e.type.id === id);
 }
 
+/**
+ * ¿Tapa un Muro la portería de ese jugador a esta altura?
+ * @param {'p1'|'p2'} owner
+ * @param {number} y
+ */
+function goalWallCovers(owner, y) {
+    return effectsOf('wall').some((e) => {
+        const w = e.data.goalWall;
+        return w.owner === owner && y >= w.y && y <= w.y + w.height;
+    });
+}
+
 /** @param {'p1'|'p2'} side ¿Está congelada la paleta de ese lado? */
 function paddleFrozen(side) {
     return activeEffects.some((e) => e.type.id === 'freeze' && e.target === side);
@@ -346,6 +373,21 @@ function applyPowerup(type, beneficiary) {
             // El siguiente golpe de esa paleta sale súper (classifyHit)
             sidePaddle(target).boltReady = true;
             break;
+
+        case 'wall': {
+            // Tapa la mitad contraria a donde tiene la paleta al recogerlo
+            // (paleta arriba: tapa la de abajo), y ya no se mueve
+            const paddle = sidePaddle(target);
+            const coversTop = paddle.y + paddle.height / 2 >= GAME_HEIGHT / 2;
+            effect.data.goalWall = {
+                x: target === 'p1' ? 0 : GAME_WIDTH - GOAL_WALL_WIDTH,
+                y: coversTop ? 0 : GAME_HEIGHT / 2,
+                width: GOAL_WALL_WIDTH,
+                height: GAME_HEIGHT / 2,
+                owner: target
+            };
+            break;
+        }
     }
 }
 
@@ -541,11 +583,12 @@ function renderPowerupPaddles(ctx) {
 }
 
 /**
- * Renderiza los escudos activos
+ * Renderiza los escudos y los Muros activos
  * @param {CanvasRenderingContext2D} ctx Contexto 2D
  */
 function renderShield(ctx) {
     for (const effect of effectsOf('shield')) drawShieldWallV2(ctx, effect.data.wall, effect.data.wall.hp);
+    for (const effect of effectsOf('wall')) drawGoalWall(ctx, effect.data.goalWall, effect.remainingMs / effect.type.duration);
 }
 
 // ------------------------------------------------------------------
@@ -818,6 +861,40 @@ function drawFrozenPaddle(ctx, p, k) {
         }
         ctx.restore();
     }
+}
+
+/** Color del Muro, el mismo que su orbe y su píldora. */
+const GOAL_WALL_COLOR = POWERUP_TYPES.find((t) => t.id === 'wall').color;
+
+/**
+ * Muro (laboratorio v2): una columna de bloques pegada a la portería. En
+ * el último 20 % de su tiempo parpadea.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {GoalWall} wall
+ * @param {number} k tiempo que le queda, de 1 a 0
+ */
+function drawGoalWall(ctx, wall, k) {
+    const c = GOAL_WALL_COLOR;
+    const t = vfxT();
+    ctx.save();
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 12;
+    const bh = 16;
+    for (let yy = wall.y, row = 0; yy < wall.y + wall.height; yy += bh, row++) {
+        const h = Math.min(bh - 2, wall.y + wall.height - yy - 2);
+        ctx.fillStyle = hexToRgba(c, 0.32 + 0.12 * Math.sin(t * 4 + row));
+        ctx.fillRect(wall.x, yy, wall.width, h);
+        ctx.strokeStyle = hexToRgba(c, 0.9);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wall.x + 0.5, yy + 0.5, wall.width - 1, h - 1);
+    }
+    ctx.shadowBlur = 0;
+    // Aviso de que se acaba
+    if (k < 0.2 && Math.sin(t * 20) > 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+    }
+    ctx.restore();
 }
 
 /** Color del Rayo, el mismo que su orbe y su píldora. */

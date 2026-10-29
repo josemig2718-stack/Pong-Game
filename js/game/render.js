@@ -270,7 +270,7 @@ function render() {
 
     // Power-ups
     renderPowerup(ctx);
-    renderShield(ctx);
+    renderShield(ctx);           // escudos y Muros
     renderPowerupBursts(ctx);
     updatePowerupPills();  // los efectos activos se muestran en el DOM, no en el canvas
     updateHud();           // marcador, tiempo y rally del HUD (DOM)

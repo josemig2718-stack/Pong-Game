@@ -228,6 +228,7 @@ function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
 
         hitPaddles(b, rotatedArena, maxBallSpeed);
         if (state.mode === 'practice') bouncePracticeWall(b, maxBallSpeed);
+        bounceGoalWalls(b);
 
         if (checkGoal(b, bi, rotatedArena, ballsToRemove)) return true;
     }
@@ -284,6 +285,29 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
             soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
         }
+    }
+}
+
+/**
+ * Power-up Muro: la bola que va hacia una portería con media portería
+ * tapada rebota en el muro, como en la pared de arriba, si su centro está
+ * a esa altura. Va justo antes de los goles: el paso de los escudos (tras
+ * las bolas) llegaría tarde a un muro pegado a la línea de gol.
+ * @param {Ball} b
+ */
+function bounceGoalWalls(b) {
+    for (const effect of effectsOf('wall')) {
+        const w = effect.data.goalWall;
+        if (b.y < w.y || b.y > w.y + w.height) continue;
+        const hits = w.owner === 'p1'
+            ? b.dx < 0 && b.x - b.radius < w.x + w.width
+            : b.dx > 0 && b.x + b.radius > w.x;
+        if (!hits) continue;
+        b.dx = -b.dx;
+        b.x = w.owner === 'p1' ? w.x + w.width + b.radius : w.x - b.radius;
+        b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
+        soundEffects.wallBlock();
+        spawnParticles(b.x, b.y, GOAL_WALL_COLOR, 6);
     }
 }
 
