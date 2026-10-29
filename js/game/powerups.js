@@ -52,8 +52,8 @@ let activePowerup = null;       // { type, x, y, ageMs, maxLifetime }
 /** @type {PowerupEffect[]} */
 let activeEffects = [];         // como mucho POWERUP_MAX_ACTIVE
 let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparición
-/** @type {'p1'|'p2'} */
-let lastHitter = 'p1';          // Último jugador en golpear la pelota
+/** @type {'p1'|'p2'|null} */
+let lastHitter = null;          // Último jugador en golpear la pelota (null: nadie aún)
 let powerupsThisGame = 0;       // Contador por partida (para logros)
 let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayuda")
 
@@ -71,7 +71,7 @@ function nextPowerupCooldown() {
 function initPowerups() {
     revertAllPowerups();
     activePowerup = null;
-    lastHitter = 'p1';
+    lastHitter = null;   // hasta el primer golpe, el orbe no se puede recoger
     powerupsThisGame = 0;
     powerupsSpawnedThisGame = 0;
     powerupBursts = [];
@@ -110,8 +110,9 @@ function updatePowerups(dt, realDt) {
             // Nuevo cooldown tras desaparecer
             powerupCooldownMs = nextPowerupCooldown();
         } else {
-            // Comprobar colisiones con todas las pelotas
-            for (let i = 0; i < state.balls.length; i++) {
+            // Comprobar colisiones con todas las pelotas (si alguien ya
+            // golpeó: si no, no hay a quién dárselo)
+            for (let i = 0; lastHitter && i < state.balls.length; i++) {
                 const b = state.balls[i];
                 if (powerupCollision(b.x, b.y, b.radius, activePowerup.x, activePowerup.y, 22)) {
                     collectPowerup();
@@ -168,12 +169,13 @@ function updatePowerups(dt, realDt) {
  * Hace aparecer un nuevo power-up en el campo de forma aleatoria
  */
 function spawnPowerup() {
-    // Selección ponderada
-    let totalWeight = POWERUP_TYPES.reduce((sum, p) => sum + p.weight, 0);
+    // Selección ponderada; en la campaña, sin los de la v2
+    const pool = state.mode === 'campaign' ? POWERUP_TYPES.filter((p) => p.campaign !== false) : POWERUP_TYPES;
+    let totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
     let random = Math.random() * totalWeight;
-    let selectedType = POWERUP_TYPES[0];
+    let selectedType = pool[0];
 
-    for (const p of POWERUP_TYPES) {
+    for (const p of pool) {
         if (random < p.weight) {
             selectedType = p;
             break;
@@ -192,7 +194,7 @@ function spawnPowerup() {
     powerupsSpawnedThisGame++;
 
     soundEffects.powerupSpawn();
-    showHint('pu_' + selectedType.id);
+    if (selectedType.hint) showHint('pu_' + selectedType.id);
 }
 
 /**
@@ -202,7 +204,8 @@ function collectPowerup() {
     if (!activePowerup) return;
 
     const type = activePowerup.type;
-    const beneficiary = lastHitter; // 'p1' o 'p2'
+    const beneficiary = lastHitter;
+    if (!beneficiary) return;
 
     // Partículas, estallido y sonido
     spawnParticles(activePowerup.x, activePowerup.y, type.color, 20);
