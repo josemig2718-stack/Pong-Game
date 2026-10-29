@@ -64,8 +64,10 @@ function update(dt) {
     rememberPaddlePositions();
     movePlayer1(playerDt, rotatedArena, invert);
     if (state.mode === 'local') movePlayer2(dt);
-    else if (state.mode !== 'practice') moveCpu(dt, bcfg);   // en práctica hay una pared
+    // En práctica hay una pared; congelada, la CPU ni calcula su objetivo
+    else if (state.mode !== 'practice' && !paddleFrozen('p2')) moveCpu(dt, bcfg);
     clampPaddles(rotatedArena);
+    holdFrozenPaddles();
     measurePaddleSpeeds(playerDt, dt, rotatedArena);
     updateSmash(p1, isActionPressed('p1Smash') || p1.smashTouchHeld, playerDt);
     if (state.mode === 'local') updateSmash(p2, isActionPressed('p2Smash') || p2.smashTouchHeld, dt);
@@ -159,6 +161,21 @@ function clampPaddles(rotatedArena) {
     if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
     if (p2Twin.active && p2Twin.retreatMs <= 0) {
         p2Twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2Twin.height, p2Twin.y));
+    }
+}
+
+/**
+ * Congelar: la paleta congelada vuelve a donde estaba antes de moverse
+ * (teclado, dedo o CPU) y pierde la inercia. Así su velocidad medida es
+ * 0 y la bola rebota en ella como en un bloqueo.
+ */
+function holdFrozenPaddles() {
+    for (const p of [p1, p2]) {
+        if (!paddleFrozen(paddleSide(p))) continue;
+        p.x = p.prevX;
+        p.y = p.prevY;
+        p.vx = 0;
+        p.vy = 0;
     }
 }
 

@@ -4,7 +4,8 @@
  * Dibuja un fotograma de la partida, por capas:
  * fondo → bordes en llamas de la fiebre (MECH_FX.fever) → red (o los corazones de la arena rotada) → jefe → estelas, aura
  * de la bola gigante, líneas de velocidad, aura del súper, bolas (la equipada) y su
- * efecto (MECH_FX.spin) → paletas (o la pared de práctica) y su carga de smash (MECH_FX.charge) →
+ * efecto (MECH_FX.spin) → paletas (o la pared de práctica), su carga de smash (MECH_FX.charge)
+ * y lo que los power-ups ponen sobre ellas (renderPowerupPaddles) →
  * power-ups y sus estallidos → partículas → anillos, textos y estallidos
  * de las mecánicas (MECH_FX.render) → viñeta de cámara lenta → capa
  * superior del jefe → efecto de gol → cuenta atrás o "¡YA!" → scanlines.
@@ -265,6 +266,7 @@ function render() {
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
     MECH_FX.charge(ctx, p1, themeColor, p1.charge);
     if (!rotatedArena && !practice) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);
+    renderPowerupPaddles(ctx);   // hielo de Congelar
 
     // Power-ups
     renderPowerup(ctx);

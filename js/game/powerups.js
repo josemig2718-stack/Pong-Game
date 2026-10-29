@@ -56,6 +56,8 @@ let powerupCooldownMs = 0;      // Tiempo hasta el próximo intento de aparició
 let lastHitter = null;          // Último jugador en golpear la pelota (null: nadie aún)
 let powerupsThisGame = 0;       // Contador por partida (para logros)
 let powerupsSpawnedThisGame = 0; // Cuántos aparecieron en la partida ("Sin Ayuda")
+/** Congelar: ms que le quedan a cada paleta sin poder volver a congelarse. */
+const freezeImmuneMs = { p1: 0, p2: 0 };
 
 /** Tipos que afectan a todo el campo: hay uno de cada como mucho, sea quien sea el que lo recoja. */
 const GLOBAL_POWERUPS = ['big_ball', 'slowmo'];
@@ -70,6 +72,8 @@ function nextPowerupCooldown() {
  */
 function initPowerups() {
     revertAllPowerups();
+    freezeImmuneMs.p1 = 0;
+    freezeImmuneMs.p2 = 0;
     activePowerup = null;
     lastHitter = null;   // hasta el primer golpe, el orbe no se puede recoger
     powerupsThisGame = 0;
@@ -122,7 +126,10 @@ function updatePowerups(dt, realDt) {
         }
     }
 
-    // 3. Lógica de los efectos activos
+    // 3. Lógica de los efectos activos (la inmunidad a Congelar se
+    // descuenta antes: la que empieza en este fotograma, entera)
+    freezeImmuneMs.p1 = Math.max(0, freezeImmuneMs.p1 - dtMs);
+    freezeImmuneMs.p2 = Math.max(0, freezeImmuneMs.p2 - dtMs);
     for (const effect of activeEffects.slice()) {
         effect.remainingMs -= effect.type.id === 'slowmo' ? realDt * MS_PER_FRAME : dtMs;
         if (effect.remainingMs <= 0) {
@@ -247,6 +254,11 @@ function powerupActive(id) {
     return activeEffects.some((e) => e.type.id === id);
 }
 
+/** @param {'p1'|'p2'} side ¿Está congelada la paleta de ese lado? */
+function paddleFrozen(side) {
+    return activeEffects.some((e) => e.type.id === 'freeze' && e.target === side);
+}
+
 /**
  * Aplica los efectos del power-up a los jugadores o la pelota
  * @param {PowerupType} type Tipo de power-up (de POWERUP_TYPES)
@@ -271,7 +283,11 @@ function applyPowerup(type, beneficiary) {
             return;
     }
 
-    const target = type.id === 'paddle_mini' ? rival : beneficiary;
+    const target = type.id === 'paddle_mini' || type.id === 'freeze' ? rival : beneficiary;
+
+    // Congelar no se encadena: si esa paleta ya está congelada o acaba de
+    // descongelarse, el orbe se gasta sin efecto (ya sonó y estalló)
+    if (type.id === 'freeze' && (paddleFrozen(target) || freezeImmuneMs[target] > 0)) return;
 
     // El mismo efecto otra vez: se renueva, no se acumula
     const same = activeEffects.find((e) => samePowerup(e, type.id, target));
@@ -315,6 +331,16 @@ function applyPowerup(type, beneficiary) {
                 ? { x: 50, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p1', hp: SHIELD_HP }
                 : { x: GAME_WIDTH - 58, y: 0, width: 8, height: GAME_HEIGHT, owner: 'p2', hp: SHIELD_HP };
             break;
+
+        case 'freeze': {
+            // La paleta del rival se para en seco (holdFrozenPaddles, en update())
+            const paddle = sidePaddle(target);
+            paddle.vx = 0;
+            paddle.vy = 0;
+            soundEffects.freeze();
+            mechVibrate(target, FREEZE_VIBRATE_MS);
+            break;
+        }
     }
 }
 
@@ -346,6 +372,10 @@ function revertPowerup(effect, { silent = false } = {}) {
 
         case 'big_ball':
             state.balls.forEach(b => b.radius = effect.originalValues.radius);
+            break;
+
+        case 'freeze':
+            freezeImmuneMs[effect.target] = FREEZE_IMMUNE_MS;
             break;
     }
 
@@ -470,6 +500,17 @@ function buildPowerupPill(effect) {
         secs: pill.querySelector('.powerup-pill__secs'),
         last: ''
     };
+}
+
+/**
+ * Lo que los efectos dibujan sobre las paletas (después de ellas): el
+ * hielo de Congelar.
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function renderPowerupPaddles(ctx) {
+    for (const effect of activeEffects) {
+        if (effect.type.id === 'freeze') drawFrozenPaddle(ctx, sidePaddle(effect.target), effect.remainingMs / effect.type.duration);
+    }
 }
 
 /**
@@ -703,6 +744,53 @@ function drawBigBallAura(ctx, b) {
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + 6 + 3 * pulse, 0, Math.PI * 2); ctx.stroke();
     ctx.restore();
+}
+
+/**
+ * Congelar (laboratorio v2): bloque de hielo sobre la paleta, con grietas;
+ * en la segunda mitad se derrite y suelta escarcha.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Paddle} p
+ * @param {number} k 1 recién congelada → 0 descongelada
+ */
+function drawFrozenPaddle(ctx, p, k) {
+    if (k <= 0) return;
+    const pad = 5;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, k * 2);
+    roundRectHelper(ctx, p.x - pad, p.y - pad, p.width + pad * 2, p.height + pad * 2, 4);
+    const g = ctx.createLinearGradient(p.x - pad, 0, p.x + p.width + pad, 0);
+    g.addColorStop(0, 'rgba(165, 243, 252, 0.55)');
+    g.addColorStop(0.5, 'rgba(224, 242, 254, 0.35)');
+    g.addColorStop(1, 'rgba(103, 232, 249, 0.55)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(240, 249, 255, 0.95)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 1;
+    for (let j = 0; j < 5; j++) {
+        const yy = p.y + j * p.height / 5 + 6;
+        ctx.beginPath();
+        ctx.moveTo(p.x - pad, yy);
+        ctx.lineTo(p.x + p.width * 0.6, yy + 8);
+        ctx.lineTo(p.x + p.width + pad, yy + 3);
+        ctx.stroke();
+    }
+    ctx.restore();
+    // Escarcha que cae al derretirse
+    if (k < 0.5) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.8)';
+        for (let i = 0; i < 6; i++) {
+            const yy = p.y + p.height + ((vfxT() * 60 + i * 23) % 30);
+            ctx.globalAlpha = 1 - (yy - p.y - p.height) / 30;
+            ctx.fillRect(p.x + (i / 6) * p.width, yy, 2, 2);
+        }
+        ctx.restore();
+    }
 }
 
 /** Cámara lenta: viñeta naranja en los bordes y líneas de escaneo que bajan despacio. */
