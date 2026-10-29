@@ -46,7 +46,7 @@ const DEFAULT_STATS = {
     totalPerfectHits: 0,
     totalSpinHits:    0,
     totalSmashGoals:  0,
-    totalSuperGoals:  0,
+    totalSmashUses:   0,
     totalFevers:      0,
 
     // Misiones diarias completadas (systems/missions.js)
@@ -101,10 +101,9 @@ let matchReachedMaxSpeed = false;   // una bola llegó al máximo del preset en 
 let matchPerfect     = 0;   // golpes perfectos
 let matchSpin        = 0;   // golpes con efecto
 let matchSmashGoals  = 0;   // goles con la bola en smash
-let matchSuperGoals  = 0;   // goles con la bola en súper
 let matchFeverCount  = 0;   // fiebres del rally
 let matchFeverPoints = 0;   // puntos del jugador 1 durante la fiebre (XP doble, fase 4)
-let matchSmashUsed   = false;   // el jugador 1 hizo algún smash o súper (misión d_win_smash)
+let matchSmashUsed   = false;   // el jugador 1 hizo algún smash (misión d_win_smash)
 
 /** Llamar al iniciar una nueva partida */
 function statsOnGameStart() {
@@ -117,7 +116,6 @@ function statsOnGameStart() {
     matchPerfect     = 0;
     matchSpin        = 0;
     matchSmashGoals  = 0;
-    matchSuperGoals  = 0;
     matchFeverCount  = 0;
     matchFeverPoints = 0;
     matchSmashUsed   = false;
@@ -167,8 +165,8 @@ function statsOnPaddleHit() {
 }
 
 /**
- * Tipo de golpe (desde resolveHit): cuenta los perfectos y los golpes con
- * efecto del jugador 1, y lo pasa a las misiones. Los totales se guardan
+ * Tipo de golpe (desde resolveHit): cuenta los perfectos, los golpes con
+ * efecto y los smash del jugador 1, y lo pasa a las misiones. Los totales se guardan
  * con el siguiente gol o al terminar.
  * @param {'p1'|'p2'} side
  * @param {HitType} type
@@ -179,10 +177,11 @@ function statsOnHitType(side, type, spin) {
     const total = statsCountMatch() ? 1 : 0;
     if (type === 'perfect') { matchPerfect++; gameStats.totalPerfectHits += total; }
     if (Math.abs(spin) > MECH.spinSoundMin) { matchSpin++; gameStats.totalSpinHits += total; }
-    if (type === 'super') matchSmashUsed = true;
+    if (type === 'super') { matchSmashUsed = true; gameStats.totalSmashUses += total; }
 
     if (type === 'perfect' || type === 'block' || type === 'edge') missionEvent(type);
     if (Math.abs(spin) > MECH.spinSoundMin) missionEvent('spin');
+    if (type === 'super') missionEvent('smash_use');
 }
 
 /** Empieza una fiebre del rally. */
@@ -218,14 +217,13 @@ function statsOnScore(scorerIsP1, ball) {
     // Rastrear velocidad máxima de la bola que marcó
     statsRecordBallSpeed(ball.speed);
 
-    // Goles del jugador 1 con smash o súper, y puntos durante la fiebre
-    if (scorerIsP1 && ball.owner === 'p1') {
-        if (ball.power === 'super') { matchSuperGoals++; gameStats.totalSuperGoals++; }
-    }
+    // Goles de smash del jugador 1 y puntos durante la fiebre
+    const smashGoal = scorerIsP1 && ball.owner === 'p1' && ball.power === 'super';
+    if (smashGoal) { matchSmashGoals++; gameStats.totalSmashGoals++; }
     if (scorerIsP1 && state.fever) matchFeverPoints++;
 
     if (scorerIsP1) missionEvent('point');
-    if (scorerIsP1 && ball.owner === 'p1' && ball.power === 'super') missionEvent('super_goal');
+    if (smashGoal) missionEvent('smash_goal');
 
     saveStats();
 }

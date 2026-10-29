@@ -320,7 +320,6 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
     const rally = XP_REWARDS.rally.find(([min]) => matchBestRally >= min);
     if (rally) row(`Rally de ${matchBestRally}${matchFeverCount > 0 ? ' (fiebre)' : ''}`, rally[1]);
     row(`Goles de smash × ${matchSmashGoals}`, matchSmashGoals * XP_REWARDS.smashGoal);
-    row(`Goles de súper golpe × ${matchSuperGoals}`, matchSuperGoals * XP_REWARDS.superGoal);
 
     if (p1Won && p2Score === 0) {
         row('Juego perfecto', XP_REWARDS.perfectGame);

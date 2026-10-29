@@ -52,6 +52,10 @@ function populateStatsScreen() {
     // Récords
     setText('stat-longest-rally',  s.longestRally);
     setText('stat-max-speed',      s.maxBallSpeed > 0 ? s.maxBallSpeed.toFixed(1) : '—');
+
+    // Smash
+    setText('stat-smash-goals',    s.totalSmashGoals);
+    setText('stat-smash-uses',     s.totalSmashUses);
 }
 
 /** Borra estadísticas (manteniendo logros) con confirmación */

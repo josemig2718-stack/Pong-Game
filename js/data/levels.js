@@ -88,8 +88,7 @@ const XP_REWARDS = {
     perfectHit: 2,
     perfectHitMax: 10,       // por partida
     rally: [[30, 15], [20, 10], [10, 5]],   // [rally mínimo, XP], del mayor al menor
-    smashGoal: 3,
-    superGoal: 5,
+    smashGoal: 5,
     perfectGame: 20
 };
 

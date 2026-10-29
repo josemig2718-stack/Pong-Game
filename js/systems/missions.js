@@ -99,6 +99,10 @@ function refreshMissions() {
     const p = playerProgression;
     const m = p.missions || { day: '', daily: [], week: '', weekly: null };
     let changed = !p.missions;
+    // Una misión guardada que ya no existe (ids renombrados) obliga a
+    // elegir de nuevo las de su día o su semana
+    if (m.daily.some(e => !missionDef(e.id))) m.day = '';
+    if (m.weekly && !missionDef(m.weekly.id)) m.week = '';
     if (m.day !== day) {
         m.day = day;
         m.daily = pickDailyMissions(day).map(mi => ({ id: mi.id, progress: 0, done: false }));

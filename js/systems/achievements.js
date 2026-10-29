@@ -43,8 +43,8 @@ const ACHIEVEMENT_GOALS = {
     // Solo los objetos de pago: los exclusivos no entran
     fashionista:       { target: () => getTotalShopItems(), value: () => getTotalPurchasedItems() },
     perfect_100:       { target: 100, value: () => gameStats.totalPerfectHits },
-    smash_goals_25:    { target: 25,  value: () => gameStats.totalSmashGoals },
-    super_goals_10:    { target: 10,  value: () => gameStats.totalSuperGoals },
+    smash_goals_10:    { target: 10,  value: () => gameStats.totalSmashGoals },
+    smash_uses_25:     { target: 25,  value: () => gameStats.totalSmashUses },
     rally_50:          { target: 50,  value: () => gameStats.longestRally },
     missions_10:       { target: 10,  value: () => playerProgression.missionsCompleted },
     missions_50:       { target: 50,  value: () => playerProgression.missionsCompleted },
@@ -262,9 +262,9 @@ function checkAllAchievements(mode, p1Won) {
     if (matchPerfect >= 10)                                unlockAchievement('perfect_10');
     if (achievementGoalMet('perfect_100'))                 unlockAchievement('perfect_100');
     if (s.totalSmashGoals >= 1)                            unlockAchievement('smash_first');
-    if (achievementGoalMet('smash_goals_25'))              unlockAchievement('smash_goals_25');
-    if (s.totalSuperGoals >= 1)                            unlockAchievement('super_first');
-    if (achievementGoalMet('super_goals_10'))              unlockAchievement('super_goals_10');
+    if (achievementGoalMet('smash_goals_10'))              unlockAchievement('smash_goals_10');
+    if (matchSmashGoals >= 2)                              unlockAchievement('smash_double');
+    if (achievementGoalMet('smash_uses_25'))               unlockAchievement('smash_uses_25');
     if (s.totalFevers >= 1)                                unlockAchievement('fever_first');
     if (achievementGoalMet('rally_50'))                    unlockAchievement('rally_50');
 
