@@ -13,8 +13,15 @@
 'use strict';
 
 /**
- * Muestra una pantalla (un div.screen) y oculta las demás. Algunas
- * pantallas hacen algo al entrar: el menú principal oculta el juego y
+ * Pantallas que se ponen encima del campo: con ellas #game-container
+ * sigue a la vista (la pausa, el fin de partida y el falso final).
+ */
+const MATCH_OVERLAY_SCREENS = ['pause-menu', 'game-over-screen', 'finale-screen', 'vs-screen'];
+
+/**
+ * Muestra una pantalla (un div.screen) y oculta las demás. Fuera de
+ * partida, cualquier pantalla que no vaya encima del campo oculta el
+ * juego. Algunas pantallas hacen algo al entrar: el menú principal
  * refresca sus tiles, la selección de modo refresca sus tarjetas y
  * precarga la pista de la Rockola, y la tienda, la campaña y Progreso se
  * redibujan.
@@ -26,8 +33,11 @@ function showScreen(screenId) {
     if (requested) requested.classList.add('active-screen');
     syncResultClass();
 
-    if (screenId === 'main-menu') {
+    if (screenId === 'main-menu' || (!state.isPlaying && !MATCH_OVERLAY_SCREENS.includes(screenId))) {
         document.getElementById('game-container').classList.add('hidden');
+    }
+
+    if (screenId === 'main-menu') {
         updateMenuTiles();
     } else if (screenId === 'mode-select-menu') {
         updateModeCards();

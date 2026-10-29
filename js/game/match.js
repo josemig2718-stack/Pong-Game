@@ -279,6 +279,13 @@ function quitGame() {
     stopGameplayMusic();
     playMenuMusic();
 
+    // Fuera el campo, el HUD y los botones de smash: showScreen solo los
+    // ocultaba al volver al menú principal, y la práctica vuelve a otras
+    const container = document.getElementById('game-container');
+    container.classList.add('hidden');
+    delete container.dataset.smash;
+    delete document.body.dataset.gameMode;
+
     showScreen(returnTo);
 }
 
