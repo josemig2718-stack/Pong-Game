@@ -1327,8 +1327,8 @@ body[data-game-mode="practice"] #hud-energy-p2 { visibility: hidden; }
 /* La práctica no da XP: la fiebre no promete el doble */
 body[data-game-mode="practice"] .hud-chip--rally.is-fever .hud-fever-xp { display: none; }
 
-/* Energía del súper golpe: 10 segmentos (updateHud). Llena, la tarjeta,
-   los segmentos y la etiqueta pasan a amarillo y dice SÚPER. El rival es
+/* Energía del smash: 10 segmentos (updateHud). Llena, la tarjeta,
+   los segmentos y la etiqueta pasan a amarillo y dice SMASH. El rival es
    gris salvo el J2 de local; el jefe de campaña no la usa. */
 .hud-card { --energy-color: var(--hud-color); }
 .hud-energy { display: flex; align-items: center; gap: 8px; max-width: 100%; }
@@ -1351,7 +1351,7 @@ body[data-game-mode="campaign"] #hud-energy-p2 { display: none; }
 .hud-chip--rally.is-fever .hud-fever__ico { display: block; }
 .hud-chip--rally.is-fever .hud-fever-xp { display: inline; margin-left: -8px; white-space: pre; }
 
-/* Aviso de súper listo, centrado abajo dentro del campo */
+/* Aviso de smash listo, centrado abajo dentro del campo */
 .super-hint {
     position: absolute;
     left: 50%;
@@ -1497,8 +1497,9 @@ body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
 
 /* Botones de smash táctiles (capturas/55). Solo existen con data-smash
    en el contenedor (setupHud: pantalla táctil y ajuste "botón"); el del
-   J2, con data-smash="2" (local). El anillo es la carga (updateHud) y con
-   la energía llena el botón pasa a amarillo y dice SÚPER. */
+   J2, con data-smash="2" (local). Sin la energía llena está apagado
+   (aria-disabled) y el anillo enseña la energía; llena, se enciende en
+   amarillo con un pulso suave y el anillo enseña la carga (updateHud). */
 .smash-btn {
     --smash-color: var(--primary);
     position: relative;
@@ -1520,7 +1521,16 @@ body[data-game-mode="hachepe"] .hud-card__badge { display: none; }
     -webkit-tap-highlight-color: transparent;
 }
 .smash-btn--p2 { --smash-color: var(--p2); }
-.smash-btn.is-super { --smash-color: #FDE047; box-shadow: 0 4px 0 #020305, inset 0 0 0 2px color-mix(in srgb, #FDE047 45%, transparent), 0 0 18px rgba(253, 224, 71, 0.35); }
+.smash-btn[aria-disabled="true"] { opacity: 0.4; }
+.smash-btn.is-super { --smash-color: #FDE047; box-shadow: 0 4px 0 #020305, inset 0 0 0 2px color-mix(in srgb, #FDE047 45%, transparent), 0 0 18px rgba(253, 224, 71, 0.35); animation: smash-ready-pulse 1.4s ease-in-out infinite; }
+.smash-btn.is-super.is-held { animation: none; }
+@keyframes smash-ready-pulse {
+    0%, 100% { box-shadow: 0 4px 0 #020305, inset 0 0 0 2px color-mix(in srgb, #FDE047 45%, transparent), 0 0 12px rgba(253, 224, 71, 0.25); }
+    50%      { box-shadow: 0 4px 0 #020305, inset 0 0 0 2px color-mix(in srgb, #FDE047 70%, transparent), 0 0 26px rgba(253, 224, 71, 0.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .smash-btn.is-super { animation: none; }
+}
 .smash-btn.is-held { transform: translateY(2px); box-shadow: 0 2px 0 #020305, inset 0 0 0 2px var(--smash-color); }
 #game-container[data-smash] #smash-btn-p1,
 #game-container[data-smash="2"] #smash-btn-p2 { display: grid; }
@@ -2491,7 +2501,7 @@ label.set-item__head { cursor: pointer; }
 .howto-card p { margin: 0; font-size: 13px; line-height: 1.45; color: #C9D0DD; }
 .howto-card small { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
 
-/* Una tecla, como en el aviso de súper */
+/* Una tecla, como en el aviso de smash */
 .kbd {
     font: 600 11px var(--font-body);
     padding: 1px 6px;

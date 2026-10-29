@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=103">
+    <link rel="stylesheet" href="css/style.css?v=104">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -489,17 +489,10 @@
                 </article>
                 <article class="howto-card">
                     <div class="howto-card__row">
-                        <svg class="howto-card__art" viewBox="0 0 150 84" aria-hidden="true"><rect x="14" y="25" width="6" height="34" rx="2" style="fill: var(--primary)"/><circle cx="34" cy="42" r="9" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/><circle cx="34" cy="42" r="9" fill="none" stroke="#FDE047" stroke-width="3" stroke-dasharray="44 57" transform="rotate(-90 34 42)"/><path d="M46 42H128" stroke="#FDE047" stroke-width="3"/><path d="M60 34H96M66 50H104" stroke="#fff" stroke-opacity=".4" stroke-width="1.5"/><circle cx="132" cy="42" r="5" fill="#fff"/></svg>
-                        <div class="howto-card__text"><h3>Smash</h3><p>Mantén pulsado para cargar (la paleta va más lenta) y suelta justo antes del golpe: hasta un 40 % más rápida y casi recta.</p></div>
+                        <svg class="howto-card__art" viewBox="0 0 150 84" aria-hidden="true"><g transform="translate(14 34)"><rect x="0" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="9" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="18" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="27" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="36" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="45" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/></g><path d="M74 38h10" stroke="#8A93A6" stroke-width="2"/><path d="M80 34l4 4-4 4" stroke="#8A93A6" fill="none" stroke-width="2"/><circle cx="116" cy="38" r="16" fill="#F97316" opacity=".3"/><circle cx="116" cy="38" r="9" fill="#FDE047" opacity=".7"/><circle cx="116" cy="38" r="6" fill="#fff"/></svg>
+                        <div class="howto-card__text"><h3>Smash</h3><p>Golpes, rallies y golpes perfectos llenan la energía. Con la barra llena, mantén pulsado para cargar (la paleta va más lenta) y suelta justo antes del golpe: la bola sale disparada con el estilo de smash que tengas equipado.</p></div>
                     </div>
                     <small>Teclado: <kbd class="kbd" data-key-label="p1Smash">ESPACIO</kbd> · Táctil: <span id="howto-smash-touch">botón SMASH</span></small>
-                </article>
-                <article class="howto-card">
-                    <div class="howto-card__row">
-                        <svg class="howto-card__art" viewBox="0 0 150 84" aria-hidden="true"><g transform="translate(14 34)"><rect x="0" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="9" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="18" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="27" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="36" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/><rect x="45" y="0" width="7" height="8" rx="1.5" fill="#FDE047"/></g><path d="M74 38h10" stroke="#8A93A6" stroke-width="2"/><path d="M80 34l4 4-4 4" stroke="#8A93A6" fill="none" stroke-width="2"/><circle cx="116" cy="38" r="16" fill="#F97316" opacity=".3"/><circle cx="116" cy="38" r="9" fill="#FDE047" opacity=".7"/><circle cx="116" cy="38" r="6" fill="#fff"/></svg>
-                        <div class="howto-card__text"><h3>Súper golpe</h3><p>Golpes, rallies y perfectos llenan la energía. Llena, tu siguiente smash es un súper golpe con el estilo que tengas equipado.</p></div>
-                    </div>
-                    <small>Igual que el smash</small>
                 </article>
                 <article class="howto-card">
                     <div class="howto-card__row">
@@ -702,7 +695,7 @@
                             <div class="option-pill-group option-pill-group--text">
                                 <button class="option-pill" data-smash-touch="button" data-action="updateSmashTouch">Botón</button>
                                 <button class="option-pill" data-smash-touch="finger" data-action="updateSmashTouch">Segundo dedo</button>
-                                <button class="option-pill" data-smash-touch="auto" data-action="updateSmashTouch">Automático (solo súper)</button>
+                                <button class="option-pill" data-smash-touch="auto" data-action="updateSmashTouch">Automático</button>
                             </div>
                             <p id="smash-touch-help" class="set-help">Mantén SMASH y suelta justo antes del golpe.</p>
                         </div>
@@ -846,7 +839,7 @@
                 </button>
                 <div class="shop-head__titles">
                     <h2 class="px shop-head__title">TIENDA</h2>
-                    <span class="shop-head__sub">Personaliza la bola, la cancha, tu paleta, cada gol y tu súper golpe.</span>
+                    <span class="shop-head__sub">Personaliza la bola, la cancha, tu paleta, cada gol y tu smash.</span>
                 </div>
                 <div class="wallet">
                     <img src="assets/chemi_coin.png" alt="">
@@ -897,9 +890,9 @@
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8 9a5 5 0 0 1 4-2"/></svg>
                     <span class="shop-tab-btn__label">BOLAS</span><small data-tab-count></small>
                 </button>
-                <button class="shop-tab-btn" aria-label="SÚPER" aria-pressed="false" data-action="switchShopTab" data-arg="super">
+                <button class="shop-tab-btn" aria-label="SMASH" aria-pressed="false" data-action="switchShopTab" data-arg="super">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
-                    <span class="shop-tab-btn__label">SÚPER</span><small data-tab-count></small>
+                    <span class="shop-tab-btn__label">SMASH</span><small data-tab-count></small>
                 </button>
                 <button class="shop-tab-btn" aria-label="ROCKOLA" aria-pressed="false" data-action="switchShopTab" data-arg="music">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
@@ -1137,9 +1130,9 @@
                 </div>
             </div>
 
-            <!-- Aviso de súper listo (2,5 s cada vez que la energía del J1 se llena) -->
+            <!-- Aviso de smash listo (2,5 s cada vez que la energía del J1 se llena) -->
             <div id="super-hint" class="super-hint hidden" role="status">
-                <span class="px super-hint__title">¡SÚPER LISTO!</span>
+                <span class="px super-hint__title">¡SMASH LISTO!</span>
                 <span id="super-hint-text" class="super-hint__text"></span>
             </div>
 
@@ -1197,75 +1190,75 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css. -->
-    <script src="js/core/constants.js?v=103"></script>
-    <script src="js/core/storage.js?v=103"></script>
-    <script src="js/core/settings.js?v=103"></script>
-    <script src="js/core/state.js?v=103"></script>
-    <script src="js/data/themes.js?v=103"></script>
-    <script src="js/data/lore.js?v=103"></script>
-    <script src="js/data/achievements.js?v=103"></script>
-    <script src="js/data/shop.js?v=103"></script>
-    <script src="js/data/levels.js?v=103"></script>
-    <script src="js/data/missions.js?v=103"></script>
-    <script src="js/data/powerups.js?v=103"></script>
-    <script src="js/data/mechanics.js?v=103"></script>
-    <script src="js/data/music.js?v=103"></script>
-    <script src="js/data/news.js?v=103"></script>
-    <script src="js/systems/audio.js?v=103"></script>
-    <script src="js/systems/music.js?v=103"></script>
-    <script src="js/systems/theme.js?v=103"></script>
-    <script src="js/systems/stats.js?v=103"></script>
-    <script src="js/systems/achievements.js?v=103"></script>
-    <script src="js/systems/progression.js?v=103"></script>
-    <script src="js/systems/missions.js?v=103"></script>
-    <script src="js/systems/input.js?v=103"></script>
-    <script src="js/systems/pointer.js?v=103"></script>
-    <script src="js/game/canvas.js?v=103"></script>
-    <script src="js/game/draw.js?v=103"></script>
-    <script src="js/game/effects.js?v=103"></script>
-    <script src="js/game/balls.js?v=103"></script>
-    <script src="js/game/ai.js?v=103"></script>
-    <script src="js/game/mechanics.js?v=103"></script>
-    <script src="js/game/physics.js?v=103"></script>
-    <script src="js/game/match.js?v=103"></script>
-    <script src="js/game/hud.js?v=103"></script>
-    <script src="js/game/hints.js?v=103"></script>
-    <script src="js/game/render.js?v=103"></script>
-    <script src="js/game/loop.js?v=103"></script>
-    <script src="js/game/powerups.js?v=103"></script>
-    <script src="js/game/practice.js?v=103"></script>
-    <script src="js/vfx/random.js?v=103"></script>
-    <script src="js/vfx/trails.js?v=103"></script>
-    <script src="js/vfx/backgrounds.js?v=103"></script>
-    <script src="js/vfx/paddles.js?v=103"></script>
-    <script src="js/vfx/balls.js?v=103"></script>
-    <script src="js/vfx/goal-fx.js?v=103"></script>
-    <script src="js/vfx/super.js?v=103"></script>
-    <script src="js/vfx/mechanics.js?v=103"></script>
-    <script src="js/vfx/index.js?v=103"></script>
-    <script src="js/bosses/shared.js?v=103"></script>
-    <script src="js/bosses/chemi.js?v=103"></script>
-    <script src="js/bosses/dani.js?v=103"></script>
-    <script src="js/bosses/duo.js?v=103"></script>
-    <script src="js/bosses/fano.js?v=103"></script>
-    <script src="js/bosses/yisus.js?v=103"></script>
-    <script src="js/bosses/creator.js?v=103"></script>
-    <script src="js/bosses/index.js?v=103"></script>
-    <script src="js/campaign/progress.js?v=103"></script>
-    <script src="js/campaign/menu.js?v=103"></script>
-    <script src="js/campaign/dialogue.js?v=103"></script>
-    <script src="js/campaign/finale.js?v=103"></script>
-    <script src="js/ui/screens.js?v=103"></script>
-    <script src="js/ui/howto.js?v=103"></script>
-    <script src="js/ui/news.js?v=103"></script>
-    <script src="js/ui/actions.js?v=103"></script>
-    <script src="js/ui/settings-panel.js?v=103"></script>
-    <script src="js/ui/stats-panel.js?v=103"></script>
-    <script src="js/ui/shop-ui.js?v=103"></script>
-    <script src="js/ui/shop-preview.js?v=103"></script>
-    <script src="js/ui/progress-display.js?v=103"></script>
-    <script src="js/ui/progress-ui.js?v=103"></script>
-    <script src="js/main.js?v=103"></script>
+    <script src="js/core/constants.js?v=104"></script>
+    <script src="js/core/storage.js?v=104"></script>
+    <script src="js/core/settings.js?v=104"></script>
+    <script src="js/core/state.js?v=104"></script>
+    <script src="js/data/themes.js?v=104"></script>
+    <script src="js/data/lore.js?v=104"></script>
+    <script src="js/data/achievements.js?v=104"></script>
+    <script src="js/data/shop.js?v=104"></script>
+    <script src="js/data/levels.js?v=104"></script>
+    <script src="js/data/missions.js?v=104"></script>
+    <script src="js/data/powerups.js?v=104"></script>
+    <script src="js/data/mechanics.js?v=104"></script>
+    <script src="js/data/music.js?v=104"></script>
+    <script src="js/data/news.js?v=104"></script>
+    <script src="js/systems/audio.js?v=104"></script>
+    <script src="js/systems/music.js?v=104"></script>
+    <script src="js/systems/theme.js?v=104"></script>
+    <script src="js/systems/stats.js?v=104"></script>
+    <script src="js/systems/achievements.js?v=104"></script>
+    <script src="js/systems/progression.js?v=104"></script>
+    <script src="js/systems/missions.js?v=104"></script>
+    <script src="js/systems/input.js?v=104"></script>
+    <script src="js/systems/pointer.js?v=104"></script>
+    <script src="js/game/canvas.js?v=104"></script>
+    <script src="js/game/draw.js?v=104"></script>
+    <script src="js/game/effects.js?v=104"></script>
+    <script src="js/game/balls.js?v=104"></script>
+    <script src="js/game/ai.js?v=104"></script>
+    <script src="js/game/mechanics.js?v=104"></script>
+    <script src="js/game/physics.js?v=104"></script>
+    <script src="js/game/match.js?v=104"></script>
+    <script src="js/game/hud.js?v=104"></script>
+    <script src="js/game/hints.js?v=104"></script>
+    <script src="js/game/render.js?v=104"></script>
+    <script src="js/game/loop.js?v=104"></script>
+    <script src="js/game/powerups.js?v=104"></script>
+    <script src="js/game/practice.js?v=104"></script>
+    <script src="js/vfx/random.js?v=104"></script>
+    <script src="js/vfx/trails.js?v=104"></script>
+    <script src="js/vfx/backgrounds.js?v=104"></script>
+    <script src="js/vfx/paddles.js?v=104"></script>
+    <script src="js/vfx/balls.js?v=104"></script>
+    <script src="js/vfx/goal-fx.js?v=104"></script>
+    <script src="js/vfx/super.js?v=104"></script>
+    <script src="js/vfx/mechanics.js?v=104"></script>
+    <script src="js/vfx/index.js?v=104"></script>
+    <script src="js/bosses/shared.js?v=104"></script>
+    <script src="js/bosses/chemi.js?v=104"></script>
+    <script src="js/bosses/dani.js?v=104"></script>
+    <script src="js/bosses/duo.js?v=104"></script>
+    <script src="js/bosses/fano.js?v=104"></script>
+    <script src="js/bosses/yisus.js?v=104"></script>
+    <script src="js/bosses/creator.js?v=104"></script>
+    <script src="js/bosses/index.js?v=104"></script>
+    <script src="js/campaign/progress.js?v=104"></script>
+    <script src="js/campaign/menu.js?v=104"></script>
+    <script src="js/campaign/dialogue.js?v=104"></script>
+    <script src="js/campaign/finale.js?v=104"></script>
+    <script src="js/ui/screens.js?v=104"></script>
+    <script src="js/ui/howto.js?v=104"></script>
+    <script src="js/ui/news.js?v=104"></script>
+    <script src="js/ui/actions.js?v=104"></script>
+    <script src="js/ui/settings-panel.js?v=104"></script>
+    <script src="js/ui/stats-panel.js?v=104"></script>
+    <script src="js/ui/shop-ui.js?v=104"></script>
+    <script src="js/ui/shop-preview.js?v=104"></script>
+    <script src="js/ui/progress-display.js?v=104"></script>
+    <script src="js/ui/progress-ui.js?v=104"></script>
+    <script src="js/main.js?v=104"></script>
 </body>
 
 </html>

@@ -371,7 +371,7 @@ function applyPowerup(type, beneficiary) {
         }
 
         case 'bolt':
-            // El siguiente golpe de esa paleta sale súper (classifyHit)
+            // El siguiente golpe de esa paleta sale smash (classifyHit)
             sidePaddle(target).boltReady = true;
             break;
 
@@ -448,7 +448,7 @@ function revertPowerup(effect, { silent = false } = {}) {
 
 /**
  * El Rayo se gasta en el golpe (resolveHit): su efecto termina sin el
- * sonido de fin, que ya suena el súper golpe.
+ * sonido de fin, que ya suena el smash.
  * @param {'p1'|'p2'} side
  */
 function useBolt(side) {
@@ -571,7 +571,7 @@ function buildPowerupPill(effect) {
     // El Rayo no tiene tiempo que mostrar (sus 20 s son un tope): dice lo que hace
     const bolt = effect.type.id === 'bolt';
     const detail = bolt
-        ? '<span class="powerup-pill__note">Siguiente golpe: súper</span>'
+        ? '<span class="powerup-pill__note">Siguiente golpe: smash</span>'
         : '<span class="powerup-pill__bar"><i></i></span>';
     pill.innerHTML =
         `<span class="powerup-pill__icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${effect.type.icon}"/></svg></span>` +
@@ -973,7 +973,7 @@ function drawPortals(ctx, a, b) {
 const BOLT_COLOR = POWERUP_TYPES.find((t) => t.id === 'bolt').color;
 
 /**
- * Rayo (laboratorio v2): la paleta lleva el súper golpe cargado, con un
+ * Rayo (laboratorio v2): la paleta lleva el smash cargado, con un
  * halo y chispas que saltan a los lados.
  * @param {CanvasRenderingContext2D} ctx
  * @param {Paddle} p

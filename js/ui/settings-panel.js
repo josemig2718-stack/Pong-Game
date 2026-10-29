@@ -56,7 +56,7 @@ function toggleMusic(enabled) {
 }
 
 /**
- * Música dinámica: baja en goles, súper golpes y punto de partido. Al
+ * Música dinámica: baja en goles, smash y punto de partido. Al
  * apagarla se quita lo que hubiera en curso (la fiebre sigue cambiando de
  * pista igual).
  * @param {boolean} enabled
@@ -156,13 +156,13 @@ function togglePowerups(enabled) {
 
 /** Ayuda bajo el selector del smash táctil, según la opción elegida. */
 const SMASH_TOUCH_HELP = {
-    button: 'Mantén SMASH y suelta justo antes del golpe.',
+    button: 'Con la energía llena, mantén SMASH y suelta justo antes del golpe.',
     finger: 'Apoya un segundo dedo en tu mitad para cargar y levántalo al golpear.',
-    auto:   'Sin smash: con la energía llena, tu siguiente golpe es súper.'
+    auto:   'Con la energía llena, tu siguiente golpe es un smash.'
 };
 
 /**
- * Cómo se hace el smash con pantalla táctil: botón, segundo dedo o súper
+ * Cómo se hace el smash con pantalla táctil: botón, segundo dedo o
  * automático. Resalta la opción y cambia la ayuda.
  * @param {string} val 'button', 'finger' o 'auto'
  */

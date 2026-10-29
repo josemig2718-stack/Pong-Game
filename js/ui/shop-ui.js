@@ -42,7 +42,7 @@ let shopListenId = null;
 
 /** Nombre en singular de lo que vende cada pestaña (vista previa). */
 const SHOP_ITEM_KIND = { trails: 'Estela', backgrounds: 'Fondo', paddles: 'Paleta', goalEffects: 'Efecto de gol',
-                         balls: 'Bola', super: 'Súper golpe', music: 'Canción' };
+                         balls: 'Bola', super: 'Smash', music: 'Canción' };
 
 /** Orden de las rarezas al ordenar por rareza. */
 const SHOP_RARITY_ORDER = { ini: 0, rar: 1, epi: 2, leg: 3, exc: 4 };
@@ -91,7 +91,7 @@ function switchShopTab(categoryKey) {
 
 /**
  * En la fila deslizable (móvil y tableta), centra la pestaña activa: si
- * no, al saltar a Súper desde la oferta quedaría fuera de la vista. Solo
+ * no, al saltar a Smash desde la oferta quedaría fuera de la vista. Solo
  * mueve la fila, nunca la página.
  * @param {HTMLElement} btn
  */

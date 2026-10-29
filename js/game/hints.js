@@ -22,7 +22,7 @@
 /** Cuánto se ve cada aviso (ms). */
 const HINT_MS = 3000;
 
-/** Veces que sale el aviso de súper listo antes de dejar de mostrarse. */
+/** Veces que sale el aviso de smash listo antes de dejar de mostrarse. */
 const ENERGY_HINT_TIMES = 3;
 
 /** Texto de cada aviso; los de power-up (pu_<id>) salen de POWERUP_TYPES. */

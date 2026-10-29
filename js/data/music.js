@@ -42,7 +42,7 @@ const MUSIC_TRACKS = {
 const MUSIC_DYNAMIC = {
     goalDb: 6,             // gol: −6 dB durante 0,6 s
     goalHoldMs: 600,
-    superDb: 4,            // súper golpe: −4 dB durante 0,3 s
+    superDb: 4,            // smash: −4 dB durante 0,3 s
     superHoldMs: 300,
     matchPointDb: 3,       // punto de partido: −3 dB mientras la bola esté en juego
     heartbeatMs: 900,      // un latido cada 0,9 s en el punto de partido

@@ -3,8 +3,8 @@
  * ------------------------------------------------------------------
  * HUD de la partida en el DOM, fuera del campo: una tarjeta por jugador
  * (nombre, marcador y una marca por punto), el chip del modo, el tiempo,
- * el rally en curso (o la fiebre), la energía del súper golpe de cada
- * jugador, el aviso de súper listo y, en pantallas táctiles, los botones
+ * el rally en curso (o la fiebre), la energía del smash de cada
+ * jugador, el aviso de smash listo y, en pantallas táctiles, los botones
  * de smash.
  *
  * setupHud() lo prepara al empezar la partida; updateHud() lo refresca
@@ -23,7 +23,7 @@ const HUD_CPU_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><r
 let hudKey = '';
 /** Lo último que se pintó en los botones de smash, para tocar el DOM solo si cambia. */
 let smashButtonsKey = '';
-/** Hasta cuándo (performance.now) se ve el aviso de súper listo; 0 = oculto. */
+/** Hasta cuándo (performance.now) se ve el aviso de smash listo; 0 = oculto. */
 let superHintUntil = 0;
 
 /** Prepara el HUD para la partida que empieza (startGame). */
@@ -97,17 +97,17 @@ function setupHud() {
 }
 
 /**
- * Texto del aviso de súper listo según cómo juega el jugador 1: el botón
- * táctil, un segundo dedo, el súper automático o la tecla de smash.
+ * Texto del aviso de smash listo según cómo juega el jugador 1: el botón
+ * táctil, un segundo dedo, el smash automático o la tecla de smash.
  * @param {HTMLElement} el
  */
 function fillSuperHintText(el) {
     if (isTouchDevice() && settings.smashTouch === 'auto') {
-        el.textContent = 'Tu siguiente golpe será súper';
+        el.textContent = 'Tu siguiente golpe será un smash';
     } else if (isTouchDevice() && settings.smashTouch === 'finger') {
         el.textContent = 'Mantén un segundo dedo y suelta al golpear';
     } else if (isTouchDevice() && !settings.mouseControl) {
-        el.textContent = 'Mantén SÚPER y suelta al golpear';
+        el.textContent = 'Mantén SMASH y suelta al golpear';
     } else {
         const kbd = document.createElement('kbd');
         kbd.textContent = keyLabel(settings.bindings.p1Smash);
@@ -128,26 +128,32 @@ function showSuperHint() {
     superHintUntil = performance.now() + MECH.superHintMs;
 }
 
-/** Oculta el aviso de súper listo cuando se acaba su tiempo. */
+/** Oculta el aviso de smash listo cuando se acaba su tiempo. */
 function updateSuperHint() {
     if (superHintUntil === 0 || performance.now() < superHintUntil) return;
     superHintUntil = 0;
     document.getElementById('super-hint').classList.add('hidden');
 }
 
-/** Anillo de carga y aspecto SÚPER de los botones de smash (solo si cambian). */
+/**
+ * Botones de smash (solo si cambian). Sin la energía llena están apagados
+ * (aria-disabled) y el anillo enseña cuánta energía hay; llena, se
+ * encienden en amarillo (.is-super) y el anillo enseña la carga.
+ */
 function updateSmashButtons() {
     if (!document.getElementById('game-container').dataset.smash) return;
-    const key = [p1, p2].map((p) => `${Math.round(p.charge * 50)}|${superReadyFor(p)}`).join('|');
+    const key = [p1, p2].map((p) => `${Math.round(p.charge * 50)}|${Math.round(p.energy)}|${superReadyFor(p)}`).join('|');
     if (key === smashButtonsKey) return;
     smashButtonsKey = key;
     for (const [side, p] of /** @type {Array<[string, Paddle]>} */ ([['p1', p1], ['p2', p2]])) {
         const btn = document.getElementById(`smash-btn-${side}`);
         const full = superReadyFor(p);
+        const ring = full ? p.charge : Math.min(1, p.energy / MECH.energy.max);
         btn.style.setProperty('--charge', p.charge.toFixed(2));
-        /** @type {SVGElement} */ (btn.querySelector('.smash-btn__fill')).style.strokeDasharray = `${(p.charge * 100).toFixed(1)} 100`;
+        /** @type {SVGElement} */ (btn.querySelector('.smash-btn__fill')).style.strokeDasharray = `${(ring * 100).toFixed(1)} 100`;
         btn.classList.toggle('is-super', full);
-        btn.querySelector('.smash-btn__label').textContent = full ? 'SÚPER' : 'SMASH';
+        btn.setAttribute('aria-disabled', String(!full));
+        if (!full) btn.classList.remove('is-held');
     }
 }
 
@@ -180,13 +186,13 @@ function updateHud() {
     document.getElementById('hud-rally-chip').classList.toggle('is-fever', state.fever);
     document.getElementById('hud-rally').textContent = state.fever ? `FIEBRE ${currentRally}` : `Rally ${currentRally}`;
 
-    // Energía: 10 segmentos; llena, la tarjeta pasa a amarillo y dice SÚPER
+    // Energía: 10 segmentos; llena, la tarjeta pasa a amarillo y dice SMASH
     for (const [side, p] of /** @type {Array<[string, Paddle]>} */ ([['p1', p1], ['p2', p2]])) {
         const full = superReadyFor(p);
         const on = full ? 10 : energySegments(p);
         document.getElementById(`hud-${side}`).classList.toggle('is-super', full);
         const energy = document.getElementById(`hud-energy-${side}`);
-        energy.querySelector('.hud-energy__lbl').textContent = full ? 'SÚPER' : 'ENERGÍA';
+        energy.querySelector('.hud-energy__lbl').textContent = full ? 'SMASH' : 'ENERGÍA';
         const segs = energy.querySelector('.hud-energy__seg').children;
         for (let i = 0; i < segs.length; i++) segs[i].classList.toggle('is-on', i < on);
     }

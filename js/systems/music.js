@@ -586,7 +586,7 @@ function musicDynRetarget(seconds) {
 
 /**
  * Baja la música `db` decibelios durante `holdMs`, con fundidos (gol,
- * súper golpe). Varios a la vez: manda el más fuerte. Sin música dinámica
+ * smash). Varios a la vez: manda el más fuerte. Sin música dinámica
  * no hace nada.
  * @param {number} db
  * @param {number} holdMs

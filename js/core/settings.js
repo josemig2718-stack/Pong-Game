@@ -51,14 +51,14 @@ const DEFAULT_SETTINGS = {
     sfxEnabled:   true,
     musicEnabled: true,
     musicVolume:  50,      // 0-100 (música de fondo)
-    dynamicMusic: true,    // la música reacciona al juego: baja en goles, súper golpes y punto de partido (systems/music.js)
+    dynamicMusic: true,    // la música reacciona al juego: baja en goles, smash y punto de partido (systems/music.js)
     winningScore: 5,       // 3, 5, 7, 11
     ballSpeed:    2,       // 1 Lenta, 2 Normal, 3 Rápida
     crtEffect:    true,    // efecto de escaneo estilo monitor CRT
     screenShake:  true,
     mouseControl: false,   // controlar paleta con mouse
     powerupsEnabled: true, // power-ups en partida
-    smashTouch:   'button', // smash en táctil: 'button' (botón), 'finger' (segundo dedo) o 'auto' (súper automático)
+    smashTouch:   'button', // smash en táctil: 'button' (botón), 'finger' (segundo dedo) o 'auto' (smash automático con la energía llena)
     haptics:      true,    // vibración del móvil en los golpes fuertes
     showHints:    true,    // avisos de primera vez en partida (game/hints.js)
     seenHints:    [],      // claves de los avisos ya vistos ('energy' se repite: una entrada por vez)

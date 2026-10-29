@@ -124,7 +124,7 @@ const SHOP_CATEGORIES = [
     { key: 'paddles',     label: 'Paletas' },
     { key: 'goalEffects', label: 'Goles' },
     { key: 'balls',       label: 'Bolas' },
-    { key: 'super',       label: 'Súper' },
+    { key: 'super',       label: 'Smash' },
     { key: 'music',       label: 'Rockola' }
 ];
 

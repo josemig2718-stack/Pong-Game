@@ -8,11 +8,11 @@
  *
  * Usa los mismos renderizadores que la partida (vfx/), con una escena
  * mínima por categoría: la bola que cruza o rebota (estelas, bolas,
- * súper), una paleta que golpea (paletas), las dos a doble escala, o el
+ * smash), una paleta que golpea (paletas), las dos a doble escala, o el
  * campo entero (fondos y goles, en coordenadas lógicas a media escala). El bucle solo corre con
  * la tienda a la vista y avanza el reloj de los efectos (vfxTick). Al
  * pararse deja limpio lo compartido con la partida: los efectos de gol,
- * los estallidos del súper y el fondo equipado.
+ * los estallidos del smash y el fondo equipado.
  * ------------------------------------------------------------------
  */
 
@@ -34,10 +34,10 @@ let shopPreviewScene = null;
 
 const SHOP_PREVIEW_W = 400;
 const SHOP_PREVIEW_H = 300;
-/** Escena ampliada (estelas, paletas, súper): 200×150 a doble escala, con la bola de la partida. */
+/** Escena ampliada (estelas, paletas, smash): 200×150 a doble escala, con la bola de la partida. */
 const SHOP_ZOOM_W = 200;
 const SHOP_ZOOM_H = 150;
-/** Fotogramas entre dos goles (efectos de gol) o dos estallidos (súper): unos 2,5 s y 2 s. */
+/** Fotogramas entre dos goles (efectos de gol) o dos estallidos (smash): unos 2,5 s y 2 s. */
 const SHOP_PREVIEW_GOAL_EVERY = 150;
 const SHOP_PREVIEW_BURST_EVERY = 120;
 

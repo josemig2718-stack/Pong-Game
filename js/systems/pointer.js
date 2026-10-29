@@ -98,7 +98,8 @@ function bindSmashButton(id, paddle) {
     btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         paddle.smashTouchHeld = true;
-        btn.classList.add('is-held');
+        // Apagado (sin la energía llena) no se hunde: updateSmash lo ignora
+        if (btn.getAttribute('aria-disabled') !== 'true') btn.classList.add('is-held');
         // Así un dedo que se desliza un poco fuera del botón no lo suelta
         try { btn.setPointerCapture(e.pointerId); } catch (err) { /* sin captura también funciona */ }
     });

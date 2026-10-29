@@ -1,13 +1,13 @@
 /**
  * vfx/super.js
  * ------------------------------------------------------------------
- * Súper golpe: el aura de la bola mientras va en súper y el estallido
+ * Smash (categoría 'super'): el aura de la bola mientras va en smash y el estallido
  * al golpear y al marcar. Cada estilo tiene { aura(ctx, b, color),
  * burst(x, y, color) }; los estallidos viven en superBursts y avanzan con
  * MECH_FX.update (vfx/mechanics.js).
  *
  * Energía es el gratuito; Llamas, Hielo y Rayo se compran en la tienda
- * (categoría super). Cada súper usa el estilo de quien lo lanzó
+ * (categoría super). Cada smash usa el estilo de quien lo lanzó
  * (superStyleId): el equipado para el jugador, Energía para la máquina.
  *
  * Azar: vfxRandom; tiempo: vfxT(). Nunca Math.random.
@@ -31,7 +31,7 @@ const SUPER_STYLE = {
 };
 
 /**
- * Estilo del súper golpe que lanzó `owner`: el equipado si es un jugador
+ * Estilo del smash que lanzó `owner`: el equipado si es un jugador
  * (el 1, o el 2 en local); la CPU, Hachepe y los jefes usan siempre
  * Energía.
  * @param {'p1'|'p2'|null} owner
