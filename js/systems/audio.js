@@ -219,8 +219,132 @@ function sfxSparkleArpeggio(notes, step) {
     sfxArpeggio(notes.map(f => f * 2), step, { type: 'sine', decay: 0.18, gain: 0.15 });
 }
 
-/** @type {{ osc: OscillatorNode, env: GainNode }|null} La carga del smash en curso. */
-let smashChargeVoice = null;
+/**
+ * La carga del smash de un lado: sus fuentes, la ganancia de salida (null
+ * con los efectos apagados) y lo que devuelve la bajada de la música.
+ * @typedef {{ sources: AudioScheduledSourceNode[], out: GainNode|null, unduck: () => void }} SmashChargeVoice
+ */
+
+/** Una voz por jugador: en local pueden cargar los dos a la vez. @type {{ p1: SmashChargeVoice|null, p2: SmashChargeVoice|null }} */
+const smashChargeVoices = { p1: null, p2: null };
+
+/**
+ * Arranca la carga del smash de un lado, programada con el reloj de audio
+ * (T = MECH.smashChargeMs):
+ *   aire   ruido compartido por un paso banda (Q 1,5) que sube de 500 a
+ *          2 200 Hz y de 0 a 0,05 en T: «tomar aire»
+ *   tono   triangle de sol₃ a sol₄ en T, paso bajo a 1 100 Hz, 0 → 0,045
+ *          en 0,12 s, con trémolo del 35 % que acelera de 5 a 12 Hz
+ *   lista  en T, un clic cristalino (1 568 + 2 349 Hz) y en 0,25 s el aire
+ *          y el tono bajan a un susurro (0,012 en total, trémolo a 3 Hz)
+ * Todo va a una sola ganancia de salida, con panorama según el lado. Si
+ * suena música, baja 2 dB mientras dure (musicDuckWhile).
+ * @param {'p1'|'p2'} side
+ */
+function startSmashChargeVoice(side) {
+    const unduck = musicCurrent() ? musicDuckWhile(MUSIC_DYNAMIC.smashChargeDb, { release: MUSIC_DYNAMIC.smashChargeReleaseS }) : () => {};
+    if (!sfxActive()) {
+        smashChargeVoices[side] = { sources: [], out: null, unduck };
+        return;
+    }
+    const ctx = getAudioContext();
+    const t0 = ctx.currentTime;
+    const T = MECH.smashChargeMs / 1000;
+    const tReady = t0 + T;
+    const tWhisper = tReady + 0.25;
+
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(1, t0);
+    sfxOut(ctx, out, side === 'p1' ? -0.4 : 0.4, t0);
+
+    // Aire que sube
+    const air = ctx.createBufferSource();
+    air.buffer = getNoiseBuffer(ctx);
+    air.loop = true;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.setValueAtTime(1.5, t0);
+    band.frequency.setValueAtTime(500, t0);
+    band.frequency.exponentialRampToValueAtTime(2200, tReady);
+    const airGain = ctx.createGain();
+    airGain.gain.setValueAtTime(0, t0);
+    airGain.gain.linearRampToValueAtTime(0.05, tReady);
+    airGain.gain.linearRampToValueAtTime(0.007, tWhisper);
+    air.connect(band);
+    band.connect(airGain);
+    airGain.connect(out);
+
+    // Tono que sube, con trémolo: trem = 0,825 ± 0,175 (35 % de profundidad)
+    const tone = ctx.createOscillator();
+    tone.type = 'triangle';
+    tone.frequency.setValueAtTime(196, t0);
+    tone.frequency.exponentialRampToValueAtTime(392, tReady);
+    const low = ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.setValueAtTime(1100, t0);
+    const toneGain = ctx.createGain();
+    toneGain.gain.setValueAtTime(0, t0);
+    toneGain.gain.linearRampToValueAtTime(0.045, t0 + 0.12);
+    toneGain.gain.setValueAtTime(0.045, tReady);
+    toneGain.gain.linearRampToValueAtTime(0.005, tWhisper);
+    const trem = ctx.createGain();
+    trem.gain.setValueAtTime(0.825, t0);
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(5, t0);
+    lfo.frequency.linearRampToValueAtTime(12, tReady);
+    lfo.frequency.linearRampToValueAtTime(3, tWhisper);
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(0.175, t0);
+    lfo.connect(depth);
+    depth.connect(trem.gain);
+    tone.connect(low);
+    low.connect(toneGain);
+    toneGain.connect(trem);
+    trem.connect(out);
+
+    // Lista: el clic, dentro de la misma voz (se cancela con ella)
+    const clickEnv = ctx.createGain();
+    clickEnv.gain.setValueAtTime(0.0001, tReady);
+    clickEnv.gain.exponentialRampToValueAtTime(0.07, tReady + 0.004);
+    clickEnv.gain.exponentialRampToValueAtTime(0.0001, tReady + 0.004 + 0.22);
+    clickEnv.connect(out);
+    const clicks = [1568, 2349].map((f) => {
+        const o = ctx.createOscillator();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, tReady);
+        o.connect(clickEnv);
+        o.start(tReady);
+        o.stop(tReady + 0.25);
+        return o;
+    });
+
+    air.start(t0, sfxRandom() * Math.max(0, air.buffer.duration - 0.1));
+    tone.start(t0);
+    lfo.start(t0);
+    smashChargeVoices[side] = { sources: [air, tone, lfo, ...clicks], out, unduck };
+}
+
+/**
+ * Corta la carga de un lado: fundido de 50 ms, para todas sus fuentes
+ * (también el clic si aún no había sonado) y la música vuelve en 0,3 s.
+ * @param {'p1'|'p2'} side
+ */
+function stopSmashChargeVoice(side) {
+    const voice = smashChargeVoices[side];
+    if (!voice) return;
+    smashChargeVoices[side] = null;
+    voice.unduck();
+    if (!voice.out) return;
+    const ctx = getAudioContext();
+    const t = ctx.currentTime;
+    voice.out.gain.cancelScheduledValues(t);
+    voice.out.gain.setValueAtTime(voice.out.gain.value, t);
+    voice.out.gain.linearRampToValueAtTime(0, t + 0.05);
+    for (const src of voice.sources) {
+        try { src.stop(t + 0.06); } catch (err) { /* ya parada */ }
+    }
+}
 
 /** @typedef {{ x?: number, speedRatio?: number }} HitInfo */
 
@@ -326,41 +450,16 @@ const soundEffects = {
         sfxVoice({ type: 'sine', freq: 2093, decay: 0.35, gain: 0.25, pan });
     },
     /**
-     * Carga del smash: con `true` arranca un zumbido que sube; con `false`
-     * lo apaga con un fundido de 40 ms.
+     * Carga del smash de un lado: con `true` arranca la voz que sube y se
+     * queda en un susurro (startSmashChargeVoice); con `false` la corta.
      * @param {boolean} on
      * @param {'p1'|'p2'} side
      */
     smashCharge: (on, side) => {
         if (on) {
-            if (smashChargeVoice || !sfxActive()) return;
-            const ctx = getAudioContext();
-            const t0 = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(110, t0);
-            osc.frequency.exponentialRampToValueAtTime(330, t0 + 0.7);
-            const env = ctx.createGain();
-            env.gain.setValueAtTime(0.0001, t0);
-            env.gain.exponentialRampToValueAtTime(0.3, t0 + 0.05);
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(800, t0);
-            filter.frequency.exponentialRampToValueAtTime(2400, t0 + 0.7);
-            osc.connect(env);
-            env.connect(filter);
-            sfxOut(ctx, filter, 0, t0);
-            osc.start(t0);
-            smashChargeVoice = { osc, env };
-        } else if (smashChargeVoice) {
-            const ctx = getAudioContext();
-            const t = ctx.currentTime;
-            const { osc, env } = smashChargeVoice;
-            smashChargeVoice = null;
-            env.gain.cancelScheduledValues(t);
-            env.gain.setValueAtTime(Math.max(0.0001, env.gain.value), t);
-            env.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-            osc.stop(t + 0.05);
+            if (!smashChargeVoices[side]) startSmashChargeVoice(side);
+        } else {
+            stopSmashChargeVoice(side);
         }
     },
     /** La energía del smash está llena. */

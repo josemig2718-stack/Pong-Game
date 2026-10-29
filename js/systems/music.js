@@ -606,6 +606,28 @@ function musicDuck(db, holdMs, { attack = 0.08, release = 0.4 } = {}) {
 }
 
 /**
+ * Bajada mientras dure algo (la carga del smash): baja en `attack`
+ * segundos y se queda hasta llamar a la función que devuelve, que la
+ * quita con un fundido de `release`. Cuenta con las de musicDuck: manda
+ * la más fuerte. Sin música dinámica no hace nada (y la función tampoco).
+ * @param {number} db
+ * @param {{ attack?: number, release?: number }} [opts] segundos
+ * @returns {() => void} quita la bajada
+ */
+function musicDuckWhile(db, { attack = 0.08, release = 0.3 } = {}) {
+    if (!settings.dynamicMusic || db <= 0) return () => {};
+    const duck = { gain: musicDbGain(-db) };
+    musicDucks.push(duck);
+    musicDynRetarget(attack);
+    return () => {
+        const i = musicDucks.indexOf(duck);
+        if (i < 0) return;   // musicDuckReset() ya la quitó
+        musicDucks.splice(i, 1);
+        musicDynRetarget(release);
+    };
+}
+
+/**
  * Bajada sin tiempo (el punto de partido): se queda hasta que se pida 0.
  * Cuenta con las de musicDuck: manda la más fuerte.
  * @param {number} db 0 la quita
