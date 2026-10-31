@@ -47,11 +47,12 @@
  *   zoom?: number, dur?: number, ease?: string, delay?: number, fade?: number,
  *   text?: string, sub?: string, color?: string, radio?: boolean, auto?: number,
  *   alias?: string, line?: string, sfx?: string, after?: string,
- *   track?: string, loop?: boolean, from?: string[]|number, stop?: boolean,
+ *   track?: string, loop?: boolean, from?: string[]|number|number[], stop?: boolean,
  *   keep?: string[], on?: boolean, density?: number, amp?: number, dir?: number,
  *   lightning?: boolean, to?: string|number[], volleys?: number, gap?: number,
  *   x0?: number, x1?: number, left?: string, right?: string, count?: number,
- *   cx?: number, cy?: number, factor?: number,
+ *   leftName?: string, leftColor?: string, rightName?: string, rightColor?: string,
+ *   smash?: boolean, cx?: number, cy?: number, factor?: number,
  *   pairs?: { x: number, y: number, color: string }[]
  * }} CutsceneStep
  */
@@ -160,12 +161,6 @@ const CUTSCENE_BLOCKING = ['say', 'narrate', 'card', 'wait'];
 /** @type {CutsceneRun|null} La reproducción en curso. */
 let cutsceneRun = null;
 
-/** @type {Map<string, { img: HTMLImageElement, ok: boolean, promise: Promise<boolean> }>} */
-const cutsceneImages = new Map();
-/** @type {Map<string, HTMLCanvasElement>} Máscaras e imágenes teñidas, por "src|color". */
-const cutsceneTints = new Map();
-/** Color del tema con el que se tiñó la caché. */
-let cutsceneTintHex = null;
 
 // -----------------------------------------------------------------
 //  Utilidades
@@ -262,75 +257,8 @@ function cutsceneDom() {
 //  Imágenes
 // -----------------------------------------------------------------
 
-/**
- * Carga una imagen una sola vez. La promesa siempre se cumple: si la
- * imagen falla, avisa en consola y la escena sigue sin ella.
- * @param {string} src
- * @returns {Promise<boolean>}
- */
-function cutsceneLoad(src) {
-    let entry = cutsceneImages.get(src);
-    if (!entry) {
-        const img = new Image();
-        const e = { img, ok: false, promise: null };
-        e.promise = new Promise((resolve) => {
-            img.onload = () => { e.ok = true; resolve(true); };
-            img.onerror = () => {
-                console.warn('Escena: no se pudo cargar', src);
-                resolve(false);
-            };
-        });
-        img.src = src;
-        cutsceneImages.set(src, e);
-        entry = e;
-    }
-    return entry.promise;
-}
-
-/**
- * La imagen si ya cargó (si no, pide cargarla y devuelve null).
- * @param {string} src
- * @returns {HTMLImageElement|null}
- */
-function cutsceneImage(src) {
-    const entry = cutsceneImages.get(src);
-    if (!entry) {
-        cutsceneLoad(src);
-        return null;
-    }
-    return entry.ok ? entry.img : null;
-}
-
-/**
- * La imagen pintada de un color, conservando su forma: canvas auxiliar,
- * fillRect del color y 'destination-in' con la imagen. En caché por
- * imagen y color; se vacía al cambiar el tema.
- * @param {string} src
- * @param {string} color
- * @returns {HTMLCanvasElement|null}
- */
-function cutsceneTinted(src, color) {
-    const theme = currentThemeHex();
-    if (theme !== cutsceneTintHex) {
-        cutsceneTints.clear();
-        cutsceneTintHex = theme;
-    }
-    const key = src + '|' + color;
-    const hit = cutsceneTints.get(key);
-    if (hit) return hit;
-    const img = cutsceneImage(src);
-    if (!img) return null;
-    const c = document.createElement('canvas');
-    c.width = img.naturalWidth;
-    c.height = img.naturalHeight;
-    const x = c.getContext('2d');
-    x.fillStyle = color;
-    x.fillRect(0, 0, c.width, c.height);
-    x.globalCompositeOperation = 'destination-in';
-    x.drawImage(img, 0, 0);
-    cutsceneTints.set(key, c);
-    return c;
-}
+// Las imágenes y su tinte viven en vfx/tint.js (artLoad, artImage,
+// tintedMask): los comparten el prólogo, la torre y la arena de Chemi.
 
 /**
  * Las imágenes que usa una escena (fondos, sprites, retratos y sus máscaras).
@@ -410,7 +338,7 @@ function cutsceneActorBox(cs, a) {
 function cutsceneDrawSprite(ctx, cs, id, x, y, s, flip, alpha, tint = null, scaleY = 1) {
     const info = cutsceneActorInfo(cs, id);
     if (!info || alpha <= 0) return;
-    const img = tint ? cutsceneTinted(info.src, tint) : cutsceneImage(info.src);
+    const img = tint ? tintedMask(info.src, tint) : artImage(info.src);
     if (!img) return;
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -421,7 +349,7 @@ function cutsceneDrawSprite(ctx, cs, id, x, y, s, flip, alpha, tint = null, scal
     const dy = -info.ay * s;
     ctx.drawImage(img, dx, dy, info.w * s, info.h * s);
     if (!tint && info.theme) {
-        const mask = cutsceneTinted(info.theme, cutsceneColor('theme'));
+        const mask = tintedMask(info.theme, cutsceneColor('theme'));
         if (mask) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.drawImage(mask, dx, dy, info.w * s, info.h * s);
@@ -467,12 +395,12 @@ function cutsceneDrawActor(ctx, cs, a) {
  */
 function cutsceneDrawBackground(ctx, cs, id, alpha) {
     const info = cs.assets && cs.assets.backgrounds[id];
-    const img = info && cutsceneImage(info.src);
+    const img = info && artImage(info.src);
     if (!img || alpha <= 0) return;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.drawImage(img, 0, 0, CUTSCENE_W, CUTSCENE_H);
-    const mask = info.theme && cutsceneTinted(info.theme, cutsceneColor('theme'));
+    const mask = info.theme && tintedMask(info.theme, cutsceneColor('theme'));
     if (mask) {
         ctx.globalCompositeOperation = 'lighter';
         ctx.drawImage(mask, 0, 0, CUTSCENE_W, CUTSCENE_H);
@@ -807,7 +735,7 @@ function cutsceneStartScene(cs, idx) {
     cs.sceneIdx = idx;
     cs.stepIdx = 0;
     cs.sceneT0 = cs.t;
-    cutsceneSceneSources(cs, idx + 1).forEach(cutsceneLoad);
+    cutsceneSceneSources(cs, idx + 1).forEach(artLoad);
 }
 
 // -----------------------------------------------------------------
@@ -825,14 +753,14 @@ function cutsceneDrawPortrait(cs, id) {
     const pctx = cv.getContext('2d');
     pctx.clearRect(0, 0, cv.width, cv.height);
     const info = cutsceneActorInfo(cs, id);
-    const img = info && cutsceneImage(info.src);
+    const img = info && artImage(info.src);
     if (!img) return false;
     const sh = img.naturalHeight * 0.42;
     const sw = sh * cv.width / cv.height;
     const sx = (img.naturalWidth - sw) / 2;
     const sy = img.naturalHeight * 0.03;
     pctx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
-    const mask = info.theme && cutsceneTinted(info.theme, cutsceneColor('theme'));
+    const mask = info.theme && tintedMask(info.theme, cutsceneColor('theme'));
     if (mask) {
         const r = mask.width / img.naturalWidth;
         pctx.globalCompositeOperation = 'lighter';
@@ -1324,14 +1252,14 @@ function playCutscene(def, { onEnd } = {}) {
     const first = new Set();
     for (let i = 0; i < CUTSCENE_PRELOAD_SCENES; i++) cutsceneSceneSources(cs, i).forEach((s) => first.add(s));
     cs.loadTotal = first.size;
-    const loads = [...first].map((src) => cutsceneLoad(src).then(() => { cs.loadDone++; }));
+    const loads = [...first].map((src) => artLoad(src).then(() => { cs.loadDone++; }));
     const timeout = new Promise((resolve) => setTimeout(resolve, CUTSCENE_LOAD_TIMEOUT_MS));
     Promise.race([Promise.all(loads), timeout]).then(() => {
         if (cutsceneRun !== cs || cs.phase !== 'loading') return;
         dom.section.classList.remove('is-loading');
         cs.phase = 'playing';
         cutsceneStartScene(cs, 0);
-        cutsceneSceneSources(cs, CUTSCENE_PRELOAD_SCENES).forEach(cutsceneLoad);
+        cutsceneSceneSources(cs, CUTSCENE_PRELOAD_SCENES).forEach(artLoad);
     });
 
     cs.raf = requestAnimationFrame(cutsceneFrame);
@@ -1348,7 +1276,7 @@ function stopCutscene() {
     for (const f of cs.fx) if (f.end) f.end(cs, false);
     if (cs.unduck) cs.unduck();
     cutsceneResetDom();
-    cutsceneTints.clear();
+    tintCacheClear();
 }
 
 /** ¿Hay una escena en curso? */

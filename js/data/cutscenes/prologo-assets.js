@@ -1,9 +1,10 @@
 /**
- * data/cutscenes/prologo-assets.js — GENERADO por design/campana/generadores/build_prologo.py.
- * No editar a mano: vuelve a ejecutar el generador.
+ * data/cutscenes/prologo-assets.js — GENERADO por design/campana/generadores/build_prologo.py
+ * y build5.py. No editar a mano: vuelve a ejecutar los generadores.
  *
  * Unidades de escena (960×540). w/h = tamaño del dibujo; ax/ay = punto de apoyo (los pies)
  * medido desde la esquina superior izquierda. theme = máscara que se tiñe con el color del tema.
+ * Los busto_* son los bustos compartidos de assets/campaign/bustos/ (fichas, VS y diálogos).
  */
 'use strict';
 
@@ -67,6 +68,55 @@ const PROLOGO_ASSETS = {
       "h": 540,
       "desc": "Escalinata de la torre bajo la lluvia (escena 12)",
       "theme": null
+    },
+    "plaza_libre": {
+      "src": "assets/campaign/prologo/fondos/plaza_libre.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Plaza con el árbol grande, ciudad libre (escenas 3, 4, 5, 6)",
+      "theme": "assets/campaign/prologo/fondos/plaza_libre_tema.webp"
+    },
+    "plaza_sindicato": {
+      "src": "assets/campaign/prologo/fondos/plaza_sindicato.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "La misma plaza bajo el Sindicato (escena 12)",
+      "theme": null
+    },
+    "recepcion": {
+      "src": "assets/campaign/prologo/fondos/recepcion.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Recepción de la Torre Hachepe (escenas 10 y 17)",
+      "theme": "assets/campaign/prologo/fondos/recepcion_tema.webp"
+    },
+    "radio_libre": {
+      "src": "assets/campaign/prologo/fondos/radio_libre.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Estudio de Barks Radio con la ciudad encendida (escena 10)",
+      "theme": "assets/campaign/prologo/fondos/radio_libre_tema.webp"
+    },
+    "radio_sindicato": {
+      "src": "assets/campaign/prologo/fondos/radio_sindicato.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "El estudio con la ciudad apagada (escena 10)",
+      "theme": null
+    },
+    "trono": {
+      "src": "assets/campaign/prologo/fondos/trono.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Último piso con el ventanal (escena 10)",
+      "theme": "assets/campaign/prologo/fondos/trono_tema.webp"
+    },
+    "cancha": {
+      "src": "assets/campaign/prologo/fondos/cancha.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Cancha vista desde arriba para la ley de la paleta (escena 8)",
+      "theme": "assets/campaign/prologo/fondos/cancha_tema.webp"
     }
   },
   "actors": {
@@ -176,15 +226,6 @@ const PROLOGO_ASSETS = {
       "ax": 100.5,
       "ay": 242.0,
       "desc": "Yisus alzando la paleta",
-      "theme": null
-    },
-    "creador": {
-      "src": "assets/campaign/prologo/actores/creador.webp",
-      "w": 201.0,
-      "h": 258.0,
-      "ax": 100.5,
-      "ay": 227.0,
-      "desc": "El Creador (silueta de la escena 4)",
       "theme": null
     },
     "desconocido": {
@@ -492,6 +533,213 @@ const PROLOGO_ASSETS = {
       "ay": 63.0,
       "desc": "La paleta del padre del niño",
       "theme": null
+    },
+    "desconocido_sentado": {
+      "src": "assets/campaign/prologo/actores/desconocido_sentado.webp",
+      "w": 191.0,
+      "h": 248.5,
+      "desc": "Sentado contra el árbol, cabeza gacha (escena 3)",
+      "theme": "assets/campaign/prologo/actores/desconocido_sentado_tema.webp",
+      "ax": 95.5,
+      "ay": 217.5
+    },
+    "desconocido_tumbado": {
+      "src": "assets/campaign/prologo/actores/desconocido_tumbado.webp",
+      "w": 190.0,
+      "h": 247.5,
+      "desc": "Inconsciente contra el árbol (escenas 6 y 12)",
+      "theme": "assets/campaign/prologo/actores/desconocido_tumbado_tema.webp",
+      "ax": 95.0,
+      "ay": 216.5
+    },
+    "desconocido_cayendo": {
+      "src": "assets/campaign/prologo/actores/desconocido_cayendo.webp",
+      "w": 243.5,
+      "h": 195.5,
+      "desc": "Despedido por la explosión (escena 6)",
+      "theme": "assets/campaign/prologo/actores/desconocido_cayendo_tema.webp",
+      "ax": 115.0,
+      "ay": 235.5
+    },
+    "alcalde_sudando": {
+      "src": "assets/campaign/prologo/actores/alcalde_sudando.webp",
+      "w": 66.0,
+      "h": 172.5,
+      "desc": "El alcalde con la paleta, sudando (escena 8)",
+      "theme": null,
+      "ax": 26.0,
+      "ay": 169.0
+    },
+    "alcalde_rodillas": {
+      "src": "assets/campaign/prologo/actores/alcalde_rodillas.webp",
+      "w": 91.0,
+      "h": 154.0,
+      "desc": "De rodillas con media paleta (escena 8)",
+      "theme": null,
+      "ax": 47.0,
+      "ay": 150.5
+    },
+    "alcalde_llave": {
+      "src": "assets/campaign/prologo/actores/alcalde_llave.webp",
+      "w": 99.5,
+      "h": 172.5,
+      "desc": "Entregando la llave (escena 9)",
+      "theme": null,
+      "ax": 26.0,
+      "ay": 169.0
+    },
+    "llave": {
+      "src": "assets/campaign/prologo/actores/llave.webp",
+      "w": 186.5,
+      "h": 73.0,
+      "desc": "La llave de la torre en primer plano (escena 9)",
+      "theme": null,
+      "ax": 92.5,
+      "ay": 76.5
+    },
+    "media_paleta": {
+      "src": "assets/campaign/prologo/actores/media_paleta.webp",
+      "w": 37.0,
+      "h": 51.0,
+      "desc": "La paleta partida del alcalde (escena 8)",
+      "theme": null,
+      "ax": 38.0,
+      "ay": 56.0
+    },
+    "mostrador": {
+      "src": "assets/campaign/prologo/actores/mostrador.webp",
+      "w": 320.0,
+      "h": 160.0,
+      "desc": "Mostrador de la recepción: va delante de Chemi (escenas 10 y 17)",
+      "theme": null,
+      "ax": 159.0,
+      "ay": 159.0
+    },
+    "maquina_arcade": {
+      "src": "assets/campaign/prologo/actores/maquina_arcade.webp",
+      "w": 90.0,
+      "h": 168.0,
+      "desc": "Máquina del Arcade (escena 10)",
+      "theme": "assets/campaign/prologo/actores/maquina_arcade_tema.webp",
+      "ax": 45.0,
+      "ay": 167.0
+    },
+    "alcancia": {
+      "src": "assets/campaign/prologo/actores/alcancia.webp",
+      "w": 66.0,
+      "h": 46.0,
+      "desc": "Alcancía dorada del Sindicato (escena 10)",
+      "theme": null,
+      "ax": 34.0,
+      "ay": 43.0
+    },
+    "dani_libreta": {
+      "src": "assets/campaign/prologo/actores/dani_libreta.webp",
+      "w": 201.0,
+      "h": 267.5,
+      "desc": "Dani con la libreta de cuotas (escena 10)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 236.5
+    },
+    "fano_movil": {
+      "src": "assets/campaign/prologo/actores/fano_movil.webp",
+      "w": 201.0,
+      "h": 258.0,
+      "desc": "Fano con Chayipiti en el móvil (escena 10)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 227.0
+    },
+    "yisus_silueta": {
+      "src": "assets/campaign/prologo/actores/yisus_silueta.webp",
+      "w": 201.0,
+      "h": 273.0,
+      "desc": "Yisus a contraluz frente al ventanal (escena 10)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 242.0
+    },
+    "chemi_silueta": {
+      "src": "assets/campaign/prologo/actores/chemi_silueta.webp",
+      "w": 201.0,
+      "h": 269.0,
+      "desc": "Chemi a contraluz tras el cristal (escena 17)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 238.0
+    },
+    "busto_chemi": {
+      "src": "assets/campaign/bustos/chemi.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de chemi",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_dani": {
+      "src": "assets/campaign/bustos/dani.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de dani",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_mario": {
+      "src": "assets/campaign/bustos/mario.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de mario",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_valen": {
+      "src": "assets/campaign/bustos/valen.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de valen",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_fano": {
+      "src": "assets/campaign/bustos/fano.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de fano",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_yisus": {
+      "src": "assets/campaign/bustos/yisus.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de yisus",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_desconocido": {
+      "src": "assets/campaign/bustos/desconocido.webp",
+      "w": 120.0,
+      "h": 120.0,
+      "desc": "Busto de desconocido",
+      "theme": "assets/campaign/bustos/desconocido_tema.webp",
+      "ax": 60.0,
+      "ay": 120.0
+    },
+    "busto_alcalde": {
+      "src": "assets/campaign/bustos/alcalde.webp",
+      "w": 80.0,
+      "h": 80.0,
+      "desc": "Busto de alcalde",
+      "theme": null,
+      "ax": 40.0,
+      "ay": 80.0
     }
   }
 };

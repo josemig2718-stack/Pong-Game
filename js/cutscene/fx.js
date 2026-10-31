@@ -300,7 +300,7 @@ const CUTSCENE_FX = {
             render(ctx, c) {
                 if (!info) return;
                 const s = step.s || 1;
-                const white = cutsceneTinted(info.src, '#FFFFFF');
+                const white = tintedMask(info.src, '#FFFFFF');
                 const left = step.x - info.ax * s;
                 const top = step.y - info.ay * s;
                 if (white) ctx.drawImage(white, left, top, info.w * s, info.h * s);
