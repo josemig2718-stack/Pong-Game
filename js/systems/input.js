@@ -29,6 +29,12 @@ function handleKeyDown(e) {
         return;
     }
 
+    // Durante una escena las teclas son suyas: nada llega al juego
+    if (cutscenePlaying()) {
+        cutsceneKey(e, true);
+        return;
+    }
+
     keysDown.add(e.code);
 
     // ESC cierra las Novedades (un diálogo encima del menú)
@@ -53,6 +59,7 @@ function initInput() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', (e) => {
         keysDown.delete(e.code);
+        if (cutscenePlaying()) cutsceneKey(e, false);
     });
 }
 

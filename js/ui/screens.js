@@ -53,7 +53,8 @@ function showScreen(screenId) {
     }
     // Lo que se escuchaba en la Rockola no sale de la tienda
     if (screenId !== 'shop-menu') endShopListen();
-    const track = screenMusic(screenId);
+    // Una escena que empieza al entrar (el prólogo) pone su propia música
+    const track = cutscenePlaying() ? null : screenMusic(screenId);
     if (track) musicPlay(track);
     soundEffects.uiClick();
 }

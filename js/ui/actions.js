@@ -45,6 +45,10 @@ const CLICK_ACTIONS = {
     nextCampaignLevel:      () => nextCampaignLevel(),
     closeFinale:            () => closeFinale(),
 
+    // Escenas (el prólogo)
+    cutsceneAdvance:        () => cutsceneAdvance(),
+    cutsceneSkip:           () => cutsceneSkip(),
+
     // Configuración, controles y estadísticas
     updateWinningScore:     (el) => updateWinningScore(Number(el.dataset.winningScore)),
     updateBallSpeed:        (el) => updateBallSpeed(Number(el.dataset.ballSpeed)),

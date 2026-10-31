@@ -4456,6 +4456,249 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 
 /* ==================================================================
+   Escenas (el prólogo de la campaña, cutscene/player.js)
+   La sección recibe del reproductor data-layout (wide | band | tall) y
+   el rectángulo de la escena en px: --cs-x, --cs-y, --cs-w, --cs-h.
+   ================================================================== */
+.screen.cutscene {
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    z-index: 80;
+    cursor: pointer;
+    --cs-x: 0px; --cs-y: 0px; --cs-w: 100vw; --cs-h: 56vw;
+    --cs-m: clamp(10px, calc(var(--cs-h) * 0.03), 20px);
+}
+.screen.cutscene::before, .screen.cutscene::after { display: none; }
+.cutscene__stage { position: absolute; inset: 0; overflow: hidden; }
+.cutscene__canvas { display: block; width: 100%; height: 100%; }
+.cutscene__rest { visibility: hidden; }
+
+/* Escaneo CRT y viñeta sobre la escena */
+.cutscene__crt {
+    position: absolute;
+    left: var(--cs-x); top: var(--cs-y); width: var(--cs-w); height: var(--cs-h);
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px);
+    box-shadow: inset 0 0 calc(var(--cs-h) * 0.22) rgba(0, 0, 0, .7);
+    pointer-events: none;
+}
+
+/* Barra de carga fina, del color del tema */
+.cutscene-loading {
+    position: absolute; left: 0; right: 0; top: 0; height: 3px;
+    opacity: 0; transition: opacity .3s ease; pointer-events: none;
+}
+.cutscene-loading i {
+    display: block; height: 100%; width: calc(var(--p, 0) * 100%);
+    background: var(--primary); box-shadow: 0 0 10px var(--primary);
+    transition: width .2s linear;
+}
+.cutscene.is-loading .cutscene-loading { opacity: 1; }
+
+/* Narración: franjas de cine (12 % del alto) y el texto en la de abajo */
+.cutscene-narration { position: absolute; inset: 0; pointer-events: none; }
+.cutscene-narration__bar {
+    position: absolute; left: var(--cs-x); width: var(--cs-w); height: calc(var(--cs-h) * 0.12);
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .4s ease;
+}
+.cutscene-narration__bar--top { top: var(--cs-y); transform: translateY(-101%); }
+.cutscene-narration__bar--bottom { top: calc(var(--cs-y) + var(--cs-h) * 0.88); transform: translateY(101%); }
+.cutscene-narration.is-on .cutscene-narration__bar { transform: none; }
+.cutscene-narration__text {
+    margin: 0; padding: 0 6%;
+    font-size: clamp(9px, calc(var(--cs-h) * 0.021), 15px); line-height: 1.7;
+    color: var(--text); text-align: center;
+    opacity: 0; transition: opacity .25s ease .2s;
+}
+.cutscene-narration.is-on .cutscene-narration__text { opacity: 1; }
+/* Con la escena recortada al alto del canvas (vertical) caben menos letras */
+.cutscene[data-layout="tall"] .cutscene-narration__text { font-size: 9px; padding: 0 16px; }
+
+/* Título de neón: tres cortes al entrar, brillo y fundido al salir */
+.cutscene-title {
+    position: absolute; left: var(--cs-x); top: var(--cs-y); width: var(--cs-w); height: var(--cs-h);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0; font-size: clamp(22px, calc(var(--cs-w) * 0.06), 68px);
+    color: var(--c, var(--primary));
+    text-shadow: 0 0 12px var(--c, var(--primary)), 0 0 42px var(--c, var(--primary)), 4px 4px 0 rgba(0, 0, 0, .6);
+    opacity: 0; pointer-events: none;
+}
+.cutscene-title.is-on { animation: cs-title-in .4s linear both, cs-title-out .8s ease-in calc(var(--dur, 4s) - .8s) forwards; }
+.cutscene.is-reduced .cutscene-title.is-on { animation: cs-fade-in .4s ease both, cs-title-out .8s ease-in calc(var(--dur, 4s) - .8s) forwards; }
+@keyframes cs-title-in {
+    0%, 14% { opacity: 1; } 15%, 34% { opacity: 0; } 35%, 54% { opacity: 1; }
+    55%, 74% { opacity: .15; } 75%, 100% { opacity: 1; }
+}
+@keyframes cs-title-out { to { opacity: 0; } }
+@keyframes cs-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Encendido de televisor: una línea blanca que se abre en la escena */
+.cutscene-crt {
+    position: absolute; left: var(--cs-x); top: var(--cs-y); width: var(--cs-w); height: var(--cs-h);
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.cutscene-crt i { display: block; width: 2px; height: 2px; background: #fff; opacity: 0; box-shadow: 0 0 30px rgba(255, 255, 255, .9); }
+.cutscene-crt.is-on i { animation: cs-crt-on var(--dur, 1s) cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes cs-crt-on {
+    0%   { width: 2px; height: 2px; opacity: 1; }
+    30%  { width: 100%; height: 2px; opacity: 1; background: #fff; }
+    100% { width: 100%; height: 100%; opacity: 0; background: rgba(var(--primary-rgb), .6); }
+}
+.cutscene.is-reduced .cutscene-crt.is-on i { width: 100%; height: 100%; animation: cs-title-out var(--dur, 1s) ease forwards; }
+
+/* Apagado: la imagen se aplasta en una línea y luego en un punto */
+.cutscene__canvas.is-off { animation: cs-crt-off var(--dur, 1s) cubic-bezier(.6, 0, .9, .2) forwards; }
+@keyframes cs-crt-off {
+    0%   { transform: none; filter: none; opacity: 1; }
+    45%  { transform: scale(1, .004); filter: brightness(4); opacity: 1; }
+    85%  { transform: scale(.02, .004); filter: brightness(6); opacity: 1; }
+    100% { transform: scale(0, 0); opacity: 0; }
+}
+.cutscene.is-reduced .cutscene__canvas.is-off { animation: cs-title-out var(--dur, 1s) ease forwards; }
+
+/* Tarjeta del capítulo, sobre negro */
+.cutscene-chapter {
+    position: absolute; inset: 0; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    background: #000; text-align: center; padding: 24px;
+    opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s;
+}
+.cutscene-chapter.is-on { opacity: 1; visibility: visible; transition: opacity .6s ease; }
+.cutscene-chapter__title {
+    margin: 0; font-size: clamp(20px, 4.2vw, 40px); color: var(--primary);
+    text-shadow: 0 0 14px rgba(var(--primary-rgb), .8), 0 0 46px rgba(var(--primary-rgb), .5);
+}
+.cutscene-chapter__sub { margin: 0; font-size: clamp(14px, 2vw, 20px); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+
+/* --- Diálogo, tarjeta y botones -------------------------------------
+   wide y band: encima de la escena (el diálogo arriba, sobre el cielo).
+   tall: debajo de la escena, a todo el ancho. */
+.cutscene__dock { position: absolute; inset: 0; pointer-events: none; }
+.cutscene__slot { display: contents; }
+.cutscene-dialogue, .cutscene-card, .cutscene__buttons > * { pointer-events: auto; }
+
+.cutscene-dialogue {
+    --c: var(--primary);
+    position: absolute;
+    top: calc(var(--cs-y) + var(--cs-m));
+    left: calc(var(--cs-x) + max(var(--cs-m), (var(--cs-w) - 980px) / 2));
+    right: calc(100% - var(--cs-x) - var(--cs-w) + max(var(--cs-m), (var(--cs-w) - 980px) / 2));
+    display: flex; gap: 14px; align-items: stretch;
+    padding: clamp(8px, calc(var(--cs-h) * 0.018), 14px);
+    border-radius: 10px;
+    background: rgba(14, 17, 26, .92);
+    border-color: rgba(255, 255, 255, .1);
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
+}
+.cutscene-dialogue.is-on { opacity: 1; visibility: visible; transform: none; transition: opacity .2s ease, transform .2s ease; }
+.cutscene-dialogue.brk::before, .cutscene-dialogue.brk::after { border-color: var(--c); }
+.cutscene-dialogue__portrait {
+    display: none; flex: none; border-radius: 6px; background: #0E111A;
+    height: clamp(52px, calc(var(--cs-h) * 0.13), 96px); aspect-ratio: 110 / 120; width: auto;
+}
+.cutscene-dialogue.has-portrait .cutscene-dialogue__portrait { display: block; }
+.cutscene-dialogue__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.cutscene-dialogue__name {
+    font-size: clamp(8px, calc(var(--cs-h) * 0.016), 12px);
+    color: var(--c); text-shadow: 0 0 8px var(--c);
+}
+.cutscene-dialogue__text {
+    margin: 0; font-size: clamp(10px, calc(var(--cs-h) * 0.021), 15px); line-height: 1.8; color: var(--text);
+}
+.cutscene-dialogue__more {
+    align-self: flex-end; font-size: 11px; color: var(--c);
+    visibility: hidden; animation: cs-blink 1s steps(1) infinite;
+}
+.cutscene-dialogue.is-done .cutscene-dialogue__more { visibility: visible; }
+@keyframes cs-blink { 50% { opacity: 0; } }
+
+/* Altavoz: borde del color, texto que tiembla y escaneo más marcado */
+.cutscene-dialogue.is-radio { border-color: var(--c); }
+.cutscene-dialogue.is-radio::after { width: auto; height: auto; inset: 0; border: 0; border-radius: 10px;
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .07) 0 1px, transparent 1px 3px); }
+.cutscene-dialogue.is-radio .cutscene-dialogue__text { animation: cs-jitter .18s steps(2) infinite; }
+.cutscene.is-reduced .cutscene-dialogue.is-radio .cutscene-dialogue__text,
+.cutscene.is-reduced .cutscene-dialogue__more { animation: none; }
+@keyframes cs-jitter { 0% { transform: translate(.5px, 0); } 50% { transform: translate(-.5px, .5px); } 100% { transform: translate(0, -.5px); } }
+
+/* Tarjeta de presentación: entra desde la izquierda en 0,25 s */
+.cutscene-card {
+    --c: var(--primary);
+    position: absolute;
+    left: calc(var(--cs-x) + var(--cs-m) * 1.5);
+    top: calc(var(--cs-y) + var(--cs-h) * 0.3);
+    width: min(400px, calc(var(--cs-w) * 0.34));
+    display: flex; flex-direction: column; gap: 10px;
+    padding: clamp(12px, calc(var(--cs-h) * 0.03), 22px);
+    background: rgba(14, 17, 26, .94);
+    border-color: rgba(255, 255, 255, .1);
+    opacity: 0; visibility: hidden; transform: translateX(-110%);
+}
+.cutscene-card.is-on { opacity: 1; visibility: visible; transform: none; transition: transform .25s cubic-bezier(.2, .8, .3, 1), opacity .15s ease; }
+.cutscene-card.brk::before, .cutscene-card.brk::after { border-color: var(--c); }
+.cutscene-card__name {
+    font-size: clamp(14px, calc(var(--cs-h) * 0.036), 26px); color: var(--c);
+    text-shadow: 0 0 10px var(--c), 0 0 28px var(--c);
+}
+.cutscene-card__alias { color: var(--text); opacity: .75; }
+.cutscene-card__line { margin: 0; font-size: clamp(12px, calc(var(--cs-h) * 0.022), 16px); line-height: 1.5; color: rgba(232, 236, 244, .88); }
+
+/* SALTAR: abajo a la derecha de la escena, con el anillo que se llena */
+.cutscene__buttons { display: contents; }
+.btn.cutscene-skip {
+    position: absolute;
+    right: calc(100% - var(--cs-x) - var(--cs-w) + var(--cs-m));
+    bottom: calc(100% - var(--cs-y) - var(--cs-h) + var(--cs-m));
+    width: auto; min-height: 44px; padding: 0 16px 0 10px; gap: 10px;
+    font-size: 9px; border-radius: 999px;
+    background: rgba(14, 17, 26, .85); border-color: rgba(255, 255, 255, .2); box-shadow: none;
+}
+.cutscene-skip__ring { width: 26px; height: 26px; transform: rotate(-90deg); flex: none; }
+.cutscene-skip__ring circle { fill: none; stroke: rgba(255, 255, 255, .18); stroke-width: 3; }
+.cutscene-skip__ring .cutscene-skip__fill { stroke: var(--primary); stroke-dasharray: 100; stroke-dashoffset: 100; }
+.btn.cutscene-next { display: none; }
+
+/* Móvil horizontal: SALTAR redondo, centrado en la banda de la derecha */
+.cutscene[data-layout="band"] .btn.cutscene-skip {
+    right: auto; bottom: auto;
+    left: calc(var(--cs-x) + var(--cs-w) + (var(--cs-x) - 60px) / 2);
+    top: calc(50% - 30px);
+    width: 60px; height: 60px; min-height: 0; padding: 0;
+    flex-direction: column; justify-content: center; gap: 4px; font-size: 7px;
+}
+.cutscene[data-layout="band"] .cutscene-skip__ring { width: 22px; height: 22px; }
+
+/* Vertical: escena arriba (cover), diálogo y botones debajo */
+.screen.cutscene[data-layout="tall"] { align-items: stretch; }
+.cutscene[data-layout="tall"] .cutscene__stage {
+    position: relative; flex: none;
+    width: 100%; height: min(100vw, 52vh);
+    margin-top: max(12px, env(safe-area-inset-top), 6vh);
+}
+.cutscene[data-layout="tall"] .cutscene__dock {
+    position: static; flex: 1; min-height: 0; pointer-events: auto;
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 18px max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.cutscene[data-layout="tall"] .cutscene__slot { display: grid; }
+.cutscene[data-layout="tall"] .cutscene__slot > * { grid-area: 1 / 1; position: relative; inset: auto; width: auto; }
+.cutscene[data-layout="tall"] .cutscene-dialogue { flex-direction: row; padding: 14px; }
+.cutscene[data-layout="tall"] .cutscene-dialogue__portrait { height: 72px; }
+.cutscene[data-layout="tall"] .cutscene-dialogue__name { font-size: 10px; }
+.cutscene[data-layout="tall"] .cutscene-dialogue__text { font-size: 12px; line-height: 1.9; }
+.cutscene[data-layout="tall"] .cutscene-card__name { font-size: 20px; }
+.cutscene[data-layout="tall"] .cutscene-card__line { font-size: 14px; }
+.cutscene[data-layout="tall"] .cutscene__buttons { display: flex; gap: 10px; margin-top: auto; }
+.cutscene[data-layout="tall"] .btn.cutscene-skip {
+    position: static; flex: 1; justify-content: center; min-height: 52px; font-size: 10px;
+    border-radius: 8px; background: var(--surface-2); box-shadow: 0 4px 0 #020305;
+}
+.cutscene[data-layout="tall"] .btn.cutscene-next { display: flex; flex: 2; justify-content: center; min-height: 52px; font-size: 10px; }
+
+/* ==================================================================
    Zonas táctiles: con el dedo (puntero grueso) todo control mide al
    menos 44 px; con ratón se conserva el tamaño del diseño. Los nodos
    del carrusel amplían su zona con ::after (::before es la línea).
