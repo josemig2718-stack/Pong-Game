@@ -727,7 +727,7 @@ function cutsceneRunStep(cs, step) {
             break;
         case 'music':
             if (step.stop) musicStop({ fade: step.fade ?? 0.5 });
-            else if (MUSIC_TRACKS[step.track]) musicPlay(step.track, { fade: step.fade ?? 0.5 });
+            else if (MUSIC_TRACKS[step.track]) musicPlay(step.track, { fade: step.fade ?? 0.5, from: /** @type {number} */ (step.from) });
             break;
         case 'sfx':
             if (step.stop) cutsceneStopLoop(cs, step.name);
@@ -850,6 +850,7 @@ function cutsceneStartText(cs, step) {
         d.dialogue.classList.remove('is-done');
         d.dialogue.classList.add('is-on');
         if (b.portrait && cutsceneDrawPortrait(cs, b.portrait)) b.portrait = null;
+        if (step.radio) soundEffects.radioClick();
     }
     cutsceneShowLine(b, 0);
     if (!cs.unduck && musicCurrent()) cs.unduck = musicDuckWhile(3);

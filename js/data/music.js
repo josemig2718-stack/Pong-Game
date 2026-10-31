@@ -2,7 +2,8 @@
  * data/music.js
  * ------------------------------------------------------------------
  * Catálogo de las pistas de música y sus puntos de bucle (copiados de
- * design/actualizacion-v2/musica/bucles.json). El archivo empieza en 0:
+ * design/actualizacion-v2/musica/bucles.json y, las del prólogo, de
+ * design/campana/prologo/musica/bucles.json). El archivo empieza en 0:
  * la intro suena una vez y luego se repite [loopStart, loopEnd]. El
  * fundido del empalme ya va dentro del MP3.
  *
@@ -32,7 +33,13 @@ const MUSIC_TRACKS = {
     hachepe_rap:       { file: 'assets/audio/hachepe_rap.mp3',       loop: true, loopStart: 0,      loopEnd: null,     rockola: 'Rap Hachepe', duration: 245.42 },
     fiebre_rally:      { file: 'assets/audio/fiebre_rally.mp3',      loop: true, loopStart: 0,      loopEnd: 64.0 },
     jingle_victoria:   { file: 'assets/audio/jingle_victoria.mp3',   loop: false, loopStart: 0, loopEnd: null },
-    jingle_derrota:    { file: 'assets/audio/jingle_derrota.mp3',    loop: false, loopStart: 0, loopEnd: null }
+    jingle_derrota:    { file: 'assets/audio/jingle_derrota.mp3',    loop: false, loopStart: 0, loopEnd: null },
+
+    // Prólogo de la campaña (design/campana/prologo/musica/bucles.json)
+    prologo_barks_city:    { file: 'assets/audio/prologo_barks_city.mp3',    loop: true,  loopStart: 13.978,  loopEnd: 60.13063 },
+    prologo_hachepes:      { file: 'assets/audio/prologo_hachepes.mp3',      loop: true,  loopStart: 8.67299, loopEnd: 49.7815 },
+    prologo_barks_triste:  { file: 'assets/audio/prologo_barks_triste.mp3',  loop: true,  loopStart: 5.759,   loopEnd: 61.78717 },
+    prologo_determinacion: { file: 'assets/audio/prologo_determinacion.mp3', loop: false, loopStart: 0,       loopEnd: null }
 };
 
 /**

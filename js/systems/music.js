@@ -213,6 +213,7 @@ function musicLoad(ch) {
             console.warn(`Música: "${ch.id}" no carga con Web Audio; pasa a <audio>.`, err);
             ch.engine = 'media';
             ch.loading = null;
+            if (ch.offset) musicElement(ch).currentTime = ch.offset;   // empezar donde se pidió (from)
             return null;
         });
     return ch.loading;
@@ -393,11 +394,14 @@ function musicHaltChannel(ch, forget) {
 
 /**
  * Pone una pista con un fundido cruzado desde la que suene. Si ya está
- * sonando no hace nada; si se dejó a medias, la retoma donde iba.
+ * sonando no hace nada; si se dejó a medias, la retoma donde iba. Con
+ * `from` empieza en ese segundo (y si la pista sonaba, vuelve a empezar
+ * desde ahí).
  * @param {string} id clave de MUSIC_TRACKS
- * @param {{ fade?: number }} [opts] segundos de fundido
+ * @param {{ fade?: number, from?: number }} [opts] segundos de fundido y de inicio
  */
-function musicPlay(id, { fade = 0.5 } = {}) {
+function musicPlay(id, { fade = 0.5, from } = {}) {
+    if (typeof from === 'number') musicSeek(id, from);
     if (id === musicCurrentId) {
         if (!musicIsPlaying) musicResume({ fade });
         return;
@@ -414,6 +418,20 @@ function musicPlay(id, { fade = 0.5 } = {}) {
     }
     musicIsPlaying = false;
     musicResume({ fade });
+}
+
+/**
+ * Pone la posición guardada de un canal en `from` segundos antes de
+ * arrancarlo; si estaba sonando, lo para primero.
+ * @param {string} id
+ * @param {number} from
+ */
+function musicSeek(id, from) {
+    const ch = musicChannel(id);
+    if (ch.running) musicHaltChannel(ch, false);
+    ch.offset = from;
+    if (ch.engine === 'media') musicElement(ch).currentTime = from;
+    if (id === musicCurrentId) musicIsPlaying = false;
 }
 
 /**

@@ -219,6 +219,151 @@ function sfxSparkleArpeggio(notes, step) {
     sfxArpeggio(notes.map(f => f * 2), step, { type: 'sine', decay: 0.18, gain: 0.15 });
 }
 
+/** @type {AudioBuffer|null} Dos segundos de ruido rosa (más grave que el blanco), creado una vez. */
+let sfxPinkBuffer = null;
+
+/**
+ * Ruido rosa por el método de Paul Kellet, con sfxRandom().
+ * @param {AudioContext} ctx
+ * @returns {AudioBuffer}
+ */
+function getPinkNoiseBuffer(ctx) {
+    if (!sfxPinkBuffer) {
+        const length = ctx.sampleRate * 2;
+        sfxPinkBuffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = sfxPinkBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < length; i++) {
+            const w = sfxRandom() * 2 - 1;
+            b0 = 0.99886 * b0 + w * 0.0555179;
+            b1 = 0.99332 * b1 + w * 0.0750759;
+            b2 = 0.96900 * b2 + w * 0.1538520;
+            b3 = 0.86650 * b3 + w * 0.3104856;
+            b4 = 0.55000 * b4 + w * 0.5329522;
+            b5 = -0.7616 * b5 - w * 0.0168980;
+            data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11;
+            b6 = w * 0.115926;
+        }
+    }
+    return sfxPinkBuffer;
+}
+
+/**
+ * Tono sostenido: sube en `attack`, se mantiene y baja en `release`
+ * (sfxVoice cae enseguida, como un golpe). `freqEnd` lo desliza durante
+ * `dur`; `vibrato` le añade un LFO a la frecuencia.
+ * @param {{ type?: OscillatorType, freq: number, freqEnd?: number|null, when?: number, dur: number,
+ *           attack?: number, release?: number, gain?: number, lowpass?: number|null,
+ *           vibrato?: { rate: number, depth: number }|null, pan?: number }} voice
+ */
+function sfxSustain({ type = 'square', freq, freqEnd = null, when = 0, dur, attack = 0.01, release = 0.05,
+                      gain = 0.2, lowpass = null, vibrato = null, pan = 0 }) {
+    if (!sfxActive()) return;
+    const ctx = getAudioContext();
+    const t0 = ctx.currentTime + when;
+    const tEnd = t0 + dur;
+
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, tEnd);
+    if (vibrato) {
+        const lfo = ctx.createOscillator();
+        lfo.frequency.setValueAtTime(vibrato.rate, t0);
+        const depth = ctx.createGain();
+        depth.gain.setValueAtTime(vibrato.depth, t0);
+        lfo.connect(depth);
+        depth.connect(osc.frequency);
+        lfo.start(t0);
+        lfo.stop(tEnd + 0.02);
+    }
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.linearRampToValueAtTime(gain, t0 + Math.min(attack, dur));
+    env.gain.setValueAtTime(gain, Math.max(t0 + attack, tEnd - release));
+    env.gain.linearRampToValueAtTime(0.0001, tEnd);
+    osc.connect(env);
+
+    /** @type {AudioNode} */
+    let out = env;
+    if (lowpass) {
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(lowpass, t0);
+        env.connect(filter);
+        out = filter;
+    }
+    sfxOut(ctx, out, pan, t0);
+    osc.start(t0);
+    osc.stop(tEnd + 0.02);
+}
+
+/**
+ * Ruido en bucle por un filtro (los ambientes del prólogo). Devuelve la
+ * función que lo para con un fundido corto; con los efectos apagados no
+ * suena y la función no hace nada.
+ * @param {{ pink?: boolean, filter: BiquadFilterType, freq: number, q?: number, gain: number }} loop
+ * @returns {() => void}
+ */
+function sfxNoiseLoop({ pink = false, filter, freq, q = 1, gain }) {
+    if (!sfxActive()) return () => {};
+    const ctx = getAudioContext();
+    const t0 = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = pink ? getPinkNoiseBuffer(ctx) : getNoiseBuffer(ctx);
+    src.loop = true;
+    const f = ctx.createBiquadFilter();
+    f.type = filter;
+    f.frequency.setValueAtTime(freq, t0);
+    f.Q.setValueAtTime(q, t0);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0, t0);
+    env.gain.linearRampToValueAtTime(gain, t0 + 0.6);
+    src.connect(f);
+    f.connect(env);
+    sfxOut(ctx, env, 0, t0);
+    src.start(t0, sfxRandom() * 0.5);
+    let stopped = false;
+    return () => {
+        if (stopped) return;
+        stopped = true;
+        const t = ctx.currentTime;
+        env.gain.cancelScheduledValues(t);
+        env.gain.setValueAtTime(env.gain.value, t);
+        env.gain.linearRampToValueAtTime(0, t + 0.25);
+        src.stop(t + 0.3);
+    };
+}
+
+/**
+ * Tono (hue) de un color #RRGGBB, de 0 a 360.
+ * @param {string} hex
+ */
+function sfxHue(hex) {
+    const n = parseInt(String(hex).replace('#', ''), 16) || 0;
+    const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    if (!d) return 0;
+    const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (h * 60 + 360) % 360;
+}
+
+/**
+ * El golpe de una tarjeta del prólogo: chasquido, bombo que cae y un
+ * acorde corto de cuadrada cuya raíz sale del color del Hachepe (cada
+ * 30° de tono, un semitono sobre la3), mayor o menor.
+ * @param {{ color?: string, major?: boolean, octave?: number, tail?: number, when?: number }} opts
+ */
+function sfxCardHit({ color = '#FFFFFF', major = false, octave = 1, tail = 0.35, when = 0 }) {
+    sfxNoise({ when, dur: 0.06, bandpass: 2200, q: 0.8, gain: 0.35 });
+    sfxVoice({ type: 'sine', freq: 90 * octave, freqEnd: 45 * octave, when, decay: 0.3, gain: 0.55 });
+    const root = 220 * Math.pow(2, Math.round(sfxHue(color) / 30) / 12) * octave;
+    for (const semis of [0, major ? 4 : 3, 7]) {
+        sfxVoice({ type: 'square', freq: root * Math.pow(2, semis / 12), when: when + 0.02, decay: tail, gain: 0.07, lowpass: 2400 });
+    }
+}
+
 /**
  * La carga del smash de un lado: sus fuentes, la ganancia de salida (null
  * con los efectos apagados) y lo que devuelve la bajada de la música.
@@ -509,7 +654,160 @@ const soundEffects = {
         sfxVoice({ type: 'square', freq: 1200, decay: 0.08 });
         sfxVoice({ type: 'triangle', freq: 1500, decay: 0.12, when: 0.06 });
         sfxVoice({ type: 'triangle', freq: 1800, decay: 0.08, when: 0.12 });
-    }
+    },
+
+    // --- Prólogo de la campaña (cutscene/player.js) -------------------
+    // Los bucles (cityAmbience, rain) devuelven la función que los para.
+
+    /** Encendido del televisor. */
+    crtOn: () => {
+        sfxNoise({ dur: 0.15, bandpass: 4000, gain: 0.25 });
+        sfxVoice({ type: 'sine', freq: 60, freqEnd: 1200, decay: 0.25, gain: 0.25 });
+    },
+    /** Acorde del título: re, la y re en sierra a la vez. */
+    titleChord: () => {
+        for (const f of [147, 220, 294]) sfxVoice({ type: 'sawtooth', freq: f, decay: 1.8, gain: 0.08, lowpass: 1200 });
+    },
+    /** Murmullo de la ciudad (bucle). */
+    cityAmbience: () => sfxNoiseLoop({ pink: true, filter: 'lowpass', freq: 600, gain: 0.05 }),
+    /** Chispazo eléctrico. */
+    spark: () => {
+        sfxNoise({ dur: 0.08, bandpass: 6000, gain: 0.3 });
+        sfxVoice({ type: 'square', freq: 1800, freqEnd: 200, decay: 0.12, gain: 0.15 });
+    },
+    /** Frenazo de la camioneta. */
+    tireScreech: () => {
+        sfxSustain({ type: 'sawtooth', freq: 900, freqEnd: 600, dur: 0.9, attack: 0.02, release: 0.2, gain: 0.3,
+                     lowpass: 3500, vibrato: { rate: 30, depth: 25 } });
+        sfxNoise({ dur: 0.9, bandpass: 3000, gain: 0.12 });
+    },
+    /** Sirena: 700 y 950 Hz alternos, 0,25 s cada uno, dos veces. */
+    siren: () => {
+        [700, 950, 700, 950].forEach((f, i) => sfxSustain({ type: 'square', freq: f, when: i * 0.25, dur: 0.25, gain: 0.09, lowpass: 2500 }));
+    },
+    /**
+     * Tarjeta de un Hachepe.
+     * @param {{ color?: string, major?: boolean }} [opts]
+     */
+    cardHit: (opts = {}) => sfxCardHit(opts),
+    /**
+     * Tarjeta del jefe: dos golpes una octava más graves, el segundo con
+     * 0,8 s de cola.
+     * @param {{ color?: string, major?: boolean }} [opts]
+     */
+    cardHitBig: (opts = {}) => {
+        sfxCardHit({ ...opts, octave: 0.5 });
+        sfxCardHit({ ...opts, octave: 0.5, tail: 0.8, when: 0.14 });
+    },
+    /** El cachorro de Valen: dos ladridos. */
+    puppyBark: () => {
+        for (const when of [0, 0.14]) sfxVoice({ type: 'square', freq: 900, freqEnd: 600, decay: 0.06, gain: 0.18, lowpass: 3000, when });
+    },
+    /**
+     * Pelotas de energía: un silbido por pelota, como las del efecto
+     * `balls` (andanadas cada `gap` s, una pelota cada `stagger` s).
+     * @param {{ volleys?: number, per?: number, gap?: number, stagger?: number }} [opts]
+     */
+    energyBalls: ({ volleys = 3, per = 6, gap = 0.45, stagger = 0.05 } = {}) => {
+        for (let v = 0; v < volleys; v++) {
+            for (let i = 0; i < per; i++) {
+                sfxVoice({ type: 'sine', freq: 400, freqEnd: 1400, decay: 0.2, gain: 0.12,
+                           detune: sfxVary(50), when: v * gap + i * stagger, pan: (i / (per - 1) - 0.5) * 0.6 });
+            }
+        }
+    },
+    /** Cristales rotos: seis chasquidos agudos. */
+    glass: () => {
+        for (let i = 0; i < 6; i++) {
+            sfxNoise({ when: i * 0.04 + sfxRandom() * 0.02, dur: 0.02, bandpass: 5000 + sfxRandom() * 4000, q: 3, gain: 0.3 });
+        }
+    },
+    /** La risa de Valen. */
+    valenLaugh: () => {
+        for (let i = 0; i < 3; i++) sfxVoice({ type: 'triangle', freq: 300, freqEnd: 250, decay: 0.1, gain: 0.3, when: i * 0.12 });
+    },
+    /** Se enciende el logo del Sindicato: zumbido grave y un pitido entrecortado. */
+    logoOn: () => {
+        sfxSustain({ type: 'sine', freq: 50, dur: 0.6, attack: 0.03, release: 0.15, gain: 0.35 });
+        for (let i = 0; i < 8; i++) sfxSustain({ type: 'square', freq: 880, when: i * 0.08, dur: 0.04, attack: 0.003, release: 0.005, gain: 0.05 });
+    },
+    /** Lluvia (bucle). */
+    rain: () => sfxNoiseLoop({ filter: 'bandpass', freq: 2000, q: 0.7, gain: 0.06 }),
+    /** Persiana metálica que baja: ruido con pulsos de 25 Hz. */
+    shutter: () => {
+        if (!sfxActive()) return;
+        const ctx = getAudioContext();
+        const t0 = ctx.currentTime;
+        const src = ctx.createBufferSource();
+        src.buffer = getNoiseBuffer(ctx);
+        const band = ctx.createBiquadFilter();
+        band.type = 'bandpass';
+        band.frequency.setValueAtTime(900, t0);
+        const pulses = ctx.createGain();
+        pulses.gain.setValueAtTime(0.5, t0);
+        const lfo = ctx.createOscillator();
+        lfo.type = 'square';
+        lfo.frequency.setValueAtTime(25, t0);
+        const depth = ctx.createGain();
+        depth.gain.setValueAtTime(0.5, t0);
+        lfo.connect(depth);
+        depth.connect(pulses.gain);
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(0.0001, t0);
+        env.gain.linearRampToValueAtTime(0.3, t0 + 0.02);
+        env.gain.setValueAtTime(0.3, t0 + 0.4);
+        env.gain.linearRampToValueAtTime(0.0001, t0 + 0.5);
+        src.connect(band);
+        band.connect(pulses);
+        pulses.connect(env);
+        sfxOut(ctx, env, 0, t0);
+        src.start(t0, sfxRandom() * 0.4, 0.5);
+        lfo.start(t0);
+        lfo.stop(t0 + 0.52);
+    },
+    /** Trueno: ruido grave que se apaga en 1,5 s. */
+    thunder: () => {
+        if (!sfxActive()) return;
+        const ctx = getAudioContext();
+        const t0 = ctx.currentTime;
+        const src = ctx.createBufferSource();
+        src.buffer = getPinkNoiseBuffer(ctx);
+        const low = ctx.createBiquadFilter();
+        low.type = 'lowpass';
+        low.frequency.setValueAtTime(300, t0);
+        low.frequency.exponentialRampToValueAtTime(120, t0 + 1.5);
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(0.0001, t0);
+        env.gain.exponentialRampToValueAtTime(0.4, t0 + 0.04);
+        env.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.5);
+        src.connect(low);
+        low.connect(env);
+        sfxOut(ctx, env, 0, t0);
+        src.start(t0, sfxRandom() * 0.4, 1.5);
+    },
+    /** El coche de los locos se acerca. */
+    carApproach: () => sfxSustain({ type: 'sawtooth', freq: 80, freqEnd: 160, dur: 1.2, attack: 1.1, release: 0.1, gain: 0.3, lowpass: 700 }),
+    /** Entra la cámara lenta. */
+    slowmo: () => sfxVoice({ type: 'sine', freq: 200, freqEnd: 60, decay: 0.6, gain: 0.3 }),
+    /** El Desconocido coge la paleta: un golpe de pala suave. */
+    paddleTake: () => {
+        sfxNoise({ dur: 0.025, bandpass: 2800, gain: 0.18 });
+        sfxVoice({ type: 'square', freq: 420, freqEnd: 360, decay: 0.07, gain: 0.25 });
+    },
+    /**
+     * Los ojos de la torre: un pitido por par, como el efecto `eyes`.
+     * @param {{ count?: number, gap?: number }} [opts]
+     */
+    eyes: ({ count = 6, gap = 0.35 } = {}) => {
+        for (let i = 0; i < count; i++) sfxVoice({ type: 'sine', freq: 1200, attack: 0.003, decay: 0.04, gain: 0.15, when: i * gap });
+    },
+    /** El altavoz de la torre se enciende. */
+    speaker: () => {
+        sfxNoise({ dur: 0.3, bandpass: 1500, q: 0.7, gain: 0.2 });
+        sfxSustain({ type: 'square', freq: 1000, dur: 0.03, attack: 0.002, release: 0.005, gain: 0.08 });
+    },
+    /** Chasquido de radio al empezar una línea por el altavoz. */
+    radioClick: () => sfxNoise({ dur: 0.05, bandpass: 2500, q: 0.6, gain: 0.25 })
 };
 
 /**
