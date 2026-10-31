@@ -148,7 +148,8 @@ function nextCampaignLevel() {
     stopDialogue();
     const next = getNextCampaignBoss();
     if (next) {
-        prepareCampaignMatch(next);
+        // La primera vez, con su escena de llegada (campaign/menu.js)
+        campaignEnterFloor(next);
     } else {
         showScreen('campaign-menu');
     }

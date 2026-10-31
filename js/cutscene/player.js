@@ -774,8 +774,9 @@ function cutsceneDrawPortrait(cs, id) {
     const cv = cs.dom.portrait;
     const pctx = cv.getContext('2d');
     pctx.clearRect(0, 0, cv.width, cv.height);
-    // Con busto (busto_<id>): la cabeza y los hombros enteros, a cover
-    const bust = cutsceneActorInfo(cs, 'busto_' + id);
+    // Con busto (busto_<id>, o el propio id si ya es un busto_*): la
+    // cabeza y los hombros enteros, a cover
+    const bust = cutsceneActorInfo(cs, id.startsWith('busto_') ? id : 'busto_' + id);
     if (bust) {
         const bimg = artImage(bust.src);
         if (!bimg) return false;
@@ -1198,7 +1199,8 @@ function cutsceneAdvance() {
 
 /**
  * SALTAR, ESC o mantener 1 s: corta todo y va directo al capítulo
- * (CUTSCENE_SKIP_CHAPTER_S) y de ahí a onEnd.
+ * (CUTSCENE_SKIP_CHAPTER_S) y de ahí a onEnd. Una película sin capítulo
+ * ni tarjeta final (las llegadas a los pisos) llama a onEnd al momento.
  */
 function cutsceneSkip() {
     const cs = cutsceneRun;
@@ -1214,6 +1216,11 @@ function cutsceneSkip() {
     cutsceneResetDom();
     musicStop({ fade: 0.3 });
     const chapter = cs.def.scenes.flatMap((s) => s.steps).find((s) => s.do === 'fx' && s.type === 'chapter');
+    // Sin capítulo ni tarjeta final (las llegadas): directo a onEnd
+    if (!chapter && !cs.def.endCard) {
+        cutsceneFinish(cs);
+        return;
+    }
     cutsceneShowChapter(cs, chapter ? chapter.text : cs.def.endCard, chapter ? chapter.sub : '');
     cs.phase = 'chapter';
     cs.chapterEnd = cs.realT + CUTSCENE_SKIP_CHAPTER_S;

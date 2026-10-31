@@ -143,6 +143,69 @@ const CUTSCENE_FX = {
         return { type: 'chapter', layer: 'screen', done: () => false };
     },
 
+    // --- Puertas del ascensor (llegadas a los pisos) ----------------
+    // Tapan la vista desde el primer fotograma: la escena empieza «desde
+    // dentro del ascensor». Tras un instante con el LED del piso, se abren
+    // hacia los lados en `dur`. Con movimiento reducido, un fundido.
+    elevator_open(step, cs) {
+        const t0 = cs.t;
+        const hold = 0.3;
+        const dur = Math.max(0.1, step.dur || 0.9);
+        const floor = step.floor || '';
+        return {
+            type: 'elevator_open', layer: 'screen',
+            done: (c) => c.t - t0 >= hold + dur,
+            render(ctx, c) {
+                const p = Math.max(0, Math.min(1, (c.t - t0 - hold) / dur));
+                const k = c.reduced ? 0 : cutsceneEase('inOut', p);
+                const W = c.view.uw, H = c.view.uh;
+                const half = W / 2;
+                ctx.save();
+                if (c.reduced) ctx.globalAlpha = 1 - p;
+                // Las dos hojas de acero, cada una con su canto dorado
+                for (const side of [-1, 1]) {
+                    const x = side < 0 ? -k * half : half + k * half;
+                    const g = ctx.createLinearGradient(x, 0, x + half, 0);
+                    g.addColorStop(0, side < 0 ? '#2B3038' : '#5E6672');
+                    g.addColorStop(0.5, '#7D8591');
+                    g.addColorStop(1, side < 0 ? '#5E6672' : '#2B3038');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(x, 0, half, H);
+                    // Acero cepillado: unas líneas verticales tenues
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    for (let lx = x + 6; lx < x + half; lx += 9) ctx.fillRect(lx, 0, 1, H);
+                    // Paneles
+                    ctx.strokeStyle = 'rgba(10, 12, 16, 0.55)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + half * 0.18, H * 0.2, half * 0.64, H * 0.28);
+                    ctx.strokeRect(x + half * 0.18, H * 0.55, half * 0.64, H * 0.3);
+                    // Canto interior dorado
+                    ctx.fillStyle = '#C9A227';
+                    ctx.fillRect(side < 0 ? x + half - 4 : x, 0, 4, H);
+                }
+                // El marco dorado y el LED se van al abrirse
+                ctx.globalAlpha *= 1 - k;
+                ctx.strokeStyle = '#FACC15';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(5, 5, W - 10, H - 10);
+                const lw = 78, lh = 42;
+                ctx.fillStyle = '#07080B';
+                ctx.fillRect(half - lw / 2, 18, lw, lh);
+                ctx.strokeStyle = '#C9A227';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(half - lw / 2, 18, lw, lh);
+                ctx.font = '22px "Press Start 2P", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#F87171';
+                ctx.shadowColor = '#EF4444';
+                ctx.shadowBlur = 10;
+                ctx.fillText(floor, half, 18 + lh / 2 + 2);
+                ctx.restore();
+            }
+        };
+    },
+
     // --- Estelas de coches por la autopista --------------------------
     traffic(step, cs) {
         const t0 = cs.t;

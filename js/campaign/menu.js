@@ -17,7 +17,9 @@
  *
  * Se elige piso con cuatro vías: toque o clic, ↑ ↓, deslizar en vertical
  * y la rueda. Al tocarlo, mantén las cuatro. ENTER o SUBIR cierran las
- * puertas, el LED cuenta los pisos y empieza el combate.
+ * puertas, el LED cuenta los pisos y empieza el combate. La primera vez
+ * que se llega a un piso con escena (LLEGADAS: 1, 2 y 3) se ve su
+ * llegada antes de la VS; VER ESCENA, en la ficha, la repite.
  *
  * Nada del Creador debe verse antes de que la historia lo revele: el
  * sótano no existe en el DOM hasta que campaignProgress llega a 6.
@@ -320,6 +322,9 @@ function renderFloorSheet(level) {
     const phasesEl = document.getElementById('floor-sheet-phases');
     const record = document.getElementById('floor-sheet-record');
     const go = /** @type {HTMLButtonElement} */ (document.getElementById('floor-sheet-go'));
+    // VER ESCENA: solo si el piso tiene llegada y ya se vio
+    document.getElementById('floor-sheet-scene').classList.toggle('hidden',
+        locked || !LLEGADAS[level] || !playerProgression.campaignArrivals[level]);
 
     if (locked) {
         name.textContent = 'NIVEL ?';
@@ -382,8 +387,38 @@ function towerEnter() {
     setTimeout(() => {
         towerEntering = false;
         if (!document.getElementById('campaign-menu').classList.contains('active-screen')) return;
-        prepareCampaignMatch(level);
+        campaignEnterFloor(level);
     }, total);
+}
+
+/**
+ * Llega a un piso: la primera vez, su escena de llegada (LLEGADAS); al
+ * terminarla o saltarla queda vista y sigue a la pantalla VS. Si ya se
+ * vio, o el piso no tiene escena, directo a la VS. Lo usan el ascensor y
+ * «SIGUIENTE HACHEPE» (campaign/progress.js).
+ * @param {number} level
+ */
+function campaignEnterFloor(level) {
+    const arrival = LLEGADAS[level];
+    if (!arrival || playerProgression.campaignArrivals[level]) {
+        prepareCampaignMatch(level);
+        return;
+    }
+    playCutscene(arrival, {
+        onEnd: () => {
+            playerProgression.campaignArrivals[level] = true;
+            saveProgression();
+            prepareCampaignMatch(level);
+        }
+    });
+}
+
+/** VER ESCENA en la ficha: vuelve a ver la llegada del piso elegido y regresa a la torre. */
+function towerScene() {
+    const arrival = LLEGADAS[towerLevel];
+    if (towerEntering || !arrival) return;
+    soundEffects.uiClick();
+    playCutscene(arrival, { onEnd: () => showScreen('campaign-menu') });
 }
 
 /** En vertical, la ficha es una hoja abajo que se pliega y se despliega. */

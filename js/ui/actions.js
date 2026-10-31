@@ -43,6 +43,7 @@ const CLICK_ACTIONS = {
     towerEnter:             () => towerEnter(),
     toggleFloorSheet:       () => toggleFloorSheet(),
     playCampaignPrologue:   () => playCampaignPrologue(),
+    towerScene:             () => towerScene(),
     nextCampaignLevel:      () => nextCampaignLevel(),
     closeFinale:            () => closeFinale(),
 
