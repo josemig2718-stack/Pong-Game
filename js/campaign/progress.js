@@ -115,6 +115,9 @@ function recordCampaignBest(p1Won) {
     const reached = phases ? (p1Won ? phases.length : (bossState.maxPhase || 0) + 1) : 1;
     const flawless = p1Won && (phases ? bossState.livesLost === 0 : state.p2Score === 0);
     if (p1Won && phases && bossState.livesLost === 0) unlockAchievement('boss_flawless');
+    // Vencer a Fano por primera vez enciende las luces de la ciudad (la
+    // torre lo celebra al volver)
+    if (p1Won && !prev.won && level === TOWER_LIGHTS_LEVEL) towerQueueLights();
     if (!playerProgression.campaignBest) playerProgression.campaignBest = {};
     playerProgression.campaignBest[level] = {
         won: prev.won || p1Won,

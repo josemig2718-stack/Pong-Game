@@ -352,21 +352,24 @@ function fanoDrawFace(ctx) {
 
 /** @type {BossMechanics} */
 const bossFano = {
-    config: { targetScore: 9, aiSpeed: 0.78, aiError: 20, aiBias: 66 },
+    config: { targetScore: 9, aiSpeed: 0.78, aiError: 20, aiBias: 40 },
     color: FANO.color,
     lives: 5,
     koLeadMs: FANO.koLeadMs,
 
+    // IA de la tabla de la guía (D.7) con aiBias ajustado al bot de prueba
+    // de ±30 px (66/58/50 → 40/32/24): unos 5,2 min por combate. El bot no
+    // sufre la oscuridad ni los clones, así que gana casi siempre.
     phases: [
         {
             name: 'Apagón',
             goals: 3,
-            config: { aiSpeed: 0.78, aiError: 20, aiBias: 66, spin: 0.25, smash: 0 }
+            config: { aiSpeed: 0.78, aiError: 20, aiBias: 40, spin: 0.25, smash: 0 }
         },
         {
             name: 'Predicción',
             goals: 3,
-            config: { aiSpeed: 0.84, aiError: 16, aiBias: 58, spin: 0.45, smash: 0.10 },
+            config: { aiSpeed: 0.84, aiError: 16, aiBias: 32, spin: 0.45, smash: 0.10 },
             transition(t) {
                 bossState.stripesOn = false;
                 bossState.stripeFade = 1 - t;   // las franjas se apagan
@@ -382,7 +385,7 @@ const bossFano = {
         {
             name: 'Clones',
             goals: 3,
-            config: { aiSpeed: 0.90, aiError: 12, aiBias: 50, spin: 0.60, smash: 0.40 },
+            config: { aiSpeed: 0.90, aiError: 12, aiBias: 24, spin: 0.60, smash: 0.40 },
             transition(t) {
                 bossState.predictOn = false;
                 bossState.glitch = false;

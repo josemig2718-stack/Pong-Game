@@ -368,21 +368,24 @@ function duoResetRetreats() {
 
 /** @type {BossMechanics} */
 const bossDuo = {
-    config: { targetScore: 9, aiSpeed: 0.78, aiError: 20, aiBias: 66 },
+    config: { targetScore: 9, aiSpeed: 0.78, aiError: 20, aiBias: 32 },
     color: DUO.mario,
     lives: 5,
     koLeadMs: DUO.koLeadMs,
 
+    // IA de la tabla de la guía (D.7) con aiBias ajustado al bot de prueba
+    // de ±30 px (66/58/50 → 32/24/16): unos 5,6 min por combate. Gana igual
+    // casi siempre: el aiBias apenas mueve las victorias del bot.
     phases: [
         {
             name: 'Cooperativo',
             goals: 3,
-            config: { aiSpeed: 0.78, aiError: 20, aiBias: 66, spin: 0.25, smash: 0 }
+            config: { aiSpeed: 0.78, aiError: 20, aiBias: 32, spin: 0.25, smash: 0 }
         },
         {
             name: 'Pinball',
             goals: 3,
-            config: { aiSpeed: 0.84, aiError: 16, aiBias: 58, spin: 0.45, smash: 0.10 },
+            config: { aiSpeed: 0.84, aiError: 16, aiBias: 24, spin: 0.45, smash: 0.10 },
             transition(t) {
                 bossState.bumpDrop = t;      // los bumpers crecen en su campo
             },
@@ -396,7 +399,7 @@ const bossDuo = {
         {
             name: 'Modo Diablo',
             goals: 3,
-            config: { aiSpeed: 0.90, aiError: 12, aiBias: 50, spin: 0.60, smash: 0.40 },
+            config: { aiSpeed: 0.90, aiError: 12, aiBias: 16, spin: 0.60, smash: 0.40 },
             transition(t) {
                 bossState.bumpOn = false;
                 bossState.tiltUntil = 0;

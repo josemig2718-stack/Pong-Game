@@ -536,7 +536,7 @@ const soundEffects = {
         sfxVoice({ type: 'sawtooth', freq: 300, decay: 0.1, when: 0.08 });
     },
     multiBallSplit: () => sfxArpeggio([600, 800, 600], 0.05, { type: 'square', decay: 0.06 }),
-    shieldBlock: () => sfxVoice({ type: 'square', freq: 200, decay: 0.15 }),
+
 
     // --- Progresión y Tienda ---
     levelUp: () => {
@@ -555,19 +555,14 @@ const soundEffects = {
     // --- Campaña: todo sintetizado, sin archivos nuevos ---
     /** Aviso previo de un ataque de jefe (escudo de Dani, parada de tiempo). */
     bossWarning: () => sfxArpeggio([220, 220], 0.16, { type: 'square', decay: 0.09 }),
-    /** El escudo de Dani se materializa. */
+    /** Un escudo se materializa (el Creador). */
     bossShield: () => {
         sfxVoice({ type: 'sawtooth', freq: 180, decay: 0.18 });
         sfxVoice({ type: 'square', freq: 260, decay: 0.14, when: 0.09 });
     },
-    /** Teletransporte de Dani. */
-    bossTeleport: () => {
-        sfxVoice({ type: 'triangle', freq: 900, decay: 0.05 });
-        sfxVoice({ type: 'triangle', freq: 500, decay: 0.08, when: 0.05 });
-    },
     /** Uno del dúo se retira del campo. */
     bossRetreat: () => sfxArpeggio([520, 420, 330], 0.07, { type: 'triangle', decay: 0.1 }),
-    /** La bola desaparece (Fano): un latido grave. */
+    /** Un latido grave (el final de la campaña). */
     bossVanish: () => {
         sfxVoice({ type: 'sine', freq: 120, decay: 0.3 });
         sfxVoice({ type: 'sine', freq: 90, decay: 0.35, when: 0.18 });
@@ -890,8 +885,75 @@ const soundEffects = {
         sfxNoise({ dur: 0.4, kind: 'lowpass', bandpass: 900, bandpassEnd: 150, q: 0.7, gain: 0.45 });
         sfxVoice({ type: 'sine', freq: 70, freqEnd: 40, attack: 0.01, decay: 0.35, gain: 0.45 });
         sfxVoice({ type: 'square', freq: 880, freqEnd: 110, decay: 0.5, gain: 0.18 });
+    },
+
+    // --- Pisos 1–3: llegadas, Dani, el dúo y Fano (guía D.7) ----------
+
+    /** La contadora de billetes: 0,8 s de clics de ruido de 8 ms cada 25 ms. */
+    cashCounter: () => {
+        for (let t = 0; t < 0.8; t += 0.025) sfxNoise({ when: t, dur: 0.008, bandpass: 3000, q: 1.5, gain: 0.16 });
+    },
+    /** Colgar el teléfono: clic de plástico y un tono corto. */
+    phoneHangUp: () => {
+        sfxNoise({ dur: 0.02, kind: 'lowpass', bandpass: 1500, q: 0.7, gain: 0.35 });
+        sfxVoice({ type: 'sine', freq: 300, attack: 0.003, decay: 0.03, gain: 0.3 });
+    },
+    /** Una máquina de arcade: 6 notas cuadradas al azar entre 600 y 1400 Hz. */
+    arcadeBlips: () => {
+        for (let i = 0; i < 6; i++) {
+            sfxVoice({ type: 'square', freq: 600 + sfxRandom() * 800, attack: 0.003, decay: 0.05, gain: 0.12, when: i * 0.11 });
+        }
+    },
+    /** Se encienden las luces: golpe grave y un zumbido que entra en 0,5 s. */
+    lightsOn: () => {
+        sfxVoice({ type: 'sine', freq: 60, attack: 0.005, decay: 0.15, gain: 0.55 });
+        sfxSustain({ type: 'sawtooth', freq: 120, dur: 1.4, attack: 0.5, release: 0.5, gain: 0.07, lowpass: 400 });
+    },
+    /** Una celda de Dani se rompe: cuatro notas que bajan y un golpe de ruido. */
+    cellBreak: () => {
+        sfxArpeggio([1200, 900, 700, 500], 0.03, { type: 'triangle', decay: 0.03, gain: 0.3 });
+        sfxNoise({ dur: 0.05, bandpass: 2200, q: 0.8, gain: 0.25 });
+    },
+    /** La celda se rellena sola: 5 teclas de 10 ms cada 60 ms. */
+    cellRefill: () => {
+        for (let i = 0; i < 5; i++) sfxNoise({ when: i * 0.06, dur: 0.01, bandpass: 2500, q: 1.2, gain: 0.22 });
+    },
+    /** Una moneda: si y mi, cuadradas, 70 ms cada una. */
+    coin: () => sfxCoinAt(0),
+    /** Un botón de la caja fuerte en orden. */
+    click: () => sfxVoice({ type: 'square', freq: 1500, attack: 0.002, decay: 0.025, gain: 0.2 }),
+    /** Un botón fuera de orden. */
+    buzz: () => sfxVoice({ type: 'sawtooth', freq: 110, attack: 0.005, decay: 0.25, gain: 0.3, lowpass: 800 }),
+    /** La lluvia de dinero del K.O. de Dani: 6 monedas al azar en 1 s y papel. */
+    cashRain: () => {
+        for (let i = 0; i < 6; i++) sfxCoinAt(sfxRandom() * 0.9);
+        sfxNoise({ dur: 0.8, bandpass: 4000, q: 0.7, gain: 0.1 });
+    },
+    /** Un bumper del pinball. */
+    bumper: () => {
+        sfxVoice({ type: 'sine', freq: 220, freqEnd: 660, attack: 0.003, decay: 0.06, gain: 0.35 });
+        sfxVoice({ type: 'square', freq: 880, attack: 0.002, decay: 0.03, gain: 0.12 });
+    },
+    /** ¡JACKPOT!: arpegio cuadrado do-mi-sol-do, dos veces. */
+    jackpot: () => {
+        const notes = [523, 659, 784, 1046];
+        sfxArpeggio([...notes, ...notes], 0.08, { type: 'square', decay: 0.08, gain: 0.2 });
+    },
+    /** Un interruptor: dos clics de 12 ms separados 40 ms. */
+    switchClick: () => {
+        sfxNoise({ dur: 0.012, bandpass: 2000, q: 1.2, gain: 0.3 });
+        sfxNoise({ when: 0.04, dur: 0.012, bandpass: 2000, q: 1.2, gain: 0.25 });
     }
 };
+
+/**
+ * Una moneda (`coin`, y las de `cashRain`): 988 y luego 1319 Hz.
+ * @param {number} when segundos de retraso
+ */
+function sfxCoinAt(when) {
+    sfxVoice({ type: 'square', freq: 988, attack: 0.002, decay: 0.07, gain: 0.16, when });
+    sfxVoice({ type: 'square', freq: 1319, attack: 0.002, decay: 0.07, gain: 0.16, when: when + 0.07 });
+}
 
 /**
  * Volumen de los efectos, de 0 a 100. Lo guarda en `settings`.

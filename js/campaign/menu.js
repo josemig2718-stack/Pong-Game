@@ -56,6 +56,22 @@ let towerCityCache = null;
 let towerCityKey = '';
 /** Última rueda atendida (performance.now), para no saltar pisos de golpe. */
 let towerWheelAt = 0;
+/**
+ * El premio de las luces está pendiente de verse: lo pide
+ * recordCampaignBest() al vencer a Fano por primera vez (towerQueueLights)
+ * y la torre lo muestra al volver. No se guarda: después, la ciudad
+ * encendida sale de campaignBest[4].won.
+ */
+let towerLightsPending = false;
+/** Cuándo empezó el destello de las ventanas (segundos del bucle), o null. */
+let towerLightsT0 = null;
+
+/** Nivel de Fano: vencerlo enciende las luces de Barks City. */
+const TOWER_LIGHTS_LEVEL = 4;
+/** El destello recorre las ventanas de abajo arriba en 1,5 s. */
+const TOWER_LIGHTS_SWEEP_S = 1.5;
+/** Cuánto se ve el aviso (ms). */
+const TOWER_NOTICE_MS = 4000;
 
 const DANGER_STAR_PATH = 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z';
 const TOWER_ICON_LOCK = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -152,6 +168,26 @@ function renderCampaignMap() {
     layoutTower();
     towerSelect(towerLevel, { instant: true });
     startTowerCity();
+    if (towerLightsPending && !cutscenePlaying()) towerShowLights();
+}
+
+/** Lo llama recordCampaignBest() al vencer a Fano por primera vez. */
+function towerQueueLights() {
+    towerLightsPending = true;
+}
+
+/**
+ * El premio de las luces: un destello recorre las ventanas de la ciudad
+ * de abajo arriba (sin él con movimiento reducido) y sale el aviso.
+ */
+function towerShowLights() {
+    towerLightsPending = false;
+    towerLightsT0 = prefersReducedMotion() ? null : -1;   // el bucle pone la hora de inicio
+    bossSfx('lightsOn');
+    const notice = document.getElementById('tower-notice');
+    notice.textContent = 'Las luces de Barks City volvieron a encenderse';
+    notice.classList.add('is-on');
+    setTimeout(() => notice.classList.remove('is-on'), TOWER_NOTICE_MS);
 }
 
 /** «PB · RECEPCIÓN». */
@@ -462,7 +498,10 @@ function drawTowerCity(t) {
     if (!w || !h) return;
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     const defeated = Math.max(0, Math.min(CAMPAIGN_LAST_BOSS, playerProgression.campaignProgress - 1));
-    const key = `${w}x${h}|${currentThemeHex()}|${defeated}`;
+    // Vencido Fano, la ciudad se enciende: como mínimo al 80 % y con su
+    // máscara un 30 % más brillante
+    const lit = campaignBestOf(TOWER_LIGHTS_LEVEL).won;
+    const key = `${w}x${h}|${currentThemeHex()}|${defeated}|${lit}`;
     if (key !== towerCityKey || !towerCityCache) {
         const art = CAMPAIGN_ART.torre;
         const off = towerCityCache || document.createElement('canvas');
@@ -477,9 +516,17 @@ function drawTowerCity(t) {
         o.fillStyle = '#05060A';
         o.fillRect(0, 0, w, h);
         let ok = drawTintedArt(o, art.ciudad_sindicato, null, dx, dy, dw, dh);
-        if (defeated > 0) {
-            o.globalAlpha = defeated / CAMPAIGN_LAST_BOSS;
+        if (defeated > 0 || lit) {
+            const alpha = lit ? Math.max(defeated / CAMPAIGN_LAST_BOSS, 0.8) : defeated / CAMPAIGN_LAST_BOSS;
+            o.globalAlpha = alpha;
             ok = drawTintedArt(o, art.ciudad_libre, currentThemeHex(), dx, dy, dw, dh) && ok;
+            const mask = lit && art.ciudad_libre.theme ? tintedMask(art.ciudad_libre.theme, currentThemeHex()) : null;
+            if (mask) {
+                o.globalAlpha = alpha * 0.3;
+                o.globalCompositeOperation = 'lighter';
+                o.drawImage(mask, dx, dy, dw, dh);
+                o.globalCompositeOperation = 'source-over';
+            }
             o.globalAlpha = 1;
         }
         // Un velo: la ciudad es fondo, la torre y la ficha mandan
@@ -493,6 +540,7 @@ function drawTowerCity(t) {
     const ctx = cv.getContext('2d');
     ctx.drawImage(towerCityCache, 0, 0);
     if (prefersReducedMotion()) return;
+    if (towerLightsT0 !== null) drawTowerLightsSweep(ctx, t, w, h);
     // Lluvia (las capas del prólogo), en unidades de 960 de ancho
     const k = w / 960;
     const uh = h / k;
@@ -514,6 +562,43 @@ function drawTowerCity(t) {
         }
         ctx.stroke();
     });
+    ctx.restore();
+}
+
+/**
+ * El destello del premio de las luces: una franja brillante que sube por
+ * las ventanas (la máscara de la ciudad liberada, en blanco) en 1,5 s.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} t segundos del bucle
+ * @param {number} w
+ * @param {number} h
+ */
+function drawTowerLightsSweep(ctx, t, w, h) {
+    if (towerLightsT0 === -1) towerLightsT0 = t;
+    const p = (t - towerLightsT0) / TOWER_LIGHTS_SWEEP_S;
+    if (p >= 1) {
+        towerLightsT0 = null;
+        return;
+    }
+    const art = CAMPAIGN_ART.torre.ciudad_libre;
+    const mask = art.theme ? tintedMask(art.theme, '#FFFFFF') : null;
+    if (!mask) return;
+    const k = Math.max(w / art.w, h / art.h);
+    const dw = art.w * k, dh = art.h * k;
+    const band = h * 0.22;
+    const cy = h + band / 2 - p * (h + band);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    // Tres capas: el centro de la franja brilla más que los bordes
+    for (const [half, alpha] of [[band / 2, 0.35], [band / 3, 0.45], [band / 6, 0.6]]) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, cy - half, w, half * 2);
+        ctx.clip();
+        ctx.globalAlpha = alpha;
+        ctx.drawImage(mask, (w - dw) / 2, h - dh, dw, dh);
+        ctx.restore();
+    }
     ctx.restore();
 }
 

@@ -3768,6 +3768,31 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 .tower__floor:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; z-index: 2; }
 
+/* El aviso del premio de las luces (al vencer a Fano por primera vez) */
+.tower-notice {
+    position: absolute;
+    top: max(72px, env(safe-area-inset-top));
+    left: 50%;
+    z-index: 40;
+    width: max-content;
+    max-width: calc(100% - 32px);
+    margin: 0;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(12, 14, 22, 0.94);
+    border: 1px solid rgba(var(--primary-rgb), 0.6);
+    box-shadow: 0 0 24px rgba(var(--primary-rgb), 0.35);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -8px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.tower-notice.is-on { opacity: 1; transform: translate(-50%, 0); }
+
 /* La ficha del piso elegido */
 .floor-sheet {
     position: fixed;
