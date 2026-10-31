@@ -580,8 +580,12 @@ const soundEffects = {
             sfxVoice({ type: 'sawtooth', freq: 90 + sfxRandom() * 900, decay: 0.05, when: i * 0.045 });
         }
     },
-    /** Pitido suave de la máquina de escribir en los diálogos. */
-    dialogueBlip: () => sfxVoice({ type: 'square', freq: 680, decay: 0.02 }),
+    /**
+     * Pitido suave de la máquina de escribir en los diálogos; más agudo
+     * con voz de altavoz (Chayipiti).
+     * @param {{ radio?: boolean }} [opts]
+     */
+    dialogueBlip: ({ radio = false } = {}) => sfxVoice({ type: 'square', freq: radio ? 1100 : 680, decay: 0.02 }),
 
     // --- Efectos nuevos: se definen ya y se usan en fases posteriores ---
     /** @param {HitInfo} [info] Golpe con efecto: el silbido del giro. */

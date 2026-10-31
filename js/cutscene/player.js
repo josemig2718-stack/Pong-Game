@@ -902,7 +902,7 @@ function cutsceneTickText(cs, dt) {
         b.n += cutsceneTextSpeed().cps * dt;
         const count = Math.min(b.full.length, Math.floor(b.n));
         for (let i = Math.max(0, b.shown); i < count; i++) {
-            if (b.kind === 'say' && b.full[i] !== ' ' && ++cs.blips % 2 === 0) soundEffects.dialogueBlip();
+            if (b.kind === 'say' && b.full[i] !== ' ' && ++cs.blips % 2 === 0) soundEffects.dialogueBlip({ radio: !!b.step.radio });
         }
         cutsceneShowLine(b, count);
         if (count >= b.full.length) cutsceneCompleteText(cs, b);

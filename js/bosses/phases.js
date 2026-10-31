@@ -45,6 +45,12 @@ const BOSS_PHASE_MUSIC = { boost2Db: 2, boost3Db: 3, rate3: 1.04 };
 /** Hasta cuándo se ve la pulla y cuándo puede salir la siguiente (performance.now). */
 let bossTauntUntil = 0;
 let bossTauntReady = 0;
+/**
+ * Junto a qué pala sale la pulla en curso: la de quien habla en los jefes
+ * con `speakers` ('p2' o 'twin'), o null (la esquina de siempre).
+ * @type {'p2'|'twin'|null}
+ */
+let bossTauntPaddle = null;
 
 /** Lo último que pintó el HUD del combate, para tocar el DOM solo si cambia. */
 let bossHudKey = '';
@@ -292,9 +298,21 @@ function bossTaunt(event, force = false) {
     if (!lines || lines.length === 0) return;
     const now = performance.now();
     if (!force && now < bossTauntReady) return;
-    const text = lines[Math.floor(vfxRandom() * lines.length)];
+    const line = lines[Math.floor(vfxRandom() * lines.length)];
     const bubble = document.getElementById('boss-bubble');
-    document.getElementById('boss-bubble-text').textContent = text;
+    document.getElementById('boss-bubble-text').textContent = typeof line === 'string' ? line : line.t;
+    // Con varios hablantes, la burbuja va junto a la pala de quien habla, con
+    // su color; la voz de altavoz (Chayipiti) lleva su cara dentro
+    const who = lore.speakers ? dialogueSpeaker(lore, line) : null;
+    bossTauntPaddle = who ? (who.paddle === 'twin' ? 'twin' : 'p2') : null;
+    bubble.classList.toggle('has-speaker', !!who);
+    if (who) bubble.style.setProperty('--c', who.color || '#FFFFFF');
+    else bubble.style.removeProperty('--bubble-y');
+    const face = /** @type {HTMLImageElement} */ (document.getElementById('boss-bubble-face'));
+    const radio = !!who && who.voice === 'radio';
+    face.classList.toggle('hidden', !radio);
+    if (radio) face.src = who.src;
+    bossPlaceBubble();
     bubble.classList.remove('hidden', 'is-on');
     void bubble.offsetWidth;
     bubble.classList.add('is-on');
@@ -309,11 +327,22 @@ function bossHideTaunt() {
     if (bubble) bubble.classList.add('hidden');
 }
 
-/** Oculta la pulla cuando se acaba su tiempo (desde updateHud). */
+/** Oculta la pulla cuando se acaba su tiempo (desde updateHud); si no, sigue a su pala. */
 function updateBossBubble() {
     if (bossTauntUntil === 0) return;
-    if (performance.now() < bossTauntUntil && !isDialogueActive) return;
+    if (performance.now() < bossTauntUntil && !isDialogueActive) {
+        bossPlaceBubble();
+        return;
+    }
     bossHideTaunt();
+}
+
+/** Pone la burbuja a la altura de la pala de quien habla (--bubble-y, en %). */
+function bossPlaceBubble() {
+    if (!bossTauntPaddle) return;
+    const p = bossTauntPaddle === 'twin' ? p2Twin : p2;
+    const y = Math.max(8, Math.min(84, (p.y + p.height / 2) / GAME_HEIGHT * 100));
+    document.getElementById('boss-bubble').style.setProperty('--bubble-y', y.toFixed(1) + '%');
 }
 
 /**

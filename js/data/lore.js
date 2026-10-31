@@ -15,9 +15,17 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
 
 /**
  * Los seis Hachepes. Los diálogos aceptan strings (habla el jefe) u
- * objetos { t, s, sfx } donde `s` elige quién habla: 'a' o 'b' en el dúo,
- * 'player' el Desconocido, 'hint' la pista del Creador (sin nombre); y
- * `sfx`, un sonido de soundEffects al mostrar la línea.
+ * objetos { t, s, sfx, bust } donde `s` elige quién habla: 'a' o 'b' en
+ * los jefes con `speakers` (el dúo; Fano y Chayipiti), 'player' el
+ * Desconocido, 'hint' la pista del Creador (sin nombre); `sfx`, un sonido
+ * de soundEffects al mostrar la línea, y `bust`, otro busto solo para esa
+ * línea. Un string suelto lo dice el hablante 'a' (o el jefe, si no tiene
+ * `speakers`). Las pullas (`taunts`) aceptan lo mismo.
+ *
+ * `speakers` (opcional): { a, b } con { name, bust, color, voice, paddle }.
+ * El cuadro de diálogo pone su nombre, su busto y el borde de su color;
+ * voice 'radio' le da aspecto de altavoz; paddle 'twin' saca sus pullas
+ * junto a la pala gemela (si no, junto a p2).
  * Los jefes por fases añaden phase2/phase3 (al cambiar de fase) y taunts
  * (pullas por evento, bosses/phases.js).
  *
@@ -69,13 +77,24 @@ const HACHEPES_LORE = {
         desc: 'El contador del Sindicato. Cada cuota de Barks City termina en su oficina, y cada partida contra él tiene precio.',
         dialogues: {
             start: [
-                'Yo dibujé estas calles. Yo dibujé estos muros.',
-                'Cada esquina donde se esconde tu gente la puse yo.',
-                'Tus movimientos son tan predecibles como un plano.'
+                'Chemi te dejó entrar gratis. Aquí arriba todo tiene precio.',
+                { t: 'Búscate una vida, enfermo.', s: 'player' },
+                'Me encanta un cliente así.'
             ],
-            mid: ['¡Mis cálculos no fallan!'],
-            win: ['Estructura defectuosa. Demolida.'],
-            lose: ['¡Imposible! ¡Estaba todo calculado!']
+            phase2: ['Bueno, rompiste mis cuentas. Pero la deuda sigue creciendo… con intereses.'],
+            phase3: ['¿Quieres lo que es de la ciudad? Está todo ahí dentro.', 'Pero la combinación… solo la sé yo.'],
+            win: ['Cuenta saldada. Cerrada. Archivada.', 'Vuelve cuando tengas fondos.'],
+            lose: ['No, no, no… ¡esto no cuadra!', 'Yisus me va a descontar esto del sueldo.', 'Sube, sube. Pero Mario y Valen no cobran. Ellos se divierten.'],
+            taunts: {
+                playerMiss: ['Anotado en tu cuenta.', '¡Facturamos!', 'Eso te va a costar.'],
+                bossMiss: ['Pérdidas mínimas.', 'Eso lo deduzco de impuestos.'],
+                rally15: ['Esto ya parece inversión a largo plazo.'],
+                playerSmash: ['¡Cuidado con mis papeles!'],
+                interest20: ['+20 %. Y subiendo.'],
+                coin: ['¡Ey, esa moneda era mía!'],
+                vaultOpen: ['¿Quién te dio la clave?'],
+                lastLife: ['Último pago, pana.']
+            }
         }
     },
     3: {
@@ -86,24 +105,45 @@ const HACHEPES_LORE = {
         image2: 'assets/campaign/bustos/valen.webp',
         danger: '⭐⭐⭐⭐',
         desc: 'El arcade que le quitaron a la ciudad es ahora su sala. Uno juega como un diablo y el otro ni se despeina. Nunca juegan solos.',
+        // Mario defiende arriba (p2) y Valen abajo (la gemela): sus pullas
+        // salen junto a su pala.
+        speakers: {
+            a: { name: 'MARIO', bust: 'mario', color: '#E63946' },
+            b: { name: 'VALEN', bust: 'valen', color: '#C98A4B', paddle: 'twin' }
+        },
         dialogues: {
             start: [
-                { t: 'Mira, Valen. Otro que quiere su ciudad de vuelta.', s: 'a' },
-                { t: 'Siempre vienen solos, Mario. Nosotros nunca.', s: 'b' },
-                { t: 'Esa es toda la diferencia.', s: 'a' }
+                { t: '¿Tú eres el que le ganó a Chemi y a Dani?', s: 'a' },
+                { t: 'Bro, a esos dos les gana cualquiera.', s: 'b' },
+                { t: 'Aquí se juega dos contra uno. Reglas de la casa.', s: 'a' },
+                { t: 'No recuerdo haberte preguntado.', s: 'player' }
             ],
-            mid: [
-                { t: '¡Por arriba!', s: 'b' },
-                { t: '¡Y por abajo!', s: 'a' }
+            phase2: [
+                { t: 'Bah, eso fue el tutorial. ¡Valen, enciende el pinball!', s: 'a' },
+                { t: 'Ya voy, ya voy… DINDINDIN.', s: 'b' }
+            ],
+            phase3: [
+                { t: '¡Se acabó el juego limpio! ¡MODO DIABLO!', s: 'a' },
+                { t: 'Yo mejor me siento un ratico, bro…', s: 'b' }
             ],
             win: [
-                { t: 'Otro nombre para la lista.', s: 'a' },
-                { t: 'Ni siquiera tenía nombre.', s: 'b' }
+                { t: 'GG EZ. Vuelve cuando subas de nivel.', s: 'a' },
+                { t: 'GG, bro. DINDINDIN.', s: 'b' }
             ],
             lose: [
-                { t: 'Valen... nos ha ganado.', s: 'a' },
-                { t: 'A los dos, Mario. A los dos.', s: 'b' }
-            ]
+                { t: '¡¿Qué?! ¡Esto está bugueado!', s: 'a' },
+                { t: 'Nos ganó limpio, Mario. Acéptalo.', s: 'b' },
+                { t: '…Fano te va a apagar las luces. Ya verás.', s: 'a' }
+            ],
+            taunts: {
+                playerMiss: [{ t: '¡GG!', s: 'a' }, { t: 'Muy lento, novato.', s: 'a' }, { t: 'Tranqui, a todos les pasa.', s: 'b' }, { t: 'DINDINDINDIN.', s: 'b' }],
+                bossMiss: [{ t: '¡Lag! ¡Fue lag!', s: 'a' }, { t: 'Uy, esa era mía, bro.', s: 'b' }, { t: 'DINDINDIN… uy.', s: 'b' }],
+                rally15: [{ t: 'Bro, esto está bueno. DINDINDIN.', s: 'b' }],
+                playerSmash: [{ t: '¡Eso no vale!', s: 'a' }],
+                jackpot: [{ t: '¡TILT! ¡Valen, mueve la pala!', s: 'a' }],
+                afk: [{ t: 'Espérate, bro, que está bueno el directo.', s: 'b' }, { t: '¡VALEN, SUELTA EL TELÉFONO!', s: 'a' }],
+                lastLife: [{ t: 'Última vida. GAME OVER pronto.', s: 'a' }]
+            }
         }
     },
     4: {
@@ -113,15 +153,44 @@ const HACHEPES_LORE = {
         image: 'assets/campaign/bustos/fano.webp',
         danger: '⭐⭐⭐⭐',
         desc: 'Desde aquí controla las luces, la radio y a Chayipiti. Él decidió que la ciudad viviera a oscuras.',
+        // Chayipiti no tiene pala: sus pullas salen junto a la de Fano, con
+        // su cara dentro, y su voz suena por altavoz.
+        speakers: {
+            a: { name: 'FANO', bust: 'fano', color: '#8B5CF6' },
+            b: { name: 'CHAYIPITI', bust: 'chayipiti', color: '#A855F7', voice: 'radio' }
+        },
         dialogues: {
             start: [
-                'Yo apagué las farolas. Yo apagué las casas.',
-                'Tu gente aprendió a vivir a oscuras por mi culpa.',
-                '¿De verdad crees que puedes ver algo aquí?'
+                { t: 'Noooo bro, ¿llegaste hasta aquí?', s: 'a' },
+                { t: 'Las máquinas también se equivocan.', s: 'player' },
+                { t: 'Chayipiti, apaga las luces.', s: 'a' }
             ],
-            mid: ['Lo que persigues no está ahí.'],
-            win: ['Te perdiste, como todos.'],
-            lose: ['No... ¡me has visto!']
+            phase2: [
+                { t: 'Bro, ¿cómo ves en la oscuridad?', s: 'a' },
+                { t: 'Activando modo predicción. Ya sé a dónde vas a tirar.', s: 'b' }
+            ],
+            phase3: [
+                { t: 'Advertencia: probabilidad de victoria de Fano, 12 %.', s: 'b' },
+                { t: '¡Pues haz algo! ¡Clónalo todo!', s: 'a' }
+            ],
+            win: [
+                { t: 'Noooo bro, ni te vi.', s: 'a' },
+                { t: 'Victoria registrada. Como predije.', s: 'b' }
+            ],
+            lose: [
+                { t: 'Noooo bro… ¿perdí?', s: 'a' },
+                { t: 'Recalculando… recalculando…', s: 'b', bust: 'chayipiti_error' },
+                { t: 'Yisus está arriba. Él no necesita luces para ganarte.', s: 'a' }
+            ],
+            taunts: {
+                playerMiss: [{ t: 'Noooo bro, ¡qué fácil!', s: 'a' }, { t: 'Predicción confirmada.', s: 'b' }],
+                bossMiss: [{ t: 'Error 404.', s: 'b' }, { t: '¡Chayipiti, haz tu trabajo!', s: 'a' }],
+                rally15: [{ t: 'Este rally no estaba en mis datos.', s: 'b' }],
+                playerSmash: [{ t: '¡Bro, cuidado con los monitores!', s: 'a' }],
+                dark: [{ t: '¿Dónde está la bola, bro?', s: 'a' }],
+                predictFail: [{ t: 'Predicción fallida. Recalibrando.', s: 'b' }],
+                lastLife: [{ t: 'Probabilidad de que pierdas: 99 %.', s: 'b' }]
+            }
         }
     },
     5: {

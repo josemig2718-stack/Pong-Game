@@ -1690,6 +1690,10 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 .boss-bubble.is-on { animation: boss-bubble-in 0.22s ease-out; }
+/* Jefes con varios hablantes: junto a la pala de quien habla y con su color */
+.boss-bubble.has-speaker { top: calc(var(--bubble-y, 14%) - 22px); right: 12%; border-color: var(--c); display: flex; align-items: center; gap: 8px; }
+.boss-bubble__face { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: cover; border: 1px solid var(--c); background: #0B0614; }
+.boss-bubble__face.hidden, .boss-bubble.hidden { display: none; }
 @keyframes boss-bubble-in {
     from { opacity: 0; transform: translateY(6px) scale(0.92); }
     to { opacity: 1; transform: none; }
@@ -4149,6 +4153,17 @@ body.has-result .achievement-toast--visible { transform: none; }
     color: #FCA5A5;
 }
 #dialogue-text { margin: 0; font-family: var(--font-body); font-size: 15px; line-height: 1.45; color: var(--text); min-height: 2.9em; }
+/* Jefes con `speakers` (data/lore.js): el borde, las esquinas y el nombre
+   toman el color de quien habla (--c, y --c-a con alfa, desde dialogue.js) */
+#dialogue-box.has-speaker { border-color: var(--c-a); box-shadow: 0 6px 0 #020305, 0 0 40px var(--c-a); }
+#dialogue-box.has-speaker::before, #dialogue-box.has-speaker::after { border-color: var(--c); }
+#dialogue-box.has-speaker .dialogue-avatar-container { border-color: var(--c-a); }
+#dialogue-box.has-speaker #dialogue-name { color: var(--c); }
+/* Voz de altavoz (Chayipiti): el texto tiembla un poco */
+#dialogue-box.is-radio #dialogue-text { animation: cs-jitter .18s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) {
+    #dialogue-box.is-radio #dialogue-text { animation: none; }
+}
 
 /* El shake genérico usa translateX y pisaría el translateX(-50%) que centra
    el cuadro, tirándolo fuera de pantalla. Este mantiene el centrado. */

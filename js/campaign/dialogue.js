@@ -2,9 +2,12 @@
  * campaign/dialogue.js
  * ------------------------------------------------------------------
  * Diálogos de los jefes: cola de líneas con máquina de escribir sobre la
- * partida. Las líneas son strings (habla el jefe) u objetos { t, s, sfx }:
- * `s` elige quién habla ('a' o 'b' en el dúo, 'player' el Desconocido,
- * 'hint' la pista del Creador, sin nombre) y `sfx` suena al mostrarla.
+ * partida. Las líneas son strings (habla el jefe, o su hablante 'a') u
+ * objetos { t, s, sfx, bust }: `s` elige quién habla ('a' o 'b' en los
+ * jefes con `speakers`, 'player' el Desconocido, 'hint' la pista del
+ * Creador, sin nombre), `sfx` suena al mostrarla y `bust` cambia el busto
+ * solo en esa línea. Con `speakers`, el cuadro toma el nombre, el busto y
+ * el color del hablante; voice 'radio' le da aspecto de altavoz.
  *
  * Un diálogo activo congela la partida (update() sale antes de mover
  * nada). Tocar el cuadro completa la línea; tocarlo otra vez la pasa.
@@ -86,6 +89,13 @@ function showNextDialogue() {
     box.classList.toggle('is-player', isPlayer);
     playerAvatar.classList.toggle('hidden', !isPlayer);
     avatar.classList.remove('avatar-hint-flash');
+    const who = isPlayer || speaker === 'hint' ? null : dialogueSpeaker(boss, raw);
+    box.classList.toggle('has-speaker', !!(who && who.color));
+    box.classList.toggle('is-radio', !!(who && who.voice === 'radio'));
+    if (who && who.color) {
+        box.style.setProperty('--c', who.color);
+        box.style.setProperty('--c-a', hexToRgba(who.color, 0.55));
+    }
 
     if (isPlayer) {
         // Habla el Desconocido: su busto con la máscara del tema
@@ -101,19 +111,10 @@ function showNextDialogue() {
         avatar2.classList.add('hidden');
         void avatar.offsetWidth;
         avatar.classList.add('avatar-hint-flash');
-    } else if (boss.image2) {
-        // El dúo alterna avatar y nombre según quién habla
-        avatar.classList.remove('hidden');
-        const names = boss.name.split(' y ');
-        nameEl.textContent = speaker === 'b' ? (names[1] || boss.name) : (names[0] || boss.name);
-        avatar.src = boss.image;
-        avatar2.src = boss.image2;
-        avatar2.classList.remove('hidden');
-        avatar.classList.toggle('avatar-dimmed', speaker === 'b');
-        avatar2.classList.toggle('avatar-dimmed', speaker !== 'b');
     } else {
-        nameEl.textContent = boss.name;
-        avatar.src = boss.image;
+        // El jefe, o el hablante de la línea (speakers): su nombre y su busto
+        nameEl.textContent = who.name;
+        avatar.src = who.src;
         avatar.classList.remove('avatar-dimmed', 'hidden');
         avatar2.classList.add('hidden');
     }
@@ -139,7 +140,7 @@ function showNextDialogue() {
     typewriterTimer = setInterval(() => {
         textEl.textContent += text.charAt(charIndex);
         charIndex++;
-        if (charIndex % 3 === 0 && soundEffects.dialogueBlip) soundEffects.dialogueBlip();
+        if (charIndex % 3 === 0 && soundEffects.dialogueBlip) soundEffects.dialogueBlip({ radio: !!(who && who.voice === 'radio') });
         if (charIndex >= text.length) finishTyping();
     }, isCreator ? 55 : 38);
 
@@ -152,6 +153,27 @@ function showNextDialogue() {
             clearTimeout(dialogueAdvanceTimer);
             showNextDialogue();
         }
+    };
+}
+
+/**
+ * Quién dice una línea de un jefe (diálogos y pullas). Con `speakers`
+ * (data/lore.js), el hablante `s` de la línea, o el 'a' si es un string
+ * suelto; sin ellos, el jefe. La línea puede traer su propio `bust`.
+ * @param {any} boss la entrada de HACHEPES_LORE
+ * @param {string|{ t: string, s?: string, bust?: string }} raw
+ * @returns {{ name: string, src: string, color: string|null, voice: string|null, paddle: string|null }}
+ */
+function dialogueSpeaker(boss, raw) {
+    const s = typeof raw === 'string' ? null : raw.s;
+    const sp = boss.speakers ? boss.speakers[s || 'a'] || null : null;
+    const bust = (typeof raw !== 'string' && raw.bust) || (sp && sp.bust) || null;
+    return {
+        name: sp ? sp.name : boss.name,
+        src: bust && CAMPAIGN_ART.bustos[bust] ? CAMPAIGN_ART.bustos[bust].src : boss.image,
+        color: sp ? sp.color || null : null,
+        voice: sp ? sp.voice || null : null,
+        paddle: sp ? sp.paddle || null : null
     };
 }
 
