@@ -1,7 +1,7 @@
 /**
  * bosses/yisus.js
  * ------------------------------------------------------------------
- * 5 · YISUS — El Falso Rey
+ * 5 · YISUS — El Aura (piso 4, El trono)
  * Telekinesis sobre la bola y parada de tiempo sobre tu paleta.
  * El muro final antes del giro.
  *

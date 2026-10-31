@@ -1,7 +1,7 @@
 /**
  * bosses/duo.js
  * ------------------------------------------------------------------
- * 3 · MARIO Y VALENTÍN — El Dúo Letal
+ * 3 · MARIO Y VALENTÍN — El Diablo Rojo y El Relajado (piso 2, Sala de juegos)
  * Dos paletas repartiéndose el campo. Al encajar gol, una se
  * retira unos segundos: esa es la ventana del jugador.
  *

@@ -1,7 +1,7 @@
 /**
  * bosses/fano.js
  * ------------------------------------------------------------------
- * 4 · FANO — El Guardián de las Sombras
+ * 4 · FANO — El fan del coco (piso 3, Sala de control)
  * La bola desaparece al cruzar la mitad y aparecen señuelos.
  * Difícil, pero no injusto: siempre queda un rastro tenue.
  *

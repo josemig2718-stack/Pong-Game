@@ -18,16 +18,19 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
  * objetos { t, s } donde `s` elige el avatar ('a' o 'b') — lo usa el dúo.
  *
  * `floor` y `room` son su piso en la Torre Hachepe (campaign/menu.js) y
- * `bust` (y `bust2`) su busto en CAMPAIGN_ART.bustos.
+ * `bust` (y `bust2`) su busto en CAMPAIGN_ART.bustos. `title` es su
+ * alias, el de su tarjeta en el prólogo; `image` (e `image2`), el busto
+ * que se ve en la pantalla VS, el diálogo, el HUD y el fin de combate.
+ * El Creador usa el de Chemi: es él (el giro).
  */
 const HACHEPES_LORE = {
     1: {
         floor: 'PB', room: 'Recepción', bust: 'chemi',
         name: 'Hachepe Chemi',
-        title: 'El Guardián de la Frontera',
-        image: 'assets/images/hachepe_chemi.png',
+        title: 'The Black',
+        image: 'assets/campaign/bustos/chemi.webp',
         danger: '⭐⭐',
-        desc: 'Vigila los escombros de tu antiguo barrio.',
+        desc: 'Lleva la recepción de la Torre Hachepe. Nadie sube sin pasar por su registro, y nadie pasa su registro.',
         dialogues: {
             start: [
                 'Vaya. Un superviviente.',
@@ -42,10 +45,10 @@ const HACHEPES_LORE = {
     2: {
         floor: '1', room: 'Contaduría', bust: 'dani',
         name: 'Hachepe Dani',
-        title: 'El Arquitecto del Caos',
-        image: 'assets/images/hachepe_dani.png',
+        title: 'Grow Partner',
+        image: 'assets/campaign/bustos/dani.webp',
         danger: '⭐⭐⭐',
-        desc: 'Diseñó las murallas que encierran tu ciudad.',
+        desc: 'El contador del Sindicato. Cada cuota de Barks City termina en su oficina, y cada partida contra él tiene precio.',
         dialogues: {
             start: [
                 'Yo dibujé estas calles. Yo dibujé estos muros.',
@@ -60,11 +63,11 @@ const HACHEPES_LORE = {
     3: {
         floor: '2', room: 'Sala de juegos', bust: 'mario', bust2: 'valen',
         name: 'Mario y Valentín',
-        title: 'El Dúo Letal',
-        image: 'assets/images/hachepe_mario.png',
-        image2: 'assets/images/hachepe_valen.png',
+        title: 'El Diablo Rojo y El Relajado',
+        image: 'assets/campaign/bustos/mario.webp',
+        image2: 'assets/campaign/bustos/valen.webp',
         danger: '⭐⭐⭐⭐',
-        desc: 'Los que se llevaron a tu familia. Nunca vienen solos.',
+        desc: 'El arcade que le quitaron a la ciudad es ahora su sala. Uno juega como un diablo y el otro ni se despeina. Nunca juegan solos.',
         dialogues: {
             start: [
                 { t: 'Mira, Valen. Otro que quiere su ciudad de vuelta.', s: 'a' },
@@ -88,10 +91,10 @@ const HACHEPES_LORE = {
     4: {
         floor: '3', room: 'Sala de control', bust: 'fano',
         name: 'Hachepe Fano',
-        title: 'El Guardián de las Sombras',
-        image: 'assets/images/hachepe_fano.png',
+        title: 'El fan del coco',
+        image: 'assets/campaign/bustos/fano.webp',
         danger: '⭐⭐⭐⭐',
-        desc: 'Apagó las luces de la ciudad y nunca las devolvió.',
+        desc: 'Desde aquí controla las luces, la radio y a Chayipiti. Él decidió que la ciudad viviera a oscuras.',
         dialogues: {
             start: [
                 'Yo apagué las farolas. Yo apagué las casas.',
@@ -106,10 +109,10 @@ const HACHEPES_LORE = {
     5: {
         floor: '4', room: 'El trono', bust: 'yisus',
         name: 'Hachepe Yisus',
-        title: 'El Falso Rey',
-        image: 'assets/images/hachepe_yisus.png',
+        title: 'El Aura',
+        image: 'assets/campaign/bustos/yisus.webp',
         danger: '⭐⭐⭐⭐⭐',
-        desc: 'Se coronó sobre las ruinas. El último tirano.',
+        desc: 'Ganó la ciudad en una sola partida y gobierna desde el último piso. Nadie le ha anotado un punto.',
         dialogues: {
             start: [
                 'Así que has llegado hasta mi trono.',
@@ -125,7 +128,7 @@ const HACHEPES_LORE = {
         floor: 'S', room: 'Sótano', bust: 'chemi',
         name: 'El Creador',
         title: '¿?¿?¿?',
-        image: 'assets/images/hachepe_chemi.png',
+        image: 'assets/campaign/bustos/chemi.webp',
         danger: 'ERROR',
         desc: '???',
         dialogues: {

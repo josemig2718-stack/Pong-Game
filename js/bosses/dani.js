@@ -1,7 +1,7 @@
 /**
  * bosses/dani.js
  * ------------------------------------------------------------------
- * 2 · DANI — El Arquitecto del Caos
+ * 2 · DANI — Grow Partner (piso 1, Contaduría)
  * Escudo telegrafiado (2 impactos) y teletransporte a la posición
  * prevista de la bola. Escudo propio, aislado de los power-ups.
  *

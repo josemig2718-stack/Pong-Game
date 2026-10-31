@@ -1306,7 +1306,7 @@ body[data-game-mode="local"] .hud-card--p2 { --hud-color: var(--p2); }
 }
 .hud-card--p1 .hud-card__badge { background: rgba(var(--primary-rgb), 0.16); border-color: rgba(var(--primary-rgb), 0.5); }
 .hud-card__badge .ico { width: 20px; height: 20px; }
-.hud-card__badge img { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+.hud-card__badge img { width: 100%; height: 100%; object-fit: cover; }
 
 .hud-card__who { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
 .hud-card--p2 .hud-card__who { align-items: flex-end; }
@@ -2809,13 +2809,16 @@ label.set-item__head { cursor: pointer; }
 }
 [data-result="loss"] .go-score { background: rgba(16, 10, 14, 0.92); border-color: rgba(239, 68, 68, 0.2); }
 .go-score__board { display: flex; align-items: center; justify-content: center; gap: 16px; }
+/* El busto del jefe (cabeza y hombros, cuadrado), recortado en círculo */
 .go-score__sprite {
     width: 84px;
     height: 84px;
     flex: none;
-    object-fit: contain;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+    object-fit: cover;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 35%, #2A0E14, #0C0609 75%);
+    border: 2px solid rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
 }
 .go-score__nums { flex: 1; display: flex; align-items: center; justify-content: center; gap: 24px; min-width: 0; }
 .go-score__side { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
@@ -3968,16 +3971,20 @@ body.has-result .achievement-toast--visible { transform: none; }
 
 .vs__boss { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .vs__sprites { display: flex; align-items: flex-end; justify-content: center; }
+/* Bustos cuadrados en un marco redondeado; el dúo, uno junto al otro */
 .vs__sprite {
     width: 150px;
     height: 150px;
-    object-fit: contain;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.6));
+    object-fit: cover;
+    border-radius: 18px;
+    background: radial-gradient(circle at 50% 35%, #2A0E14, #0C0609 75%);
+    border: 2px solid rgba(239, 68, 68, 0.65);
+    box-shadow: 0 0 26px rgba(239, 68, 68, 0.45);
 }
-.vs__sprite + .vs__sprite { margin-left: -44px; }
+.vs__sprite + .vs__sprite { margin-left: 10px; }
 .vs__sprite.hidden { display: none; }
-.vs__sprite.avatar-corrupted { filter: invert(1) hue-rotate(90deg) contrast(1.4) saturate(2) drop-shadow(0 0 18px rgba(34, 197, 94, 0.6)); }
+/* Sin fondo: el invert del filtro solo toca la figura, no el marco */
+.vs__sprite.avatar-corrupted { background: none; border-color: rgba(34, 197, 94, 0.7); filter: invert(1) hue-rotate(90deg) contrast(1.4) saturate(2) drop-shadow(0 0 18px rgba(34, 197, 94, 0.6)); }
 .vs__boss-name { font-size: 16px; line-height: 1.5; color: #fff; text-transform: uppercase; }
 .vs__boss-title { font-size: 14px; font-style: italic; color: #FCA5A5; }
 .vs__danger { display: flex; align-items: center; gap: 10px; }
@@ -4021,7 +4028,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     .vs__avatar svg { width: 72px; height: 72px; }
     .vs__player-name { font-size: 32px; }
     .vs__sprite { width: 220px; height: 220px; }
-    .vs__sprite + .vs__sprite { margin-left: -64px; }
+    .vs__sprite + .vs__sprite { margin-left: 14px; }
     .vs__boss-name { font-size: 22px; }
 }
 /* Ventanas bajas (móvil en horizontal) */
@@ -4033,7 +4040,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     .vs__player-name { font-size: 18px; }
     .vs__player-info { gap: 6px; }
     .vs__sprite { width: 96px; height: 96px; }
-    .vs__sprite + .vs__sprite { margin-left: -28px; }
+    .vs__sprite + .vs__sprite { margin-left: 8px; }
     .vs__boss { gap: 6px; }
     .vs__boss-name { font-size: 12px; }
 }
@@ -4112,10 +4119,9 @@ body.has-result .achievement-toast--visible { transform: none; }
     display: block;
     width: 64px;
     height: 64px;
-    object-fit: contain;
-    image-rendering: pixelated;
+    object-fit: cover;
 }
-.dialogue-avatar-container img + img { margin-left: -14px; }
+.dialogue-avatar-container img + img { margin-left: 2px; }
 .dialogue-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 #dialogue-name {
     font-family: var(--font-display);
@@ -4385,7 +4391,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     #dialogue-box { width: 96%; padding: 8px 10px 8px 8px; gap: 10px; }
     .dialogue-avatar-container { height: 40px; padding: 0 2px; }
     .dialogue-avatar-container img { width: 40px; height: 40px; }
-    .dialogue-avatar-container img + img { margin-left: -10px; }
+    .dialogue-avatar-container img + img { margin-left: 2px; }
     #dialogue-name { font-size: 8px; }
     .dialogue-glitch #dialogue-name { font-size: 11px; }
     #dialogue-text { font-size: 12.5px; }
