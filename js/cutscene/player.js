@@ -190,9 +190,9 @@ function cutsceneEase(name, p) {
     }
 }
 
-/** Velocidad del texto elegida en Configuración. */
+/** Velocidad del texto elegida en Configuración (settings.textSpeed). */
 function cutsceneTextSpeed() {
-    return CUTSCENE_TEXT_SPEEDS.normal;
+    return CUTSCENE_TEXT_SPEEDS[settings.textSpeed] || CUTSCENE_TEXT_SPEEDS.normal;
 }
 
 /**

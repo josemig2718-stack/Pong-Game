@@ -61,6 +61,7 @@ const DEFAULT_SETTINGS = {
     smashTouch:   'button', // smash en táctil: 'button' (botón), 'finger' (segundo dedo) o 'auto' (smash automático con la energía llena)
     haptics:      true,    // vibración del móvil en los golpes fuertes
     showHints:    true,    // avisos de primera vez en partida (game/hints.js)
+    textSpeed:    'normal', // velocidad del texto de las escenas: 'slow', 'normal' o 'fast' (cutscene/player.js)
     seenHints:    [],      // claves de los avisos ya vistos ('energy' se repite: una entrada por vez)
     seenNewsVersion: null, // última versión de Novedades vista (ui/news.js)
     progressWasReset: false, // se borró un progreso v1 al cargar: Novedades avisa una vez

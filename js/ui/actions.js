@@ -94,6 +94,7 @@ const CHANGE_ACTIONS = {
     toggleHints:        (el) => toggleHints(el.checked),
     toggleHaptics:      (el) => toggleHaptics(el.checked),
     toggleDynamicMusic: (el) => toggleDynamicMusic(el.checked),
+    updateTextSpeed:    (el) => updateTextSpeed(el.value),
     setShopSort:        (el) => setShopSort(el.value)
 };
 

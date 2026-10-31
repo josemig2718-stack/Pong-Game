@@ -2159,6 +2159,18 @@ body.touch-device #game-container[data-layout="stack"] #orientation-hint { displ
 .set-item + .set-item { border-top: 1px solid rgba(255, 255, 255, 0.05); }
 .set-item__head { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; }
 .set-item.set-item__head { flex-direction: row; }
+/* Desplegable de una fila de ajustes (Velocidad del texto), a la derecha */
+.set-select {
+    margin-left: auto;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: #0A0D14;
+    color: var(--text);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
 label.set-item__head { cursor: pointer; }
 .set-item__head .ico { color: var(--muted); }
 .set-item__head small { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--primary); }
@@ -4673,7 +4685,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     .option-pill { height: 44px; }
     .shop-card__btn { min-height: 44px; }
     .shop-card__stop { width: 44px; height: 44px; }
-    .shop-offer__btn, .shop-sort select { min-height: 44px; }
+    .shop-offer__btn, .shop-sort select, .set-select { min-height: 44px; }
     .ach-cat { height: 44px; }
     #orientation-hint-close { width: 44px; height: 44px; }
     .smash-btn { min-width: 44px; min-height: 44px; }

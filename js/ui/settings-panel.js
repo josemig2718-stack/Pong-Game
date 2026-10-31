@@ -186,6 +186,15 @@ function toggleHaptics(enabled) {
 }
 
 /**
+ * Velocidad del texto de las escenas (el prólogo): Lenta, Normal o Rápida.
+ * @param {string} value 'slow', 'normal' o 'fast'
+ */
+function updateTextSpeed(value) {
+    settings.textSpeed = CUTSCENE_TEXT_SPEEDS[value] ? value : 'normal';
+    saveSettings();
+}
+
+/**
  * Avisos de primera vez en partida.
  * @param {boolean} enabled
  */
@@ -228,6 +237,7 @@ function populateSettingsUI() {
         input('powerups-toggle').checked = settings.powerupsEnabled;
     }
     input('hints-toggle').checked         = settings.showHints;
+    input('text-speed-select').value      = settings.textSpeed;
     input('haptics-toggle').checked       = settings.haptics;
     // La vibración solo se ofrece donde existe
     document.getElementById('haptics-row').classList.toggle('hidden', typeof navigator.vibrate !== 'function');
