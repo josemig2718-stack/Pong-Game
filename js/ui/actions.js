@@ -40,8 +40,7 @@ const CLICK_ACTIONS = {
 
     // Campaña
     carouselMove:           (el) => carouselMove(Number(el.dataset.arg)),
-    replayCampaignIntro:    () => replayCampaignIntro(),
-    closeCampaignIntro:     () => closeCampaignIntro(),
+    playCampaignPrologue:   () => playCampaignPrologue(),
     nextCampaignLevel:      () => nextCampaignLevel(),
     closeFinale:            () => closeFinale(),
 

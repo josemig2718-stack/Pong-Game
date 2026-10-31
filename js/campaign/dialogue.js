@@ -20,8 +20,8 @@ let isDialogueActive = false;
 let dialogueCallback = null;
 
 /**
- * Intervalo de la máquina de escribir en curso. Lo comparten los diálogos,
- * la intro y la revelación del final: solo puede haber uno a la vez.
+ * Intervalo de la máquina de escribir en curso. Lo comparten los diálogos
+ * y la revelación del final: solo puede haber uno a la vez.
  */
 let typewriterTimer = null;
 

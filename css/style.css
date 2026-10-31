@@ -3806,39 +3806,6 @@ body.has-result .achievement-toast--visible { transform: none; }
 .carousel-dot--current.active { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25), 0 0 24px rgba(239, 68, 68, 0.6); }
 .carousel-dot--creator.active { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25), 0 0 24px rgba(34, 197, 94, 0.6); }
 
-/* --- Intro de la campaña --- */
-/* fixed: cubre toda la ventana aunque la pantalla tenga scroll */
-.campaign-intro {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-    padding: 32px 24px;
-    text-align: center;
-    background: rgba(5, 3, 5, 0.96);
-}
-.campaign-intro.hidden, .campaign-intro__btn.hidden { display: none; }
-.campaign-intro__title {
-    margin: 0;
-    font-size: clamp(16px, 4vw, 30px);
-    line-height: 1.5;
-    color: var(--danger);
-    text-shadow: 4px 4px 0 #450A0A, 0 0 30px rgba(239, 68, 68, 0.6);
-}
-.campaign-intro__text { margin: 0; max-width: 42rem; min-height: 100px; font-size: 15px; line-height: 1.7; color: rgba(232, 236, 244, 0.85); }
-.btn-p.campaign-intro__btn {
-    width: auto;
-    padding: 0 28px;
-    justify-content: center;
-    background: var(--danger);
-    color: #16040A;
-    box-shadow: 0 5px 0 #7F1D1D, 0 0 30px rgba(239, 68, 68, 0.4);
-}
-
 /* --- Responsive --- */
 @media (max-width: 360px) {
     .boss-carousel { --card-w: calc(100vw - 64px); --card-h: 440px; --side-h: 414px; --stage-h: 180px; --side-stage-h: 170px; --sprite: 128px; }
@@ -4234,9 +4201,6 @@ body.has-result .achievement-toast--visible { transform: none; }
     pointer-events: none;
     transition: opacity 800ms ease;
 }
-
-/* La intro se escribe con textContent: sin esto los párrafos se pierden */
-#campaign-intro-text { white-space: pre-line; }
 
 /* Por encima de #fade-overlay (z-90): durante la revelación el texto se lee
    sobre el negro, no debajo de él. */

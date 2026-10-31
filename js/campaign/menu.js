@@ -1,7 +1,8 @@
 /**
  * campaign/menu.js
  * ------------------------------------------------------------------
- * El menú de campaña: el carrusel de jefes y la intro narrativa.
+ * El menú de campaña: el carrusel de jefes y el prólogo (la primera vez
+ * que se entra y con VER HISTORIA).
  *
  * El carrusel coloca las cartas solo con `transform`: updateCarousel
  * les pone data-pos (de -2 a 2) y el CSS traduce cada posición. Solo
@@ -63,7 +64,7 @@ function renderCampaignMap() {
     const track = document.getElementById('campaign-nodes');
     if (!track) return;
 
-    if (!playerProgression.campaignIntroSeen) showCampaignIntro();
+    if (!playerProgression.campaignIntroSeen) playCampaignPrologue();
 
     track.innerHTML = '';
     carouselCards = getCarouselLevels();
@@ -263,48 +264,16 @@ function initCarouselControls() {
     }, { passive: true });
 }
 
-/** Intro narrativa con máquina de escribir; un toque la completa de golpe. */
-function showCampaignIntro() {
-    const overlay = document.getElementById('campaign-intro-overlay');
-    const textEl = document.getElementById('campaign-intro-text');
-    const btn = document.getElementById('campaign-intro-btn');
-    if (!overlay || !textEl || !btn) return;
-
-    overlay.classList.remove('hidden');
-    btn.classList.add('hidden');
-    textEl.textContent = '';
-
-    // Máquina de escribir sobre texto plano: los saltos de párrafo son \n\n
-    let i = 0;
-    clearTypewriter();
-    const interval = setInterval(() => {
-        textEl.textContent = CAMPAIGN_INTRO_TEXT.slice(0, i);
-        i++;
-        if (i > CAMPAIGN_INTRO_TEXT.length) {
-            clearInterval(interval);
-            btn.classList.remove('hidden');
+/**
+ * El prólogo de la campaña (data/cutscenes/prologo.js). Al terminar o
+ * saltarlo queda visto y se vuelve al menú de campaña, con su música.
+ */
+function playCampaignPrologue() {
+    playCutscene(PROLOGO, {
+        onEnd: () => {
+            playerProgression.campaignIntroSeen = true;
+            saveProgression();
+            showScreen('campaign-menu');
         }
-    }, 22);
-
-    // Tocar la pantalla completa el texto de golpe
-    overlay.onclick = () => {
-        clearInterval(interval);
-        textEl.textContent = CAMPAIGN_INTRO_TEXT;
-        btn.classList.remove('hidden');
-    };
-}
-
-/** Botón "ACEPTAR MI DESTINO": cierra la intro y la marca como vista. */
-function closeCampaignIntro() {
-    const overlay = document.getElementById('campaign-intro-overlay');
-    if (overlay) overlay.classList.add('hidden');
-    playerProgression.campaignIntroSeen = true;
-    saveProgression();
-    soundEffects.uiClick();
-}
-
-/** Botón "Ver Historia": vuelve a mostrar la intro. */
-function replayCampaignIntro() {
-    soundEffects.uiClick();
-    showCampaignIntro();
+    });
 }

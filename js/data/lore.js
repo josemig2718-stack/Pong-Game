@@ -2,8 +2,8 @@
  * data/lore.js
  * ------------------------------------------------------------------
  * La historia de la campaña: los seis Hachepes (nombre, retrato,
- * peligro y diálogos) y el texto de la intro. Las mecánicas de cada
- * combate están en bosses/.
+ * peligro y diálogos). Las mecánicas de cada combate están en bosses/;
+ * el prólogo, en data/cutscenes/.
  * ------------------------------------------------------------------
  */
 
@@ -131,10 +131,3 @@ const HACHEPES_LORE = {
         }
     }
 };
-
-/** Texto de la intro narrativa. */
-const CAMPAIGN_INTRO_TEXT =
-    'Los Hachepes llegaron sin avisar. Un sindicato de tiranos que quemó tu ciudad, ' +
-    'derribó tu casa y esclavizó a todos los que conocías.\n\n' +
-    'Montaron sobre las ruinas un torneo enfermo donde perder significa desaparecer.\n\n' +
-    'No tienes nombre. No tienes nada. Por eso nadie te vio venir.';
