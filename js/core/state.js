@@ -35,6 +35,7 @@
  * @property {'p1'|'p2'|null} owner  quién la golpeó por última vez (null hasta el primer golpe)
  * @property {number} squash  aplastamiento del último golpe, de 1 a 0. Solo visual
  * @property {number} warpMs  ms de juego desde que cruzó un portal (Infinity si no ha cruzado ninguno)
+ * @property {boolean} [bip]  pasó por el detector de Chemi: va ×1,35 hasta el siguiente golpe (bosses/chemi.js)
  */
 
 /** @typedef {null | 'super'} BallPower 'super' es el smash */

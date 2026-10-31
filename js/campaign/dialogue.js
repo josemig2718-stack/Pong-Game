@@ -2,8 +2,9 @@
  * campaign/dialogue.js
  * ------------------------------------------------------------------
  * Diálogos de los jefes: cola de líneas con máquina de escribir sobre la
- * partida. Las líneas son strings (habla el jefe) u objetos { t, s },
- * donde `s` ('a' o 'b') elige quién habla en el dúo.
+ * partida. Las líneas son strings (habla el jefe) u objetos { t, s, sfx }:
+ * `s` elige quién habla ('a' o 'b' en el dúo, 'player' el Desconocido,
+ * 'hint' la pista del Creador, sin nombre) y `sfx` suena al mostrarla.
  *
  * Un diálogo activo congela la partida (update() sale antes de mover
  * nada). Tocar el cuadro completa la línea; tocarlo otra vez la pasa.
@@ -74,14 +75,35 @@ function showNextDialogue() {
     const speaker = typeof raw === 'string' ? null : raw.s;
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!box || !boss) return;
+    if (typeof raw !== 'string' && raw.sfx && soundEffects[raw.sfx]) soundEffects[raw.sfx]();
 
     const nameEl = document.getElementById('dialogue-name');
     const textEl = document.getElementById('dialogue-text');
     const avatar = /** @type {HTMLImageElement} */ (document.getElementById('dialogue-avatar'));
     const avatar2 = /** @type {HTMLImageElement} */ (document.getElementById('dialogue-avatar2'));
+    const playerAvatar = /** @type {HTMLCanvasElement} */ (document.getElementById('dialogue-avatar-player'));
+    const isPlayer = speaker === 'player';
+    box.classList.toggle('is-player', isPlayer);
+    playerAvatar.classList.toggle('hidden', !isPlayer);
+    avatar.classList.remove('avatar-hint-flash');
 
-    // El dúo alterna avatar y nombre según quién habla
-    if (boss.image2) {
+    if (isPlayer) {
+        // Habla el Desconocido: su busto con la máscara del tema
+        nameEl.textContent = '¿¿??';
+        avatar.classList.add('hidden');
+        avatar2.classList.add('hidden');
+        drawDialoguePlayer(playerAvatar);
+    } else if (speaker === 'hint') {
+        // La pista del Creador: sin nombre, y el busto parpadea un fotograma
+        nameEl.textContent = '';
+        avatar.src = boss.image;
+        avatar.classList.remove('hidden', 'avatar-dimmed');
+        avatar2.classList.add('hidden');
+        void avatar.offsetWidth;
+        avatar.classList.add('avatar-hint-flash');
+    } else if (boss.image2) {
+        // El dúo alterna avatar y nombre según quién habla
+        avatar.classList.remove('hidden');
         const names = boss.name.split(' y ');
         nameEl.textContent = speaker === 'b' ? (names[1] || boss.name) : (names[0] || boss.name);
         avatar.src = boss.image;
@@ -92,7 +114,7 @@ function showNextDialogue() {
     } else {
         nameEl.textContent = boss.name;
         avatar.src = boss.image;
-        avatar.classList.remove('avatar-dimmed');
+        avatar.classList.remove('avatar-dimmed', 'hidden');
         avatar2.classList.add('hidden');
     }
 
@@ -131,6 +153,24 @@ function showNextDialogue() {
             showNextDialogue();
         }
     };
+}
+
+/**
+ * El busto del Desconocido en el cuadro de diálogo: la imagen y su
+ * máscara teñida del tema, en un canvas (con file:// no se puede pasar a
+ * un <img> ni usar mask-image).
+ * @param {HTMLCanvasElement} cv
+ */
+function drawDialoguePlayer(cv) {
+    const info = CAMPAIGN_ART.bustos.desconocido;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    if (!drawTintedArt(ctx, info, currentThemeHex(), 0, 0, cv.width, cv.height)) {
+        Promise.all([artLoad(info.src), artLoad(info.theme)]).then(() => {
+            ctx.clearRect(0, 0, cv.width, cv.height);
+            drawTintedArt(ctx, info, currentThemeHex(), 0, 0, cv.width, cv.height);
+        });
+    }
 }
 
 /** Corta cualquier diálogo en curso (al salir de la partida). */
@@ -174,6 +214,11 @@ function playBossOutcomeDialogue(p1Won) {
     if (!boss) return;
     // Al vencer a Yisus o al Creador manda la secuencia narrativa, no esto.
     if (p1Won && (currentCampaignLevel === CAMPAIGN_LAST_BOSS || currentCampaignLevel === CAMPAIGN_CREATOR)) return;
-    const lines = p1Won ? boss.dialogues.lose : boss.dialogues.win;
+    let lines = p1Won ? boss.dialogues.lose : boss.dialogues.win;
+    // La pista del Creador: solo la primera vez que se vence a este jefe
+    // (el récord aún no se ha guardado: checkWin lo hace después)
+    if (p1Won && boss.dialogues.creatorHint && !campaignBestOf(currentCampaignLevel).won) {
+        lines = [...lines, { t: boss.dialogues.creatorHint, s: 'hint' }];
+    }
     setTimeout(() => queueDialogue(lines), 400);
 }

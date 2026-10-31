@@ -4122,6 +4122,18 @@ body.has-result .achievement-toast--visible { transform: none; }
     object-fit: cover;
 }
 .dialogue-avatar-container img + img { margin-left: 2px; }
+.dialogue-avatar-container img.hidden, .dialogue-avatar-container canvas.hidden { display: none; }
+/* Habla el Desconocido: su busto (canvas con la máscara del tema) y el borde del tema */
+.dialogue-avatar-container canvas { display: block; width: 64px; height: 64px; }
+#dialogue-box.is-player .dialogue-avatar-container { border-color: rgba(var(--primary-rgb), 0.7); background: radial-gradient(circle at 50% 70%, rgba(var(--primary-rgb), 0.18), #06080C 70%); }
+#dialogue-box.is-player #dialogue-name { color: var(--primary); }
+/* La pista del Creador: el busto de Chemi parpadea un fotograma en blanco y celeste */
+.avatar-hint-flash { animation: avatar-hint-flash 0.12s steps(1, end) 1; }
+@keyframes avatar-hint-flash {
+    0% { filter: brightness(4) saturate(0) drop-shadow(0 0 6px #E0F2FE); }
+    50% { filter: brightness(2.4) sepia(1) hue-rotate(160deg) drop-shadow(0 0 8px #E0F2FE); }
+    100% { filter: none; }
+}
 .dialogue-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 #dialogue-name {
     font-family: var(--font-display);

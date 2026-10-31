@@ -15,7 +15,11 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
 
 /**
  * Los seis Hachepes. Los diálogos aceptan strings (habla el jefe) u
- * objetos { t, s } donde `s` elige el avatar ('a' o 'b') — lo usa el dúo.
+ * objetos { t, s, sfx } donde `s` elige quién habla: 'a' o 'b' en el dúo,
+ * 'player' el Desconocido, 'hint' la pista del Creador (sin nombre); y
+ * `sfx`, un sonido de soundEffects al mostrar la línea.
+ * Los jefes por fases añaden phase2/phase3 (al cambiar de fase) y taunts
+ * (pullas por evento, bosses/phases.js).
  *
  * `floor` y `room` son su piso en la Torre Hachepe (campaign/menu.js) y
  * `bust` (y `bust2`) su busto en CAMPAIGN_ART.bustos. `title` es su
@@ -31,15 +35,29 @@ const HACHEPES_LORE = {
         image: 'assets/campaign/bustos/chemi.webp',
         danger: '⭐⭐',
         desc: 'Lleva la recepción de la Torre Hachepe. Nadie sube sin pasar por su registro, y nadie pasa su registro.',
+        // { s: 'player' } habla el Desconocido; { sfx } suena al mostrar la línea.
+        // creatorHint: la única pista del Creador, tras la primera victoria.
         dialogues: {
             start: [
-                'Vaya. Un superviviente.',
-                'Este montón de escombros era tu casa, ¿verdad?',
-                'Yo mismo la tiré. Y no recuerdo tu cara.'
+                'Buenas. Bienvenido a la Torre Hachepe. ¿Tiene cita?',
+                { t: 'Vengo a subir.', s: 'player' },
+                'Ajá. Todos vienen a subir, mano. Nadie sube.',
+                'Aquí abajo mando yo. Si me ganas, pasas. Si no, la puerta está detrás de ti.'
             ],
-            mid: ['¿Ves? Nadie se levanta dos veces.'],
-            win: ['Vuelve al polvo, don nadie.'],
-            lose: ['¿Cómo...? ¡Solo eras basura!']
+            phase2: ['Bueno, bueno. Pasaste el torniquete. Ahora, el control de seguridad.'],
+            phase3: ['¿Te crees muy vivo, sapegato?', { t: '¡CÓDIGO NEGRO! ¡Cierren todo!', sfx: 'alarm' }],
+            win: ['Pase usted… a la calle.', 'Sin cita no se sube. Vuelva otro día.'],
+            lose: ['Mano… ¿me ganaste?', 'Yisus me va a matar.', 'Dale, sube. Pero arriba no son tan amables como yo.'],
+            creatorHint: 'Qué raro… sentí que ya te conocía.',
+            taunts: {
+                playerMiss: ['Siguiente, por favor.', '¿Sin cita? Fuera.', 'Eso va al registro.'],
+                bossMiss: ['Eso no estaba en el formulario.', 'Mano, qué ladilla.'],
+                rally15: ['Chamo, ¿tú no te cansas?'],
+                playerSmash: ['¡Epa! ¡Aquí no se grita!'],
+                detector: ['¡Bip! Eso es contrabando.'],
+                turnstile: ['¡Ey! Sin pase no se pasa.'],
+                lastLife: ['Último aviso, pana.']
+            }
         }
     },
     2: {
