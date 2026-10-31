@@ -39,6 +39,9 @@ const BOSS_PHASE_MS = {
     tauntGap: 4000      // como mucho una cada tanto
 };
 
+/** Música por fase: subida en dB de las fases 2 y 3+, y velocidad de la 3+. */
+const BOSS_PHASE_MUSIC = { boost2Db: 2, boost3Db: 3, rate3: 1.04 };
+
 /** Hasta cuándo se ve la pulla y cuándo puede salir la siguiente (performance.now). */
 let bossTauntUntil = 0;
 let bossTauntReady = 0;
@@ -185,6 +188,7 @@ function bossTickTransition(tr, ms) {
         if (t >= 1) {
             bossState.transition = null;
             if (phase.enter) phase.enter();
+            bossPhaseMusic(tr.next);
             bossShowPhaseBanner(tr.next);
             resetBall(false, { toward: 'p1' });
         }
@@ -247,6 +251,21 @@ function bossRenderPhaseOverlay(ctx) {
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             ctx.restore();
         }
+    }
+}
+
+/**
+ * Intensidad de la música por fase (música dinámica, sin cambiar de
+ * pista): fase 2, +2 dB; fase 3 y siguientes, +3 dB y un 4 % más rápida.
+ * startGame y checkWin lo devuelven todo a la normalidad.
+ * @param {number} idx fase que empieza
+ */
+function bossPhaseMusic(idx) {
+    if (idx >= 2) {
+        musicSetBoost(BOSS_PHASE_MUSIC.boost3Db);
+        musicSetRate(BOSS_PHASE_MUSIC.rate3);
+    } else if (idx === 1) {
+        musicSetBoost(BOSS_PHASE_MUSIC.boost2Db);
     }
 }
 

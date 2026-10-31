@@ -132,7 +132,7 @@ function tickMatchPointMusic(ms) {
     }
     matchPointBeatMs -= ms;
     if (matchPointBeatMs <= 0) {
-        soundEffects.heartbeat();
+        soundEffects.matchPointBeat();
         matchPointBeatMs += MUSIC_DYNAMIC.heartbeatMs;
     }
 }
@@ -174,6 +174,8 @@ function startGame(mode) {
     state.hitStopMs = 0;
     resetFever();
     resetMatchMusic();
+    // La intensidad por fase de la partida anterior (revancha sin salir)
+    resetMusicRate();
 
     // Restaurar geometría original de las paletas. Hay que reponer también
     // width y x: la arena rotada del Creador convierte a p1 en una paleta
@@ -385,6 +387,8 @@ function checkWin() {
 
     if (state.mode === 'campaign') {
         winnerText.textContent = p1Won ? '¡DERROTASTE AL HACHEPE!' : 'HAS CAÍDO...';
+        // La pista vuelve a su velocidad antes de pararse (la usa el siguiente combate)
+        resetMusicRate();
         if (!narrativeEnding) playMatchEndSound(p1Won);
 
         // Diálogo de despedida del jefe (win/lose desde su punto de vista)

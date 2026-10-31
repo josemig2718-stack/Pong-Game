@@ -295,6 +295,14 @@ function musicElement(ch) {
     const track = MUSIC_TRACKS[ch.id];
     const el = new Audio(track.file);
     el.loop = track.loop && track.loopEnd === null;
+    // Si el archivo no carga y la pista tiene respaldo, suena el respaldo
+    el.onerror = () => {
+        console.warn(`Música: "${ch.id}" no carga.`);
+        if (track.fallback && musicCurrentId === ch.id) {
+            ch.running = false;
+            musicPlay(track.fallback);
+        }
+    };
     // Respaldo del vigilante: si el archivo llega al final, vuelve al bucle
     el.onended = () => {
         if (!ch.running || !track.loop) {

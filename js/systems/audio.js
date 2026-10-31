@@ -150,10 +150,12 @@ function getNoiseBuffer(ctx) {
 /**
  * Ráfaga de ruido blanco filtrado (el "chasquido" del impacto).
  * `bandpassEnd` barre el filtro durante la ráfaga.
+ * `kind` cambia el filtro (por defecto, paso banda): 'lowpass' para los
+ * golpes sordos (boom, stamp).
  * @param {{ when?: number, dur?: number, bandpass?: number, bandpassEnd?: number|null,
- *           q?: number, gain?: number, pan?: number }} burst
+ *           q?: number, gain?: number, pan?: number, kind?: BiquadFilterType }} burst
  */
-function sfxNoise({ when = 0, dur = 0.03, bandpass = 2500, bandpassEnd = null, q = 1.2, gain = 0.35, pan = 0 }) {
+function sfxNoise({ when = 0, dur = 0.03, bandpass = 2500, bandpassEnd = null, q = 1.2, gain = 0.35, pan = 0, kind = 'bandpass' }) {
     if (!sfxActive()) return;
     const ctx = getAudioContext();
     const t0 = ctx.currentTime + when;
@@ -163,7 +165,7 @@ function sfxNoise({ when = 0, dur = 0.03, bandpass = 2500, bandpassEnd = null, q
     src.buffer = buffer;
 
     const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
+    filter.type = kind;
     filter.frequency.setValueAtTime(bandpass, t0);
     if (bandpassEnd) filter.frequency.exponentialRampToValueAtTime(bandpassEnd, t0 + dur);
     filter.Q.setValueAtTime(q, t0);
@@ -643,7 +645,7 @@ const soundEffects = {
         sfxNoise({ dur: 0.03 });
     },
     /** Punto de partido: dos golpes graves de 55 Hz, como un latido. */
-    heartbeat: () => {
+    matchPointBeat: () => {
         sfxVoice({ type: 'sine', freq: 55, attack: 0.005, decay: 0.085, gain: 0.5 });
         sfxVoice({ type: 'sine', freq: 55, attack: 0.005, decay: 0.085, gain: 0.5, when: 0.18 });
     },
@@ -809,7 +811,82 @@ const soundEffects = {
         sfxSustain({ type: 'square', freq: 1000, dur: 0.03, attack: 0.002, release: 0.005, gain: 0.08 });
     },
     /** Chasquido de radio al empezar una línea por el altavoz. */
-    radioClick: () => sfxNoise({ dur: 0.05, bandpass: 2500, q: 0.6, gain: 0.25 })
+    radioClick: () => sfxNoise({ dur: 0.05, bandpass: 2500, q: 0.6, gain: 0.25 }),
+
+    // --- Prólogo extendido (escenas 6, 8, 10 y 11) --------------------
+
+    /** Explosión: ruido grave que se cierra (900→120 Hz) y un seno que cae de 70 a 35 Hz. */
+    boom: () => {
+        sfxNoise({ dur: 0.8, kind: 'lowpass', bandpass: 900, bandpassEnd: 120, q: 0.7, gain: 0.5 });
+        sfxVoice({ type: 'sine', freq: 70, freqEnd: 35, attack: 0.01, decay: 0.6, gain: 0.5 });
+    },
+    /** El desmayo: dos golpes de 55 Hz cada 0,9 s durante 4 s, cada vez más bajos. */
+    heartbeat: () => {
+        for (let i = 0; i * 0.9 < 4; i++) {
+            const g = 0.55 * Math.pow(0.72, i);
+            sfxVoice({ type: 'sine', freq: 55, attack: 0.006, decay: 0.12, gain: g, when: i * 0.9 });
+            sfxVoice({ type: 'sine', freq: 55, attack: 0.006, decay: 0.12, gain: g * 0.8, when: i * 0.9 + 0.18 });
+        }
+    },
+    /** La pala del alcalde se parte: ruido, un cuadrado que cae y cuatro chasquidos. */
+    paddleBreak: () => {
+        sfxNoise({ dur: 0.25, bandpass: 2500, gain: 0.35 });
+        sfxVoice({ type: 'square', freq: 400, freqEnd: 80, decay: 0.2, gain: 0.25 });
+        for (let i = 0; i < 4; i++) sfxNoise({ dur: 0.02, bandpass: 3500 + 600 * sfxRandom(), gain: 0.3, when: 0.05 + i * 0.045 });
+    },
+    /** Sintonía de Barks Radio: tres notas por un filtro de radio. */
+    radioJingle: () => {
+        [523, 659, 784].forEach((f, i) => {
+            sfxVoice({ type: 'triangle', freq: f, decay: 0.14, gain: 0.3, when: i * 0.15, lowpass: 2200 });
+            sfxNoise({ dur: 0.03, bandpass: 1500, q: 2, gain: 0.08, when: i * 0.15 });
+        });
+    },
+    /** Se apagan las farolas: una sierra que cae de 300 a 40 Hz con el filtro cerrándose. */
+    powerDown: () => sfxSustain({ type: 'sawtooth', freq: 300, freqEnd: 40, dur: 1.2, attack: 0.02, release: 0.25, gain: 0.25, lowpass: 900 }),
+
+    // --- Campaña: Chemi y el combate por fases ------------------------
+
+    /** Torniquete: clic metálico. */
+    turnstile: () => {
+        sfxNoise({ dur: 0.03, bandpass: 4000, gain: 0.3 });
+        sfxVoice({ type: 'square', freq: 1200, attack: 0.002, decay: 0.02, gain: 0.18 });
+    },
+    /** Detector: dos pitidos agudos. */
+    bip: () => {
+        sfxVoice({ type: 'square', freq: 1800, attack: 0.003, decay: 0.08, gain: 0.16 });
+        sfxVoice({ type: 'square', freq: 1800, attack: 0.003, decay: 0.08, gain: 0.16, when: 0.12 });
+    },
+    /** El sello: golpe seco y grave. */
+    stamp: () => {
+        sfxNoise({ dur: 0.06, kind: 'lowpass', bandpass: 800, q: 0.7, gain: 0.4 });
+        sfxVoice({ type: 'sine', freq: 120, freqEnd: 60, attack: 0.003, decay: 0.15, gain: 0.4 });
+    },
+    /** Persiana: dos triángulos metálicos a la vez y un golpe de ruido. */
+    clang: () => {
+        sfxVoice({ type: 'triangle', freq: 900, attack: 0.002, decay: 0.4, gain: 0.22 });
+        sfxVoice({ type: 'triangle', freq: 1350, attack: 0.002, decay: 0.4, gain: 0.16 });
+        sfxNoise({ dur: 0.03, bandpass: 3000, gain: 0.25 });
+    },
+    /** Ascensor: «ding-dong» (mi y do agudos) con cola suave. */
+    elevatorDing: () => {
+        sfxVoice({ type: 'sine', freq: 1318, attack: 0.004, decay: 0.35, gain: 0.25 });
+        sfxVoice({ type: 'sine', freq: 1046, attack: 0.004, decay: 0.5, gain: 0.25, when: 0.35 });
+    },
+    /** Código negro: alarma de 660/880 Hz cada 0,25 s durante 2 s. */
+    alarm: () => {
+        for (let i = 0; i < 8; i++) sfxVoice({ type: 'square', freq: i % 2 ? 880 : 660, attack: 0.01, decay: 0.22, gain: 0.2, when: i * 0.25, lowpass: 3000 });
+    },
+    /** Fase superada: barrido de ruido hacia arriba y un acorde de sierras. */
+    phaseUp: () => {
+        sfxNoise({ dur: 0.4, bandpass: 500, bandpassEnd: 5000, q: 0.9, gain: 0.3 });
+        for (const f of [220, 277, 330]) sfxVoice({ type: 'sawtooth', freq: f, attack: 0.02, decay: 0.6, gain: 0.1, lowpass: 2400, when: 0.15 });
+    },
+    /** K.O. del jefe: un boom corto y un cuadrado que cae de 880 a 110 Hz. */
+    koHit: () => {
+        sfxNoise({ dur: 0.4, kind: 'lowpass', bandpass: 900, bandpassEnd: 150, q: 0.7, gain: 0.45 });
+        sfxVoice({ type: 'sine', freq: 70, freqEnd: 40, attack: 0.01, decay: 0.35, gain: 0.45 });
+        sfxVoice({ type: 'square', freq: 880, freqEnd: 110, decay: 0.5, gain: 0.18 });
+    }
 };
 
 /**
@@ -886,8 +963,10 @@ function playGameplayMusic(mode = 'cpu') {
         musicStop();
         return;
     }
-    // El resto de jefes comparten el rap de los Hachepes
-    musicPlay(mode === 'hachepe' || mode === 'campaign' ? 'hachepe_rap' : (state.matchTrack || 'partida_synthwave'));
+    // Los jefes de campaña comparten su pista (jefe_hachepe, con el rap de
+    // respaldo); el Modo Hachepe, el rap
+    if (mode === 'campaign') musicPlay('jefe_hachepe');
+    else musicPlay(mode === 'hachepe' ? 'hachepe_rap' : (state.matchTrack || 'partida_synthwave'));
 }
 
 /** Para la música de partida (la de los menús no la toca). */

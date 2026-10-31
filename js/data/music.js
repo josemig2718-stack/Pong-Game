@@ -7,6 +7,10 @@
  * la intro suena una vez y luego se repite [loopStart, loopEnd]. El
  * fundido del empalme ya va dentro del MP3.
  *
+ * La de los jefes (jefe_hachepe) viene de
+ * design/campana/rework-torre/musica/bucles.json; si su archivo no carga,
+ * suena su `fallback`.
+ *
  * `loopEnd: null` significa que el bucle llega hasta el final del
  * archivo. `rockola` es el nombre de las pistas que se pueden elegir
  * para las partidas en la Rockola de la tienda (su artículo está en
@@ -19,7 +23,7 @@
 
 /**
  * @typedef {{ file: string, loopStart: number, loopEnd: number|null, loop: boolean,
- *             rockola?: string, bpm?: number, duration?: number }} MusicTrack
+ *             rockola?: string, bpm?: number, duration?: number, fallback?: string }} MusicTrack
  */
 
 /** @type {Record<string, MusicTrack>} */
@@ -32,6 +36,9 @@ const MUSIC_TRACKS = {
     musica_gameplay:   { file: 'assets/audio/musica_gameplay.mp3',   loop: true, loopStart: 0,      loopEnd: null,     rockola: 'Clásica', duration: 117.29 },
     hachepe_rap:       { file: 'assets/audio/hachepe_rap.mp3',       loop: true, loopStart: 0,      loopEnd: null,     rockola: 'Rap Hachepe', duration: 245.42 },
     fiebre_rally:      { file: 'assets/audio/fiebre_rally.mp3',      loop: true, loopStart: 0,      loopEnd: 64.0 },
+    // Todos los jefes de campaña, en todas sus fases (menos el Creador): intro de
+    // ascensor (bossa nova) una vez y luego el bucle
+    jefe_hachepe:      { file: 'assets/audio/jefe_hachepe.mp3',      loop: true, loopStart: 20.60798, loopEnd: 76.60798, fallback: 'hachepe_rap' },
     jingle_victoria:   { file: 'assets/audio/jingle_victoria.mp3',   loop: false, loopStart: 0, loopEnd: null },
     jingle_derrota:    { file: 'assets/audio/jingle_derrota.mp3',    loop: false, loopStart: 0, loopEnd: null },
 
