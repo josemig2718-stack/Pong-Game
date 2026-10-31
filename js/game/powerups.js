@@ -95,6 +95,17 @@ function initPowerups() {
 }
 
 /**
+ * Cambio de fase de un jefe (bosses/phases.js): fuera el orbe y los
+ * efectos de los dos, sin tocar los contadores de la partida.
+ */
+function clearPowerupsForPhase() {
+    revertAllPowerups();
+    activePowerup = null;
+    powerupCooldownMs = nextPowerupCooldown();
+    updatePowerupPills();
+}
+
+/**
  * Actualiza la lógica de los power-ups (aparición, expiración, colisiones)
  * @param {number} dt Delta time normalizado a 60 FPS
  * @param {number} realDt el mismo dt sin la cámara lenta: con él se

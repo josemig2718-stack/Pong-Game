@@ -88,6 +88,43 @@ function handleCampaignVictory() {
 }
 
 /**
+ * Récord de un jefe en la ficha de la torre.
+ * @typedef {{ won: boolean, bestPhase: number, flawless: boolean }} CampaignBest
+ */
+
+/**
+ * @param {number} level
+ * @returns {CampaignBest} el récord guardado (vacío si nunca se jugó)
+ */
+function campaignBestOf(level) {
+    const best = playerProgression.campaignBest && playerProgression.campaignBest[level];
+    return { won: false, bestPhase: 0, flawless: false, ...(best || {}) };
+}
+
+/**
+ * Guarda el récord del jefe en curso al terminar el combate (checkWin,
+ * después de las recompensas). Por fases: la fase más alta a la que se
+ * llegó y si se ganó sin perder ninguna vida («Sin un rasguño»). Sin
+ * fases: ganado sin encajar ningún gol.
+ * @param {boolean} p1Won
+ */
+function recordCampaignBest(p1Won) {
+    const level = currentCampaignLevel;
+    const prev = campaignBestOf(level);
+    const phases = bossPhases();
+    const reached = phases ? (p1Won ? phases.length : (bossState.maxPhase || 0) + 1) : 1;
+    const flawless = p1Won && (phases ? bossState.livesLost === 0 : state.p2Score === 0);
+    if (p1Won && phases && bossState.livesLost === 0) unlockAchievement('boss_flawless');
+    if (!playerProgression.campaignBest) playerProgression.campaignBest = {};
+    playerProgression.campaignBest[level] = {
+        won: prev.won || p1Won,
+        bestPhase: Math.max(prev.bestPhase, reached),
+        flawless: prev.flawless || flawless
+    };
+    saveProgression();
+}
+
+/**
  * ¿Cuál es el siguiente Hachepe tras el que se acaba de jugar?
  * Devuelve null si no hay ninguno disponible.
  *

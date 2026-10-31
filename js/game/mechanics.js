@@ -382,11 +382,16 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 2-4. Tipo, ángulo y velocidad. Un smash del rival no se
     // devuelve más rápido que el tope normal.
-    // Los jefes de campaña no usan las mecánicas (llegarán con su rework):
-    // sus golpes son siempre normales, sin efecto ni bloqueo. Un bloqueo
-    // frenaría cada bola y les daría tiempo a llegar a todas.
-    const bossHit = state.mode === 'campaign' && side === 'p2';
-    const type = bossHit ? 'normal' : classifyHit(paddle, holder, side, c, rotated ? paddle.vx : paddle.vy);
+    // Los jefes de campaña sin `spin`/`smash` en su config no usan las
+    // mecánicas: sus golpes son siempre normales, sin efecto ni bloqueo.
+    // Los que sí las usan (por fases) clasifican el golpe, pero nunca
+    // bloquean: un bloqueo frenaría cada bola y les daría tiempo a llegar
+    // a todas.
+    const bcfgHit = state.mode === 'campaign' && side === 'p2' ? bossConfig() : null;
+    const bossMech = !!bcfgHit && ((bcfgHit.spin || 0) > 0 || (bcfgHit.smash || 0) > 0);
+    const bossHit = !!bcfgHit && !bossMech;
+    let type = bossHit ? 'normal' : classifyHit(paddle, holder, side, c, rotated ? paddle.vx : paddle.vy);
+    if (bossMech && type === 'block') type = 'normal';
     const angle = hitAngle(type, c, rotated);
     if (b.power && b.owner && b.owner !== side) b.speed = Math.min(b.speed, maxBallSpeed);
     b.speed = hitSpeed(type, b, paddle, maxBallSpeed);
@@ -461,6 +466,7 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
         if (state.mode !== 'practice') addEnergy(p2, MECH.energy.rally10);
     }
     if (currentRally === MECH.feverRally) startFever();
+    if (state.mode === 'campaign') bossOnHit(b, side, type);
     // Fiebre larga: su pista sube
     if (state.fever && currentRally === MUSIC_DYNAMIC.feverBoostRally && feverChangesMusic()) musicSetBoost(MUSIC_DYNAMIC.feverBoostDb);
     return type;

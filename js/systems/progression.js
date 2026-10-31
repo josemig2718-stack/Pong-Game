@@ -31,6 +31,7 @@ const DEFAULT_PROGRESSION = {
     rewardedLevel: 1,         // hasta qué nivel se han cobrado ya las recompensas
     campaignProgress: 1,      // nivel de la campaña (1 a 6)
     campaignIntroSeen: false, // si ya vio la historia inicial
+    campaignBest: {},         // récord por jefe: { [nivel]: { won, bestPhase, flawless } } (campaign/progress.js)
     missions: null,           // misiones del día y de la semana (systems/missions.js)
     missionsCompleted: 0,
     weeklyCompleted: 0,
@@ -71,7 +72,8 @@ function loadProgression() {
                 ...parsed,
                 owned,
                 // Una categoría nueva toma su valor por defecto
-                equipped: { ...DEFAULT_PROGRESSION.equipped, ...parsed.equipped }
+                equipped: { ...DEFAULT_PROGRESSION.equipped, ...parsed.equipped },
+                campaignBest: { ...(parsed.campaignBest || {}) }
             };
         }
         discardOldSave(PROG_STORAGE_KEY_V1);
@@ -312,6 +314,8 @@ function awardGameRewards(mode, p1Won, p1Score, p2Score) {
         const gain = isCreator ? COIN_REWARDS.winCreator : COIN_REWARDS.winCampaignBase * level;
         row(`Victoria · ${HACHEPES_LORE[level].name}${isReplayingBoss ? ' (repetición)' : ''}`, Math.round(xp * factor));
         coins += Math.round(gain * factor);
+        // La primera vez que se vence a cada jefe (el récord se guarda después)
+        if (!campaignBestOf(level).won) row('Primera victoria', XP_REWARDS.firstBossClear);
     }
 
     // Lo que se hizo en la partida (del jugador 1)

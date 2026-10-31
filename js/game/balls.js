@@ -15,8 +15,12 @@
 const SERVE_INITIAL = 3000;    // 3 segundos al iniciar partida
 const SERVE_AFTER_GOAL = 3000; // 3 segundos tras cada punto
 
-/** Velocidades de bola (base y tope) del ajuste en curso. */
+/**
+ * Velocidades de bola (base y tope) del ajuste en curso. La campaña
+ * tiene su propia dificultad: siempre la velocidad normal.
+ */
 function currentSpeedPreset() {
+    if (state.mode === 'campaign') return BALL_SPEED_PRESETS[2];
     return BALL_SPEED_PRESETS[settings.ballSpeed] || BALL_SPEED_PRESETS[2];
 }
 
@@ -40,10 +44,12 @@ function createBall(x, y, speed, dx, dy) {
  * Coloca una bola nueva en el centro, con dirección aleatoria, y arranca
  * la cuenta regresiva del saque.
  * @param {boolean} [initialServe] true en el primer saque de la partida
+ * @param {{ toward?: 'p1'|'p2' }} [opts] toward: saca hacia ese lado (pide el mismo azar)
  */
-function resetBall(initialServe = false) {
+function resetBall(initialServe = false, opts = {}) {
     const speedPreset = currentSpeedPreset();
-    const dir = Math.random() > 0.5 ? 1 : -1;
+    let dir = Math.random() > 0.5 ? 1 : -1;
+    if (opts.toward) dir = opts.toward === 'p1' ? -1 : 1;
     const speed = speedPreset.base;
     let dy = (Math.random() * 2 - 1) * speed;
     if (Math.abs(dy) < 2) dy = dy < 0 ? -2 : 2;

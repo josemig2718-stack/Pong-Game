@@ -1611,6 +1611,122 @@ body.touch-device:not([data-game-mode="local"]) .touch-hint--right { display: no
 body.touch-device #game-container[data-layout="stack"] #orientation-hint { display: flex; }
 #orientation-hint.orientation-hint--dismissed { display: none !important; }
 
+/* --- Combate por fases (bosses/phases.js) ---------------------------
+   #hud-mode pasa a ser la barra del jefe: nombre, «FASE N · nombre» y un
+   tramo por fase con una muesca por gol. Los corazones del jugador
+   sustituyen a sus marcas y el marcador numérico se queda, más pequeño. */
+#game-container[data-phases] .hud-chip--mode {
+    --boss: #EF4444;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    height: auto;
+    min-width: 0;
+    width: min(300px, 100%);
+    padding: 6px 12px 7px;
+    border-radius: 12px;
+    line-height: 1.2;
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--boss) 55%, transparent);
+}
+.boss-bar__head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.boss-bar__name { font-size: 10px; color: var(--boss); flex: none; }
+.boss-bar__phase { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.boss-bar__track { display: flex; gap: 6px; }
+.boss-bar__seg { flex: 1; display: flex; gap: 2px; padding: 2px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); }
+.boss-bar__seg i { flex: 1; height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+.boss-bar__seg.is-current { box-shadow: 0 0 0 1px color-mix(in srgb, var(--boss) 60%, transparent); }
+.boss-bar__seg.is-current i { background: color-mix(in srgb, var(--boss) 25%, transparent); }
+.boss-bar__seg.is-current i.is-on { background: var(--boss); box-shadow: 0 0 6px var(--boss); }
+.boss-bar__seg.is-done i { background: rgba(255, 255, 255, 0.22); }
+.boss-bar__seg i.is-pop { animation: boss-notch-pop 0.45s ease-out; }
+@keyframes boss-notch-pop {
+    0% { transform: scaleY(1); filter: brightness(1); }
+    35% { transform: scaleY(2.4); filter: brightness(2.2); }
+    100% { transform: scaleY(1); filter: brightness(1); }
+}
+#game-container[data-phases] .hud-card__score { font-size: 22px; }
+#game-container[data-phases] .hud-pips { gap: 3px; }
+.hud-pips .hud-heart { flex: none; display: block; width: 14px; height: 13px; color: rgba(255, 255, 255, 0.14); }
+.hud-heart svg { width: 100%; height: 100%; fill: currentColor; display: block; }
+.hud-heart.is-on { color: #EF4444; filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.6)); }
+.hud-heart.is-breaking { animation: heart-break 0.5s ease-out; }
+.hud-heart.is-gain { animation: heart-gain 0.6s ease-out; }
+@keyframes heart-break {
+    0% { transform: scale(1.3); color: #EF4444; }
+    40% { transform: scale(0.8) rotate(-18deg); color: #FCA5A5; }
+    100% { transform: scale(1); }
+}
+@keyframes heart-gain {
+    0% { transform: scale(0.4); filter: drop-shadow(0 0 0 #fff) brightness(2.5); }
+    60% { transform: scale(1.35); filter: drop-shadow(0 0 8px #fff) brightness(1.6); }
+    100% { transform: scale(1); }
+}
+#game-container[data-layout="sides"][data-phases] .hud-chip--mode { width: auto; height: auto; line-height: 1.2; margin: 8px 8px 0; padding: 5px 8px 6px; }
+#game-container[data-layout="sides"][data-phases] .boss-bar__head { flex-direction: column; gap: 3px; }
+#game-container[data-layout="sides"][data-phases] .boss-bar__phase { font-size: 10px; max-width: 100%; }
+#game-container[data-layout="sides"][data-phases] .hud-pips { justify-content: center; }
+#game-container[data-layout="stack"][data-phases] .hud-chip--mode { width: 100%; height: auto; line-height: 1.2; padding: 5px 10px 6px; justify-self: stretch; }
+#game-container[data-layout="stack"][data-phases] .boss-bar__phase { font-size: 10px; }
+#game-container[data-layout="stack"] .hud-pips .hud-heart { width: 12px; height: 11px; }
+
+/* La pulla del jefe: junto a su lado, por encima del campo */
+.boss-bubble {
+    position: absolute;
+    top: 9%;
+    right: 7%;
+    z-index: 30;
+    max-width: min(46%, 300px);
+    padding: 8px 12px;
+    border-radius: 12px 12px 2px 12px;
+    background: rgba(14, 17, 26, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.boss-bubble.is-on { animation: boss-bubble-in 0.22s ease-out; }
+@keyframes boss-bubble-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.92); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Letrero «FASE N · nombre», en el centro del campo */
+.boss-phase-banner {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    pointer-events: none;
+    text-align: center;
+    padding: 0 16px;
+}
+.boss-phase-banner__n,
+.boss-phase-banner__name { display: block; position: static; line-height: 1.3; }
+.boss-phase-banner__n { font-size: clamp(18px, 4vw, 34px); color: var(--primary); text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.7), 3px 3px 0 #000; }
+.boss-phase-banner__name { font-size: clamp(10px, 1.8vw, 16px); color: var(--text); text-shadow: 2px 2px 0 #000; }
+.boss-phase-banner.is-on { animation: boss-banner var(--dur, 1.2s) ease-out forwards; }
+@keyframes boss-banner {
+    0% { opacity: 0; transform: scale(1.4); }
+    15% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* K.O.: zoom hacia la pala del jefe (transform-origin lo pone JS). Al
+   quitar la clase se quita al instante: un transform en #canvas-wrapper
+   crea un contexto de apilamiento y el diálogo final quedaría debajo del
+   fin de partida. */
+#canvas-wrapper.is-ko { transform: scale(1.12); transition: transform 0.35s ease-out; }
+
 /* --- top: escritorio y tablet ------------------------------------- */
 #game-container[data-layout="top"] {
     width: min(100%, calc(var(--field-w, 100vw) + 40px));

@@ -38,12 +38,69 @@ let cpuComingMs = 0;
 /** @type {number|null} */
 let cpuLastPredY = null;
 
+/**
+ * Plan de un jefe con mecánicas (`spin`/`smash` en su config): se elige
+ * cuando la bola empieza a venir hacia él.
+ * @type {{ spin: boolean, smash: boolean }|null}
+ */
+let bossPlan = null;
+/** La bola objetivo venía hacia el jefe en el fotograma anterior. */
+let bossBallWasComing = false;
+
 /** Sin plan: la próxima bola que venga hace elegir uno nuevo (al empezar partida). */
 function resetCpuPlan() {
     cpuPlan = null;
     cpuBallWasComing = false;
     cpuComingMs = 0;
     cpuLastPredY = null;
+    bossPlan = null;
+    bossBallWasComing = false;
+}
+
+/**
+ * Jefe con mecánicas: persigue la bola con su desvío de puntería (como
+ * los demás jefes) y, según el plan de esta bola, da efecto barriendo en
+ * los últimos fotogramas o carga el smash si su barra está llena. El
+ * plan pide siempre dos números aleatorios.
+ * @param {Ball|undefined} ball
+ * @param {number} aiSpeed
+ * @param {number} errorMargin
+ * @param {BossConfig} cfg
+ * @param {number} dt
+ */
+function bossPlay(ball, aiSpeed, errorMargin, cfg, dt) {
+    const coming = !!ball && ball.dx > 0;
+    if (coming && !bossBallWasComing) {
+        const spinRoll = Math.random();
+        const smashRoll = Math.random();
+        bossPlan = { spin: spinRoll < (cfg.spin || 0), smash: smashRoll < (cfg.smash || 0) };
+    }
+    bossBallWasComing = coming;
+
+    const center = p2.y + p2.height / 2;
+    const speed = aiSpeed * (p2.smashHeld ? MECH.smashSlowK : 1);
+    let hold = false;
+    if (coming && bossPlan) {
+        const frames = (p2.x - ball.x) / Math.max(0.1, ball.dx);
+        const msLeft = frames * MS_PER_FRAME;
+        if (bossPlan.smash && superReadyFor(p2)) {
+            hold = msLeft <= MECH.cpu.smashLeadMs && msLeft > MECH.cpu.smashReleaseMs;
+        }
+        const goal = ball.y + bossAim();
+        const sweep = bossPlan.spin && !hold ? cpuSpinSweep(goal, aiSpeed) : 0;
+        if (sweep !== 0 && frames <= MECH.cpu.spinFrames
+            && Math.abs(goal - (center + sweep * aiSpeed * dt)) <= p2.height / 2 * MECH.cpu.spinMaxContact) {
+            p2.y += sweep * aiSpeed * dt;
+        } else if (center < goal - errorMargin) {
+            p2.y += speed * dt;
+        } else if (center > goal + errorMargin) {
+            p2.y -= speed * dt;
+        }
+    } else {
+        if (center < GAME_HEIGHT / 2 - 5) p2.y += speed * 0.5 * dt;
+        else if (center > GAME_HEIGHT / 2 + 5) p2.y -= speed * 0.5 * dt;
+    }
+    updateSmash(p2, hold, dt);
 }
 
 /**
@@ -193,7 +250,7 @@ function cpuPlay(ball, aiSpeed, errorMargin, dt) {
 /**
  * Mueve la paleta de la CPU (p2) y, en el combate del dúo, la gemela.
  * @param {number} dt
- * @param {object|null} bcfg config del jefe en curso (bossConfig())
+ * @param {BossConfig|null} bcfg config del jefe en curso (bossConfig())
  */
 function moveCpu(dt, bcfg) {
     let aiSpeed = paddleSpeed, errorMargin = 0;
@@ -222,9 +279,14 @@ function moveCpu(dt, bcfg) {
     }
     if (!targetBall) targetBall = state.balls[0];
 
-    // VS CPU y Hachepe: con las mecánicas. Los jefes, con su IA de siempre.
+    // VS CPU y Hachepe: con las mecánicas. Los jefes, con su IA de siempre;
+    // los que traen `spin`/`smash` en su config, con su plan (bossPlay).
     if (!bcfg) {
         cpuPlay(targetBall, aiSpeed, errorMargin, dt);
+        return;
+    }
+    if ((bcfg.spin || 0) > 0 || (bcfg.smash || 0) > 0) {
+        bossPlay(targetBall, aiSpeed, errorMargin, bcfg, dt);
         return;
     }
 

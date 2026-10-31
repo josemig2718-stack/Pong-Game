@@ -88,6 +88,9 @@ function setupHud() {
         }
     }
 
+    // Combate por fases: barra del jefe y corazones (bosses/phases.js)
+    setupBossHud();
+
     hudKey = '';
     smashButtonsKey = '';
     superHintUntil = 0;
@@ -167,6 +170,7 @@ function updateHud() {
     updateSmashButtons();
     updateSuperHint();
     updateHintToast();
+    updateBossHud();
     const secs = Math.floor(matchElapsedMs / 1000);
     const energyKey = [p1, p2].map((p) => `${energySegments(p)}${superReadyFor(p) ? '!' : ''}`).join('|');
     const key = `${state.p1Score}|${state.p2Score}|${currentRally}|${secs}|${state.fever}|${energyKey}`;
@@ -178,7 +182,8 @@ function updateHud() {
     for (const side of ['p1', 'p2']) {
         const score = side === 'p1' ? (practice ? matchBestRally : state.p1Score) : state.p2Score;
         document.getElementById(`hud-score-${side}`).textContent = String(score);
-        if (practice) continue;
+        // En práctica no hay marcas; por fases, son los corazones (updateBossHud)
+        if (practice || bossHasPhases()) continue;
         const pips = document.getElementById(`hud-pips-${side}`).children;
         for (let i = 0; i < pips.length; i++) pips[i].classList.toggle('is-on', i < score);
     }

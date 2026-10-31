@@ -82,6 +82,7 @@ const XP_REWARDS = {
     winHachepe: 100,
     winCampaignBase: 40,     // se multiplica por el nº de jefe (1 a 5)
     winCreator: 300,
+    firstBossClear: 50,      // la primera victoria contra cada jefe (campaignBest)
     completeLocal: 10,
     loss: 5,                 // consolación (VS CPU, Hachepe o campaña)
     scorePoint: 2,           // ×2 los anotados en fiebre

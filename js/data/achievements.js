@@ -167,6 +167,10 @@ const ACHIEVEMENTS = [
       icon: 'M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2' },
     { id: 'campaign_clear', category: 'campana', name: 'La Venganza', desc: 'Derrota a los cinco Hachepes',
       icon: 'M3 21V11h4v10M7 21V7h5v14M12 21v-8h4v8M16 21V9h5v12M3 21h18M9.5 7V3l3 1.2-3 1.2' },
+    { id: 'boss_flawless', category: 'campana', name: 'Sin un rasguño', desc: 'Vence a un jefe sin perder ninguna vida',
+      icon: 'M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6zM9 12l2 2 4-4' },
+    { id: 'boss_ko_smash', category: 'campana', name: 'Remate perfecto', desc: 'Remata a un jefe con un smash',
+      icon: 'M13 2L4 14h7l-1 8 9-12h-7z' },
 
     // Secreto: se muestra como "????" hasta que se desbloquea
     { id: 'the_creator', category: 'secreto', name: 'The Creator', desc: 'Vence al Creador', secret: true,

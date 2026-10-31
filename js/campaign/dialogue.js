@@ -154,6 +154,8 @@ let midDialogueShown = false;
 /** Diálogo "voy ganando": salta una sola vez por partida, al ir perdiendo de 2. */
 function checkMidDialogue() {
     if (state.mode !== 'campaign' || midDialogueShown) return;
+    // En los jefes por fases, las pullas sustituyen a este diálogo
+    if (bossHasPhases()) return;
     if (state.p2Score - state.p1Score < 2) return;
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!boss || !boss.dialogues.mid) return;

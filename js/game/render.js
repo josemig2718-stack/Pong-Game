@@ -218,6 +218,9 @@ function render() {
     // Fondo animado VFX (estrellas, lluvia, aurora)
     renderBackground(ctx);
 
+    // Suelo propio del jefe (la arena de Chemi), debajo del resplandor y la red
+    bossRenderArena(ctx);
+
     // Resplandor sutil detrás del centro
     const gradient = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 10, GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_HEIGHT / 1.3);
     gradient.addColorStop(0, hexToRgba(themeColor, 0.08));

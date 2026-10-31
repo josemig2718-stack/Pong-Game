@@ -36,6 +36,10 @@ function update(dt) {
         return;
     }
 
+    // Jefe por fases: la transición entre fases y el K.O. retienen la
+    // partida (bosses/phases.js). Fuera de esos combates no hace nada.
+    if (bossPhaseHold(dt)) return;
+
     // El reloj de la partida cuenta tiempo real, sin la cámara lenta
     const realDt = dt;
 
@@ -397,7 +401,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         statsOnScore(false, b);
         endFever();
         goalMusic();
-        bossOnGoal(false);
+        bossOnGoal(false, b);
         checkMidDialogue();
         soundEffects.score();
         triggerShake(10, 260);
@@ -413,7 +417,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         if (b.warpMs < PORTAL_GOAL_MS) unlockAchievement('portal_goal');   // «Atajo»
         endFever();
         goalMusic();
-        bossOnGoal(true);
+        bossOnGoal(true, b);
         soundEffects.score();
         triggerShake(10, 260);
         triggerGoalVFX(GAME_WIDTH, b.y, goalPower(b));

@@ -21,6 +21,7 @@
  */
 function matchTargetScore() {
     const bcfg = bossConfig();
+    if (bcfg && bossHasPhases()) return bossPhasesGoalTotal();
     if (bcfg) return bcfg.targetScore;
     if (state.mode === 'practice') return 0;
     if (state.mode === 'hachepe') return 10;
@@ -353,6 +354,11 @@ function checkWin() {
         const hp = bossHealth();
         p1Won = hp <= 0;
         finished = p1Won || state.p2Score >= target;
+    } else if (bcfg && bossHasPhases()) {
+        // Por fases: se gana tras el K.O. de la última fase y se pierde
+        // sin vidas. Los marcadores siguen contando goles (estadísticas).
+        p1Won = !!bossState.cleared;
+        finished = p1Won || bossState.lives <= 0;
     } else {
         p1Won = state.p1Score >= target;
         finished = p1Won || state.p2Score >= target;
@@ -428,6 +434,9 @@ function checkWin() {
 
     // Progresión: otorgar XP y Chemi Coins
     awardGameRewards(state.mode, p1Won, state.p1Score, state.p2Score);
+    // Récord del jefe en la ficha de la torre (después de las recompensas:
+    // la primera victoria paga extra)
+    if (state.mode === 'campaign') recordCampaignBest(p1Won);
 
     // Actualizar displays de progresión
     updateCoinDisplay();
