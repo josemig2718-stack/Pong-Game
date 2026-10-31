@@ -208,6 +208,9 @@ function bossTickTransition(tr, ms) {
 function bossTickKo(ko, ms) {
     ko.ms += ms;
     const wrapper = document.getElementById('canvas-wrapper');
+    // El remate propio del jefe (la caja de Dani, la caída de Mario…)
+    const boss = currentBoss();
+    if (!ko.hit && boss && boss.koTick) boss.koTick(ko.ms);
     if (!ko.hit && ko.ms >= ko.lead) {
         ko.hit = true;
         wrapper.style.transformOrigin = `${((p2.x + p2.width / 2) / GAME_WIDTH * 100).toFixed(1)}% ${((p2.y + p2.height / 2) / GAME_HEIGHT * 100).toFixed(1)}%`;

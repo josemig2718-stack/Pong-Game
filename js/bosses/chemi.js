@@ -129,7 +129,7 @@ function chemiCollideTurnstiles(b) {
             b.dy = b.dy - 2 * dot * ny + vay * CHEMI.armTangentK;
             // La regla de los obstáculos: perturbar dy, o el rebote se repite
             b.dy += (Math.random() * 2 - 1) * b.speed * 0.3;
-            chemiNormalize(b);
+            bossNormalizeBall(b);
             b.x = qx + nx * (rad + 0.5);
             b.y = qy + ny * (rad + 0.5);
             b.spin *= MECH.spinWallK;
@@ -145,22 +145,6 @@ function chemiCollideTurnstiles(b) {
     return false;
 }
 
-/**
- * Reparte la velocidad de la bola (b.speed) en su dirección actual, sin
- * dejarla casi vertical: así nunca se queda rebotando de pared a pared.
- * @param {Ball} b
- */
-function chemiNormalize(b) {
-    const v = Math.hypot(b.dx, b.dy) || 1;
-    let dx = b.dx / v, dy = b.dy / v;
-    const minX = 0.42;
-    if (Math.abs(dx) < minX) {
-        dx = (dx < 0 ? -1 : 1) * minX;
-        dy = (dy < 0 ? -1 : 1) * Math.sqrt(1 - minX * minX);
-    }
-    b.dx = dx * b.speed;
-    b.dy = dy * b.speed;
-}
 
 // ------------------------------------------------------------------
 //  Fase 2 · arco detector y sello
@@ -261,7 +245,7 @@ function chemiCollideShutters(b) {
     b.x = CHEMI.shutterX - b.radius;
     b.dx = -Math.abs(b.dx);
     b.dy += (Math.random() * 2 - 1) * b.speed * 0.3;
-    chemiNormalize(b);
+    bossNormalizeBall(b);
     b.dx = -Math.abs(b.dx);
     b.spin *= MECH.spinWallK;
     if (soundEffects.clang) soundEffects.clang();
@@ -287,34 +271,6 @@ function chemiTickElevators() {
 // ------------------------------------------------------------------
 //  Dibujo
 // ------------------------------------------------------------------
-
-/**
- * Un cartel pequeño de neón (PASE, ALTO, DENEGADO…).
- * @param {CanvasRenderingContext2D} ctx
- * @param {string} text
- * @param {number} x
- * @param {number} y
- * @param {string} color
- * @param {number} [size]
- */
-function chemiSign(ctx, text, x, y, color, size = 9) {
-    ctx.save();
-    ctx.font = `${size}px "Press Start 2P", monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 14;
-    ctx.fillStyle = 'rgba(6, 7, 12, 0.85)';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 8;
-    ctx.fillRect(x - w / 2, y - size, w, size * 2);
-    ctx.strokeRect(x - w / 2, y - size, w, size * 2);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = color;
-    ctx.fillText(text, x, y + 1);
-    ctx.restore();
-}
 
 /** @param {CanvasRenderingContext2D} ctx */
 function chemiDrawTurnstiles(ctx) {
@@ -362,7 +318,7 @@ function chemiDrawTurnstiles(ctx) {
         ctx.fill();
         ctx.stroke();
         ctx.restore();
-        if (sink < 0.3) chemiSign(ctx, green ? 'PASE' : 'ALTO', ts.x, ts.y - CHEMI.armLen - 22, light, 8);
+        if (sink < 0.3) bossSign(ctx, green ? 'PASE' : 'ALTO', ts.x, ts.y - CHEMI.armLen - 22, light, 8);
     });
 }
 
@@ -404,7 +360,7 @@ function chemiDrawArch(ctx) {
     ctx.moveTo(CHEMI.archX - 7, bottom + 14); ctx.lineTo(CHEMI.archX, bottom + 21); ctx.lineTo(CHEMI.archX + 7, bottom + 14);
     ctx.stroke();
     ctx.restore();
-    if (bip) chemiSign(ctx, 'BIP ×1,35', CHEMI.archX + 70, y, CHEMI.red, 8);
+    if (bip) bossSign(ctx, 'BIP ×1,35', CHEMI.archX + 70, y, CHEMI.red, 8);
 }
 
 /** El sello «HP» sobre la pala de Chemi y la trayectoria «DENEGADO». */
@@ -414,7 +370,7 @@ function chemiDrawStamp(ctx) {
         const pulse = 0.75 + 0.25 * Math.sin(chemiNow() / 90);
         ctx.save();
         ctx.globalAlpha = pulse;
-        chemiSign(ctx, 'HP', p2.x - 30, p2.y + p2.height / 2, CHEMI.gold, 11);
+        bossSign(ctx, 'HP', p2.x - 30, p2.y + p2.height / 2, CHEMI.gold, 11);
         ctx.restore();
     }
     const since = chemiNow() - (bossState.stampAt ?? -9999);
@@ -430,7 +386,7 @@ function chemiDrawStamp(ctx) {
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.restore();
-        chemiSign(ctx, 'DENEGADO', 640, 40, CHEMI.red, 9);
+        bossSign(ctx, 'DENEGADO', 640, 40, CHEMI.red, 9);
     }
 }
 
@@ -478,12 +434,12 @@ function chemiDrawElevators(ctx) {
                 ctx.fillRect(X - 4, g0, W + 4, half);
                 ctx.fillRect(X - 4, g1 - half, W + 4, half);
                 const led = ko.ms >= CHEMI.koDoorsMs + 200 ? '1' : 'PB';
-                chemiSign(ctx, led, X - 26, Math.max(16, g0 - 16), CHEMI.red, 10);
+                bossSign(ctx, led, X - 26, Math.max(16, g0 - 16), CHEMI.red, 10);
             } else {
-                chemiSign(ctx, 'ABIERTO', X - 50, (g0 + g1) / 2, CHEMI.green, 7);
+                bossSign(ctx, 'ABIERTO', X - 50, (g0 + g1) / 2, CHEMI.green, 7);
             }
         } else if (bossState.shuttersOn) {
-            chemiSign(ctx, 'PERSIANA', X - 50, (a + z) / 2, 'rgba(250, 204, 21, 0.6)', 6);
+            bossSign(ctx, 'PERSIANA', X - 50, (a + z) / 2, 'rgba(250, 204, 21, 0.6)', 6);
         }
         // La flecha del siguiente, que parpadea el segundo antes
         if (bossState.shuttersOn && i === bossState.nextElevator && Math.floor(now / 120) % 2 === 0) {

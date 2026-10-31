@@ -466,7 +466,7 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
         if (state.mode !== 'practice') addEnergy(p2, MECH.energy.rally10);
     }
     if (currentRally === MECH.feverRally) startFever();
-    if (state.mode === 'campaign') bossOnHit(b, side, type);
+    if (state.mode === 'campaign') bossOnHit(b, side, type, paddle);
     // Fiebre larga: su pista sube
     if (state.fever && currentRally === MUSIC_DYNAMIC.feverBoostRally && feverChangesMusic()) musicSetBoost(MUSIC_DYNAMIC.feverBoostDb);
     return type;

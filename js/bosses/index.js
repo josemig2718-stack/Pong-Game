@@ -57,7 +57,7 @@
  * @property {(ctx: CanvasRenderingContext2D) => void} [render]         capa junto al campo
  * @property {(ctx: CanvasRenderingContext2D) => void} [renderOverlay]  capa superior
  * @property {(b: Ball) => boolean} [collide]  obstáculos propios; true si la bola rebotó
- * @property {(scorerIsP1: boolean) => void} [onGoal]
+ * @property {(scorerIsP1: boolean, b?: Ball) => void} [onGoal]  antes de contar la fase (b: la bola que entró)
  * @property {() => boolean} [hidesBall]
  * @property {() => boolean} [freezesPlayer]
  * @property {() => boolean} [invertsControls]
@@ -66,8 +66,14 @@
  * @property {number} [lives]            vidas del jugador (BOSS_LIVES por defecto)
  * @property {string} [color]            color del jefe: barra, destellos y K.O.
  * @property {(ctx: CanvasRenderingContext2D) => void} [renderArena]  suelo propio, justo después del fondo
- * @property {(b: Ball, side: 'p1'|'p2', type: HitType) => void} [onHit]  tras cada golpe de pala
+ * @property {(b: Ball, side: 'p1'|'p2', type: HitType, paddle: Paddle) => void} [onHit]  tras cada golpe de pala
  * @property {number} [koLeadMs]         remate propio antes del K.O. común (ms)
+ * @property {(ms: number) => void} [koTick]  cada paso de su remate (ms desde que empezó el K.O.)
+ * @property {(target: Ball|undefined, aiSpeed: number, errorMargin: number, cfg: BossConfig, dt: number) => void} [ai]
+ *           IA propia: mueve sus palas en lugar de la de siempre (el dúo, la predicción de Fano)
+ * @property {(b: Ball) => ({ ball: number, trail: number }|null)} [ballAlpha]  opacidad de una bola (y su estela), o null
+ * @property {(b: Ball) => ({ tint?: string, id?: string }|null)} [trailStyle]  estela propia de una bola: un color o otra estela
+ * @property {(p: Paddle) => (string|null)} [paddleColor]  color de una de sus palas (p2 o la gemela), o null
  */
 
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
@@ -179,7 +185,7 @@ function bossCollide(b) {
  */
 function bossOnGoal(scorerIsP1, b) {
     const boss = currentBoss();
-    if (boss && boss.onGoal) boss.onGoal(scorerIsP1);
+    if (boss && boss.onGoal) boss.onGoal(scorerIsP1, b);
     if (boss) bossPhaseGoal(scorerIsP1, b);
 }
 
@@ -189,13 +195,58 @@ function bossOnGoal(scorerIsP1, b) {
  * @param {Ball} b
  * @param {'p1'|'p2'} side
  * @param {HitType} type
+ * @param {Paddle} paddle la pala que golpeó (p1, p2 o la gemela)
  */
-function bossOnHit(b, side, type) {
+function bossOnHit(b, side, type, paddle) {
     const boss = currentBoss();
     if (!boss) return;
-    if (boss.onHit) boss.onHit(b, side, type);
+    if (boss.onHit) boss.onHit(b, side, type, paddle);
     if (currentRally === 15) bossTaunt('rally15');
     if (side === 'p1' && type === 'super') bossTaunt('playerSmash');
+}
+
+/**
+ * IA propia del jefe (game/ai.js la prueba antes que la de siempre).
+ * @param {Ball|undefined} target la bola más cercana que va hacia él
+ * @param {number} aiSpeed px por fotograma
+ * @param {number} errorMargin
+ * @param {BossConfig} cfg
+ * @param {number} dt
+ * @returns {boolean} true si el jefe movió sus palas
+ */
+function bossMoveAi(target, aiSpeed, errorMargin, cfg, dt) {
+    const boss = currentBoss();
+    if (!boss || !boss.ai) return false;
+    boss.ai(target, aiSpeed, errorMargin, cfg, dt);
+    return true;
+}
+
+/**
+ * Opacidad de una bola y su estela (la oscuridad de Fano), o null si se
+ * dibuja como siempre.
+ * @param {Ball} b
+ */
+function bossBallAlpha(b) {
+    const boss = currentBoss();
+    return boss && boss.ballAlpha ? boss.ballAlpha(b) : null;
+}
+
+/**
+ * Estela propia de una bola (el color de quien la golpeó en el dúo), o null.
+ * @param {Ball} b
+ */
+function bossTrailStyle(b) {
+    const boss = currentBoss();
+    return boss && boss.trailStyle ? boss.trailStyle(b) : null;
+}
+
+/**
+ * Color de una pala del jefe, o null para el de siempre.
+ * @param {Paddle} p
+ */
+function bossPaddleColor(p) {
+    const boss = currentBoss();
+    return boss && boss.paddleColor ? boss.paddleColor(p) : null;
 }
 
 /** Suelo propio del jefe, justo después del fondo (debajo de la red). */

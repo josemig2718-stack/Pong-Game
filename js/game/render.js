@@ -58,14 +58,6 @@ function drawLives(vidas) {
 }
 
 /**
- * Una bola con la bola equipada en la tienda (vfx/balls.js), aplastada
- * tras un golpe. La usan todas las bolas, multibola incluida.
- */
-function drawBall(b, color) {
-    renderBallVFX(ctx, b, color);
-}
-
-/**
  * Cuenta atrás del saque: el número dentro de un anillo que se vacía cada
  * segundo, con un pequeño golpe al cambiar de número.
  * @param {number} msLeft state.serveCountdownMs
@@ -119,7 +111,63 @@ function drawGoText(msLeft, color) {
 }
 
 function drawBallTrail() {
-    for (const b of state.balls) renderBallTrail(ctx, b.trail, b.radius, { spin: b.spin, power: b.power ? 1 : 0 });
+    for (const b of state.balls) {
+        // El jefe puede darle otra estela (el color de quien la golpeó) u
+        // oscurecerla (la oscuridad de Fano)
+        const fx = { spin: b.spin, power: b.power ? 1 : 0, ...(bossTrailStyle(b) || {}) };
+        const dim = bossBallAlpha(b);
+        if (dim) drawDimmed(dim.trail, (c) => renderBallTrail(c, b.trail, b.radius, fx));
+        else renderBallTrail(ctx, b.trail, b.radius, fx);
+    }
+}
+
+/** Capa auxiliar para dibujar una bola o su estela con menos opacidad. */
+/** @type {HTMLCanvasElement|null} */
+let ballDimLayer = null;
+
+/**
+ * Dibuja algo en una capa aparte y la pega con `alpha`: los dibujos de
+ * las bolas y las estelas ponen su propio globalAlpha, así que no basta
+ * con multiplicarlo.
+ * @param {number} alpha
+ * @param {(c: CanvasRenderingContext2D) => void} draw
+ */
+function drawDimmed(alpha, draw) {
+    if (alpha <= 0) return;
+    if (!ballDimLayer) {
+        ballDimLayer = document.createElement('canvas');
+        ballDimLayer.width = GAME_WIDTH;
+        ballDimLayer.height = GAME_HEIGHT;
+    }
+    const lc = ballDimLayer.getContext('2d');
+    lc.setTransform(1, 0, 0, 1, 0, 0);
+    lc.globalAlpha = 1;
+    lc.globalCompositeOperation = 'source-over';
+    lc.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    lc.save();
+    draw(lc);
+    lc.restore();
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(ballDimLayer, 0, 0);
+    ctx.restore();
+}
+
+/**
+ * Una bola con sus capas: aura de la bola gigante, líneas de velocidad,
+ * aura del smash, la bola y su efecto.
+ * @param {CanvasRenderingContext2D} c
+ * @param {Ball} b
+ * @param {boolean} bigBall
+ * @param {number} speedMax
+ * @param {string} themeColor
+ */
+function drawBallLayers(c, b, bigBall, speedMax, themeColor) {
+    if (bigBall) drawBigBallAura(c, b);
+    drawSpeedLines(c, b, Math.hypot(b.dx, b.dy) / speedMax);
+    if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].aura(c, b, themeColor);
+    renderBallVFX(c, b, themeColor);
+    MECH_FX.spin(c, b, themeColor);
 }
 
 /**
@@ -254,13 +302,10 @@ function render() {
     const speedMax = currentSpeedPreset().max;
     const bigBall = powerupActive('big_ball');
     for (const b of state.balls) {
-        if (hideBall) continue; // Fano oculta la bola real
-
-        if (bigBall) drawBigBallAura(ctx, b);
-        drawSpeedLines(ctx, b, Math.hypot(b.dx, b.dy) / speedMax);
-        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].aura(ctx, b, themeColor);
-        drawBall(b, themeColor);
-        MECH_FX.spin(ctx, b, themeColor);
+        if (hideBall) continue; // el K.O. de un jefe oculta la bola
+        const dim = bossBallAlpha(b);
+        if (dim) drawDimmed(dim.ball, (c) => drawBallLayers(c, b, bigBall, speedMax, themeColor));
+        else drawBallLayers(ctx, b, bigBall, speedMax, themeColor);
     }
 
     // Paletas (sideColor) y su carga de smash; el gemelo, rojo. En
@@ -268,8 +313,8 @@ function render() {
     const practice = state.mode === 'practice';
     renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor, { charge: p1.charge, hit: mechPaddleHit.p1 });
     if (practice) drawPracticeWall(ctx, themeColor);
-    else if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
-    if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, '#ef4444');
+    else if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, bossPaddleColor(p2) || sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
+    if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, bossPaddleColor(p2Twin) || '#ef4444');
     MECH_FX.charge(ctx, p1, themeColor, p1.charge);
     if (!rotatedArena && !practice) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);
     renderPowerupPaddles(ctx);   // hielo de Congelar y carga del Rayo

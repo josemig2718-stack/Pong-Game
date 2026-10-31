@@ -18,6 +18,26 @@ function vfxEachSegment(trail, fn) {
 }
 
 /** Clásica: círculos blancos que se encogen y se apagan. */
+/**
+ * Cinta de un color que se afina hacia la cola: la estela que pide un
+ * jefe (bossTrailStyle), sin cosmético.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {{ x: number, y: number }[]} trail
+ * @param {number} radius
+ * @param {string} color '#RRGGBB'
+ */
+function drawTrailTint(ctx, trail, radius, color) {
+    if (trail.length < 2) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    vfxEachSegment(trail, (a, b, pct) => {
+        ctx.strokeStyle = hexToRgba(color, 0.75 * pct);
+        ctx.lineWidth = Math.max(1, radius * 1.7 * pct);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    ctx.restore();
+}
+
 function drawTrailDefault(ctx, trail, radius, color) {
     const n = trail.length;
     if (n < 2) return;
@@ -376,11 +396,16 @@ const TRAIL_RENDERERS = {
  * `fx` lleva el estado de la bola para las estelas que reaccionan:
  * `spin` (efecto, -1–1) y `power` (1 en un smash). Las que no lo
  * usan lo ignoran.
- * @param {{spin: number, power: number}} [fx]
+ * @param {{spin: number, power: number, tint?: string, id?: string}} [fx] tint/id: la estela que pide un jefe
  */
 function renderBallTrail(ctx, trail, radius, fx) {
     const color = currentThemeHex();
-    const trailId = equippedId('trails') || 'default';
+    // Un jefe puede pedir un color (el de quien golpeó en el dúo) u otra estela
+    if (fx && fx.tint) {
+        drawTrailTint(ctx, trail, radius, fx.tint);
+        return;
+    }
+    const trailId = (fx && fx.id && TRAIL_RENDERERS[fx.id]) ? fx.id : equippedId('trails') || 'default';
 
     if (TRAIL_RENDERERS[trailId]) {
         TRAIL_RENDERERS[trailId](ctx, trail, radius, color, fx);
