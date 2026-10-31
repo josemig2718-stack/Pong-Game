@@ -18,7 +18,7 @@ initAudio();             // desbloqueo del audio con la primera interacción
 initInput();             // teclado de juego y reasignación de teclas
 initCanvas();            // redimensionado del canvas con la ventana
 initPointer();           // ratón y dedo sobre el canvas, botón de pausa
-initCarouselControls();  // teclado y deslizamiento del selector de jefes
+initTowerControls();     // teclado, deslizamiento y rueda de la Torre Hachepe
 initCutscene();          // mantener el dedo para saltar y recolocar las escenas
 initActions();           // botones, sliders e interruptores del HTML (data-action…)
 refreshMissions();       // misiones del día y de la semana (antes de pintar nada)

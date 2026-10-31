@@ -39,7 +39,9 @@ const CLICK_ACTIONS = {
     startPractice:          (el) => startPractice(el.dataset.arg),
 
     // Campaña
-    carouselMove:           (el) => carouselMove(Number(el.dataset.arg)),
+    towerSelect:            (el) => towerSelect(Number(el.dataset.arg)),
+    towerEnter:             () => towerEnter(),
+    toggleFloorSheet:       () => toggleFloorSheet(),
     playCampaignPrologue:   () => playCampaignPrologue(),
     nextCampaignLevel:      () => nextCampaignLevel(),
     closeFinale:            () => closeFinale(),

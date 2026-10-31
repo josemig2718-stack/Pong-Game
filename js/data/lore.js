@@ -16,9 +16,13 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
 /**
  * Los seis Hachepes. Los diálogos aceptan strings (habla el jefe) u
  * objetos { t, s } donde `s` elige el avatar ('a' o 'b') — lo usa el dúo.
+ *
+ * `floor` y `room` son su piso en la Torre Hachepe (campaign/menu.js) y
+ * `bust` (y `bust2`) su busto en CAMPAIGN_ART.bustos.
  */
 const HACHEPES_LORE = {
     1: {
+        floor: 'PB', room: 'Recepción', bust: 'chemi',
         name: 'Hachepe Chemi',
         title: 'El Guardián de la Frontera',
         image: 'assets/images/hachepe_chemi.png',
@@ -36,6 +40,7 @@ const HACHEPES_LORE = {
         }
     },
     2: {
+        floor: '1', room: 'Contaduría', bust: 'dani',
         name: 'Hachepe Dani',
         title: 'El Arquitecto del Caos',
         image: 'assets/images/hachepe_dani.png',
@@ -53,6 +58,7 @@ const HACHEPES_LORE = {
         }
     },
     3: {
+        floor: '2', room: 'Sala de juegos', bust: 'mario', bust2: 'valen',
         name: 'Mario y Valentín',
         title: 'El Dúo Letal',
         image: 'assets/images/hachepe_mario.png',
@@ -80,6 +86,7 @@ const HACHEPES_LORE = {
         }
     },
     4: {
+        floor: '3', room: 'Sala de control', bust: 'fano',
         name: 'Hachepe Fano',
         title: 'El Guardián de las Sombras',
         image: 'assets/images/hachepe_fano.png',
@@ -97,6 +104,7 @@ const HACHEPES_LORE = {
         }
     },
     5: {
+        floor: '4', room: 'El trono', bust: 'yisus',
         name: 'Hachepe Yisus',
         title: 'El Falso Rey',
         image: 'assets/images/hachepe_yisus.png',
@@ -114,6 +122,7 @@ const HACHEPES_LORE = {
         }
     },
     6: {
+        floor: 'S', room: 'Sótano', bust: 'chemi',
         name: 'El Creador',
         title: '¿?¿?¿?',
         image: 'assets/images/hachepe_chemi.png',

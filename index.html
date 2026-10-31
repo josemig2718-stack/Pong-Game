@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#06070C">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=117">
+    <link rel="stylesheet" href="css/style.css?v=118">
 </head>
 
 <body class="crt-effect min-h-screen relative w-full h-full flex justify-center items-center">
@@ -246,8 +246,11 @@
     </section>
 
     <!-- ============================== MAPA DE CAMPAÑA ============================== -->
+    <!-- La Torre Hachepe (campaign/menu.js): un piso por jefe, el ascensor a
+         la izquierda y la ficha del piso elegido. La ciudad de fondo es un
+         canvas. El sótano solo existe tras la revelación del Creador. -->
     <section id="campaign-menu" class="screen z-20">
-        <svg class="campaign-skyline" viewBox="0 0 1280 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 200V120h40v-30h30v50h26v-80h44v60h20v-34h36v64h22v-100h52v80h30v-50h26v60h40v-40h34v54h26v-90h44v80h34v-30h22v60h52v-70h30v40h44v-90h40v70h26v-40h44v60h36v-80h30v50h40v-30h44v70h30v-50h40v30h34v-60h44v80h30v-40h52V200Z"/></svg>
+        <canvas id="tower-city" class="tower-city" aria-hidden="true"></canvas>
 
         <div class="campaign-layout">
             <header class="screen-head">
@@ -265,27 +268,39 @@
                 </button>
             </header>
 
-            <div class="boss-carousel">
-                <button type="button" class="carousel-arrow" id="carousel-prev" aria-label="Rival anterior" data-action="carouselMove" data-arg="-1">
-                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-                </button>
-                <div class="carousel-viewport">
-                    <div id="campaign-nodes" class="carousel-track">
-                        <!-- Cartas de jefe generadas por JS -->
+            <div class="tower-body">
+                <div id="tower-wrap" class="tower-scene">
+                    <div id="tower" class="tower">
+                        <div class="tower__elevator" aria-hidden="true">
+                            <span id="tower-led" class="px tower__led">PB</span>
+                            <div class="tower__shaft">
+                                <div id="tower-cab" class="tower__cab"><i class="tower__door tower__door--l"></i><i class="tower__door tower__door--r"></i></div>
+                            </div>
+                        </div>
+                        <div id="tower-floors" class="tower__floors" role="group" aria-label="Pisos de la Torre Hachepe">
+                            <!-- Techo y pisos generados por JS -->
+                        </div>
                     </div>
                 </div>
-                <button type="button" class="carousel-arrow" id="carousel-next" aria-label="Rival siguiente" data-action="carouselMove" data-arg="1">
-                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
 
-            <!-- Camino de nodos: también sirve para saltar a un rival -->
-            <div class="campaign-path">
-                <div class="campaign-path__labels">
-                    <span class="lbl">Progreso</span>
-                    <span class="lbl campaign-path__hint">Desliza para ver rivales</span>
-                </div>
-                <nav id="carousel-dots" class="carousel-dots" aria-label="Progreso de campaña"></nav>
+                <aside id="floor-sheet" class="floor-sheet" aria-live="polite">
+                    <button type="button" id="floor-sheet-grip" class="floor-sheet__grip" data-action="toggleFloorSheet" aria-expanded="false" aria-label="Ver la ficha completa"><i></i></button>
+                    <span id="floor-sheet-floor" class="px floor-sheet__floor">PB · RECEPCIÓN</span>
+                    <div class="floor-sheet__main">
+                        <div id="floor-sheet-bust" class="floor-sheet__bust"></div>
+                        <div class="floor-sheet__who">
+                            <h3 id="floor-sheet-name" class="px floor-sheet__name">Nombre</h3>
+                            <p id="floor-sheet-alias" class="floor-sheet__alias">Alias</p>
+                            <div id="floor-sheet-danger" class="floor-sheet__danger"></div>
+                        </div>
+                    </div>
+                    <div class="floor-sheet__more">
+                        <p id="floor-sheet-desc" class="floor-sheet__desc"></p>
+                        <div id="floor-sheet-phases" class="floor-sheet__phases"></div>
+                        <p id="floor-sheet-record" class="floor-sheet__record"></p>
+                    </div>
+                    <button type="button" id="floor-sheet-go" class="btn btn-p floor-sheet__go" data-action="towerEnter">SUBIR</button>
+                </aside>
             </div>
         </div>
     </section>
@@ -1255,82 +1270,82 @@
          clásicos (no módulos) para que el juego funcione también abriendo
          index.html directamente (file://). Al cambiar cualquier JS o CSS,
          sube ?v=N en todos, también en style.css. -->
-    <script src="js/core/constants.js?v=117"></script>
-    <script src="js/core/storage.js?v=117"></script>
-    <script src="js/core/settings.js?v=117"></script>
-    <script src="js/core/state.js?v=117"></script>
-    <script src="js/data/themes.js?v=117"></script>
-    <script src="js/data/lore.js?v=117"></script>
-    <script src="js/data/cutscenes/prologo-assets.js?v=117"></script>
-    <script src="js/data/cutscenes/prologo.js?v=117"></script>
-    <script src="js/data/campaign-art.js?v=117"></script>
-    <script src="js/data/achievements.js?v=117"></script>
-    <script src="js/data/shop.js?v=117"></script>
-    <script src="js/data/levels.js?v=117"></script>
-    <script src="js/data/missions.js?v=117"></script>
-    <script src="js/data/powerups.js?v=117"></script>
-    <script src="js/data/mechanics.js?v=117"></script>
-    <script src="js/data/music.js?v=117"></script>
-    <script src="js/data/news.js?v=117"></script>
-    <script src="js/systems/audio.js?v=117"></script>
-    <script src="js/systems/music.js?v=117"></script>
-    <script src="js/systems/theme.js?v=117"></script>
-    <script src="js/systems/stats.js?v=117"></script>
-    <script src="js/systems/achievements.js?v=117"></script>
-    <script src="js/systems/progression.js?v=117"></script>
-    <script src="js/systems/missions.js?v=117"></script>
-    <script src="js/systems/input.js?v=117"></script>
-    <script src="js/systems/pointer.js?v=117"></script>
-    <script src="js/game/canvas.js?v=117"></script>
-    <script src="js/game/draw.js?v=117"></script>
-    <script src="js/game/effects.js?v=117"></script>
-    <script src="js/game/balls.js?v=117"></script>
-    <script src="js/game/ai.js?v=117"></script>
-    <script src="js/game/mechanics.js?v=117"></script>
-    <script src="js/game/physics.js?v=117"></script>
-    <script src="js/game/match.js?v=117"></script>
-    <script src="js/game/hud.js?v=117"></script>
-    <script src="js/game/hints.js?v=117"></script>
-    <script src="js/game/render.js?v=117"></script>
-    <script src="js/game/loop.js?v=117"></script>
-    <script src="js/game/powerups.js?v=117"></script>
-    <script src="js/game/practice.js?v=117"></script>
-    <script src="js/vfx/random.js?v=117"></script>
-    <script src="js/vfx/tint.js?v=117"></script>
-    <script src="js/vfx/trails.js?v=117"></script>
-    <script src="js/vfx/backgrounds.js?v=117"></script>
-    <script src="js/vfx/paddles.js?v=117"></script>
-    <script src="js/vfx/balls.js?v=117"></script>
-    <script src="js/vfx/goal-fx.js?v=117"></script>
-    <script src="js/vfx/super.js?v=117"></script>
-    <script src="js/vfx/mechanics.js?v=117"></script>
-    <script src="js/vfx/index.js?v=117"></script>
-    <script src="js/bosses/shared.js?v=117"></script>
-    <script src="js/bosses/chemi.js?v=117"></script>
-    <script src="js/bosses/dani.js?v=117"></script>
-    <script src="js/bosses/duo.js?v=117"></script>
-    <script src="js/bosses/fano.js?v=117"></script>
-    <script src="js/bosses/yisus.js?v=117"></script>
-    <script src="js/bosses/creator.js?v=117"></script>
-    <script src="js/bosses/index.js?v=117"></script>
-    <script src="js/bosses/phases.js?v=117"></script>
-    <script src="js/campaign/progress.js?v=117"></script>
-    <script src="js/campaign/menu.js?v=117"></script>
-    <script src="js/campaign/dialogue.js?v=117"></script>
-    <script src="js/campaign/finale.js?v=117"></script>
-    <script src="js/cutscene/fx.js?v=117"></script>
-    <script src="js/cutscene/player.js?v=117"></script>
-    <script src="js/ui/screens.js?v=117"></script>
-    <script src="js/ui/howto.js?v=117"></script>
-    <script src="js/ui/news.js?v=117"></script>
-    <script src="js/ui/actions.js?v=117"></script>
-    <script src="js/ui/settings-panel.js?v=117"></script>
-    <script src="js/ui/stats-panel.js?v=117"></script>
-    <script src="js/ui/shop-ui.js?v=117"></script>
-    <script src="js/ui/shop-preview.js?v=117"></script>
-    <script src="js/ui/progress-display.js?v=117"></script>
-    <script src="js/ui/progress-ui.js?v=117"></script>
-    <script src="js/main.js?v=117"></script>
+    <script src="js/core/constants.js?v=118"></script>
+    <script src="js/core/storage.js?v=118"></script>
+    <script src="js/core/settings.js?v=118"></script>
+    <script src="js/core/state.js?v=118"></script>
+    <script src="js/data/themes.js?v=118"></script>
+    <script src="js/data/lore.js?v=118"></script>
+    <script src="js/data/cutscenes/prologo-assets.js?v=118"></script>
+    <script src="js/data/cutscenes/prologo.js?v=118"></script>
+    <script src="js/data/campaign-art.js?v=118"></script>
+    <script src="js/data/achievements.js?v=118"></script>
+    <script src="js/data/shop.js?v=118"></script>
+    <script src="js/data/levels.js?v=118"></script>
+    <script src="js/data/missions.js?v=118"></script>
+    <script src="js/data/powerups.js?v=118"></script>
+    <script src="js/data/mechanics.js?v=118"></script>
+    <script src="js/data/music.js?v=118"></script>
+    <script src="js/data/news.js?v=118"></script>
+    <script src="js/systems/audio.js?v=118"></script>
+    <script src="js/systems/music.js?v=118"></script>
+    <script src="js/systems/theme.js?v=118"></script>
+    <script src="js/systems/stats.js?v=118"></script>
+    <script src="js/systems/achievements.js?v=118"></script>
+    <script src="js/systems/progression.js?v=118"></script>
+    <script src="js/systems/missions.js?v=118"></script>
+    <script src="js/systems/input.js?v=118"></script>
+    <script src="js/systems/pointer.js?v=118"></script>
+    <script src="js/game/canvas.js?v=118"></script>
+    <script src="js/game/draw.js?v=118"></script>
+    <script src="js/game/effects.js?v=118"></script>
+    <script src="js/game/balls.js?v=118"></script>
+    <script src="js/game/ai.js?v=118"></script>
+    <script src="js/game/mechanics.js?v=118"></script>
+    <script src="js/game/physics.js?v=118"></script>
+    <script src="js/game/match.js?v=118"></script>
+    <script src="js/game/hud.js?v=118"></script>
+    <script src="js/game/hints.js?v=118"></script>
+    <script src="js/game/render.js?v=118"></script>
+    <script src="js/game/loop.js?v=118"></script>
+    <script src="js/game/powerups.js?v=118"></script>
+    <script src="js/game/practice.js?v=118"></script>
+    <script src="js/vfx/random.js?v=118"></script>
+    <script src="js/vfx/tint.js?v=118"></script>
+    <script src="js/vfx/trails.js?v=118"></script>
+    <script src="js/vfx/backgrounds.js?v=118"></script>
+    <script src="js/vfx/paddles.js?v=118"></script>
+    <script src="js/vfx/balls.js?v=118"></script>
+    <script src="js/vfx/goal-fx.js?v=118"></script>
+    <script src="js/vfx/super.js?v=118"></script>
+    <script src="js/vfx/mechanics.js?v=118"></script>
+    <script src="js/vfx/index.js?v=118"></script>
+    <script src="js/bosses/shared.js?v=118"></script>
+    <script src="js/bosses/chemi.js?v=118"></script>
+    <script src="js/bosses/dani.js?v=118"></script>
+    <script src="js/bosses/duo.js?v=118"></script>
+    <script src="js/bosses/fano.js?v=118"></script>
+    <script src="js/bosses/yisus.js?v=118"></script>
+    <script src="js/bosses/creator.js?v=118"></script>
+    <script src="js/bosses/index.js?v=118"></script>
+    <script src="js/bosses/phases.js?v=118"></script>
+    <script src="js/campaign/progress.js?v=118"></script>
+    <script src="js/campaign/menu.js?v=118"></script>
+    <script src="js/campaign/dialogue.js?v=118"></script>
+    <script src="js/campaign/finale.js?v=118"></script>
+    <script src="js/cutscene/fx.js?v=118"></script>
+    <script src="js/cutscene/player.js?v=118"></script>
+    <script src="js/ui/screens.js?v=118"></script>
+    <script src="js/ui/howto.js?v=118"></script>
+    <script src="js/ui/news.js?v=118"></script>
+    <script src="js/ui/actions.js?v=118"></script>
+    <script src="js/ui/settings-panel.js?v=118"></script>
+    <script src="js/ui/stats-panel.js?v=118"></script>
+    <script src="js/ui/shop-ui.js?v=118"></script>
+    <script src="js/ui/shop-preview.js?v=118"></script>
+    <script src="js/ui/progress-display.js?v=118"></script>
+    <script src="js/ui/progress-ui.js?v=118"></script>
+    <script src="js/main.js?v=118"></script>
 </body>
 
 </html>

@@ -3596,37 +3596,30 @@ body.has-result .achievement-toast--visible { transform: none; }
 .coin-error { animation: shake-error 0.3s ease; color: #ef4444 !important; }
 
 /* ==================================================================
-   CAMPAÑA — selector de jefes (carrusel estilo arcade)
+   CAMPAÑA — la Torre Hachepe (campaign/menu.js)
    ------------------------------------------------------------------
-   updateCarousel() pone data-pos (-2…2) a cada carta y aquí se
-   traduce a tamaño, posición y opacidad. Las medidas son variables del
-   carrusel: móvil (cartas casi a pantalla completa, vecinas asomando
-   por los bordes) y escritorio (vecinas pequeñas a los lados).
+   La ciudad de fondo es un canvas (#tower-city). La torre: el ascensor
+   (LED, hueco y cabina) a la izquierda y el techo y los pisos a la
+   derecha, todos con el ancho --floor-w que calcula layoutTower() para
+   que quepa en alto (pisos 4:1, techo 3:1). La ficha va a la derecha;
+   en vertical, es una hoja fija abajo que se despliega.
    ================================================================== */
 #campaign-menu {
-    background: radial-gradient(90% 50% at 50% 40%, rgba(239, 68, 68, 0.16), transparent 70%), #07050A;
-    overflow-x: hidden;
+    background: #05060A;
+    overflow: hidden;
+    justify-content: stretch;
 }
-.campaign-skyline {
-    display: none;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 200px;
-    fill: #14060A;
-    opacity: 0.9;
-    pointer-events: none;
-    z-index: -1;
-}
+#campaign-menu::before, #campaign-menu::after { content: none; }
+.tower-city { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
 .campaign-layout {
     position: relative;
-    flex: 1 0 auto;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
     width: 100%;
     max-width: 1152px;
 }
@@ -3634,178 +3627,231 @@ body.has-result .achievement-toast--visible { transform: none; }
 .campaign-subtitle { margin: 0; font-size: 12px; color: #B9A7AC; }
 .campaign-subtitle__long { display: none; }
 
-.boss-carousel {
-    --card-w: min(300px, calc(100vw - 90px));
-    --card-h: 480px;
-    --side-w: var(--card-w);
-    --side-h: 450px;
-    --side-x: calc(var(--card-w) + 14px);
-    --stage-h: 210px;
-    --side-stage-h: 200px;
-    --sprite: 150px;
-    position: relative;
-    flex: 1 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-    width: 100%;
-}
-
-.carousel-viewport {
-    position: relative;
+.tower-body {
     flex: 1 1 auto;
-    align-self: stretch;
-    height: calc(var(--card-h) + 24px);
-    margin: 0 -12px;      /* en móvil, las vecinas asoman hasta el borde */
-    overflow: hidden;     /* las cartas lejanas no deben desbordar la página */
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
 }
-.carousel-track { position: relative; width: 100%; height: 100%; }
-
-/* La carta se centra con márgenes negativos (no con transform: el
-   parpadeo del Creador anima transform y la descolocaría). */
-.boss-card {
-    --w: var(--card-w);
-    --h: var(--card-h);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: var(--w);
-    height: var(--h);
-    margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+.tower-scene {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
-    flex-direction: column;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #100A0E;
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    box-shadow: 0 8px 0 #020305;
-    cursor: pointer;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                height 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                margin 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.35s ease,
-                box-shadow 0.35s ease,
-                border-color 0.35s ease;
+    justify-content: center;
+    padding-bottom: 210px;   /* la hoja de la ficha no tapa el último piso */
+    scrollbar-width: thin;
 }
-.boss-card[data-pos="-1"], .boss-card[data-pos="1"],
-.boss-card[data-pos="-2"], .boss-card[data-pos="2"] { --w: var(--side-w); --h: var(--side-h); }
-.boss-card[data-pos="-1"] { transform: translateX(calc(var(--side-x) * -1)); opacity: 0.5; }
-.boss-card[data-pos="1"]  { transform: translateX(var(--side-x)); opacity: 0.5; }
-.boss-card[data-pos="-2"] { transform: translateX(calc(var(--side-x) * -2)); opacity: 0; }
-.boss-card[data-pos="2"]  { transform: translateX(calc(var(--side-x) * 2)); opacity: 0; }
-.boss-card.defeated:not(.is-active) { filter: saturate(0.6); }
-.boss-card.locked { cursor: default; }
-.boss-card.is-active { border-color: rgba(239, 68, 68, 0.7); box-shadow: 0 8px 0 #020305, 0 0 60px rgba(239, 68, 68, 0.26); }
-
-/* Retrato: sprites pixelados sobre una cuadrícula roja */
-.boss-card__stage {
-    position: relative;
-    flex: none;
-    height: var(--stage-h);
+.tower {
+    --floor-w: 300px;
+    --floors: 5;
+    --floor-h: calc(var(--floor-w) / 4);
     display: flex;
     align-items: flex-end;
-    justify-content: center;
-    background:
-        linear-gradient(rgba(239, 68, 68, 0.14) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(239, 68, 68, 0.14) 1px, transparent 1px),
-        radial-gradient(circle at 50% 70%, #3A0B12, #0C0609 70%);
-    background-size: 20px 20px, 20px 20px, 100% 100%;
-    transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    gap: 4px;
+    margin: auto 0;
+    filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.7));
 }
-.boss-card:not(.is-active) .boss-card__stage { height: var(--side-stage-h); }
-.boss-card__sprite {
-    display: block;
-    width: var(--sprite);
-    height: var(--sprite);
-    object-fit: contain;
-    image-rendering: pixelated;
-}
-.boss-card__sprite + .boss-card__sprite { margin-left: calc(var(--sprite) * -0.24); }
-.boss-card.locked .boss-card__sprite { filter: brightness(0); opacity: 0.9; }
 
-/* Insignias del retrato, chips de estado y nodos comparten forma */
-.boss-card__level, .boss-card__flag, .boss-card__chip {
-    display: inline-flex;
-    align-items: center;
+/* El ascensor */
+.tower__elevator {
+    width: calc(var(--floor-w) * 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
-    padding: 6px 9px;
+}
+.tower__led {
+    align-self: center;
+    min-width: 100%;
+    padding: 6px 2px;
     border-radius: 6px;
-    font-family: var(--font-display);
-    font-size: 7.5px;
-    letter-spacing: 0.06em;
-    line-height: 1;
-    white-space: nowrap;
+    background: #0A0204;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #F87171;
+    font-size: clamp(8px, calc(var(--floor-w) * 0.026), 12px);
+    text-align: center;
+    text-shadow: 0 0 6px rgba(248, 113, 113, 0.9);
 }
-.boss-card__level .ico, .boss-card__flag .ico, .boss-card__chip .ico { width: 12px; height: 12px; }
-.boss-card__level {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(239, 68, 68, 0.6);
-    color: #FCA5A5;
-}
-.boss-card__flag { position: absolute; top: 12px; right: 12px; background: var(--danger); color: #16040A; }
-.boss-card__flag--done { background: rgba(5, 46, 22, 0.85); border: 1px solid rgba(74, 222, 128, 0.5); color: #4ADE80; }
-.boss-card__flag--locked { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); color: #9AA3B5; }
-.boss-card__flag-long { display: none; }
-.boss-card:not(.is-active) .boss-card__level,
-.boss-card:not(.is-active) .boss-card__flag { display: none; }
-
-.boss-card__chip { align-self: flex-start; background: rgba(255, 255, 255, 0.08); color: #9AA3B5; }
-.boss-card__chip--done { background: rgba(34, 197, 94, 0.14); color: #4ADE80; }
-.boss-card__chip--next { background: rgba(239, 68, 68, 0.18); color: #FCA5A5; }
-
-/* Cuerpo: la ficha completa en la carta centrada, un resumen en las demás */
-.boss-card__body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.boss-card__main { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 18px; }
-.boss-card__side { display: none; flex-direction: column; gap: 10px; padding: 14px; }
-.boss-card:not(.is-active) .boss-card__main { display: none; }
-.boss-card:not(.is-active) .boss-card__side { display: flex; }
-
-.boss-card__heading { display: flex; flex-direction: column; gap: 10px; }
-.boss-card__names { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.boss-card__name { margin: 0; font-size: 13px; line-height: 1.5; color: #fff; text-transform: uppercase; }
-.boss-card__title { margin: 0; font-size: 14px; font-style: italic; color: #FCA5A5; }
-.boss-card__danger { display: flex; align-items: center; gap: 8px; }
-.boss-card__danger .lbl { font-size: 9px; }
-.boss-card__desc {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.45;
-    color: #C9BCC0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+.tower__shaft {
+    position: relative;
+    height: calc(var(--floors) * var(--floor-h));
+    border-radius: 4px;
+    background: repeating-linear-gradient(180deg, #0B0D14 0 calc(var(--floor-h) - 2px), #1C2130 calc(var(--floor-h) - 2px) var(--floor-h));
+    border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
 }
-.boss-card__cta {
+.tower__cab {
+    --cab-i: 0;
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: calc(var(--cab-i) * var(--floor-h) + var(--floor-h) * 0.1);
+    height: calc(var(--floor-h) * 0.8);
+    border-radius: 3px;
+    background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.55), rgba(var(--primary-rgb), 0.18));
+    border: 1px solid rgba(var(--primary-rgb), 0.9);
+    box-shadow: 0 0 14px rgba(var(--primary-rgb), 0.55);
+    overflow: hidden;
+    transition: top 0.35s ease-in-out;
+}
+.tower__door {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    background: linear-gradient(90deg, #5B6170, #2A2F3B);
+    transform: scaleX(0.1);
+    transition: transform 0.4s ease-in-out;
+}
+.tower__door--l { left: 0; transform-origin: left; }
+.tower__door--r { right: 0; transform-origin: right; background: linear-gradient(270deg, #5B6170, #2A2F3B); }
+.tower__cab.is-closed .tower__door { transform: scaleX(1); }
+
+/* Techo y pisos */
+.tower__floors { display: flex; flex-direction: column; width: var(--floor-w); }
+.tower__roof { display: block; width: 100%; aspect-ratio: 3 / 1; }
+.tower__floor {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 1;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #000;
+    cursor: pointer;
+}
+.tower__floor canvas { display: block; width: 100%; height: 100%; }
+.tower__tag {
+    position: absolute;
+    top: 6%;
+    left: 1.5%;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: clamp(7px, calc(var(--floor-w) * 0.02), 10px);
+    background: rgba(0, 0, 0, 0.65);
+    color: var(--muted);
+    pointer-events: none;
+}
+.tower__floor--free .tower__tag { color: var(--primary); }
+.tower__floor--next .tower__tag { color: #FACC15; }
+.tower__floor--basement .tower__tag { color: #7DD3FC; }
+/* El siguiente: borde dorado que late */
+.tower__floor--next::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 2px rgba(250, 204, 21, 0.85), inset 0 0 22px rgba(250, 204, 21, 0.3);
+    animation: tower-pulse 1.8s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes tower-pulse { 50% { opacity: 0.35; } }
+/* El elegido */
+.tower__floor.is-selected::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+}
+.tower__floor:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; z-index: 2; }
+
+/* La ficha del piso elegido */
+.floor-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 72vh;
+    overflow-y: auto;
+    padding: 6px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    border-radius: 18px 18px 0 0;
+    background: rgba(12, 14, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 0;
+    box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.6);
+}
+.floor-sheet__grip { align-self: center; width: 64px; height: 22px; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
+.floor-sheet__grip i { width: 40px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
+.floor-sheet:not(.is-open) .floor-sheet__more { display: none; }
+.floor-sheet__floor { font-size: 9px; letter-spacing: 0.08em; color: var(--muted); }
+.floor-sheet[data-state="next"] .floor-sheet__floor { color: #FACC15; }
+.floor-sheet[data-state="free"] .floor-sheet__floor { color: var(--primary); }
+.floor-sheet__main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.floor-sheet__bust {
     flex: none;
-    margin-top: auto;
-    height: 54px;
-    padding: 0 18px;
-    border-radius: 8px;
-    background: var(--danger);
-    color: #16040A;
-    font-family: var(--font-display);
-    font-size: 12px;
-    box-shadow: 0 5px 0 #7F1D1D;
+    display: flex;
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 35%, #1D2333, #07080D 75%);
+    border: 2px solid rgba(255, 255, 255, 0.15);
 }
-.boss-card.defeated .boss-card__cta {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.6);
-    color: #FCA5A5;
-    box-shadow: 0 4px 0 #020305;
+.floor-sheet__bust img { flex: 1; min-width: 0; height: 100%; object-fit: cover; }
+.floor-sheet[data-state="next"] .floor-sheet__bust { border-color: #FACC15; box-shadow: 0 0 16px rgba(250, 204, 21, 0.35); }
+.floor-sheet[data-state="free"] .floor-sheet__bust { border-color: rgba(var(--primary-rgb), 0.8); }
+.floor-sheet[data-state="locked"] .floor-sheet__bust img { filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, 0.7)); }
+.floor-sheet__who { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.floor-sheet__name { margin: 0; font-size: 12px; line-height: 1.4; color: #fff; text-transform: uppercase; }
+.floor-sheet__alias { margin: 0; font-size: 14px; font-style: italic; color: #FCA5A5; }
+.floor-sheet__danger { display: flex; align-items: center; gap: 8px; }
+.floor-sheet__danger .lbl { font-size: 9px; }
+.floor-sheet__more { display: flex; flex-direction: column; gap: 12px; }
+.floor-sheet__desc { margin: 0; font-size: 14px; line-height: 1.5; color: #C9CFDB; }
+.floor-sheet__phases { display: flex; flex-wrap: wrap; gap: 6px; }
+.floor-sheet__phases:empty { display: none; }
+.floor-sheet__chip { padding: 5px 10px; border-radius: 999px; font-size: 12px; color: #E8ECF4; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); }
+.floor-sheet__record { margin: 0; font-size: 13px; font-weight: 600; color: #4ADE80; }
+.floor-sheet__record:empty { display: none; }
+.floor-sheet__go { width: 100%; min-height: 50px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 10px; }
+.floor-sheet__go .ico { width: 18px; height: 18px; }
+.floor-sheet__go small { flex-basis: 100%; text-align: center; font-size: 10px; font-weight: 600; opacity: 0.8; }
+.floor-sheet__go:disabled { opacity: 0.45; cursor: default; filter: grayscale(1); }
+.floor-sheet.is-creator { border-color: rgba(34, 197, 94, 0.5); }
+.floor-sheet.is-creator .floor-sheet__alias { color: #4ADE80; }
+
+/* Horizontal, tablet y escritorio: la torre a la izquierda y la ficha a la derecha */
+@media (orientation: landscape) {
+    .tower-body { grid-template-columns: min(46vw, 560px) minmax(0, 1fr); }
+    .tower-scene { padding-bottom: 0; align-items: center; }
+    .floor-sheet {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        align-self: center;
+        max-height: 100%;
+        max-width: 520px;
+        padding: 22px 24px;
+        border-radius: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    }
+    .floor-sheet__grip { display: none; }
+    .floor-sheet:not(.is-open) .floor-sheet__more { display: flex; }
+    .floor-sheet__bust { width: 112px; height: 112px; }
+    .floor-sheet__name { font-size: 15px; }
 }
-.boss-card__cta--locked { background: rgba(255, 255, 255, 0.06); color: #6B7280; box-shadow: none; }
-.boss-card__side-name { font-size: 10px; line-height: 1.5; color: var(--text); text-transform: uppercase; }
-.boss-card__side-sub { font-size: 12px; line-height: 1.35; color: #9A8D91; }
-.boss-card.locked .boss-card__side-name, .boss-card.locked .boss-card__side-sub { color: #6B7280; }
+@media (orientation: landscape) and (max-height: 560px) {
+    .campaign-layout { gap: 8px; }
+    .floor-sheet { padding: 14px 16px; gap: 8px; }
+    .floor-sheet__bust { width: 64px; height: 64px; }
+    .floor-sheet__name { font-size: 11px; }
+    .floor-sheet__alias { font-size: 12px; }
+    .floor-sheet__desc { font-size: 12px; line-height: 1.4; }
+    .floor-sheet__chip { font-size: 11px; padding: 3px 8px; }
+    .floor-sheet__go { min-height: 42px; }
+}
 
 /* Estrellas de peligro (también en la pantalla VS) */
 .danger-stars { display: flex; gap: 2px; color: var(--danger); }
@@ -3819,212 +3865,20 @@ body.has-result .achievement-toast--visible { transform: none; }
     text-shadow: 1px 0 0 #f00, -1px 0 0 #0ff;
 }
 
-/* La carta del Creador no pertenece a la misma paleta que el resto */
-.boss-card.corrupted { background: #050C08; border-color: rgba(34, 197, 94, 0.45); }
-.boss-card.corrupted .boss-card__stage {
-    background:
-        linear-gradient(rgba(34, 197, 94, 0.14) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 197, 94, 0.14) 1px, transparent 1px),
-        radial-gradient(circle at 50% 70%, #0B3A1A, #060C08 70%);
-    background-size: 20px 20px, 20px 20px, 100% 100%;
-}
-.boss-card.corrupted .boss-card__sprite { filter: invert(1) hue-rotate(90deg) saturate(2) contrast(1.3); }
-.boss-card.corrupted .boss-card__name,
-.boss-card.corrupted .boss-card__side-name,
-.boss-card.corrupted .boss-card__level {
-    font-family: monospace;
-    text-shadow: 1px 0 0 #f00, -1px 0 0 #0ff;
-}
-.boss-card.corrupted .boss-card__name { font-size: 18px; }
-.boss-card.corrupted .boss-card__level { border-color: rgba(34, 197, 94, 0.6); color: #4ADE80; }
-.boss-card.corrupted .boss-card__title { color: #4ADE80; }
-.boss-card.corrupted .boss-card__flag, .boss-card.corrupted .boss-card__cta { background: #22C55E; color: #03120A; }
-.boss-card.corrupted .boss-card__cta { box-shadow: 0 5px 0 #14532D; }
-.boss-card.corrupted.is-active { border-color: #22C55E; box-shadow: 0 0 34px rgba(34, 197, 94, 0.6); animation: corrupt-flicker 3s infinite; }
-
-/* --- Flechas (desde tablet; en móvil se desliza o se tocan los nodos) --- */
-.carousel-arrow {
-    display: none;
-    flex: none;
-    width: 56px;
-    height: 56px;
-    place-items: center;
-    border-radius: 50%;
-    background: #140C10;
-    border: 1px solid rgba(239, 68, 68, 0.45);
-    color: #FCA5A5;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #020305;
-    transition: background 0.2s, border-color 0.2s, opacity 0.2s;
-}
-.carousel-arrow .ico { width: 24px; height: 24px; }
-.carousel-arrow:hover:not(:disabled) { background: rgba(239, 68, 68, 0.12); border-color: var(--danger); }
-.carousel-arrow:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #020305; }
-.carousel-arrow:disabled { opacity: 0.25; cursor: default; }
-
-/* --- Camino de nodos ---
-   Las líneas son el ::before de cada nodo (hacia el anterior), así que
-   los nodos son los únicos hijos de #carousel-dots. La línea toma el
-   estado del nodo al que llega: vencido (verde), pendiente (de verde a
-   rojo) o bloqueado (discontinua). */
-.campaign-path { display: flex; flex-direction: column; gap: 12px; padding: 0 12px; }
-.campaign-path__labels { display: flex; justify-content: space-between; gap: 12px; }
-.campaign-path__hint { color: #FCA5A5; }
-
-.carousel-dots {
-    --node: 34px;
-    --node-grow: 3px;
-    --node-gap: clamp(16px, 6vw, 64px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--node-gap);
-    margin: 0;
-    padding: 6px 0;
-}
-.carousel-dot {
-    position: relative;
-    flex: none;
-    width: var(--node);
-    height: var(--node);
-    padding: 0;
-    display: grid;
-    place-items: center;
-    border-radius: 8px;
-    background: #120E12;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #4B5563;
-    font-family: var(--font-display);
-    font-size: 10px;
-    line-height: 1;
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.carousel-dot + .carousel-dot::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 100%;
-    width: var(--node-gap);
-    height: 3px;
-    margin-top: -1.5px;
-    margin-right: 1px;
-    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0 5px, transparent 5px 10px);
-    pointer-events: none;
-}
-.carousel-dot--done { background: rgba(34, 197, 94, 0.16); border-color: #22C55E; color: #4ADE80; }
-.carousel-dot + .carousel-dot--done::before { background: #22C55E; }
-.carousel-dot--current { background: var(--danger); border-color: var(--danger); color: #16040A; }
-.carousel-dot + .carousel-dot--current::before { background: linear-gradient(90deg, #22C55E, var(--danger)); }
-/* El Creador no sigue la paleta de los Hachepes */
-.carousel-dot--creator { background: #22C55E; border-color: #22C55E; color: #03120A; font-family: monospace; font-weight: 700; }
-.carousel-dot + .carousel-dot--creator::before { background: #22C55E; }
-.carousel-dot:hover { border-color: #fff; }
-
-/* El nodo de la carta centrada crece sin mover a los demás */
-.carousel-dot.active {
-    z-index: 1;
-    width: calc(var(--node) + var(--node-grow) * 2);
-    height: calc(var(--node) + var(--node-grow) * 2);
-    margin: calc(var(--node-grow) * -1);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
-}
-.carousel-dot + .carousel-dot.active::before { width: calc(var(--node-gap) - var(--node-grow)); }
-.carousel-dot--done.active { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25), 0 0 20px rgba(34, 197, 94, 0.45); }
-.carousel-dot--current.active { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25), 0 0 24px rgba(239, 68, 68, 0.6); }
-.carousel-dot--creator.active { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25), 0 0 24px rgba(34, 197, 94, 0.6); }
-
-/* --- Responsive --- */
-@media (max-width: 360px) {
-    .boss-carousel { --card-w: calc(100vw - 64px); --card-h: 440px; --side-h: 414px; --stage-h: 180px; --side-stage-h: 170px; --sprite: 128px; }
-}
-@media (max-height: 760px) {
-    .boss-carousel { --card-h: 420px; --side-h: 395px; --stage-h: 170px; --side-stage-h: 160px; --sprite: 124px; }
-    .boss-card__desc { -webkit-line-clamp: 2; }
-}
-
 @media (min-width: 768px) {
-    .campaign-skyline { display: block; }
     .campaign-title { font-size: 28px; text-shadow: 4px 4px 0 #450A0A, 0 0 30px rgba(239, 68, 68, 0.6); }
     .campaign-subtitle { font-size: 14px; }
     .campaign-subtitle__long { display: inline; }
-    .campaign-subtitle__short, .campaign-path__labels { display: none; }
-
-    .boss-carousel {
-        --card-w: 360px;
-        --card-h: 480px;
-        --side-w: 170px;
-        --side-h: 280px;
-        --side-x: 285px;
-        --stage-h: 210px;
-        --side-stage-h: 156px;
-        --sprite: 160px;
-        gap: 20px;
-    }
-    .carousel-viewport { margin: 0; }
-    .carousel-arrow { display: grid; }
-    .boss-card:not(.is-active) .boss-card__sprite { width: 128px; height: 128px; }
-
-    .boss-card__level, .boss-card__flag, .boss-card__chip { font-size: 8px; padding: 6px 10px; }
-    .boss-card__level { top: 14px; left: 14px; }
-    .boss-card__flag { top: 14px; right: 14px; }
-    .boss-card__flag-long { display: inline; }
-    .boss-card__flag-short { display: none; }
-    .boss-card__main { gap: 12px; padding: 22px; }
-    .boss-card__heading { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .boss-card__danger { flex: none; flex-direction: column; align-items: flex-end; gap: 6px; }
-    .boss-card__name { font-size: 16px; line-height: 1.4; }
-    .boss-card__desc { font-size: 15px; line-height: 1.5; }
-    .boss-card__cta { height: 58px; padding: 0 22px; font-size: 13px; }
-    .boss-card__cta .ico { width: 22px; height: 22px; }
+    .campaign-subtitle__short { display: none; }
     .danger-star { width: 18px; height: 18px; }
-
-    .carousel-dots { --node: 44px; --node-grow: 4px; --node-gap: 64px; }
-    .carousel-dot { border-radius: 10px; font-size: 12px; }
 }
-@media (min-width: 768px) and (max-height: 820px) {
-    .boss-carousel { --card-h: 440px; --stage-h: 180px; --side-h: 260px; --side-stage-h: 140px; --sprite: 140px; }
-    .boss-card__desc { -webkit-line-clamp: 2; }
-}
-@media (min-width: 1280px) {
-    .boss-carousel { --card-w: 400px; --side-w: 190px; --side-x: 323px; gap: 28px; }
-}
-@media (min-width: 1280px) and (min-height: 821px) {
-    .boss-carousel { --card-h: 520px; --stage-h: 236px; --side-h: 300px; --side-stage-h: 170px; --sprite: 176px; }
-    .boss-card:not(.is-active) .boss-card__sprite { width: 140px; height: 140px; }
-}
-
-/* Ventanas bajas (móvil en horizontal): todo más compacto */
 @media (max-height: 560px) {
-    .campaign-layout { gap: 10px; }
     .campaign-title { font-size: 18px; }
     .campaign-subtitle { display: none; }
-    .boss-carousel { --card-h: 300px; --side-h: 220px; --stage-h: 120px; --side-stage-h: 100px; --sprite: 96px; }
-    .boss-card:not(.is-active) .boss-card__sprite { width: 80px; height: 80px; }
-    .boss-card__main { gap: 8px; padding: 12px 16px; }
-    .boss-card__desc { display: none; }
-    .boss-card__cta { height: 44px; }
-    .campaign-path__labels { display: none; }
-    .carousel-dots { --node: 30px; --node-grow: 3px; --node-gap: clamp(16px, 4vw, 40px); }
 }
-@media (min-width: 768px) and (max-height: 640px) {
-    .campaign-layout { gap: 12px; }
-    .campaign-title { font-size: 22px; }
-    .boss-carousel { --card-h: 360px; --stage-h: 140px; --side-h: 230px; --side-stage-h: 120px; --sprite: 112px; }
-}
-@media (orientation: landscape) and (max-height: 420px) {
-    .campaign-layout { gap: 8px; }
-    .boss-carousel { --card-h: 224px; --side-h: 190px; --stage-h: 84px; --side-stage-h: 80px; --sprite: 72px; }
-    .boss-card__main { gap: 6px; padding: 10px 14px; }
-    .boss-card__cta { height: 40px; }
-}
-@media (orientation: portrait) and (max-height: 680px) {
-    .boss-carousel { --card-h: 396px; --side-h: 372px; --stage-h: 156px; --side-stage-h: 146px; --sprite: 116px; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .boss-card, .boss-card__stage { transition: none; }
-    .boss-card.corrupted.is-active { animation: none; }
+    .tower__cab, .tower__door { transition: none; }
+    .tower__floor--next::after { animation: none; }
 }
 
 /* ==================================================================
@@ -4795,8 +4649,7 @@ body.has-result .achievement-toast--visible { transform: none; }
 
 /* ==================================================================
    Zonas táctiles: con el dedo (puntero grueso) todo control mide al
-   menos 44 px; con ratón se conserva el tamaño del diseño. Los nodos
-   del carrusel amplían su zona con ::after (::before es la línea).
+   menos 44 px; con ratón se conserva el tamaño del diseño.
    Va al final del archivo para ganar a las reglas de cada pantalla.
    ================================================================== */
 @media (pointer: coarse) {
@@ -4809,15 +4662,7 @@ body.has-result .achievement-toast--visible { transform: none; }
     #orientation-hint-close { width: 44px; height: 44px; }
     .smash-btn { min-width: 44px; min-height: 44px; }
     input[type=range], .diff-range { height: 44px; }
-    .carousel-dot::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 44px;
-        height: 44px;
-        transform: translate(-50%, -50%);
-    }
+    .floor-sheet__grip { height: 44px; }
 }
 /* Las ocho muestras de 44 px no caben en una fila del móvil: 4 × 2 */
 @media (pointer: coarse) and (max-width: 480px) {
