@@ -1,9 +1,9 @@
 /**
- * data/campaign-art.js — GENERADO por design/campana/generadores/build5.py. No editar a mano.
+ * data/campaign-art.js — GENERADO por design/campana/generadores/build5.py (merge5.py). No editar a mano.
  *
- * Arte de la campaña fuera de las escenas: bustos, Torre Hachepe y arena de Chemi.
+ * Arte de la campaña fuera de las escenas: bustos, Torre Hachepe y arenas de los jefes.
  * w/h en unidades (bustos: 1 unidad = 4 px; torre y arena: 1 unidad = 2 px).
- * theme = máscara blanca con alfa que se tiñe (dorado = Sindicato, var(--t) = liberado).
+ * theme = máscara blanca con alfa que se tiñe (dorado = Sindicato, color del tema = liberado).
  */
 'use strict';
 
@@ -55,6 +55,18 @@ const CAMPAIGN_ART = {
       "src": "assets/campaign/bustos/alcalde.webp",
       "w": 80.0,
       "h": 80.0,
+      "theme": null
+    },
+    "chayipiti": {
+      "src": "assets/campaign/bustos/chayipiti.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "theme": null
+    },
+    "chayipiti_error": {
+      "src": "assets/campaign/bustos/chayipiti_error.webp",
+      "w": 140.0,
+      "h": 140.0,
       "theme": null
     }
   },
@@ -120,6 +132,26 @@ const CAMPAIGN_ART = {
       "w": 800,
       "h": 600,
       "theme": "assets/campaign/chemi/arena_chemi_tema.webp"
+    }
+  },
+  "pisos": {
+    "arena_dani": {
+      "src": "assets/campaign/pisos/arenas/arena_dani.webp",
+      "w": 800,
+      "h": 600,
+      "theme": "assets/campaign/pisos/arenas/arena_dani_tema.webp"
+    },
+    "arena_duo": {
+      "src": "assets/campaign/pisos/arenas/arena_duo.webp",
+      "w": 800,
+      "h": 600,
+      "theme": "assets/campaign/pisos/arenas/arena_duo_tema.webp"
+    },
+    "arena_fano": {
+      "src": "assets/campaign/pisos/arenas/arena_fano.webp",
+      "w": 800,
+      "h": 600,
+      "theme": "assets/campaign/pisos/arenas/arena_fano_tema.webp"
     }
   }
 };

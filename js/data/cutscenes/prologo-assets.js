@@ -1,6 +1,6 @@
 /**
  * data/cutscenes/prologo-assets.js — GENERADO por design/campana/generadores/build_prologo.py
- * y build5.py. No editar a mano: vuelve a ejecutar los generadores.
+ * build5.py y build6.py (unidos con merge5.py). No editar a mano: vuelve a ejecutar los generadores.
  *
  * Unidades de escena (960×540). w/h = tamaño del dibujo; ax/ay = punto de apoyo (los pies)
  * medido desde la esquina superior izquierda. theme = máscara que se tiñe con el color del tema.
@@ -117,6 +117,34 @@ const PROLOGO_ASSETS = {
       "h": 540,
       "desc": "Cancha vista desde arriba para la ley de la paleta (escena 8)",
       "theme": "assets/campaign/prologo/fondos/cancha_tema.webp"
+    },
+    "contaduria": {
+      "src": "assets/campaign/pisos/fondos/contaduria.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Contaduría de lado (llegada al piso 1)",
+      "theme": null
+    },
+    "sala_juegos": {
+      "src": "assets/campaign/pisos/fondos/sala_juegos.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Sala de juegos de lado (llegada al piso 2)",
+      "theme": "assets/campaign/pisos/fondos/sala_juegos_tema.webp"
+    },
+    "sala_control_oscura": {
+      "src": "assets/campaign/pisos/fondos/sala_control_oscura.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Sala de control a oscuras (llegada al piso 3)",
+      "theme": null
+    },
+    "sala_control": {
+      "src": "assets/campaign/pisos/fondos/sala_control.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Sala de control con las luces encendidas (llegada al piso 3)",
+      "theme": null
     }
   },
   "actors": {
@@ -669,6 +697,51 @@ const PROLOGO_ASSETS = {
       "ax": 100.5,
       "ay": 238.0
     },
+    "dani_telefono": {
+      "src": "assets/campaign/pisos/actores/dani_telefono.webp",
+      "w": 201.0,
+      "h": 258.0,
+      "desc": "Dani al teléfono con Yisus (llegada al piso 1)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 227.0
+    },
+    "escritorio": {
+      "src": "assets/campaign/pisos/actores/escritorio.webp",
+      "w": 274.0,
+      "h": 131.0,
+      "desc": "Escritorio de Dani: va delante de él (llegada al piso 1)",
+      "theme": null,
+      "ax": 137.0,
+      "ay": 130.0
+    },
+    "maquina_espaldas": {
+      "src": "assets/campaign/pisos/actores/maquina_espaldas.webp",
+      "w": 142.0,
+      "h": 194.0,
+      "desc": "Máquina de arcade vista por detrás: va delante de Mario (llegada al piso 2)",
+      "theme": "assets/campaign/pisos/actores/maquina_espaldas_tema.webp",
+      "ax": 71.0,
+      "ay": 193.0
+    },
+    "puff": {
+      "src": "assets/campaign/pisos/actores/puff.webp",
+      "w": 142.0,
+      "h": 86.0,
+      "desc": "Puff de Valen: va delante de sus piernas (llegada al piso 2)",
+      "theme": null,
+      "ax": 71.0,
+      "ay": 79.0
+    },
+    "consola": {
+      "src": "assets/campaign/pisos/actores/consola.webp",
+      "w": 282.0,
+      "h": 80.0,
+      "desc": "Consola de Fano: va delante de él (llegada al piso 3)",
+      "theme": null,
+      "ax": 141.0,
+      "ay": 79.0
+    },
     "busto_chemi": {
       "src": "assets/campaign/bustos/chemi.webp",
       "w": 140.0,
@@ -740,6 +813,24 @@ const PROLOGO_ASSETS = {
       "theme": null,
       "ax": 40.0,
       "ay": 80.0
+    },
+    "busto_chayipiti": {
+      "src": "assets/campaign/bustos/chayipiti.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de chayipiti",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_chayipiti_error": {
+      "src": "assets/campaign/bustos/chayipiti_error.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de chayipiti_error",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
     }
   }
 };

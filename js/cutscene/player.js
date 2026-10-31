@@ -53,7 +53,7 @@
  *   x0?: number, x1?: number, left?: string, right?: string, count?: number,
  *   leftName?: string, leftColor?: string, rightName?: string, rightColor?: string,
  *   smash?: boolean, cx?: number, cy?: number, factor?: number,
- *   pairs?: { x: number, y: number, color: string }[]
+ *   pairs?: { x: number, y: number, color: string }[], floor?: string
  * }} CutsceneStep
  */
 
