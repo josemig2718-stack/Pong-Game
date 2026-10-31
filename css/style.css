@@ -4471,7 +4471,8 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 .cutscene.is-loading .cutscene-loading { opacity: 1; }
 
-/* Narración: franjas de cine (12 % del alto) y el texto en la de abajo */
+/* Narración: franjas de cine (12 % del alto) y el texto en letra grande
+   sobre la de abajo, donde no tapa a nadie */
 .cutscene-narration { position: absolute; inset: 0; pointer-events: none; }
 .cutscene-narration__bar {
     position: absolute; left: var(--cs-x); width: var(--cs-w); height: calc(var(--cs-h) * 0.12);
@@ -4483,14 +4484,16 @@ body.has-result .achievement-toast--visible { transform: none; }
 .cutscene-narration__bar--bottom { top: calc(var(--cs-y) + var(--cs-h) * 0.88); transform: translateY(101%); }
 .cutscene-narration.is-on .cutscene-narration__bar { transform: none; }
 .cutscene-narration__text {
-    margin: 0; padding: 0 6%;
-    font-size: clamp(9px, calc(var(--cs-h) * 0.021), 15px); line-height: 1.7;
+    margin: 0; padding: 0 5%;
+    font-size: clamp(10px, calc(var(--cs-h) * 0.028), 22px); line-height: 1.55;
     color: var(--text); text-align: center;
     opacity: 0; transition: opacity .25s ease .2s;
 }
 .cutscene-narration.is-on .cutscene-narration__text { opacity: 1; }
 /* Con la escena recortada al alto del canvas (vertical) caben menos letras */
-.cutscene[data-layout="tall"] .cutscene-narration__text { font-size: 9px; padding: 0 16px; }
+/* En horizontal, SALTAR va en la franja de abajo: el texto le deja sitio */
+.cutscene[data-layout="wide"] .cutscene-narration__text { padding: 0 clamp(16px, 12%, 150px); }
+.cutscene[data-layout="tall"] .cutscene-narration__text { font-size: 10px; padding: 0 14px; }
 
 /* Título de neón: tres cortes al entrar, brillo y fundido al salir */
 .cutscene-title {

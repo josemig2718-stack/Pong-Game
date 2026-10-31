@@ -705,13 +705,15 @@ const soundEffects = {
     },
     /**
      * Pelotas de energía: un silbido por pelota, como las del efecto
-     * `balls` (andanadas cada `gap` s, una pelota cada `stagger` s).
+     * `balls` (andanadas cada `gap` s, una pelota cada `stagger` s). Cada
+     * Hachepe silba un tono más arriba que el anterior.
      * @param {{ volleys?: number, per?: number, gap?: number, stagger?: number }} [opts]
      */
     energyBalls: ({ volleys = 3, per = 6, gap = 0.45, stagger = 0.05 } = {}) => {
         for (let v = 0; v < volleys; v++) {
             for (let i = 0; i < per; i++) {
-                sfxVoice({ type: 'sine', freq: 400, freqEnd: 1400, decay: 0.2, gain: 0.12,
+                const k = Math.pow(2, i * 2 / 12);
+                sfxVoice({ type: 'sine', freq: 400 * k, freqEnd: 1400 * k, decay: 0.2, gain: 0.12,
                            detune: sfxVary(50), when: v * gap + i * stagger, pan: (i / (per - 1) - 0.5) * 0.6 });
             }
         }

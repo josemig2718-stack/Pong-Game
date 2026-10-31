@@ -108,7 +108,7 @@
  *   timers: { at: number, fn: () => void }[], realTimers: { at: number, fn: () => void }[],
  *   tweens: CutsceneTween[], actors: Map<string, CutsceneActor>, fx: CutsceneFx[],
  *   bg: { id: string, t0: number, fade: number }|null, prevBg: string|null,
- *   camera: { x: number, y: number, zoom: number }, shakeX: number, shakeY: number,
+ *   camera: { x: number, y: number, zoom: number }, focusX: number|null, shakeX: number, shakeY: number,
  *   slowmo: { factor: number, from: number, until: number }|null, frozen: boolean,
  *   loops: Map<string, () => void>, unduck: (() => void)|null, rallyScore: number,
  *   view: CutsceneView, dom: CutsceneDom, raf: number, lastNow: number,
@@ -497,7 +497,8 @@ function cutsceneSetBackground(cs, id, fade, instant = false) {
 
 /**
  * Aplica la cámara: el centro de la vista en (x, y) con su aumento, sin
- * salirse de la escena, más el temblor.
+ * salirse de la escena, más el temblor. En vertical la x es la del foco
+ * (cutsceneTickFocus), que sigue a quien habla.
  * @param {CanvasRenderingContext2D} ctx
  * @param {CutsceneRun} cs
  */
@@ -507,11 +508,28 @@ function cutsceneApplyCamera(ctx, cs) {
     const hw = v.w / 2 / kz;
     const hh = v.h / 2 / kz;
     const clamp = (c, half, size) => (half * 2 >= size ? size / 2 : Math.max(half, Math.min(size - half, c)));
-    const cx = clamp(cs.camera.x, hw, CUTSCENE_W);
+    const cx = clamp(v.mode === 'tall' && cs.focusX !== null ? cs.focusX : cs.camera.x, hw, CUTSCENE_W);
     const cy = clamp(cs.camera.y, hh, CUTSCENE_H);
     ctx.translate(v.x + v.w / 2, v.y + v.h / 2);
     ctx.scale(kz, kz);
     ctx.translate(-cx + cs.shakeX, -cy + cs.shakeY);
+}
+
+/**
+ * En vertical solo se ve el centro de la escena: mientras alguien habla
+ * (`who`) o tiene su tarjeta, la cámara se desliza hasta él; luego vuelve
+ * a la x del guion.
+ * @param {CutsceneRun} cs
+ * @param {number} dt segundos reales
+ */
+function cutsceneTickFocus(cs, dt) {
+    let target = cs.camera.x;
+    const b = cs.block;
+    const id = b && (b.kind === 'say' ? b.step.who : b.kind === 'card' ? b.step.actor : null);
+    const a = id ? cs.actors.get(id) : null;
+    if (a) target = a.x;
+    if (cs.focusX === null || cs.view.mode !== 'tall') cs.focusX = target;
+    else cs.focusX += (target - cs.focusX) * Math.min(1, dt * 4);
 }
 
 /**
@@ -1063,6 +1081,7 @@ function cutsceneTick(cs, realDt) {
         else if (b.kind === 'card' && cs.realT >= b.until) cutsceneEndCard(cs);
     }
     cutsceneAdvanceSteps(cs);
+    cutsceneTickFocus(cs, realDt);
 }
 
 /**
@@ -1284,7 +1303,7 @@ function playCutscene(def, { onEnd } = {}) {
         def, assets, onEnd: onEnd || null, phase: 'loading',
         sceneIdx: 0, stepIdx: 0, sceneT0: 0, t: 0, realT: 0, block: null,
         timers: [], realTimers: [], tweens: [], actors: new Map(), fx: [],
-        bg: null, prevBg: null, camera: { x: CUTSCENE_W / 2, y: CUTSCENE_H / 2, zoom: 1 },
+        bg: null, prevBg: null, camera: { x: CUTSCENE_W / 2, y: CUTSCENE_H / 2, zoom: 1 }, focusX: null,
         shakeX: 0, shakeY: 0, slowmo: null, frozen: false, loops: new Map(), unduck: null, rallyScore: 0,
         view: null, dom, raf: 0, lastNow: performance.now(),
         hold: { key: false, pointer: false, t: 0 }, blips: 0,
