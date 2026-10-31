@@ -36,6 +36,7 @@
  * @property {number} squash  aplastamiento del último golpe, de 1 a 0. Solo visual
  * @property {number} warpMs  ms de juego desde que cruzó un portal (Infinity si no ha cruzado ninguno)
  * @property {boolean} [bip]  pasó por el detector de Chemi: va ×1,35 hasta el siguiente golpe (bosses/chemi.js)
+ * @property {'mario'|'valen'|null} [hitter]  quién del dúo la golpeó por última vez: su estela y su velocidad (bosses/duo.js)
  */
 
 /** @typedef {null | 'super'} BallPower 'super' es el smash */
@@ -61,6 +62,7 @@
  * @property {number} energy  energía del smash, de 0 a MECH.energy.max
  * @property {boolean} superArmed  el siguiente golpe es smash sin gastar energía
  * @property {boolean} boltReady  power-up Rayo: el siguiente golpe es smash sin gastar energía (game/powerups.js)
+ * @property {number} [retreatMs]  ms que le quedan retirada (el dúo, tras encajar gol): ni se recoloca ni choca con la bola
  */
 
 /**
@@ -145,15 +147,15 @@ function paddleMechanicsRest() {
 /** @type {Paddle} */
 const p1 = { x: 24, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, touchY: null, ...paddleMechanicsRest() };
 /** @type {Paddle} */
-const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, touchY: null, ...paddleMechanicsRest() };
+const p2 = { x: GAME_WIDTH - 24 - paddleWidth, y: GAME_HEIGHT / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, touchY: null, retreatMs: 0, ...paddleMechanicsRest() };
 
 /**
- * Paleta gemela del rival (Mario, en el combate del dúo). Las mecánicas
- * del jefe viven en bosses/duo.js; está aquí porque la mueven y la
- * golpean game/ai.js y game/physics.js.
+ * Paleta gemela del rival (Valen, en el combate del dúo: Mario es p2).
+ * Las mecánicas del jefe viven en bosses/duo.js, que también la mueve
+ * (su gancho `ai`); está aquí porque la golpea game/physics.js.
  * @type {Paddle & {active: boolean, retreatMs: number}}
  */
-const p2Twin = { x: GAME_WIDTH - 24 - 15 - 40, y: 0, width: 15, height: 100, active: false, retreatMs: 0, ...paddleMechanicsRest() };
+const p2Twin = { x: GAME_WIDTH - 24 - paddleWidth, y: 0, width: paddleWidth, height: paddleHeight, active: false, retreatMs: 0, ...paddleMechanicsRest() };
 
 /** Repone los campos de las mecánicas de las tres paletas (al empezar una partida). */
 function resetPaddleMechanics() {

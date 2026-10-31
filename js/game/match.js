@@ -217,6 +217,7 @@ function startGame(mode) {
     // curso (si lo hay) arma lo suyo en bossInit().
     p2Twin.active = false;
     p2Twin.retreatMs = 0;
+    p2.retreatMs = 0;
     bossInit();
     resetCpuPlan();
 

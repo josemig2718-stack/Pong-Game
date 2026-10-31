@@ -266,7 +266,8 @@ function cpuPlay(ball, aiSpeed, errorMargin, dt) {
 }
 
 /**
- * Mueve la paleta de la CPU (p2) y, en el combate del dúo, la gemela.
+ * Mueve la paleta de la CPU (p2). Un jefe con IA propia (el dúo, que
+ * mueve también la gemela) lo hace con su gancho `ai`.
  * @param {number} dt
  * @param {BossConfig|null} bcfg config del jefe en curso (bossConfig())
  */
@@ -322,41 +323,5 @@ function moveCpu(dt, bcfg) {
     } else {
         if (p2Center < GAME_HEIGHT / 2 - 5) p2.y += aiSpeed * 0.5 * dt;
         else if (p2Center > GAME_HEIGHT / 2 + 5) p2.y -= aiSpeed * 0.5 * dt;
-    }
-
-    // Lógica para el clon (Mario y Valen)
-    if (p2Twin.active && p2Twin.retreatMs > 0) {
-        // Retirado tras encajar gol: sale del campo por abajo. Esa es la
-        // ventana del jugador para volver a anotar.
-        p2Twin.y += paddleSpeed * 1.5 * dt;
-    } else if (p2Twin.active) {
-        const twinCenter = p2Twin.y + p2Twin.height / 2;
-
-        // Valen (p2) cubrirá de la mitad de la cancha hacia arriba
-        // Mario (p2Twin) cubrirá de la mitad de la cancha hacia abajo
-        const twinSpeed = paddleSpeed * 1.25; // Mario es un poco más rápido pero solo cubre abajo
-
-        if (targetBall && targetBall.dx > 0) {
-            // Si la bola está en la mitad superior, Mario baja al centro para esperar
-            if (targetBall.y < GAME_HEIGHT / 2) {
-                if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2Twin.y += twinSpeed * dt;
-                else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2Twin.y -= twinSpeed * dt;
-            } else {
-                // Si está en la mitad inferior, Mario ataca
-                if (twinCenter < targetBall.y - 10) p2Twin.y += twinSpeed * dt;
-                else if (twinCenter > targetBall.y + 10) p2Twin.y -= twinSpeed * dt;
-            }
-        } else {
-            // Volver a posición default inferior
-            if (twinCenter < GAME_HEIGHT * 0.75 - 10) p2Twin.y += twinSpeed * 0.5 * dt;
-            else if (twinCenter > GAME_HEIGHT * 0.75 + 10) p2Twin.y -= twinSpeed * 0.5 * dt;
-        }
-
-        // Y Valen (p2) modifica su comportamiento para priorizar arriba
-        if (targetBall && targetBall.dx > 0 && targetBall.y >= GAME_HEIGHT / 2) {
-            // Si la bola va muy abajo, Valen se queda en el centro alto
-            if (p2Center < GAME_HEIGHT * 0.25 - 10) p2.y += aiSpeed * dt;
-            else if (p2Center > GAME_HEIGHT * 0.25 + 10) p2.y -= aiSpeed * dt;
-        }
     }
 }

@@ -149,8 +149,8 @@ function movePlayer2(dt) {
 }
 
 /**
- * Mantiene las paletas dentro del campo (la gemela, salvo cuando se
- * retira). Una paleta que choca con el borde se queda sin velocidad: si
+ * Mantiene las paletas dentro del campo (las del rival, salvo cuando se
+ * retiran). Una paleta que choca con el borde se queda sin velocidad: si
  * no, el teclado la daría por movida y sus golpes llevarían efecto.
  */
 function clampPaddles(rotatedArena) {
@@ -161,8 +161,10 @@ function clampPaddles(rotatedArena) {
         const y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
         if (y !== p1.y) { p1.y = y; p1.vy = 0; }
     }
-    const y2 = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
-    if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
+    if (!(p2.retreatMs > 0)) {
+        const y2 = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
+        if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
+    }
     if (p2Twin.active && p2Twin.retreatMs <= 0) {
         p2Twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2Twin.height, p2Twin.y));
     }
@@ -360,7 +362,8 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
     if (targetPaddle === p2 && state.mode === 'practice') return;   // en práctica no hay rival
 
     let hit = false;
-    if (collision(b, targetPaddle)) {
+    // Una pala retirada (el dúo, tras encajar gol) no choca con la bola
+    if (collision(b, targetPaddle) && !(targetPaddle === p2 && p2.retreatMs > 0)) {
         hit = true;
     } else if (!rotatedArena && p2Twin.active && p2Twin.retreatMs <= 0 && b.x + b.radius > GAME_WIDTH / 2 && collision(b, p2Twin)) {
         targetPaddle = p2Twin;
