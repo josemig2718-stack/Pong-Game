@@ -268,7 +268,7 @@ function bossRenderOverlay(ctx) {
     bossRenderPhaseOverlay(ctx);
 }
 
-/** ¿Este jefe oculta la bola real? (Fano; y cualquiera durante su K.O.) */
+/** ¿Este jefe oculta la bola real? (Cualquiera durante su K.O., o el que defina hidesBall.) */
 function bossHidesBall() {
     const boss = currentBoss();
     if (boss && bossState.ko) return true;
