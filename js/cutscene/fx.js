@@ -290,39 +290,6 @@ const CUTSCENE_FX = {
         };
     },
 
-    // --- Silueta blanca entre rayos (El Creador tras el cristal) ------
-    silhouette(step, cs) {
-        const t0 = cs.t;
-        const info = cutsceneActorInfo(cs, step.sprite);
-        return {
-            type: 'silhouette', layer: 'world',
-            done: (c) => c.t - t0 >= step.dur,
-            render(ctx, c) {
-                if (!info) return;
-                const s = step.s || 1;
-                const white = tintedMask(info.src, '#FFFFFF');
-                const left = step.x - info.ax * s;
-                const top = step.y - info.ay * s;
-                if (white) ctx.drawImage(white, left, top, info.w * s, info.h * s);
-                if (!step.lightning) return;
-                // Tres rayos pequeños alrededor, que cambian cada 60 ms
-                const frame = Math.floor((c.t - t0) / 0.06);
-                const w = info.w * s;
-                const h = info.h * s;
-                const ends = [[left - 4, top + h * 0.2, left + w * 0.15, top + h * 0.55],
-                              [left + w + 4, top + h * 0.15, left + w * 0.85, top + h * 0.5],
-                              [left + w * 0.5, top - 12, left + w * 0.45, top + h * 0.18]];
-                ends.forEach(([x0, y0, x1, y1], i) => {
-                    if (!c.reduced && vfxHash(frame * 3 + i) < 0.3) return;
-                    const j = (k) => (vfxHash(frame * 17 + i * 5 + k) - 0.5) * 10;
-                    const pts = [{ x: x0, y: y0 }, { x: (x0 * 2 + x1) / 3 + j(1), y: (y0 * 2 + y1) / 3 + j(2) },
-                                 { x: (x0 + x1 * 2) / 3 + j(3), y: (y0 + y1 * 2) / 3 + j(4) }, { x: x1, y: y1 }];
-                    cutsceneDrawBolt(ctx, pts, '#DCE3FF', 1.2);
-                });
-            }
-        };
-    },
-
     // --- Destello y velo de pantalla ---------------------------------
     flash(step, cs) {
         if (cs.reduced) return null;
@@ -352,9 +319,12 @@ const CUTSCENE_FX = {
     },
 
     // --- Pelotas de energía desde la pala de cada Hachepe -------------
+    // `to`: 'left' o 'right' (salen de la escena) o un punto [x, y],
+    // donde las pelotas llegan y desaparecen.
     balls(step, cs) {
         const t0 = cs.t;
         const from = /** @type {string[]} */ (step.from) || [];
+        const target = Array.isArray(step.to) ? /** @type {number[]} */ (step.to) : null;
         const dir = step.to === 'right' ? 1 : -1;
         const volleys = step.volleys || 1;
         const gap = step.gap || 0.4;
@@ -363,7 +333,7 @@ const CUTSCENE_FX = {
         for (let v = 0; v < volleys; v++) {
             from.forEach((id, i) => queue.push({ at: t0 + v * gap + i * 0.05, id }));
         }
-        /** @type {{ x: number, y: number, vx: number, vy: number, color: string, trail: { x: number, y: number }[] }[]} */
+        /** @type {{ x: number, y: number, vx: number, vy: number, left: number, color: string, trail: { x: number, y: number }[] }[]} */
         const live = [];
         return {
             type: 'balls', layer: 'world',
@@ -374,18 +344,26 @@ const CUTSCENE_FX = {
                     const a = c.actors.get(id);
                     const box = a && cutsceneActorBox(c, a);
                     if (!box) continue;
-                    live.push({ x: box.left + box.w * 0.7, y: box.top + box.h * 0.25,
-                                vx: dir * cutsceneRand(950, 1150), vy: cutsceneRand(-40, 90),
-                                color: a.color || cutsceneColor('theme'), trail: [] });
+                    const x = box.left + box.w * (target ? 0.5 : 0.7);
+                    const y = box.top + box.h * 0.25;
+                    const speed = cutsceneRand(950, 1150);
+                    let vx = dir * speed, vy = cutsceneRand(-40, 90), left = Infinity;
+                    if (target) {
+                        left = Math.hypot(target[0] - x, target[1] - y);
+                        vx = (target[0] - x) / (left || 1) * speed;
+                        vy = (target[1] - y) / (left || 1) * speed;
+                    }
+                    live.push({ x, y, vx, vy, left, color: a.color || cutsceneColor('theme'), trail: [] });
                 }
                 for (const b of live) {
                     b.trail.unshift({ x: b.x, y: b.y });
                     if (b.trail.length > 8) b.trail.pop();
                     b.x += b.vx * dt;
                     b.y += b.vy * dt;
+                    b.left -= Math.hypot(b.vx, b.vy) * dt;
                 }
                 for (let i = live.length - 1; i >= 0; i--) {
-                    if (live[i].x < -60 || live[i].x > 1020) live.splice(i, 1);
+                    if (live[i].x < -60 || live[i].x > 1020 || live[i].left <= 0) live.splice(i, 1);
                 }
             },
             render(ctx) {
@@ -447,80 +425,6 @@ const CUTSCENE_FX = {
             }
             ctx.restore();
         });
-    },
-
-    // --- Peloteo sobre la mesa: cada llegada al lado x1 es un punto ---
-    rally(step, cs) {
-        const t0 = cs.t;
-        const legs = 10;
-        // Cada tramo dura un 85 % del anterior: cada vez más rápido
-        const raw = Array.from({ length: legs }, (_, i) => Math.pow(0.85, i));
-        const total = raw.reduce((a, b) => a + b, 0);
-        const durs = raw.map((d) => d / total * step.dur * 0.94);
-        cs.rallyScore = 0;
-        let leg = 0;
-        let legStart = t0;
-        return {
-            type: 'rally', layer: 'world',
-            done: (c) => c.t - t0 >= step.dur + 0.4,
-            update(c) {
-                while (leg < legs && c.t - legStart >= durs[leg]) {
-                    legStart += durs[leg];
-                    if (leg % 2 === 0) c.rallyScore++;   // llega al lado del alcalde
-                    leg++;
-                }
-            },
-            render(ctx, c) {
-                if (leg >= legs) return;
-                const p = Math.min(1, (c.t - legStart) / durs[leg]);
-                const goingRight = leg % 2 === 0;
-                const x = goingRight ? step.x0 + (step.x1 - step.x0) * p : step.x1 + (step.x0 - step.x1) * p;
-                const y = step.y - Math.sin(p * Math.PI) * 26;
-                ctx.save();
-                ctx.fillStyle = '#FFFFFF';
-                ctx.shadowColor = '#FFFFFF';
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        };
-    },
-
-    // --- Marcador de neón --------------------------------------------
-    scoreboard(step, cs) {
-        const t0 = cs.t;
-        const to = /** @type {number[]} */ (step.to) || [0, 0];
-        return {
-            type: 'scoreboard', layer: 'world',
-            done: () => false,   // hasta el siguiente clear
-            render(ctx, c) {
-                const hasRally = c.fx.some((f) => f.type === 'rally');
-                const p = Math.min(1, (c.t - t0) / step.dur);
-                const left = Math.min(to[0], hasRally || c.rallyScore ? c.rallyScore : Math.round(to[0] * p));
-                const right = Math.min(to[1], Math.round(to[1] * p));
-                const color = cutsceneColor(step.color);
-                const text = `${step.left} ${left} – ${right} ${step.right}`;
-                ctx.save();
-                ctx.font = "16px 'Press Start 2P', monospace";
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const w = ctx.measureText(text).width + 40;
-                ctx.fillStyle = 'rgba(6, 7, 12, 0.78)';
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 12;
-                ctx.beginPath();
-                ctx.rect(step.x - w / 2, step.y - 22, w, 44);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = color;
-                ctx.fillText(text, step.x, step.y + 1);
-                ctx.restore();
-            }
-        };
     },
 
     // --- Corte de señal ----------------------------------------------
@@ -777,5 +681,530 @@ const CUTSCENE_FX = {
                 ctx.restore();
             }
         };
+    },
+
+    // --- Explosión: destello, anillo y chispas del color --------------
+    explosion(step, cs) {
+        const t0 = cs.t;
+        const color = cutsceneColor(step.color);
+        const sparks = Array.from({ length: 24 }, (_, i) => ({
+            a: (i / 24) * Math.PI * 2 + cutsceneRand(-0.15, 0.15), v: cutsceneRand(160, 360), life: cutsceneRand(0.45, 0.85)
+        }));
+        return {
+            type: 'explosion', layer: 'world',
+            done: (c) => c.t - t0 >= 0.9,
+            render(ctx, c) {
+                const e = c.t - t0;
+                ctx.save();
+                if (e < 0.25) {
+                    const g = ctx.createRadialGradient(step.x, step.y, 0, step.x, step.y, 70);
+                    g.addColorStop(0, `rgba(255, 255, 255, ${0.9 * (1 - e / 0.25)})`);
+                    g.addColorStop(0.4, hexToRgba(color, 0.7 * (1 - e / 0.25)));
+                    g.addColorStop(1, hexToRgba(color, 0));
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(step.x, step.y, 70, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (e < 0.5) {
+                    ctx.strokeStyle = color;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 12;
+                    ctx.globalAlpha = 1 - e / 0.5;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(step.x, step.y, 90 * Math.min(1, e / 0.4), 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = color;
+                for (const s of sparks) {
+                    if (e > s.life) continue;
+                    ctx.globalAlpha = 1 - e / s.life;
+                    const x = step.x + Math.cos(s.a) * s.v * e;
+                    const y = step.y + Math.sin(s.a) * s.v * e + CUTSCENE_GRAVITY * 0.4 * e * e / 2;
+                    ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
+                }
+                ctx.restore();
+            }
+        };
+    },
+
+    // --- Hojas que caen de la copa con balanceo ------------------------
+    leaves(step, cs) {
+        const t0 = cs.t;
+        const dur = step.dur || 4;
+        const leaves = Array.from({ length: step.count || 12 }, () => ({
+            at: cutsceneRand(0, dur * 0.45), x: step.x + cutsceneRand(-70, 70), y: step.y + cutsceneRand(-30, 30),
+            fall: cutsceneRand(35, 70), sway: cutsceneRand(10, 24), freq: cutsceneRand(1.6, 3), rot: cutsceneRand(0, 6),
+            life: cutsceneRand(dur * 0.45, dur * 0.55), color: vfxRandom() < 0.5 ? '#2A6236' : '#1C4428'
+        }));
+        return {
+            type: 'leaves', layer: 'world',
+            done: (c) => c.t - t0 >= dur,
+            render(ctx, c) {
+                ctx.save();
+                for (const l of leaves) {
+                    const e = c.t - t0 - l.at;
+                    if (e < 0 || e > l.life) continue;
+                    const p = e / l.life;
+                    ctx.globalAlpha = p > 0.7 ? 1 - (p - 0.7) / 0.3 : 1;
+                    ctx.fillStyle = l.color;
+                    ctx.save();
+                    ctx.translate(l.x + Math.sin(e * l.freq) * l.sway, l.y + l.fall * e);
+                    ctx.rotate(l.rot + Math.sin(e * l.freq) * 0.8);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 4, 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+                ctx.restore();
+            }
+        };
+    },
+
+    // --- Desmayo: desenfoque, viñeta roja que late y fundido a negro ---
+    // El negro se queda hasta el siguiente `bg` o `clear` (los dos quitan
+    // el efecto y su filtro). El desenfoque es un filtro CSS del canvas:
+    // no lee píxeles, así que vale en file://.
+    knockout(step, cs) {
+        const t0 = cs.t;
+        const dur = step.dur || 4;
+        const canvas = cs.dom.canvas;
+        return {
+            type: 'knockout', layer: 'screen',
+            done: () => false,
+            update(c) {
+                if (c.reduced) return;
+                const p = Math.min(1, (c.t - t0) / dur);
+                canvas.style.filter = `blur(${(5 * p).toFixed(2)}px)`;
+            },
+            render(ctx, c) {
+                const e = c.t - t0;
+                const { uw, uh } = c.view;
+                ctx.save();
+                if (!c.reduced && e < dur) {
+                    const beat = Math.exp(-((e % 0.9) / 0.9) * 5);
+                    const a = 0.5 * beat * Math.min(1, e / 0.5);
+                    const g = ctx.createRadialGradient(uw / 2, uh / 2, Math.min(uw, uh) * 0.25, uw / 2, uh / 2, Math.max(uw, uh) * 0.7);
+                    g.addColorStop(0, 'rgba(150, 0, 0, 0)');
+                    g.addColorStop(1, `rgba(150, 0, 0, ${a})`);
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, uw, uh);
+                }
+                const black = Math.max(0, Math.min(1, e - (dur - 1)));
+                if (black > 0) {
+                    ctx.fillStyle = `rgba(0, 0, 0, ${black})`;
+                    ctx.fillRect(0, 0, uw, uh);
+                }
+                ctx.restore();
+            },
+            end() {
+                canvas.style.filter = '';
+            }
+        };
+    },
+
+    // --- Presentación tipo pantalla VS ---------------------------------
+    versus(step, cs) {
+        const t0 = cs.t;
+        const dur = step.dur || 4;
+        return {
+            type: 'versus', layer: 'screen',
+            done: (c) => c.t - t0 >= dur,
+            render(ctx, c) {
+                const e = c.t - t0;
+                const { uw, uh } = c.view;
+                const pin = cutsceneEase('out', Math.min(1, e / 0.4));
+                const pout = Math.max(0, Math.min(1, (e - (dur - 0.3)) / 0.3));
+                const slide = (1 - pin) + pout;
+                const size = Math.min(150, uw * 0.27);
+                const cy = uh * 0.36;
+                ctx.save();
+                ctx.globalAlpha = 1 - pout;
+                ctx.fillStyle = 'rgba(4, 5, 10, 0.55)';
+                ctx.fillRect(0, 0, uw, uh);
+                // Franja diagonal con los dos colores
+                const by = uh * 0.74;
+                ctx.save();
+                ctx.translate(uw / 2, by);
+                ctx.rotate(-0.07);
+                const band = ctx.createLinearGradient(-uw / 2, 0, uw / 2, 0);
+                band.addColorStop(0, hexToRgba(cutsceneColor(step.leftColor), 0.85));
+                band.addColorStop(0.5, 'rgba(10, 10, 18, 0.95)');
+                band.addColorStop(1, hexToRgba(cutsceneColor(step.rightColor), 0.85));
+                ctx.fillStyle = band;
+                ctx.fillRect(-uw * 0.6 * pin, -uh * 0.11, uw * 1.2 * pin, uh * 0.22);
+                ctx.restore();
+                /** @type {Array<[string|undefined, string|undefined, string|undefined, number]>} */
+                const sides = [[step.left, step.leftName, step.leftColor, -1], [step.right, step.rightName, step.rightColor, 1]];
+                for (const [id, name, col, side] of sides) {
+                    const color = cutsceneColor(col);
+                    const cx = uw / 2 + side * uw * 0.25 + side * slide * uw * 0.6;
+                    if (id) cutsceneDrawBust(ctx, c, id, cx - size / 2, cy - size / 2, size, color, 0);
+                    ctx.font = `${Math.round(Math.min(16, uw / 40))}px 'Press Start 2P', monospace`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = color;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 10;
+                    ctx.fillText(name || '', cx, cy + size / 2 + 12);
+                    ctx.shadowBlur = 0;
+                }
+                // Texto central
+                const text = step.text || '';
+                const fs = Math.round(Math.min(26, (uw * 0.88) / Math.max(1, text.length)));
+                ctx.globalAlpha = (1 - pout) * pin;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `${fs}px 'Press Start 2P', monospace`;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.shadowColor = '#000000';
+                ctx.shadowBlur = 8;
+                ctx.fillText(text, uw / 2, by - uh * 0.025);
+                if (step.sub) {
+                    ctx.font = `${Math.round(Math.max(9, fs * 0.5))}px 'Press Start 2P', monospace`;
+                    ctx.fillStyle = '#E8ECF4';
+                    ctx.fillText(step.sub, uw / 2, by + uh * 0.055);
+                }
+                ctx.restore();
+            }
+        };
+    },
+
+    // --- La partida desde arriba, con el aspecto del juego -------------
+    // La cancha (palas, bola y estela) va en la capa 'world' sobre el
+    // fondo `cancha`; el marcador y los bustos, en un efecto compañero de
+    // la capa 'screen'. Todo con el reloj de la escena (cs.t).
+    match(step, cs) {
+        const m = cutsceneMatchPlan(step, cs);
+        cs.fitW = CUTSCENE_MATCH.fitW;
+        cs.fx = cs.fx.filter((f) => f.type !== 'match' && f.type !== 'match_hud');
+        cs.fx.push({
+            type: 'match_hud', layer: 'screen',
+            done: () => m.over,
+            render: (ctx, c) => cutsceneMatchHud(ctx, c, m)
+        });
+        return {
+            type: 'match', layer: 'world',
+            done: (c) => c.t - m.t0 >= m.dur,
+            update: (c) => cutsceneMatchUpdate(c, m),
+            render: (ctx, c) => cutsceneMatchCourt(ctx, c, m),
+            end(c) {
+                m.over = true;
+                c.fitW = null;
+            }
+        };
     }
 };
+
+// -----------------------------------------------------------------
+//  Bustos y la partida del prólogo (efectos versus y match)
+// -----------------------------------------------------------------
+
+/** Medidas de la partida de la escena 8, en unidades de escena. */
+const CUTSCENE_MATCH = {
+    top: 96, bottom: 486, xl: 170, xr: 790, pw: 12, ph: 70, r: 7,
+    pointPause: 0.5,
+    fitW: 700              // en vertical, la cámara se aleja hasta ver este ancho
+};
+
+/**
+ * Dibuja un busto (busto_* del manifiesto) en un panel con el borde de su
+ * color. `glow` (0…1) le da un pulso de brillo.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {CutsceneRun} cs
+ * @param {string} id
+ * @param {number} x
+ * @param {number} y
+ * @param {number} size
+ * @param {string} color
+ * @param {number} glow
+ */
+function cutsceneDrawBust(ctx, cs, id, x, y, size, color, glow) {
+    const info = cutsceneActorInfo(cs, id);
+    ctx.save();
+    ctx.fillStyle = 'rgba(8, 10, 18, 0.9)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8 + 24 * glow;
+    ctx.fillRect(x, y, size, size);
+    ctx.strokeRect(x, y, size, size);
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.rect(x, y, size, size);
+    ctx.clip();
+    if (info) drawTintedArt(ctx, info, cutsceneColor('theme'), x, y, size, size);
+    ctx.restore();
+}
+
+/**
+ * Un tramo de la bola en la partida del prólogo: de (x0, y0) a (x1, y1)
+ * entre los segundos a y b. `side` es quien golpea al empezarlo; `miss`,
+ * que la derecha no llega.
+ * @typedef {{ a: number, b: number, x0: number, y0: number, x1: number, y1: number,
+ *             side: 'L'|'R', miss: boolean, big: boolean, started: boolean, scored: boolean }} CutsceneMatchLeg
+ */
+
+/**
+ * La partida en curso (efecto match).
+ * @typedef {{ t0: number, dur: number, legs: CutsceneMatchLeg[],
+ *             kf: { L: { t: number, y: number }[], R: { t: number, y: number }[] },
+ *             breakAt: number, smash: boolean, over: boolean, score: number[],
+ *             lc: string, rc: string, left: string|undefined, right: string|undefined,
+ *             trail: { x: number, y: number }[], trailColor: string, shakeAt: number, glowAt: number }} CutsceneMatch
+ */
+
+/**
+ * El plan de la partida: tramos de la bola y puntos clave de cada pala.
+ * La izquierda siempre devuelve y la derecha falla al final de cada
+ * peloteo (de 3 a 5 golpes). Con `smash`, un único punto: devolución,
+ * carga de 1,2 s, bola grande y la pala derecha partida.
+ * @param {CutsceneStep} step
+ * @param {CutsceneRun} cs
+ * @returns {CutsceneMatch}
+ */
+function cutsceneMatchPlan(step, cs) {
+    const M = CUTSCENE_MATCH;
+    const dur = step.dur || 10;
+    const from = /** @type {number[]} */ (step.from) || [0, 0];
+    const to = /** @type {number[]} */ (step.to) || from;
+    const mid = (M.top + M.bottom) / 2;
+    const yr = () => cutsceneRand(M.top + 40, M.bottom - 40);
+    /** @type {CutsceneMatchLeg[]} */
+    const legs = [];
+    const kf = { L: [{ t: 0, y: mid }], R: [{ t: 0, y: mid }] };
+    /** @param {number} a @param {number} b @param {'L'|'R'} side @param {number} y0 @param {number} y1 @param {boolean} miss @param {boolean} [big] */
+    const leg = (a, b, side, y0, y1, miss, big = false) => {
+        const x0 = side === 'L' ? M.xl + M.pw : M.xr;
+        const x1 = miss ? M.xr + 60 : side === 'L' ? M.xr : M.xl + M.pw;
+        legs.push({ a, b, x0, y0, x1, y1, side, miss, big, started: false, scored: false });
+        kf[side].push({ t: a, y: y0 });
+    };
+    let breakAt = Infinity;
+    if (step.smash) {
+        const yHit = mid + cutsceneRand(-40, 40);
+        const yBreak = yr();
+        leg(0, dur * 0.2, 'R', yr(), yHit, false);
+        leg(dur * 0.2, dur * 0.62, 'L', yHit, yBreak, false, true);
+        kf.R.push({ t: dur * 0.62, y: yBreak });
+        legs.push({ a: dur * 0.62, b: dur * 0.72, x0: M.xr, y0: yBreak, x1: M.xr + 70, y1: yBreak + 10,
+                    side: 'L', miss: true, big: true, started: true, scored: false });
+        breakAt = dur * 0.62;
+    } else {
+        const points = Math.max(0, to[0] - from[0]) + Math.max(0, to[1] - from[1]);
+        const hits = Array.from({ length: points }, () => 3 + Math.floor(vfxRandom() * 3));
+        const total = hits.reduce((s, h) => s + h, 0);
+        const legT = (dur - points * M.pointPause) / Math.max(1, total);
+        let t = 0;
+        for (const h of hits) {
+            // El último tramo siempre va hacia la derecha, que falla
+            /** @type {'L'|'R'} */
+            let side = h % 2 === 1 ? 'L' : 'R';
+            let y = yr();
+            for (let i = 0; i < h; i++) {
+                const last = i === h - 1;
+                const y1 = yr();
+                leg(t, t + legT, side, y, y1, last);
+                if (last) kf.R.push({ t: t + legT * 0.8, y: y1 + (y1 < mid ? 95 : -95) });
+                t += legT;
+                y = y1;
+                side = side === 'L' ? 'R' : 'L';
+            }
+            t += M.pointPause;
+        }
+    }
+    return {
+        t0: cs.t, dur, legs, kf, breakAt, smash: !!step.smash, over: false,
+        score: [from[0], from[1]],
+        lc: cutsceneColor(step.leftColor), rc: cutsceneColor(step.rightColor),
+        left: step.left, right: step.right,
+        trail: [], trailColor: '#FFFFFF', shakeAt: -9, glowAt: -9
+    };
+}
+
+/**
+ * La posición de una pala: interpolación suave entre sus puntos clave.
+ * @param {{ t: number, y: number }[]} keys
+ * @param {number} e segundos desde el inicio
+ */
+function cutsceneMatchPaddleY(keys, e) {
+    let prev = keys[0];
+    for (const k of keys) {
+        if (k.t > e) {
+            const p = (e - prev.t) / Math.max(0.001, k.t - prev.t);
+            return prev.y + (k.y - prev.y) * cutsceneEase('inOut', Math.min(1, Math.max(0, p)));
+        }
+        prev = k;
+    }
+    return prev.y;
+}
+
+/** @param {CutsceneMatch} m @param {number} e */
+function cutsceneMatchBall(m, e) {
+    const leg = m.legs.find((l) => e >= l.a && e < l.b);
+    if (!leg) return null;
+    const p = (e - leg.a) / (leg.b - leg.a);
+    return { leg, x: leg.x0 + (leg.x1 - leg.x0) * p, y: leg.y0 + (leg.y1 - leg.y0) * p };
+}
+
+/**
+ * Golpes (sonido y color de la estela), puntos y reacciones.
+ * @param {CutsceneRun} c
+ * @param {CutsceneMatch} m
+ */
+function cutsceneMatchUpdate(c, m) {
+    const e = c.t - m.t0;
+    for (const l of m.legs) {
+        if (!l.started && e >= l.a) {
+            l.started = true;
+            m.trailColor = l.side === 'L' ? m.lc : m.rc;
+            if (soundEffects.paddleHit) soundEffects.paddleHit({ x: l.x0 * GAME_WIDTH / CUTSCENE_W });
+        }
+        if (l.miss && !l.scored && e >= l.b) {
+            l.scored = true;
+            m.score[0]++;
+            m.shakeAt = c.t;
+            m.glowAt = c.t;
+        }
+    }
+    const ball = cutsceneMatchBall(m, e);
+    if (ball) {
+        m.trail.unshift({ x: ball.x, y: ball.y });
+        if (m.trail.length > (ball.leg.big ? 14 : 9)) m.trail.pop();
+    } else {
+        m.trail = [];
+    }
+}
+
+/**
+ * La cancha: palas, aura de la carga, bola con estela y la pala rota.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {CutsceneRun} c
+ * @param {CutsceneMatch} m
+ */
+function cutsceneMatchCourt(ctx, c, m) {
+    const M = CUTSCENE_MATCH;
+    const e = c.t - m.t0;
+    const yl = cutsceneMatchPaddleY(m.kf.L, e);
+    const yr = cutsceneMatchPaddleY(m.kf.R, Math.min(e, m.breakAt));
+    ctx.save();
+    // Pala izquierda (y su aura mientras carga el smash)
+    if (m.smash && e < m.dur * 0.2 + 0.1) {
+        const k = Math.min(1, e / (m.dur * 0.2));
+        ctx.fillStyle = hexToRgba(m.lc, 0.18 + 0.3 * k);
+        ctx.shadowColor = m.lc;
+        ctx.shadowBlur = 10 + 30 * k;
+        ctx.beginPath();
+        ctx.ellipse(M.xl + M.pw / 2, yl, 14 + 16 * k, M.ph / 2 + 14 + 10 * k, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    /** @param {number} x @param {number} y @param {string} color */
+    const paddle = (x, y, color) => {
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 14;
+        ctx.fillRect(x, y - M.ph / 2, M.pw, M.ph);
+    };
+    paddle(M.xl, yl, m.lc);
+    if (e < m.breakAt) {
+        paddle(M.xr, yr, m.rc);
+    } else {
+        // Dos mitades que salen girando
+        const t = e - m.breakAt;
+        ctx.globalAlpha = Math.max(0, 1 - t / 1.6);
+        for (const [half, vx, vy] of [[-1, 120, -110], [1, 150, 90]]) {
+            ctx.save();
+            ctx.translate(M.xr + M.pw / 2 + vx * t, yr + half * M.ph / 4 + vy * t + 140 * t * t);
+            ctx.rotate(half * 5 * t);
+            ctx.fillStyle = m.rc;
+            ctx.shadowColor = m.rc;
+            ctx.shadowBlur = 10;
+            ctx.fillRect(-M.pw / 2, -M.ph / 4, M.pw, M.ph / 2);
+            ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+    }
+    // Bola y estela
+    const ball = cutsceneMatchBall(m, e);
+    if (ball) {
+        const r = ball.leg.big ? M.r * 1.8 : M.r;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = m.trailColor;
+        ctx.shadowColor = m.trailColor;
+        ctx.shadowBlur = 12;
+        for (let i = 1; i < m.trail.length; i++) {
+            const k = 1 - i / m.trail.length;
+            ctx.globalAlpha = 0.7 * k;
+            ctx.lineWidth = r * 1.6 * k;
+            ctx.beginPath();
+            ctx.moveTo(m.trail[i - 1].x, m.trail[i - 1].y);
+            ctx.lineTo(m.trail[i].x, m.trail[i].y);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowBlur = ball.leg.big ? 24 : 12;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+/**
+ * Marcador arriba (cada número del color de su lado) y los bustos en las
+ * esquinas de abajo: el alcalde tiembla y suda al encajar; Yisus brilla
+ * al anotar.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {CutsceneRun} c
+ * @param {CutsceneMatch} m
+ */
+function cutsceneMatchHud(ctx, c, m) {
+    const { uw, uh } = c.view;
+    ctx.save();
+    const fs = Math.round(Math.min(30, uw / 24));
+    ctx.font = `${fs}px 'Press Start 2P', monospace`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = m.lc;
+    ctx.shadowColor = m.lc;
+    ctx.shadowBlur = 10;
+    ctx.fillText(String(m.score[0]), uw / 2 - fs * 0.8, 18);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = m.rc;
+    ctx.shadowColor = m.rc;
+    ctx.fillText(String(m.score[1]), uw / 2 + fs * 0.8, 18);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(232, 236, 244, 0.6)';
+    ctx.textAlign = 'center';
+    ctx.fillText('-', uw / 2, 18);
+    ctx.restore();
+
+    const size = Math.min(110, uw * 0.16);
+    const shake = c.t - m.shakeAt < 0.3 && !c.reduced ? Math.sin((c.t - m.shakeAt) * 90) * 4 : 0;
+    const glowT = c.t - m.glowAt;
+    const glow = glowT < 0.6 ? Math.sin(Math.PI * glowT / 0.6) : 0;
+    const y = uh - size - 12;
+    if (m.left) cutsceneDrawBust(ctx, c, m.left, 12, y, size, m.lc, glow);
+    if (m.right) {
+        const x = uw - size - 12 + shake;
+        cutsceneDrawBust(ctx, c, m.right, x, y, size, m.rc, 0);
+        // La gota de sudor
+        const d = c.t - m.shakeAt;
+        if (d >= 0 && d < 0.8) {
+            ctx.save();
+            ctx.globalAlpha = 1 - d / 0.8;
+            ctx.fillStyle = '#7DD3FC';
+            const dx = x + size * 0.78;
+            const dy = y + size * 0.25 + d * 40;
+            ctx.beginPath();
+            ctx.moveTo(dx, dy - 7);
+            ctx.quadraticCurveTo(dx + 5, dy + 1, dx, dy + 4);
+            ctx.quadraticCurveTo(dx - 5, dy + 1, dx, dy - 7);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+}

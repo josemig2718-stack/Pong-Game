@@ -111,7 +111,7 @@
  *   bg: { id: string, t0: number, fade: number }|null, prevBg: string|null,
  *   camera: { x: number, y: number, zoom: number }, focusX: number|null, shakeX: number, shakeY: number,
  *   slowmo: { factor: number, from: number, until: number }|null, frozen: boolean,
- *   loops: Map<string, () => void>, unduck: (() => void)|null, rallyScore: number,
+ *   loops: Map<string, () => void>, unduck: (() => void)|null, fitW: number|null,
  *   view: CutsceneView, dom: CutsceneDom, raf: number, lastNow: number,
  *   hold: { key: boolean, pointer: boolean, t: number }, blips: number,
  *   reduced: boolean, chapterEnd: number, loadTotal: number, loadDone: number,
@@ -130,6 +130,9 @@
  *             title: HTMLElement, chapter: HTMLElement, chapterTitle: HTMLElement, chapterSub: HTMLElement,
  *             crt: HTMLElement, ring: SVGCircleElement }} CutsceneDom
  */
+
+/** Fondo negro sólido (`bg` con este id): no está en el manifiesto. */
+const CUTSCENE_BLACK_BG = 'negro';
 
 /** Tamaño de la escena en unidades. */
 const CUTSCENE_W = 960;
@@ -279,7 +282,8 @@ function cutsceneSceneSources(cs, idx) {
     for (const s of scene.steps) {
         if (s.do === 'bg') add(cs.assets.backgrounds[s.id]);
         if (s.do === 'fx' && s.type === 'wipe') add(cs.assets.backgrounds[/** @type {string} */ (s.to)]);
-        for (const id of [s.sprite, s.portrait, ...(s.frames || [])]) {
+        const busts = s.portrait ? ['busto_' + s.portrait] : [];
+        for (const id of [s.sprite, s.portrait, s.left, s.right, ...busts, ...(s.frames || [])]) {
             if (id) add(cs.assets.actors[id]);
         }
     }
@@ -394,6 +398,16 @@ function cutsceneDrawActor(ctx, cs, a) {
  * @param {number} alpha
  */
 function cutsceneDrawBackground(ctx, cs, id, alpha) {
+    // 'negro' no está en el manifiesto a propósito: fondo negro sólido
+    if (id === CUTSCENE_BLACK_BG) {
+        if (alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, CUTSCENE_W, CUTSCENE_H);
+        ctx.restore();
+        return;
+    }
     const info = cs.assets && cs.assets.backgrounds[id];
     const img = info && artImage(info.src);
     if (!img || alpha <= 0) return;
@@ -421,6 +435,12 @@ function cutsceneSetBackground(cs, id, fade, instant = false) {
     const f = instant ? 0 : fade > 0 ? fade : cs.reduced ? 0.3 : 0;
     cs.prevBg = f > 0 && cs.bg ? cs.bg.id : null;
     cs.bg = { id, t0: cs.t, fade: f };
+    // El negro del desmayo se queda hasta el siguiente fondo
+    cs.fx = cs.fx.filter((fx) => {
+        if (fx.type !== 'knockout') return true;
+        if (fx.end) fx.end(cs, false);
+        return false;
+    });
 }
 
 /**
@@ -432,7 +452,9 @@ function cutsceneSetBackground(cs, id, fade, instant = false) {
  */
 function cutsceneApplyCamera(ctx, cs) {
     const v = cs.view;
-    const kz = v.k * cs.camera.zoom;
+    // La partida del prólogo (fitW) pide ver toda la cancha en vertical
+    const zoom = cs.fitW && v.mode === 'tall' ? Math.min(cs.camera.zoom, v.uw / cs.fitW) : cs.camera.zoom;
+    const kz = v.k * zoom;
     const hw = v.w / 2 / kz;
     const hh = v.h / 2 / kz;
     const clamp = (c, half, size) => (half * 2 >= size ? size / 2 : Math.max(half, Math.min(size - half, c)));
@@ -752,6 +774,17 @@ function cutsceneDrawPortrait(cs, id) {
     const cv = cs.dom.portrait;
     const pctx = cv.getContext('2d');
     pctx.clearRect(0, 0, cv.width, cv.height);
+    // Con busto (busto_<id>): la cabeza y los hombros enteros, a cover
+    const bust = cutsceneActorInfo(cs, 'busto_' + id);
+    if (bust) {
+        const bimg = artImage(bust.src);
+        if (!bimg) return false;
+        const k = Math.max(cv.width / bust.w, cv.height / bust.h);
+        const w = bust.w * k;
+        const h = bust.h * k;
+        drawTintedArt(pctx, bust, cutsceneColor('theme'), (cv.width - w) / 2, cv.height - h, w, h);
+        return true;
+    }
     const info = cutsceneActorInfo(cs, id);
     const img = info && artImage(info.src);
     if (!img) return false;
@@ -781,7 +814,7 @@ function cutsceneStartText(cs, step) {
     const narrate = step.do === 'narrate';
     /** @type {CutsceneBlock} */
     const b = { kind: narrate ? 'narrate' : 'say', step, full: step.text || '', n: 0, shown: -1, complete: false,
-                autoAt: narrate && step.auto ? cs.realT + step.auto : null,
+                autoAt: step.auto ? cs.realT + step.auto : null,
                 shownEl: narrate ? d.narrationShown : d.lineShown, restEl: narrate ? d.narrationRest : d.lineRest,
                 portrait: narrate ? null : step.portrait || null };
     if (narrate) {
@@ -1137,6 +1170,7 @@ function cutsceneResetDom() {
     const d = cutsceneDom();
     for (const el of [d.dialogue, d.narration, d.card, d.title, d.chapter, d.crt]) el.classList.remove('is-on', 'is-done');
     d.canvas.classList.remove('is-off');
+    d.canvas.style.filter = '';
     d.section.classList.remove('is-loading');
     d.ring.style.strokeDashoffset = '100';
 }
@@ -1232,7 +1266,7 @@ function playCutscene(def, { onEnd } = {}) {
         sceneIdx: 0, stepIdx: 0, sceneT0: 0, t: 0, realT: 0, block: null,
         timers: [], realTimers: [], tweens: [], actors: new Map(), fx: [],
         bg: null, prevBg: null, camera: { x: CUTSCENE_W / 2, y: CUTSCENE_H / 2, zoom: 1 }, focusX: null,
-        shakeX: 0, shakeY: 0, slowmo: null, frozen: false, loops: new Map(), unduck: null, rallyScore: 0,
+        shakeX: 0, shakeY: 0, slowmo: null, frozen: false, loops: new Map(), unduck: null, fitW: null,
         view: null, dom, raf: 0, lastNow: performance.now(),
         hold: { key: false, pointer: false, t: 0 }, blips: 0,
         reduced: prefersReducedMotion(), chapterEnd: 0, loadTotal: 0, loadDone: 0, aux: null
