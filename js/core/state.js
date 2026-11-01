@@ -37,6 +37,9 @@
  * @property {number} warpMs  ms de juego desde que cruzó un portal (Infinity si no ha cruzado ninguno)
  * @property {boolean} [bip]  pasó por el detector de Chemi: va ×1,35 hasta el siguiente golpe (bosses/chemi.js)
  * @property {'mario'|'valen'|null} [hitter]  quién del dúo la golpeó por última vez: su estela y su velocidad (bosses/duo.js)
+ * @property {boolean} [tsPending]  Yisus la golpeó y se congelará a mitad de camino (bosses/yisus.js)
+ * @property {{ ms: number, angle: number, dir: number }|null} [frozen]  congelada por Yisus: lo que le queda, el ángulo y el lado de salida
+ * @property {boolean} [golden]  la disparó el ataúd de Yisus
  */
 
 /** @typedef {null | 'super'} BallPower 'super' es el smash */

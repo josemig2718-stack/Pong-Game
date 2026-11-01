@@ -5120,3 +5120,9 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 /* Mientras corren los créditos no hay botones (en vertical irían encima) */
 .cutscene.has-credits .cutscene__buttons { visibility: hidden; }
+
+/* Yisus: la pantalla, desaturada mientras el tiempo está parado */
+#canvas-wrapper.is-timestop canvas { filter: saturate(.7); }
+/* En vertical (stack), los acompañantes van encima del marcador del jefe, en su tarjeta */
+.boss-side.boss-side--card { position: static; order: -1; flex-basis: 100%; justify-content: flex-start; }
+.boss-side.boss-side--card .boss-side__who { width: 30px; height: 30px; }

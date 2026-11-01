@@ -200,15 +200,53 @@ const HACHEPES_LORE = {
         image: 'assets/campaign/bustos/yisus.webp',
         danger: '⭐⭐⭐⭐⭐',
         desc: 'Ganó la ciudad en una sola partida y gobierna desde el último piso. Nadie le ha anotado un punto.',
+        // Mariangel y Pedro hablan con él (y miran desde su marcador)
+        speakers: {
+            a: { name: 'YISUS', bust: 'yisus', color: '#FACC15' },
+            b: { name: 'MARIANGEL', bust: 'mariangel', color: '#F472B6' },
+            c: { name: 'PEDRO', bust: 'pedro', color: '#60A5FA' }
+        },
         dialogues: {
             start: [
-                'Así que has llegado hasta mi trono.',
-                'Los otros cuatro eran mis manos. Yo di la orden.',
-                'Yo ordené quemar tu ciudad. Yo. ¿Y ahora qué?'
+                { t: 'Una partida. Como con el alcalde. ¿Te acuerdas de cómo terminó?', s: 'a' },
+                { t: 'Esta vez termina distinto.', s: 'player' }
             ],
-            mid: ['¡Tu tiempo me pertenece!'],
-            win: ['Nadie destrona a un rey.'],
-            lose: ['Un rey... derrotado por nadie...']
+            phase2: [
+                { t: '¿Me anotaste? ¿A mí?', s: 'a' },
+                { t: 'Ji… ji…', s: 'b' },
+                { t: 'Muy bien. Entonces el tiempo… también es mío.', s: 'a' }
+            ],
+            phase3: [
+                { t: '¡Pedro! ¡El ataúd!', s: 'a' },
+                { t: '…No.', s: 'c' },
+                { t: '¿Qué dijiste?', s: 'a' },
+                { t: 'Que no. Ya no.', s: 'c' },
+                { t: 'Lo haré yo mismo.', s: 'a' }
+            ],
+            phase4: [
+                { t: '¡NADIE ME HA ANOTADO JAMÁS! ¡AURA MÁXIMA!', s: 'a' },
+                { t: 'Ji, Ji… ¿Yisus?', s: 'b' }
+            ],
+            win: [
+                { t: 'Nadie destrona al Aura.', s: 'a' },
+                { t: 'Ji, Ji, Ji, Ji.', s: 'b' }
+            ],
+            // Se muestra al vencerlo; al cerrarse empieza el falso final
+            lose: [
+                { t: '¿Un punto…? ¿A mí…?', s: 'a' },
+                { t: '…Ji.', s: 'b' },
+                { t: 'Gracias, desconocido. Gracias.', s: 'c' }
+            ],
+            taunts: {
+                playerMiss: [{ t: 'Así de fácil.', s: 'a' }, { t: 'Eso fue aura pura.', s: 'a' }, { t: 'Ji, Ji, Ji, Ji.', s: 'b' }],
+                bossMiss: [{ t: '…Suerte.', s: 'a' }, { t: 'Mariangel, tú no viste eso.', s: 'a' }, { t: 'Ji…?', s: 'b' }],
+                rally15: [{ t: '¿Todavía de pie?', s: 'a' }],
+                playerSmash: [{ t: '¿Eso es todo tu poder?', s: 'a' }],
+                auraBreak: [{ t: '¡Mi aura!', s: 'a' }],
+                timeStop: [{ t: 'Tu tiempo me pertenece.', s: 'a' }],
+                coffin: [{ t: 'Ahí tienes compañía.', s: 'a' }],
+                lastLife: [{ t: 'Arrodíllate.', s: 'a' }]
+            }
         }
     },
     6: {

@@ -392,8 +392,9 @@ function checkWin() {
         resetMusicRate();
         if (!narrativeEnding) playMatchEndSound(p1Won);
 
-        // Diálogo de despedida del jefe (win/lose desde su punto de vista)
-        playBossOutcomeDialogue(p1Won);
+        // Diálogo de despedida del jefe (win/lose desde su punto de vista).
+        // Al vencer a Yisus, su `lose` y, al cerrarse, el falso final
+        playBossOutcomeDialogue(p1Won, narrativeEnding === 'finale' ? runFinaleSequence : undefined);
 
         if (p1Won) {
             handleCampaignVictory();
@@ -458,11 +459,8 @@ function checkWin() {
     // (en el resto ya la paró playMatchEndSound)
     if (narrativeEnding) stopGameplayMusic();
 
-    // Encadenar la secuencia narrativa que corresponda
-    if (narrativeEnding === 'finale') {
-        runFinaleSequence();
-    } else if (narrativeEnding === 'trueEnding') {
-        runTrueEndingSequence();
-    }
+    // Encadenar la secuencia narrativa que corresponda (el falso final
+    // empieza al cerrarse el diálogo de Yisus: ver arriba)
+    if (narrativeEnding === 'trueEnding') runTrueEndingSequence();
     return true;
 }

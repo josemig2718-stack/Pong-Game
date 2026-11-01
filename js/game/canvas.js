@@ -36,6 +36,7 @@ function resizeCanvas() {
     const wrapper = document.getElementById('canvas-wrapper');
     const container = document.getElementById('game-container');
     container.dataset.layout = hudLayoutFor(window.innerWidth, window.innerHeight);
+    bossSidePlace();
 
     container.setAttribute('data-measuring', '');
     container.style.removeProperty('--field-w');

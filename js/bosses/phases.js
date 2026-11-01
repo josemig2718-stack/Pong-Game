@@ -302,6 +302,7 @@ function bossTaunt(event, force = false) {
     const now = performance.now();
     if (!force && now < bossTauntReady) return;
     const line = lines[Math.floor(vfxRandom() * lines.length)];
+    bossOnLine(line);
     const bubble = document.getElementById('boss-bubble');
     document.getElementById('boss-bubble-text').textContent = typeof line === 'string' ? line : line.t;
     // Con varios hablantes, la burbuja va junto a la pala de quien habla, con
@@ -379,7 +380,8 @@ function setupBossHud() {
     const container = document.getElementById('game-container');
     const phases = bossPhases();
     container.toggleAttribute('data-phases', !!phases);
-    document.getElementById('canvas-wrapper').classList.remove('is-ko');
+    document.getElementById('canvas-wrapper').classList.remove('is-ko', 'is-timestop');
+    bossSideBuild();
     bossHideTaunt();
     bossTauntReady = 0;
     document.getElementById('boss-phase-banner').classList.add('hidden');
@@ -403,6 +405,68 @@ function setupBossHud() {
         hearts.appendChild(h);
     }
     document.getElementById('hud-pips-p2').replaceChildren();
+}
+
+/**
+ * Los acompañantes del jefe junto a su marcador (`companions`: Mariangel
+ * y Pedro con Yisus), en #boss-side dentro del campo. Sin ellos, se quita.
+ */
+function bossSideBuild() {
+    const old = document.getElementById('boss-side');
+    if (old) old.remove();
+    const boss = currentBoss();
+    if (!boss || !boss.companions) return;
+    const side = document.createElement('div');
+    side.id = 'boss-side';
+    side.className = 'boss-side boss-side--boss';
+    side.setAttribute('aria-hidden', 'true');
+    for (const c of boss.companions) {
+        const who = document.createElement('span');
+        who.className = 'boss-side__who' + (c.cls ? ' ' + c.cls : '');
+        who.dataset.who = c.id;
+        who.style.setProperty('--c', c.color);
+        const img = document.createElement('img');
+        img.src = CAMPAIGN_ART.bustos[c.id].src;
+        img.alt = '';
+        who.appendChild(img);
+        side.appendChild(who);
+    }
+    document.getElementById('canvas-wrapper').appendChild(side);
+    bossSidePlace();
+}
+
+/**
+ * Coloca los acompañantes: en la esquina del campo junto al marcador del
+ * jefe, y en vertical (stack) encima de ese marcador, dentro de su tarjeta.
+ * Lo llama también resizeCanvas() (al girar el móvil cambia el layout).
+ */
+function bossSidePlace() {
+    const side = document.getElementById('boss-side');
+    if (!side) return;
+    const stack = document.getElementById('game-container').dataset.layout === 'stack';
+    const parent = stack ? document.getElementById('hud-p2') : document.getElementById('canvas-wrapper');
+    side.classList.toggle('boss-side--card', stack);
+    if (side.parentElement !== parent) parent.prepend(side);
+}
+
+/**
+ * Un acompañante del jefe (o null).
+ * @param {string} id
+ * @returns {HTMLElement|null}
+ */
+function bossSideWho(id) {
+    return document.querySelector(`#boss-side [data-who="${id}"]`);
+}
+
+/**
+ * Pone o quita una clase a un acompañante (is-kneel, is-gone…).
+ * @param {string} id
+ * @param {string} cls
+ * @param {boolean} on
+ */
+function bossSideState(id, cls, on) {
+    const el = bossSideWho(id);
+    if (el) el.classList.toggle(cls, on);
 }
 
 /** Refresca la barra del jefe y los corazones si han cambiado (desde updateHud). */

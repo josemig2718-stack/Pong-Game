@@ -79,6 +79,7 @@ function showNextDialogue() {
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!box || !boss) return;
     if (typeof raw !== 'string' && raw.sfx && soundEffects[raw.sfx]) soundEffects[raw.sfx]();
+    bossOnLine(raw);
 
     const nameEl = document.getElementById('dialogue-name');
     const textEl = document.getElementById('dialogue-text');
@@ -230,12 +231,22 @@ function resetMidDialogue() {
     midDialogueShown = false;
 }
 
-/** Diálogo final del jefe, mostrado sobre la pantalla de fin de combate. */
-function playBossOutcomeDialogue(p1Won) {
+/**
+ * Diálogo final del jefe, mostrado sobre la pantalla de fin de combate.
+ * Al vencer a Yisus se muestra su `lose` sobre el campo y, al cerrarse,
+ * `onDone` (el falso final).
+ * @param {boolean} p1Won
+ * @param {() => void} [onDone]
+ */
+function playBossOutcomeDialogue(p1Won, onDone) {
     const boss = HACHEPES_LORE[currentCampaignLevel];
     if (!boss) return;
-    // Al vencer a Yisus o al Creador manda la secuencia narrativa, no esto.
-    if (p1Won && (currentCampaignLevel === CAMPAIGN_LAST_BOSS || currentCampaignLevel === CAMPAIGN_CREATOR)) return;
+    // Al vencer al Creador manda la secuencia narrativa, no esto
+    if (p1Won && currentCampaignLevel === CAMPAIGN_CREATOR) return;
+    if (p1Won && currentCampaignLevel === CAMPAIGN_LAST_BOSS) {
+        setTimeout(() => queueDialogue(boss.dialogues.lose, onDone), 400);
+        return;
+    }
     let lines = p1Won ? boss.dialogues.lose : boss.dialogues.win;
     // La pista del Creador: solo la primera vez que se vence a este jefe
     // (el récord aún no se ha guardado: checkWin lo hace después)

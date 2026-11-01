@@ -313,7 +313,7 @@ function render() {
     const practice = state.mode === 'practice';
     renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor, { charge: p1.charge, hit: mechPaddleHit.p1 });
     if (practice) drawPracticeWall(ctx, themeColor);
-    else if (!rotatedArena) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, bossPaddleColor(p2) || sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
+    else if (!rotatedArena && !bossHidesPaddle(p2)) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, bossPaddleColor(p2) || sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, bossPaddleColor(p2Twin) || '#ef4444');
     MECH_FX.charge(ctx, p1, themeColor, p1.charge);
     if (!rotatedArena && !practice) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);

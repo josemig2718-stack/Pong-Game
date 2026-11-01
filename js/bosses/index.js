@@ -75,6 +75,11 @@
  * @property {(b: Ball) => ({ tint?: string, id?: string }|null)} [trailStyle]  estela propia de una bola: un color o otra estela
  * @property {(p: Paddle) => (string|null)} [paddleColor]  color de una de sus palas (p2 o la gemela), o null
  * @property {string} [music]           su pista (clave de MUSIC_TRACKS); sin ella, jefe_hachepe
+ * @property {{ id: string, color: string, cls?: string }[]} [companions]
+ *           quienes lo acompañan junto a su marcador (.boss-side): busto de CAMPAIGN_ART.bustos,
+ *           color y clase inicial (Mariangel y Pedro con Yisus)
+ * @property {(line: string|{ t: string, s?: string }) => void} [onLine]  cada línea de diálogo o pulla que se muestra
+ * @property {(p: Paddle) => boolean} [paddleHidden]  no se dibuja esa pala (la de Yisus, partida en su K.O.)
  */
 
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
@@ -258,6 +263,24 @@ function bossPaddleColor(p) {
 function bossMusicTrack() {
     const boss = currentBoss();
     return (boss && boss.music) || 'jefe_hachepe';
+}
+
+/**
+ * Avisa al jefe de cada línea que se muestra (diálogo o pulla).
+ * @param {string|{ t: string, s?: string }} line
+ */
+function bossOnLine(line) {
+    const boss = currentBoss();
+    if (boss && boss.onLine) boss.onLine(line);
+}
+
+/**
+ * ¿Esta pala del jefe no se dibuja? (la de Yisus, partida en su K.O.)
+ * @param {Paddle} p
+ */
+function bossHidesPaddle(p) {
+    const boss = currentBoss();
+    return !!(boss && boss.paddleHidden && boss.paddleHidden(p));
 }
 
 /** Suelo propio del jefe, justo después del fondo (debajo de la red). */
