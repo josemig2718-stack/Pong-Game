@@ -4,10 +4,7 @@
  * Mecánicas de los jefes de la campaña: la tabla BOSS_MECHANICS y los
  * despachadores que usa game/.
  *
- * Cada jefe vive en su archivo con la forma
- *   { config, init, update, render, renderOverlay, collide, onGoal,
- *     hidesBall, freezesPlayer, invertsControls, segmentIsArmored,
- *     phases, lives, color, renderArena, onHit, koLeadMs }
+ * Cada jefe vive en su archivo con la forma de BossMechanics (abajo),
  * donde todo salvo `config` es opcional. Un jefe con `phases` se juega
  * por fases y con vidas (bosses/phases.js). game/ nunca nombra a un jefe:
  * llama a bossInit/bossUpdate/bossRender/... y lee bossConfig(). Añadir
@@ -27,13 +24,10 @@
 /**
  * Parámetros de un jefe. Cada jefe define solo los que cambia.
  * @typedef {object} BossConfig
- * @property {number} targetScore  puntos para ganar; contra el Creador, fallos permitidos al jugador
+ * @property {number} targetScore  puntos para ganar (los jefes por fases cuentan la suma de sus goles)
  * @property {number} aiSpeed      multiplicador sobre paddleSpeed
  * @property {number} aiError      zona muerta en píxeles: no corrige por debajo de esto
  * @property {number} aiBias       desvío de puntería en píxeles, renovado en cada golpe
- * @property {'x'|'y'} paddleAxis  'x' rota la arena (paleta del jugador horizontal abajo)
- * @property {boolean} useHealth   true = se gana vaciando la barra de vida, no por marcador
- * @property {number} [hitDamage]  daño por impacto (jefes con vida)
  * @property {number} [spin]       probabilidad de dar efecto en cada devolución (game/ai.js)
  * @property {number} [smash]      probabilidad de usar el smash con la barra llena
  */
@@ -59,9 +53,10 @@
  * @property {(b: Ball) => boolean} [collide]  obstáculos propios; true si la bola rebotó
  * @property {(scorerIsP1: boolean, b?: Ball) => void} [onGoal]  antes de contar la fase (b: la bola que entró)
  * @property {() => boolean} [hidesBall]
- * @property {() => boolean} [freezesPlayer]
  * @property {() => boolean} [invertsControls]
- * @property {(x: number) => boolean} [segmentIsArmored]
+ * @property {() => boolean} [rotated]   arena girada: tu pala horizontal abajo y la suya arriba (el Creador, fase 3)
+ * @property {(b: Ball, p: Paddle) => boolean} [passesPaddle]  la bola atraviesa esa pala (el golpe dorado)
+ * @property {(ctx: CanvasRenderingContext2D, p: Paddle) => boolean} [drawPaddle]  dibuja esa pala él mismo (true si la dibujó)
  * @property {BossPhase[]} [phases]      combate por fases (bosses/phases.js)
  * @property {number} [lives]            vidas del jugador (BOSS_LIVES por defecto)
  * @property {string} [color]            color del jefe: barra, destellos y K.O.
@@ -88,11 +83,9 @@ const BOSS_DEFAULT_CONFIG = {
     targetScore: 5,      // puntos necesarios para ganar el combate
     aiSpeed: 0.75,       // multiplicador sobre paddleSpeed
     aiError: 18,         // zona muerta en píxeles: no corrige por debajo de esto
-    aiBias: 50,          // desvío de puntería en píxeles, renovado en cada golpe.
+    aiBias: 50           // desvío de puntería en píxeles, renovado en cada golpe.
                          // Es lo que hace fallar de verdad al jefe: la zona muerta
                          // sola no basta, porque cabe dentro de la propia paleta.
-    paddleAxis: 'y',     // 'x' invierte la arena (paleta horizontal abajo)
-    useHealth: false     // true = se gana vaciando la barra de vida, no por marcador
 };
 
 /** Desvío de puntería actual del jefe. Se renueva en cada intercambio. */
@@ -152,15 +145,17 @@ function bossConfig() {
     return { ...BOSS_DEFAULT_CONFIG, ...(boss.config || {}), ...((phase && phase.config) || {}) };
 }
 
-/** true si la arena está rotada (paleta del jugador horizontal). */
+/** true si la arena está girada (tu pala horizontal abajo, la del jefe arriba). */
 function bossIsRotatedArena() {
-    const cfg = bossConfig();
-    return !!cfg && cfg.paddleAxis === 'x';
+    const boss = currentBoss();
+    return !!(boss && boss.rotated && boss.rotated());
 }
 
 /** Vacía el estado del jefe y arma el del jefe en curso (al empezar la partida). */
 function bossInit() {
     resetBossState();
+    // Lo que dejó sobre el campo el combate anterior (antes de que este ponga lo suyo)
+    bossCleanupDom();
     bossPhasesInit();
     const boss = currentBoss();
     if (boss && boss.init) boss.init();
@@ -309,34 +304,29 @@ function bossHidesBall() {
     return !!(boss && boss.hidesBall && boss.hidesBall());
 }
 
-/** ¿Está congelada la paleta del jugador? (Yisus) */
-function bossFreezesPlayer() {
-    const boss = currentBoss();
-    return !!(boss && boss.freezesPlayer && boss.freezesPlayer());
-}
-
-/** ¿Están invertidos los controles? (El Creador, fase 2+) */
+/** ¿Están invertidos los controles? (una regla de código del Creador) */
 function bossInvertsControls() {
     const boss = currentBoss();
     return !!(boss && boss.invertsControls && boss.invertsControls());
 }
 
-/** Aplica daño al jefe con barra de vida. Devuelve la vida restante. */
-function bossDamage(amount) {
-    if (typeof bossState.health !== 'number') return 0;
-    bossState.health = Math.max(0, bossState.health - amount);
-    return bossState.health;
-}
-
-/** ¿El tramo del jefe en esa X está blindado? Si lo está, no recibe daño. */
-function bossSegmentArmored(x) {
+/**
+ * ¿Atraviesa la bola esta pala? (el golpe dorado contra el Creador)
+ * @param {Ball} b
+ * @param {Paddle} p
+ */
+function bossPassesPaddle(b, p) {
     const boss = currentBoss();
-    return !!(boss && boss.segmentIsArmored && boss.segmentIsArmored(x));
+    return !!(boss && boss.passesPaddle && boss.passesPaddle(b, p));
 }
 
 /**
- * @returns {number} vida del jefe en curso (0 si no tiene barra de vida)
+ * Deja que el jefe dibuje una pala (la dorada del jugador, la del
+ * Creador). true si la dibujó él.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Paddle} p
  */
-function bossHealth() {
-    return typeof bossState.health === 'number' ? bossState.health : 0;
+function bossDrawPaddle(ctx, p) {
+    const boss = currentBoss();
+    return !!(boss && boss.drawPaddle && boss.drawPaddle(ctx, p));
 }

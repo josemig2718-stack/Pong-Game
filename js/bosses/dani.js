@@ -84,17 +84,44 @@ function daniCellY(k) {
 // ------------------------------------------------------------------
 
 /**
- * Las celdas solo chocan con bolas que van hacia Dani: la rompen y la
- * bola rebota (de frente: hacia atrás; de lado: hacia arriba o abajo).
+ * Una celda del muro: viva, o rota (y cuándo se rellena, si toca).
+ * @typedef {{ alive: boolean, refillAt: number|null }} DaniCell
+ */
+
+/** @returns {DaniCell[]} el muro entero */
+function daniCellsMake() {
+    return Array.from({ length: DANI.cells }, () => ({ alive: true, refillAt: null }));
+}
+
+/** Las celdas que tocaba rellenar vuelven. @param {DaniCell[]} cells @param {number} now */
+function daniCellsTick(cells, now) {
+    for (const cell of cells) {
+        if (cell.refillAt !== null && now >= cell.refillAt) {
+            cell.alive = true;
+            cell.refillAt = null;
+        }
+    }
+}
+
+/** El muro de Dani (con la lluvia de números). @param {Ball} b @returns {boolean} */
+function daniCollideCells(b) {
+    return daniCellsCollide(bossState.cells, b, daniSpawnDigits);
+}
+
+/**
+ * Las celdas solo chocan con bolas que van hacia la derecha: la rompen y
+ * la bola rebota (de frente: hacia atrás; de lado: hacia arriba o abajo).
+ * @param {DaniCell[]} cells
  * @param {Ball} b
+ * @param {(x: number, y: number, cell: DaniCell) => void} [onBreak]
  * @returns {boolean}
  */
-function daniCollideCells(b) {
+function daniCellsCollide(cells, b, onBreak) {
     if (b.dx <= 0) return false;
     const x0 = DANI.cellX, x1 = DANI.cellX + DANI.cellW;
     if (b.x + b.radius < x0 || b.x - b.radius > x1) return false;
     for (let k = 0; k < DANI.cells; k++) {
-        const cell = bossState.cells[k];
+        const cell = cells[k];
         if (!cell.alive) continue;
         const [y0, y1] = daniCellY(k);
         const qx = Math.max(x0, Math.min(x1, b.x));
@@ -119,7 +146,7 @@ function daniCollideCells(b) {
         b.spin *= MECH.spinWallK;
         bossSfx('cellBreak');
         spawnParticles(b.x, b.y, DANI.gold, 8);
-        daniSpawnDigits(x0 + DANI.cellW / 2, (y0 + y1) / 2);
+        if (onBreak) onBreak(x0 + DANI.cellW / 2, (y0 + y1) / 2, cell);
         return true;
     }
     return false;
@@ -281,37 +308,50 @@ function daniCollideDoor(b) {
 function daniDrawCells(ctx) {
     const erase = bossState.wallErase || 0;
     if (!bossState.wallOn && erase >= 1) return;
-    const now = daniNow();
+    daniCellsDraw(ctx, bossState.cells, daniNow(), erase);
+}
+
+/**
+ * Dibuja un muro de celdas. Con `ghost` (el Creador), todo de ese color.
+ * Una celda que se va a rellenar parpadea su último segundo.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {DaniCell[]} cells
+ * @param {number} now
+ * @param {number} erase 0…1, se borra en cascada (transición)
+ * @param {string|null} [ghost]
+ */
+function daniCellsDraw(ctx, cells, now, erase, ghost = null) {
+    const gold = ghost || DANI.gold;
     ctx.save();
     for (let k = 0; k < DANI.cells; k++) {
-        const cell = bossState.cells[k];
+        const cell = cells[k];
         const [y0] = daniCellY(k);
         // En la transición se borran en cascada, de arriba abajo
         const a = Math.max(0, Math.min(1, 1 - (erase * (DANI.cells + 1) - k)));
         if (a <= 0) continue;
-        ctx.globalAlpha = a;
-        const refilling = cell.refillAt !== null;
+        ctx.globalAlpha *= a;
+        const refilling = cell.refillAt !== null && cell.refillAt - now <= DANI.refillMs;
         if (cell.alive || (refilling && Math.floor(now / 110) % 2 === 0)) {
-            ctx.fillStyle = 'rgba(38, 30, 8, 0.9)';
+            ctx.fillStyle = ghost ? 'rgba(5, 7, 15, 0.7)' : 'rgba(38, 30, 8, 0.9)';
             ctx.fillRect(DANI.cellX, y0, DANI.cellW, DANI.cellH);
-            ctx.strokeStyle = DANI.gold;
+            ctx.strokeStyle = gold;
             ctx.lineWidth = 2;
-            ctx.shadowColor = DANI.gold;
+            ctx.shadowColor = gold;
             ctx.shadowBlur = cell.alive ? 8 : 14;
             ctx.strokeRect(DANI.cellX + 1, y0 + 1, DANI.cellW - 2, DANI.cellH - 2);
             ctx.shadowBlur = 0;
-            ctx.fillStyle = DANI.gold;
+            ctx.fillStyle = gold;
             ctx.font = '8px "Press Start 2P", monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('$', DANI.cellX + DANI.cellW / 2, y0 + DANI.cellH / 2);
         } else if (!refilling) {
             ctx.setLineDash([3, 5]);
-            ctx.strokeStyle = 'rgba(250, 204, 21, 0.25)';
+            ctx.strokeStyle = ghost ? 'rgba(224, 242, 254, 0.25)' : 'rgba(250, 204, 21, 0.25)';
             ctx.lineWidth = 1;
             ctx.strokeRect(DANI.cellX + 1, y0 + 1, DANI.cellW - 2, DANI.cellH - 2);
             ctx.setLineDash([]);
-            if (erase === 0) {
+            if (erase === 0 && !ghost) {
                 ctx.font = '7px "Press Start 2P", monospace';
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
@@ -319,7 +359,8 @@ function daniDrawCells(ctx) {
                 ctx.fillText('HUECO', DANI.cellX - 8, y0 + DANI.cellH / 2);
             }
         }
-        if (refilling) bossSign(ctx, '=SUMA', DANI.cellX - 34, y0 + DANI.cellH / 2, DANI.gold, 7);
+        if (refilling) bossSign(ctx, '=SUMA', DANI.cellX - 34, y0 + DANI.cellH / 2, gold, 7);
+        ctx.globalAlpha /= a;
     }
     ctx.restore();
 }
@@ -601,7 +642,7 @@ const bossDani = {
         Object.assign(bossState, {
             time: 0,
             wallOn: true, wallErase: 0,
-            cells: Array.from({ length: DANI.cells }, () => ({ alive: true, refillAt: null })),
+            cells: daniCellsMake(),
             digits: [],
             interestOn: false, interest: 0, interestHist: [0], interestAt: -9999, interest20Taunted: false,
             coin: null, coinTick: 0, paid: null, chartGrow: 0,
@@ -616,12 +657,7 @@ const bossDani = {
     update(dt) {
         bossState.time = daniNow() + dt * MS_PER_FRAME;
         const now = daniNow();
-        for (const cell of bossState.cells) {
-            if (cell.refillAt !== null && now >= cell.refillAt) {
-                cell.alive = true;
-                cell.refillAt = null;
-            }
-        }
+        daniCellsTick(bossState.cells, now);
         for (const d of bossState.digits) {
             d.x += d.vx * dt;
             d.y += d.vy * dt;

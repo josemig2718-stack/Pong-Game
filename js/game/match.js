@@ -47,9 +47,7 @@ function matchInfoText(withTarget) {
     const parts = [matchModeLabel()];
     if (state.mode === 'cpu') parts.push(DIFFICULTY_NAMES[settings.difficulty] || DIFFICULTY_NAMES[2]);
     if (withTarget) {
-        const bcfg = bossConfig();
-        const target = matchTargetScore();
-        parts.push(bcfg && bcfg.useHealth ? `${target} fallos` : `a ${target} puntos`);
+        parts.push(`a ${matchTargetScore()} puntos`);
     }
     return parts.join(' · ');
 }
@@ -64,8 +62,7 @@ function matchSideNames() {
 }
 
 /**
- * Pone el marcador en una pantalla (pausa o fin). Los jefes con barra de
- * vida no tienen marcador de puntos: ahí p2Score son fallos.
+ * Pone el marcador en una pantalla (pausa o fin).
  * @param {string} prefix 'pause' o 'final'
  */
 function fillMatchScore(prefix) {
@@ -74,8 +71,7 @@ function fillMatchScore(prefix) {
     document.getElementById(`${prefix}-name-p2`).textContent = name2;
     document.getElementById(`${prefix}-score-p1`).textContent = String(state.p1Score);
     document.getElementById(`${prefix}-score-p2`).textContent = String(state.p2Score);
-    const bcfg = bossConfig();
-    document.getElementById(`${prefix}-score`).classList.toggle('hidden', !!(bcfg && bcfg.useHealth) || state.mode === 'practice');
+    document.getElementById(`${prefix}-score`).classList.toggle('hidden', state.mode === 'practice');
 }
 
 /**
@@ -350,14 +346,8 @@ function checkWin() {
     // Cada jefe de campaña tiene su propio marcador; el resto usa el de siempre.
     const target = matchTargetScore();
 
-    // Los jefes con barra de vida se ganan vaciándola, no por marcador: aquí
-    // state.p2Score cuenta los fallos del jugador, no los puntos del rival.
     let p1Won, finished;
-    if (bcfg && bcfg.useHealth) {
-        const hp = bossHealth();
-        p1Won = hp <= 0;
-        finished = p1Won || state.p2Score >= target;
-    } else if (bcfg && bossHasPhases()) {
+    if (bcfg && bossHasPhases()) {
         // Por fases: se gana tras el K.O. de la última fase y se pierde
         // sin vidas. Los marcadores siguen contando goles (estadísticas).
         p1Won = !!bossState.cleared;
@@ -371,6 +361,8 @@ function checkWin() {
 
     state.isPlaying = false;
     releaseSmashCharges();
+    // Lo que el jefe puso sobre el campo y el HUD (grietas, avisos…) se va
+    bossCleanupDom();
 
     const gameOverScreen = document.getElementById('game-over-screen');
     const winnerText = document.getElementById('winner-text');
@@ -421,7 +413,7 @@ function checkWin() {
     gameOverScreen.dataset.winner = p1Won ? 'p1' : 'p2';
     // Derrota en campaña: el jefe junto al marcador
     const bossSprite = /** @type {HTMLImageElement} */ (document.getElementById('final-boss-sprite'));
-    const showBoss = state.mode === 'campaign' && !p1Won && !(bcfg && bcfg.useHealth);
+    const showBoss = state.mode === 'campaign' && !p1Won;
     if (showBoss) {
         bossSprite.src = HACHEPES_LORE[currentCampaignLevel].image;
         bossSprite.alt = HACHEPES_LORE[currentCampaignLevel].name;

@@ -120,9 +120,11 @@ function showNextDialogue() {
         avatar2.classList.add('hidden');
     }
 
-    const isCreator = currentCampaignLevel === CAMPAIGN_CREATOR;
-    box.classList.toggle('dialogue-glitch', isCreator);
-    avatar.classList.toggle('avatar-corrupted', isCreator);
+    // La voz del Creador (voice 'glitch'): el texto tiembla y algunas
+    // letras cambian un instante por caracteres de glitch
+    const glitch = !!(who && who.voice === 'glitch');
+    box.classList.toggle('dialogue-glitch', glitch);
+    avatar.classList.remove('avatar-corrupted');
 
     box.classList.remove('hidden');
     textEl.textContent = '';
@@ -139,11 +141,19 @@ function showNextDialogue() {
     };
 
     typewriterTimer = setInterval(() => {
-        textEl.textContent += text.charAt(charIndex);
         charIndex++;
+        const shown = text.slice(0, charIndex);
+        // Con la voz glitch, a veces una letra ya escrita sale cambiada (solo
+        // visual: vfxRandom)
+        if (glitch && charIndex > 2 && vfxRandom() < 0.35) {
+            const i = Math.floor(vfxRandom() * charIndex);
+            textEl.textContent = shown.slice(0, i) + DIALOGUE_GLITCH_CHARS[Math.floor(vfxRandom() * DIALOGUE_GLITCH_CHARS.length)] + shown.slice(i + 1);
+        } else {
+            textEl.textContent = shown;
+        }
         if (charIndex % 3 === 0 && soundEffects.dialogueBlip) soundEffects.dialogueBlip({ radio: !!(who && who.voice === 'radio') });
         if (charIndex >= text.length) finishTyping();
-    }, isCreator ? 55 : 38);
+    }, glitch ? 55 : 38);
 
     // Tocar/click adelanta: primero completa la línea, luego pasa a la siguiente
     box.onclick = () => {
@@ -195,6 +205,9 @@ function drawDialoguePlayer(cv) {
         });
     }
 }
+
+/** Caracteres con los que se corrompen las letras de la voz glitch. */
+const DIALOGUE_GLITCH_CHARS = '▓█░▒#@%&$?/\\|<>*';
 
 /** Corta cualquier diálogo en curso (al salir de la partida). */
 function stopDialogue() {

@@ -56,13 +56,13 @@ function update(dt) {
     // Mecánicas del jefe de campaña
     bossUpdate(dt);
 
-    // Yisus (parada de tiempo) y el rayo del Creador congelan al jugador
-    const playerDt = bossFreezesPlayer() ? 0 : dt;
+    // Ningún jefe congela ya al jugador: su paso es el de la partida
+    const playerDt = dt;
 
     const bcfg = bossConfig();
-    const rotatedArena = !!bcfg && bcfg.paddleAxis === 'x';
+    const rotatedArena = bossIsRotatedArena();
 
-    // El Creador invierte los controles en su fase 2
+    // Una regla de código del Creador invierte los controles
     const invert = (bossInvertsControls()) ? -1 : 1;
 
     rememberPaddlePositions();
@@ -161,7 +161,11 @@ function clampPaddles(rotatedArena) {
         const y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
         if (y !== p1.y) { p1.y = y; p1.vy = 0; }
     }
-    if (!(p2.retreatMs > 0)) {
+    if (rotatedArena) {
+        // Arena girada: la pala del jefe va arriba, en horizontal
+        const x2 = Math.max(0, Math.min(GAME_WIDTH - p2.width, p2.x));
+        if (x2 !== p2.x) { p2.x = x2; p2.vx = 0; }
+    } else if (!(p2.retreatMs > 0)) {
         const y2 = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
         if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
     }
@@ -263,27 +267,6 @@ function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
             soundEffects.wallHit({ x: b.x });
             spawnParticles(b.x, b.y, currentThemeHex(), 6);
         }
-        // Impacto contra el Creador (franja superior): le quita vida.
-        // Ojo: NO toca state.p1Score — el marcador y el daño son cosas distintas.
-        if (b.y - b.radius < CREATOR_BAND_H) {
-            b.dy = -b.dy;
-            b.y = CREATOR_BAND_H + b.radius;
-
-            // Los tramos blindados rebotan sin recibir daño: hay que
-            // apuntar al hueco en vez de repetir siempre el mismo golpe.
-            const blindado = bossSegmentArmored(b.x);
-            if (blindado) {
-                soundEffects.wallHit({ x: b.x });
-                triggerShake(4, 120);
-                spawnParticles(b.x, b.y, '#9ca3af', 12);
-            } else {
-                bossDamage((bcfg && bcfg.hitDamage) || 10);
-                soundEffects.score();
-                triggerShake(8, 200);
-                spawnParticles(b.x, b.y, '#ef4444', 20);
-            }
-            if (b.speed < maxBallSpeed) b.speed += 0.2;
-        }
     } else {
         // Rebote en paredes superior/inferior normales
         if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
@@ -358,8 +341,10 @@ function collision(b, p) {
 function hitPaddles(b, rotatedArena, maxBallSpeed) {
     /** @type {Paddle} */
     let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
-    if (rotatedArena) targetPaddle = p1; // En la arena rotada solo existe p1 (abajo)
+    // En la arena girada: la tuya abajo, la del jefe arriba
+    if (rotatedArena) targetPaddle = b.y > GAME_HEIGHT / 2 ? p1 : p2;
     if (targetPaddle === p2 && state.mode === 'practice') return;   // en práctica no hay rival
+    if (targetPaddle === p2 && bossPassesPaddle(b, p2)) return;     // el golpe dorado la atraviesa
 
     let hit = false;
     // Una pala retirada (el dúo, tras encajar gol) no choca con la bola
@@ -375,31 +360,22 @@ function hitPaddles(b, rotatedArena, maxBallSpeed) {
 }
 
 /**
- * Goles (la bola sale del campo) y, en la arena rotada, la victoria por
- * vaciar la vida del Creador.
+ * Goles (la bola sale del campo). En la arena girada la portería del
+ * jugador es la de abajo y la del jefe, la de arriba.
  * @returns {boolean} true si la partida terminó y el paso debe cortarse
  */
 function checkGoal(b, bi, rotatedArena, ballsToRemove) {
-    if (rotatedArena) {
-        if (b.y - b.radius > GAME_HEIGHT) {
-            // El jugador falla: cuenta como fallo, no como punto del rival
-            state.p2Score++;
-            endFever();
-            goalMusic();
-            soundEffects.score();
-            triggerShake(10, 260);
-            triggerGoalVFX(b.x, GAME_HEIGHT, goalPower(b));
-            if (onBallOut(bi, ballsToRemove)) return true;
-        }
-        // La victoria se decide en checkWin() leyendo la barra de vida
-        return bossHealth() <= 0 && checkWin();
-    }
+    const outP1 = rotatedArena ? b.y - b.radius > GAME_HEIGHT : b.x - b.radius < 0;
+    const outP2 = rotatedArena ? b.y + b.radius < 0 : b.x + b.radius > GAME_WIDTH;
+    // Dónde entró (para los efectos del gol)
+    const gx = rotatedArena ? b.x : outP1 ? 0 : GAME_WIDTH;
+    const gy = rotatedArena ? (outP1 ? GAME_HEIGHT : 0) : b.y;
 
-    if (b.x - b.radius < 0 && state.mode === 'practice') return practiceMiss(b, bi, ballsToRemove);
+    if (outP1 && state.mode === 'practice') return practiceMiss(b, bi, ballsToRemove);
 
-    if (b.x - b.radius < 0) {
+    if (outP1) {
         // CPU/P2 anota
-        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(0, b.y, sideColor('p2'));
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(gx, gy, sideColor('p2'));
         state.p2Score++;
         statsOnScore(false, b);
         endFever();
@@ -408,13 +384,13 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         checkMidDialogue();
         soundEffects.score();
         triggerShake(10, 260);
-        triggerGoalVFX(0, b.y, goalPower(b));
+        triggerGoalVFX(gx, gy, goalPower(b));
         return onBallOut(bi, ballsToRemove);
     }
 
-    if (b.x + b.radius > GAME_WIDTH) {
+    if (outP2) {
         // P1 anota
-        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(GAME_WIDTH, b.y, sideColor('p1'));
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(gx, gy, sideColor('p1'));
         state.p1Score++;
         statsOnScore(true, b);
         if (b.warpMs < PORTAL_GOAL_MS) unlockAchievement('portal_goal');   // «Atajo»
@@ -423,7 +399,7 @@ function checkGoal(b, bi, rotatedArena, ballsToRemove) {
         bossOnGoal(true, b);
         soundEffects.score();
         triggerShake(10, 260);
-        triggerGoalVFX(GAME_WIDTH, b.y, goalPower(b));
+        triggerGoalVFX(gx, gy, goalPower(b));
         return onBallOut(bi, ballsToRemove);
     }
     return false;

@@ -57,13 +57,10 @@ function resetBall(initialServe = false, opts = {}) {
     let dx = dir * speed;
 
     if (bossIsRotatedArena()) {
-        // Arena rotada (El Creador): la bola cae y la paleta pasa a horizontal abajo
-        dy = speed;
+        // Arena girada (el Creador): la bola va hacia la portería de abajo
+        // o la de arriba (las palas ya las giró el jefe)
+        dy = dir < 0 ? speed : -speed;
         dx = (Math.random() * 2 - 1) * speed * 0.5;
-        p1.width = 100;
-        p1.height = 15;
-        p1.x = GAME_WIDTH / 2 - p1.width / 2;
-        p1.y = GAME_HEIGHT - 30;
     }
 
     const newBall = createBall(GAME_WIDTH / 2, GAME_HEIGHT / 2, speed, dx, dy);

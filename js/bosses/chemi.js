@@ -101,15 +101,55 @@ function chemiTurnstileBlink(i, t) {
 }
 
 /**
+ * Un torniquete: dónde está, hacia dónde gira, su ángulo, el largo de sus
+ * brazos (se pliegan en verde) y si está en verde. Los de Chemi viven en
+ * bossState.turnstiles; el Creador invoca los suyos en su fase 2.
+ * @typedef {{ x: number, y: number, dir: number, angle: number, len: number, green: boolean }} ChemiTurnstile
+ */
+
+/** @returns {ChemiTurnstile[]} los dos torniquetes de la fase 1, recién puestos */
+function chemiTurnstilesMake() {
+    return CHEMI.turnstiles.map((ts) => ({ ...ts, angle: ts.dir > 0 ? 0 : Math.PI / 3, len: CHEMI.armLen, green: false }));
+}
+
+/**
+ * Giran, y se ponen en verde (plegados) por turnos.
+ * @param {ChemiTurnstile[]} list
+ * @param {number} t ms desde que empezaron
+ * @param {number} dt
+ */
+function chemiTurnstilesTick(list, t, dt) {
+    list.forEach((ts, i) => {
+        ts.angle += ts.dir * CHEMI.armSpin * dt / 60;
+        ts.green = chemiTurnstileGreen(i, t);
+        const target = ts.green ? CHEMI.armFolded : CHEMI.armLen;
+        const step = (CHEMI.armLen - CHEMI.armFolded) * dt * MS_PER_FRAME / CHEMI.foldMs;
+        ts.len = ts.len < target ? Math.min(target, ts.len + step) : Math.max(target, ts.len - step);
+    });
+}
+
+/** Los torniquetes de Chemi (su pulla, la primera vez). @param {Ball} b @returns {boolean} */
+function chemiCollideTurnstiles(b) {
+    return chemiTurnstilesCollide(bossState.turnstiles, b, () => {
+        if (!bossState.turnstileTaunted) {
+            bossState.turnstileTaunted = true;
+            bossTaunt('turnstile', true);
+        }
+    });
+}
+
+/**
  * Choque de la bola con los brazos de un torniquete: segmento contra
  * círculo. Refleja respecto a la normal, suma parte de la velocidad del
  * brazo, perturba dy y saca la bola fuera.
+ * @param {ChemiTurnstile[]} list
  * @param {Ball} b
+ * @param {() => void} [onHit]
  * @returns {boolean}
  */
-function chemiCollideTurnstiles(b) {
+function chemiTurnstilesCollide(list, b, onHit) {
     const rad = b.radius + CHEMI.armWidth / 2;
-    for (const ts of bossState.turnstiles) {
+    for (const ts of list) {
         if (ts.green || ts.len < CHEMI.armLen * 0.9) continue;   // plegado: no choca
         if (Math.abs(b.x - ts.x) > ts.len + rad || Math.abs(b.y - ts.y) > ts.len + rad) continue;
         for (let a = 0; a < 3; a++) {
@@ -135,10 +175,7 @@ function chemiCollideTurnstiles(b) {
             b.spin *= MECH.spinWallK;
             if (soundEffects.turnstile) soundEffects.turnstile();
             spawnParticles(b.x, b.y, CHEMI.gold, 8);
-            if (!bossState.turnstileTaunted) {
-                bossState.turnstileTaunted = true;
-                bossTaunt('turnstile', true);
-            }
+            if (onHit) onHit();
             return true;
         }
     }
@@ -276,11 +313,22 @@ function chemiTickElevators() {
 function chemiDrawTurnstiles(ctx) {
     const sink = bossState.sink || 0;
     if (!bossState.turnstilesOn || sink >= 1) return;
-    const t = chemiNow() - bossState.phaseT0;
-    bossState.turnstiles.forEach((ts, i) => {
+    chemiTurnstilesDraw(ctx, bossState.turnstiles, chemiNow() - bossState.phaseT0, sink);
+}
+
+/**
+ * Dibuja unos torniquetes. Con `ghost` (el Creador), todo de ese color.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {ChemiTurnstile[]} list
+ * @param {number} t ms desde que empezaron
+ * @param {number} sink 0…1, se hunden (transición)
+ * @param {string|null} [ghost]
+ */
+function chemiTurnstilesDraw(ctx, list, t, sink, ghost = null) {
+    list.forEach((ts, i) => {
         const blink = chemiTurnstileBlink(i, t) && Math.floor(t / 100) % 2 === 0;
         const green = ts.green;
-        const light = blink ? '#FDE68A' : green ? CHEMI.green : CHEMI.red;
+        const light = ghost || (blink ? '#FDE68A' : green ? CHEMI.green : CHEMI.red);
         ctx.save();
         ctx.globalAlpha = 1 - sink;
         ctx.translate(ts.x, ts.y);
@@ -296,7 +344,7 @@ function chemiDrawTurnstiles(ctx) {
         ctx.setLineDash([]);
         ctx.globalAlpha = 1 - sink;
         // Brazos
-        ctx.strokeStyle = '#E5E0D0';
+        ctx.strokeStyle = ghost || '#E5E0D0';
         ctx.lineCap = 'round';
         ctx.lineWidth = CHEMI.armWidth;
         ctx.shadowColor = light;
@@ -309,9 +357,9 @@ function chemiDrawTurnstiles(ctx) {
             ctx.stroke();
         }
         // Eje dorado
-        ctx.shadowColor = CHEMI.gold;
+        ctx.shadowColor = ghost || CHEMI.gold;
         ctx.fillStyle = '#1A1405';
-        ctx.strokeStyle = CHEMI.gold;
+        ctx.strokeStyle = ghost || CHEMI.gold;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(0, 0, 8, 0, Math.PI * 2);
@@ -522,7 +570,7 @@ const bossChemi = {
         Object.assign(bossState, {
             time: 0, phaseT0: 0,
             turnstilesOn: true,
-            turnstiles: CHEMI.turnstiles.map((ts) => ({ ...ts, angle: ts.dir > 0 ? 0 : Math.PI / 3, len: CHEMI.armLen, green: false })),
+            turnstiles: chemiTurnstilesMake(),
             turnstileTaunted: false, sink: 0,
             archOn: false, archDrop: 0, archT0: 0, bipAt: -9999,
             chemiHits: 0, stampWarn: false, stampAt: -9999, stampPath: null,
@@ -536,16 +584,7 @@ const bossChemi = {
 
     update(dt) {
         bossState.time = chemiNow() + dt * MS_PER_FRAME;
-        if (bossState.turnstilesOn) {
-            const t = chemiNow() - bossState.phaseT0;
-            bossState.turnstiles.forEach((ts, i) => {
-                ts.angle += ts.dir * CHEMI.armSpin * dt / 60;
-                ts.green = chemiTurnstileGreen(i, t);
-                const target = ts.green ? CHEMI.armFolded : CHEMI.armLen;
-                const step = (CHEMI.armLen - CHEMI.armFolded) * dt * MS_PER_FRAME / CHEMI.foldMs;
-                ts.len = ts.len < target ? Math.min(target, ts.len + step) : Math.max(target, ts.len - step);
-            });
-        }
+        if (bossState.turnstilesOn) chemiTurnstilesTick(bossState.turnstiles, chemiNow() - bossState.phaseT0, dt);
         if (bossState.shuttersOn && !bossState.ko) chemiTickElevators();
     },
 

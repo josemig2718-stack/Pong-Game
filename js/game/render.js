@@ -39,25 +39,6 @@ function drawNet(color) {
 }
 
 /**
- * Fallos que le quedan al jugador en la arena rotada, como corazones
- * pixelados centrados sobre su paleta. Sin ninguno, un corazón vacío.
- */
-function drawLives(vidas) {
-    const px = 4, w = 7 * px, gap = 12;
-    const n = Math.max(vidas, 1);
-    let x = Math.round(GAME_WIDTH / 2 - (n * w + (n - 1) * gap) / 2);
-    const y = GAME_HEIGHT - 76;
-    for (let i = 0; i < n; i++, x += w + gap) {
-        if (vidas === 0) {
-            drawPixelHeart(x, y, px, 'rgba(239, 68, 68, 0.5)', PIXEL_HEART_EMPTY);
-            continue;
-        }
-        drawPixelHeart(x + 3, y + 3, px, '#450A0A');
-        drawPixelHeart(x, y, px, '#ef4444');
-    }
-}
-
-/**
  * Cuenta atrás del saque: el número dentro de un anillo que se vacía cada
  * segundo, con un pequeño golpe al cambiar de número.
  * @param {number} msLeft state.serveCountdownMs
@@ -281,14 +262,9 @@ function render() {
 
     const rotatedArena = bossIsRotatedArena();
 
-    if (!rotatedArena) {
-        drawNet(themeColor);   // el marcador va en el HUD del DOM (game/hud.js)
-    } else {
-        // Arena rotada: abajo se muestran los fallos restantes del jugador
-        const bcfg = bossConfig();
-        const vidas = Math.max(0, (bcfg ? bcfg.targetScore : 5) - state.p2Score);
-        drawLives(vidas);
-    }
+    // El marcador va en el HUD del DOM (game/hud.js); en la arena girada
+    // del Creador no hay red
+    if (!rotatedArena) drawNet(themeColor);
 
     // Capa propia del jefe: escombros, escudo, franja del Creador...
     bossRender(ctx);
@@ -311,9 +287,10 @@ function render() {
     // Paletas (sideColor) y su carga de smash; el gemelo, rojo. En
     // práctica, en lugar del rival, la pared.
     const practice = state.mode === 'practice';
-    renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor, { charge: p1.charge, hit: mechPaddleHit.p1 });
+    // Un jefe puede dibujar él una pala (la dorada del jugador, la del Creador)
+    if (!bossDrawPaddle(ctx, p1)) renderPaddleVFX(ctx, p1.x, p1.y, p1.width, p1.height, themeColor, { charge: p1.charge, hit: mechPaddleHit.p1 });
     if (practice) drawPracticeWall(ctx, themeColor);
-    else if (!rotatedArena && !bossHidesPaddle(p2)) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, bossPaddleColor(p2) || sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
+    else if (!bossHidesPaddle(p2) && !bossDrawPaddle(ctx, p2)) renderPaddleVFX(ctx, p2.x, p2.y, p2.width, p2.height, bossPaddleColor(p2) || sideColor('p2'), { charge: p2.charge, hit: mechPaddleHit.p2 });
     if (!rotatedArena && p2Twin.active) renderPaddleVFX(ctx, p2Twin.x, p2Twin.y, p2Twin.width, p2Twin.height, bossPaddleColor(p2Twin) || '#ef4444');
     MECH_FX.charge(ctx, p1, themeColor, p1.charge);
     if (!rotatedArena && !practice) MECH_FX.charge(ctx, p2, sideColor('p2'), p2.charge);
@@ -337,11 +314,13 @@ function render() {
     renderGoalVFX(ctx);
 
     // Cuenta atrás del saque + previsualización de trayectoria, y "¡YA!"
-    // al sacar (se desvanece en sus últimos 300 ms)
-    if (state.serveCountdownMs > 0) {
+    // al sacar (se desvanece en sus últimos 300 ms). Nada de eso durante
+    // el K.O. de un jefe: el combate ya terminó
+    const koNow = !!bossState.ko;
+    if (state.serveCountdownMs > 0 && !koNow) {
         drawTrajectoryPreview(themeColor);
         drawCountdown(state.serveCountdownMs, SERVE_INITIAL, themeColor);
-    } else if (state.goTextMs > 0) {
+    } else if (state.goTextMs > 0 && !koNow) {
         drawGoText(state.goTextMs, themeColor);
     }
 

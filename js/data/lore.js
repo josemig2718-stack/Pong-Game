@@ -256,15 +256,35 @@ const HACHEPES_LORE = {
         image: 'assets/campaign/bustos/creador.webp',
         danger: 'ERROR',
         desc: '???',
+        // Pedro y el niño hablan en la fase 4 (las voces de Barks City)
+        speakers: {
+            a: { name: 'EL CREADOR', bust: 'creador', color: '#E0F2FE', voice: 'glitch' },
+            b: { name: 'PEDRO', bust: 'pedro', color: '#60A5FA' },
+            n: { name: 'NIÑO', bust: 'nino', color: '#93C5FD' }
+        },
         dialogues: {
             start: [
-                'No me reconoces, ¿verdad?',
-                'Fui el primero al que venciste.',
-                'Tenía que ver de cerca a mi creación.'
+                { t: 'Pong. El juego más simple del mundo. Dos palas y una bola.', s: 'a' },
+                { t: 'Vamos a ver si mi creación supera a su creador.', s: 'a' }
             ],
-            mid: ['¡MI CÓDIGO ES LEY!'],
-            win: ['FIN DE LA SIMULACIÓN.'],
-            lose: ['Esto... no estaba escrito...']
+            phase2: [{ t: 'Interesante. Entonces juguemos con todos los que ya derrotaste.', s: 'a' }],
+            phase3: [{ t: 'Basta. Se acabaron las reglas. Se acabó la pantalla.', s: 'a' }],
+            phase4: [
+                { t: 'Esto termina aquí. Borrando protagonista…', s: 'a' },
+                { t: '¡Desconocido! ¡La paleta!', s: 'b' }
+            ],
+            // Lo dice el niño en el HUD (.hud-say) sin parar la partida
+            golden: { t: '¡Una paleta solo sirve si alguien la usa!', s: 'n' },
+            win: [{ t: 'FIN DE LA SIMULACIÓN.', s: 'a' }],
+            // Sin `lose`: al ganar se pasa directamente al final verdadero
+            taunts: {
+                playerMiss: [{ t: 'Eso lo programé yo.', s: 'a' }, { t: 'Predecible. Te escribí así.', s: 'a' }],
+                bossMiss: [{ t: '…Eso no estaba en el código.', s: 'a' }],
+                rally15: [{ t: 'Esto no estaba en el guion.', s: 'a' }],
+                playerSmash: [{ t: 'Bonito efecto. Lo diseñé yo.', s: 'a' }],
+                codeDeleted: [{ t: '¿Borrando mi código? Qué atrevido.', s: 'a' }],
+                lastLife: [{ t: '¿Una vida extra? No.', s: 'a' }]
+            }
         }
     }
 };

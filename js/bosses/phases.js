@@ -408,19 +408,30 @@ function setupBossHud() {
 }
 
 /**
- * Los acompañantes del jefe junto a su marcador (`companions`: Mariangel
- * y Pedro con Yisus), en #boss-side dentro del campo. Sin ellos, se quita.
+ * Lo que un jefe pone sobre el campo y el HUD mientras pelea (las piezas
+ * .boss-fx del Creador: grietas, avisos, ecos, voces; su frase de la
+ * pausa y el marcador que miente). Al empezar cualquier partida y al
+ * terminar el combate.
  */
-function bossSideBuild() {
-    const old = document.getElementById('boss-side');
-    if (old) old.remove();
-    const boss = currentBoss();
-    if (!boss || !boss.companions) return;
+function bossCleanupDom() {
+    document.querySelectorAll('.boss-fx').forEach((el) => el.remove());
+    document.getElementById('game-container').classList.remove('hud-scrambled');
+}
+
+/**
+ * Una franja de retratos (.boss-side) con su `cls` (boss-side--boss o
+ * boss-side--player).
+ * @param {string} id
+ * @param {string} cls
+ * @param {{ id: string, color: string, cls?: string }[]} list
+ * @returns {HTMLElement}
+ */
+function bossSideMake(id, cls, list) {
     const side = document.createElement('div');
-    side.id = 'boss-side';
-    side.className = 'boss-side boss-side--boss';
+    side.id = id;
+    side.className = 'boss-side ' + cls;
     side.setAttribute('aria-hidden', 'true');
-    for (const c of boss.companions) {
+    for (const c of list) {
         const who = document.createElement('span');
         who.className = 'boss-side__who' + (c.cls ? ' ' + c.cls : '');
         who.dataset.who = c.id;
@@ -431,6 +442,19 @@ function bossSideBuild() {
         who.appendChild(img);
         side.appendChild(who);
     }
+    return side;
+}
+
+/**
+ * Los acompañantes del jefe junto a su marcador (`companions`: Mariangel
+ * y Pedro con Yisus), en #boss-side dentro del campo. Sin ellos, se quita.
+ */
+function bossSideBuild() {
+    const old = document.getElementById('boss-side');
+    if (old) old.remove();
+    const boss = currentBoss();
+    if (!boss || !boss.companions) return;
+    const side = bossSideMake('boss-side', 'boss-side--boss', boss.companions);
     document.getElementById('canvas-wrapper').appendChild(side);
     bossSidePlace();
 }

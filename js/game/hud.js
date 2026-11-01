@@ -29,11 +29,6 @@ let superHintUntil = 0;
 /** Prepara el HUD para la partida que empieza (startGame). */
 function setupHud() {
     const container = document.getElementById('game-container');
-    const bcfg = bossConfig();
-    const useHealth = !!(bcfg && bcfg.useHealth);
-    // En la pelea con barra de vida las tarjetas sobran: los corazones
-    // del canvas y la barra del jefe ya cuentan la partida.
-    container.toggleAttribute('data-health', useHealth);
 
     // Botones de smash: con pantalla táctil y el ajuste "botón"; el del
     // J2 solo en local. Antes de resizeCanvas(), que mide el campo con ellos.
@@ -53,7 +48,7 @@ function setupHud() {
         mode.appendChild(diff);
     }
     const practice = state.mode === 'practice';
-    if (!useHealth && !practice) mode.appendChild(document.createTextNode(` · a ${target}`));
+    if (!practice) mode.appendChild(document.createTextNode(` · a ${target}`));
 
     const [name1, name2] = matchSideNames();
     document.getElementById('hud-name-p1').textContent = name1;
@@ -66,7 +61,7 @@ function setupHud() {
         badge2.textContent = 'J2';
     } else if (practice) {
         badge2.innerHTML = HUD_WALL_ICON;
-    } else if (state.mode === 'campaign' && !useHealth) {
+    } else if (state.mode === 'campaign') {
         const img = document.createElement('img');
         img.src = HACHEPES_LORE[currentCampaignLevel].image;
         img.alt = '';
@@ -179,9 +174,11 @@ function updateHud() {
 
     // En práctica: el mejor rally de la sesión y los fallos (p2Score)
     const practice = state.mode === 'practice';
+    // El marcador que miente del Creador escribe «???» y lo restaura él
+    const scrambled = document.getElementById('game-container').classList.contains('hud-scrambled');
     for (const side of ['p1', 'p2']) {
         const score = side === 'p1' ? (practice ? matchBestRally : state.p1Score) : state.p2Score;
-        document.getElementById(`hud-score-${side}`).textContent = String(score);
+        if (!scrambled) document.getElementById(`hud-score-${side}`).textContent = String(score);
         // En práctica no hay marcas; por fases, son los corazones (updateBossHud)
         if (practice || bossHasPhases()) continue;
         const pips = document.getElementById(`hud-pips-${side}`).children;

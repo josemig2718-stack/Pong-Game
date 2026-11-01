@@ -19,9 +19,6 @@ function resetBossState() {
     bossState = {};
 }
 
-/** Alto de la franja del Creador. game/ lo usa para el rebote contra ella. */
-const CREATOR_BAND_H = 110;
-
 /**
  * Reparte la velocidad de la bola (b.speed) en su dirección actual, sin
  * dejarla casi vertical: así nunca se queda rebotando de pared a pared.

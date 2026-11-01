@@ -39,7 +39,8 @@
  * @property {'mario'|'valen'|null} [hitter]  quién del dúo la golpeó por última vez: su estela y su velocidad (bosses/duo.js)
  * @property {boolean} [tsPending]  Yisus la golpeó y se congelará a mitad de camino (bosses/yisus.js)
  * @property {{ ms: number, angle: number, dir: number }|null} [frozen]  congelada por Yisus: lo que le queda, el ángulo y el lado de salida
- * @property {boolean} [golden]  la disparó el ataúd de Yisus
+ * @property {boolean} [golden]  la disparó el ataúd de Yisus, o es el golpe dorado contra el Creador
+ * @property {boolean} [ruleFast]  va ×1,4 por la regla de código del Creador
  */
 
 /** @typedef {null | 'super'} BallPower 'super' es el smash */

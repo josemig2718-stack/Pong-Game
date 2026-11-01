@@ -118,12 +118,42 @@ function duoIncoming(half) {
 // ------------------------------------------------------------------
 
 /**
+ * El estado de unos bumpers: cuándo se golpeó cada uno (su destello) y
+ * los «+100» que flotan. Los del dúo viven en bossState; el Creador
+ * invoca los suyos en su fase 2.
+ * @typedef {{ bumperHitAt: number[], pops: { x: number, y: number, at: number }[] }} DuoBumpers
+ */
+
+/** @returns {DuoBumpers} */
+function duoBumpersMake() {
+    return { bumperHitAt: [-9999, -9999, -9999], pops: [] };
+}
+
+/** Los bumpers del dúo: los toques del jugador los encienden (y el TILT). @param {Ball} b @returns {boolean} */
+function duoCollideBumpers(b) {
+    return duoBumpersCollide(/** @type {DuoBumpers} */ (bossState), b, duoNow(), (i) => {
+        if (b.owner === 'p1' && !duoTilted()) {
+            bossState.lit[i] = true;
+            if (bossState.lit.every(Boolean)) {
+                // JACKPOT: las dos palas se quedan bloqueadas 4 s
+                bossState.tiltUntil = duoNow() + DUO.tiltMs;
+                bossSfx('jackpot');
+                bossTaunt('jackpot', true);
+            }
+        }
+    });
+}
+
+/**
  * Rebote en un bumper: se refleja respecto a la normal desde su centro y
  * sale ×1,15 (sin pasar del tope del preset × 1,2).
+ * @param {DuoBumpers} st
  * @param {Ball} b
+ * @param {number} now
+ * @param {(i: number) => void} [onHit]
  * @returns {boolean}
  */
-function duoCollideBumpers(b) {
+function duoBumpersCollide(st, b, now, onHit) {
     for (let i = 0; i < DUO.bumpers.length; i++) {
         const bp = DUO.bumpers[i];
         const rad = DUO.bumperR + b.radius;
@@ -141,17 +171,9 @@ function duoCollideBumpers(b) {
         b.spin *= MECH.spinWallK;
         bossSfx('bumper');
         spawnParticles(b.x, b.y, DUO.lime, 8);
-        bossState.bumperHitAt[i] = duoNow();
-        bossState.pops.push({ x: bp.x, y: bp.y - DUO.bumperR - 6, at: duoNow() });
-        if (b.owner === 'p1' && !duoTilted()) {
-            bossState.lit[i] = true;
-            if (bossState.lit.every(Boolean)) {
-                // JACKPOT: las dos palas se quedan bloqueadas 4 s
-                bossState.tiltUntil = duoNow() + DUO.tiltMs;
-                bossSfx('jackpot');
-                bossTaunt('jackpot', true);
-            }
-        }
+        st.bumperHitAt[i] = now;
+        st.pops.push({ x: bp.x, y: bp.y - DUO.bumperR - 6, at: now });
+        if (onHit) onHit(i);
         return true;
     }
     return false;
@@ -166,43 +188,59 @@ function duoDrawBumpers(ctx) {
     const drop = bossState.bumpDrop || 0;
     if (!bossState.bumpOn && drop <= 0) return;
     const k = bossState.bumpOn ? 1 : drop;
-    const now = duoNow();
+    duoBumpersDraw(ctx, /** @type {DuoBumpers} */ (bossState), duoNow(), k, bossState.lit);
+    if (bossState.bumpOn && !duoTilted()) {
+        ctx.save();
+        ctx.font = '9px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = DUO.lime;
+        ctx.fillText(`${bossState.lit.filter(Boolean).length} / 3`, 620, 330);
+        ctx.restore();
+    }
+}
+
+/**
+ * Dibuja unos bumpers y sus «+100». Con `ghost` (el Creador), todo de ese
+ * color y sin luces.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {DuoBumpers} st
+ * @param {number} now
+ * @param {number} k 0…1, tamaño y opacidad (transición)
+ * @param {boolean[]} lit cuáles están encendidos
+ * @param {string|null} [ghost]
+ */
+function duoBumpersDraw(ctx, st, now, k, lit, ghost = null) {
+    const glow = ghost || DUO.lime;
+    const base = ctx.globalAlpha;
     ctx.save();
     DUO.bumpers.forEach((bp, i) => {
-        const lit = bossState.lit[i];
-        const flash = Math.max(0, 1 - (now - bossState.bumperHitAt[i]) / 200);
+        const on = lit[i];
+        const flash = Math.max(0, 1 - (now - st.bumperHitAt[i]) / 200);
         const r = DUO.bumperR * k * (1 + 0.12 * flash);
-        ctx.globalAlpha = k;
-        ctx.fillStyle = lit ? 'rgba(101, 130, 30, 0.9)' : 'rgba(17, 19, 26, 0.9)';
-        ctx.strokeStyle = lit || flash > 0 ? DUO.lime : DUO.gray;
+        ctx.globalAlpha = base * k;
+        ctx.fillStyle = on ? 'rgba(101, 130, 30, 0.9)' : 'rgba(17, 19, 26, 0.9)';
+        ctx.strokeStyle = on || flash > 0 || ghost ? glow : DUO.gray;
         ctx.lineWidth = 4;
-        ctx.shadowColor = DUO.lime;
-        ctx.shadowBlur = lit ? 16 : flash * 16;
+        ctx.shadowColor = glow;
+        ctx.shadowBlur = on ? 16 : flash * 16;
         ctx.beginPath();
         ctx.arc(bp.x, bp.y, r, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.shadowBlur = 0;
-        ctx.fillStyle = lit ? '#BEF264' : '#2A2F3A';
+        ctx.fillStyle = on ? '#BEF264' : '#2A2F3A';
         ctx.beginPath();
         ctx.arc(bp.x, bp.y, r * 0.45, 0, Math.PI * 2);
         ctx.fill();
     });
-    if (bossState.bumpOn && !duoTilted()) {
-        ctx.globalAlpha = 1;
-        ctx.font = '9px "Press Start 2P", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = DUO.lime;
-        ctx.fillText(`${bossState.lit.filter(Boolean).length} / 3`, 620, 330);
-    }
     // Los «+100» que flotan
     ctx.font = '9px "Press Start 2P", monospace';
     ctx.textAlign = 'center';
-    for (const p of bossState.pops) {
+    for (const p of st.pops) {
         const t = (now - p.at) / 700;
         if (t >= 1) continue;
-        ctx.globalAlpha = 1 - t;
-        ctx.fillStyle = DUO.gold;
+        ctx.globalAlpha = base * (1 - t);
+        ctx.fillStyle = ghost || DUO.gold;
         ctx.fillText('+100', p.x, p.y - t * 26);
     }
     ctx.restore();
@@ -427,8 +465,8 @@ const bossDuo = {
         }
         Object.assign(bossState, {
             time: 0,
-            bumpOn: false, bumpDrop: 0, lit: [false, false, false], bumperHitAt: [-9999, -9999, -9999],
-            tiltUntil: 0, pops: [], puppyX: 400, puppyV: 0,
+            bumpOn: false, bumpDrop: 0, lit: [false, false, false], ...duoBumpersMake(),
+            tiltUntil: 0, puppyX: 400, puppyV: 0,
             diablo: false, diabloIn: 0, afkT0: 0, afkCycle: -1, koY0: null, koSpark: 0
         });
         const arena = CAMPAIGN_ART.pisos.arena_duo;

@@ -120,7 +120,7 @@ function measurePaddleSpeeds(playerDt, dt, rotatedArena) {
     } else if (p1.touchY !== null) {
         measurePaddle(p1, playerDt, 'y');
     }
-    if (state.mode !== 'local' || p2.touchY !== null) measurePaddle(p2, dt, 'y');
+    if (state.mode !== 'local' || p2.touchY !== null) measurePaddle(p2, dt, rotatedArena ? 'x' : 'y');
     if (p2Twin.active) measurePaddle(p2Twin, dt, 'y');
 }
 
@@ -367,7 +367,7 @@ function hitParticles(type) {
  * @param {Ball} b
  * @param {Paddle} paddle p1, p2 o la gemela
  * @param {number} maxBallSpeed
- * @param {boolean} rotated arena rotada del Creador (la paleta es horizontal, abajo)
+ * @param {boolean} rotated arena girada del Creador (palas horizontales: la tuya abajo, la suya arriba)
  * @returns {HitType}
  */
 function resolveHit(b, paddle, maxBallSpeed, rotated) {
@@ -403,9 +403,11 @@ function resolveHit(b, paddle, maxBallSpeed, rotated) {
 
     // 6. Dirección, y la bola fuera de la paleta
     if (rotated) {
+        // La tuya, abajo, la manda hacia arriba; la del jefe, hacia abajo
+        const up = side === 'p1' ? -1 : 1;
         b.dx = b.speed * Math.sin(angle);
-        b.dy = -b.speed * Math.cos(angle);   // siempre hacia arriba
-        b.y = paddle.y - b.radius;
+        b.dy = up * b.speed * Math.cos(angle);
+        b.y = up < 0 ? paddle.y - b.radius : paddle.y + paddle.height + b.radius;
     } else {
         const direction = side === 'p1' ? 1 : -1;
         b.dx = direction * b.speed * Math.cos(angle);
