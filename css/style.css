@@ -5081,3 +5081,42 @@ body.has-result .achievement-toast--visible { transform: none; }
     .cutscene-dialogue.is-creator, #main-menu.is-fake-menu *, #main-menu.is-fake-menu::after, .cs-reveal__text, .cs-bustglitch *, .sys-window,
     .cs-bigtext__main, .cs-bigtext__sub, .boss-echo, .fw-warn, .fw-warn svg, .fw-gameover__big, .fw-gameover__sub, .hud-scrambled .hud-pips, .pause-taunt, .cs-credits__item.is-corrupt .cs-credits__name { animation: none !important; }
 }
+
+/* ------------------------------------------------------------------
+   El final: lo que necesita el reproductor (cutscene/player.js y
+   cutscene/fx-final.js) para colocar las piezas de arriba
+   ------------------------------------------------------------------ */
+/* El diálogo y la tarjeta, por encima del busto y la consola */
+.cutscene-dialogue, .cutscene-card { z-index: 9; }
+/* fx fake_menu: la escena se aparta y deja ver el menú real; solo el
+   diálogo sigue recibiendo toques */
+.screen.cutscene.is-fake-menu { background: transparent; pointer-events: none; cursor: auto; }
+.cutscene.is-fake-menu .cutscene__stage { visibility: hidden; }
+.cutscene.is-fake-menu .cutscene__dock { pointer-events: none; }
+.cutscene.is-fake-menu .cutscene-dialogue { pointer-events: auto; cursor: pointer; }
+/* noSkipFirstTime: la primera vez no hay SALTAR */
+.cutscene.is-noskip .cutscene-skip { visibility: hidden; }
+/* glitch y crt_off también tocan las piezas DOM que sigan en pantalla */
+.cs-dom-fx.is-glitching { animation: cr-portrait .3s steps(1) infinite; }
+.cs-dom-fx.is-off { animation: cs-crt-off var(--dur, 1s) cubic-bezier(.6, 0, .9, .2) forwards; }
+.cutscene.is-reduced .cs-dom-fx.is-off { animation: cs-title-out var(--dur, 1s) ease forwards; }
+/* fx reveal: las bandas cambian de sitio cada 80 ms (variables que pone el JS) */
+.cs-reveal__img::before {
+    background:
+        linear-gradient(transparent 0 var(--b1, 18%), rgba(255, 255, 255, .18) var(--b1, 18%) calc(var(--b1, 18%) + var(--h1, 3%)), transparent 0),
+        linear-gradient(transparent 0 var(--b2, 47%), rgba(0, 0, 0, .55) var(--b2, 47%) calc(var(--b2, 47%) + var(--h2, 6%)), transparent 0),
+        linear-gradient(transparent 0 var(--b3, 63%), rgba(255, 0, 80, .16) var(--b3, 63%) calc(var(--b3, 63%) + var(--h3, 2%)), transparent 0),
+        linear-gradient(transparent 0 var(--b4, 76%), rgba(var(--creator-rgb), .25) var(--b4, 76%) calc(var(--b4, 76%) + var(--h4, 2%)), transparent 0);
+}
+.cs-reveal__img .g { transform: translate(calc(-50% + var(--x1, 0px)), -50%); }
+.cs-reveal.is-reduced .cs-reveal__img::before { display: none; }
+.cs-reveal.is-reduced .cs-reveal__img .r, .cs-reveal.is-reduced .cs-reveal__img .b { display: none; }
+/* El temblor de la ventana conserva su centrado (translate(-50%, -50%)) */
+.sys-window.is-shake { animation: sw-shake .1s steps(2) 8; }
+@keyframes sw-shake {
+    0% { transform: translate(calc(-50% + 3px), calc(-50% - 1px)) skewX(4deg); }
+    50% { transform: translate(calc(-50% - 3px), calc(-50% + 1px)) skewX(-4deg); }
+    100% { transform: translate(-50%, -50%); }
+}
+/* Mientras corren los créditos no hay botones (en vertical irían encima) */
+.cutscene.has-credits .cutscene__buttons { visibility: hidden; }

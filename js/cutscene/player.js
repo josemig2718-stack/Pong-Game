@@ -85,9 +85,10 @@
 /**
  * Un actor en escena. `sprite` o `frames` (con `fps`; 0 = quieto en el
  * primero). `color` lo pone la tarjeta del actor: es el de sus pelotas.
+ * `rot` (grados) lo gira alrededor del centro de su dibujo.
  * @typedef {{ id: string, sprite: string|null, frames: string[]|null, fps: number,
  *             x: number, y: number, s: number, flip: boolean, alpha: number, bob: number|null,
- *             moving: boolean, flashAt: number, color: string|null, phase: number }} CutsceneActor
+ *             moving: boolean, flashAt: number, color: string|null, phase: number, rot: number }} CutsceneActor
  */
 
 /**
@@ -107,11 +108,13 @@
 
 /**
  * Lo que bloquea los pasos siguientes: una espera, la línea que se
- * escribe (diálogo o narración) o la tarjeta en curso.
- * @typedef {{ kind: 'wait'|'say'|'narrate'|'card', until?: number, step?: CutsceneStep,
+ * escribe (diálogo o narración), la tarjeta en curso o un efecto que
+ * bloquea (CUTSCENE_BLOCKING_FX). `tokens` son los tramos [desde, hasta)
+ * de la línea que salen de una ficha ({partidas}…).
+ * @typedef {{ kind: 'wait'|'say'|'narrate'|'card'|'fx', until?: number, step?: CutsceneStep,
  *             full?: string, n?: number, shown?: number, complete?: boolean,
  *             autoAt?: number|null, shownEl?: HTMLElement, restEl?: HTMLElement,
- *             portrait?: string|null }} CutsceneBlock
+ *             portrait?: string|null, tokens?: number[][], fx?: CutsceneFx }} CutsceneBlock
  */
 
 /**
@@ -132,7 +135,7 @@
  *   view: CutsceneView, dom: CutsceneDom, raf: number, lastNow: number,
  *   hold: { key: boolean, pointer: boolean, t: number }, blips: number,
  *   reduced: boolean, chapterEnd: number, loadTotal: number, loadDone: number,
- *   aux: HTMLCanvasElement|null
+ *   aux: HTMLCanvasElement|null, noSkip: boolean, consoleEl: HTMLElement|null
  * }} CutsceneRun
  */
 
@@ -150,6 +153,8 @@
 
 /** Fondo negro sólido (`bg` con este id): no está en el manifiesto. */
 const CUTSCENE_BLACK_BG = 'negro';
+/** Fondos lisos que no están en el manifiesto: el negro y el blanco del final. */
+const CUTSCENE_PLAIN_BGS = { negro: '#000000', blanco: '#F8FAFC' };
 
 /** Tamaño de la escena en unidades. */
 const CUTSCENE_W = 960;
@@ -177,6 +182,8 @@ const CUTSCENE_PRELOAD_SCENES = 3;
 const CUTSCENE_BAND_MIN = 64;
 /** Pasos que bloquean: el siguiente espera a que terminen. */
 const CUTSCENE_BLOCKING = ['say', 'narrate', 'card', 'wait'];
+/** Efectos que bloquean (los créditos, solo los verdaderos). */
+const CUTSCENE_BLOCKING_FX = ['console', 'error_window', 'name_box', 'credits'];
 
 /** @type {CutsceneRun|null} La reproducción en curso. */
 let cutsceneRun = null;
@@ -299,6 +306,8 @@ function cutsceneSceneSources(cs, idx) {
     for (const s of scene.steps) {
         if (s.do === 'bg') add(cs.assets.backgrounds[s.id]);
         if (s.do === 'fx' && s.type === 'wipe') add(cs.assets.backgrounds[/** @type {string} */ (s.to)]);
+        if (s.do === 'fx' && s.image) out.add(s.image);
+        if (s.do === 'fx' && s.bust && CAMPAIGN_ART.bustos[s.bust]) out.add(CAMPAIGN_ART.bustos[s.bust].src);
         const busts = s.portrait ? ['busto_' + s.portrait] : [];
         for (const id of [s.sprite, s.portrait, s.left, s.right, ...busts, ...(s.frames || [])]) {
             if (id) add(cs.assets.actors[id]);
@@ -355,8 +364,9 @@ function cutsceneActorBox(cs, a) {
  * @param {number} alpha
  * @param {string|null} [tint]
  * @param {number} [scaleY] respiración (desde los pies)
+ * @param {number} [rot] giro en grados alrededor del centro del dibujo
  */
-function cutsceneDrawSprite(ctx, cs, id, x, y, s, flip, alpha, tint = null, scaleY = 1) {
+function cutsceneDrawSprite(ctx, cs, id, x, y, s, flip, alpha, tint = null, scaleY = 1, rot = 0) {
     const info = cutsceneActorInfo(cs, id);
     if (!info || alpha <= 0) return;
     const img = tint ? tintedMask(info.src, tint) : artImage(info.src);
@@ -364,6 +374,13 @@ function cutsceneDrawSprite(ctx, cs, id, x, y, s, flip, alpha, tint = null, scal
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(x, y);
+    if (rot) {
+        const cx = (flip ? -1 : 1) * (info.w / 2 - info.ax) * s;
+        const cy = (info.h / 2 - info.ay) * s;
+        ctx.translate(cx, cy);
+        ctx.rotate(rot * Math.PI / 180);
+        ctx.translate(-cx, -cy);
+    }
     if (flip) ctx.scale(-1, 1);
     if (scaleY !== 1) ctx.scale(1, scaleY);
     const dx = -info.ax * s;
@@ -396,10 +413,10 @@ function cutsceneDrawActor(ctx, cs, a) {
     } else if (!cs.reduced) {
         sy = 1 + 0.008 * Math.sin((cs.t + a.phase) * 2 * Math.PI / 3);
     }
-    cutsceneDrawSprite(ctx, cs, sprite, a.x, y, a.s, a.flip, a.alpha, null, sy);
+    cutsceneDrawSprite(ctx, cs, sprite, a.x, y, a.s, a.flip, a.alpha, null, sy, a.rot);
     const flash = cs.t - a.flashAt;
     if (!cs.reduced && flash >= 0 && flash < 0.1) {
-        cutsceneDrawSprite(ctx, cs, sprite, a.x, y, a.s, a.flip, a.alpha * (1 - flash / 0.1), '#FFFFFF', sy);
+        cutsceneDrawSprite(ctx, cs, sprite, a.x, y, a.s, a.flip, a.alpha * (1 - flash / 0.1), '#FFFFFF', sy, a.rot);
     }
 }
 
@@ -415,12 +432,12 @@ function cutsceneDrawActor(ctx, cs, a) {
  * @param {number} alpha
  */
 function cutsceneDrawBackground(ctx, cs, id, alpha) {
-    // 'negro' no está en el manifiesto a propósito: fondo negro sólido
-    if (id === CUTSCENE_BLACK_BG) {
+    // 'negro' y 'blanco' no están en el manifiesto a propósito: fondos lisos
+    if (CUTSCENE_PLAIN_BGS[id]) {
         if (alpha <= 0) return;
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = CUTSCENE_PLAIN_BGS[id];
         ctx.fillRect(0, 0, CUTSCENE_W, CUTSCENE_H);
         ctx.restore();
         return;
@@ -564,7 +581,7 @@ function cutsceneActorStep(cs, step) {
         let h = 0;
         for (const ch of step.id) h = (h * 31 + ch.charCodeAt(0)) | 0;
         a = { id: step.id, sprite: null, frames: null, fps: 3, x: 0, y: 0, s: 1, flip: false, alpha: 1,
-              bob: null, moving: false, flashAt: -9, color: null, phase: vfxHash(h) * 3 };
+              bob: null, moving: false, flashAt: -9, color: null, phase: vfxHash(h) * 3, rot: 0 };
         cs.actors.set(step.id, a);
     }
     if (step.sprite) { a.sprite = step.sprite; a.frames = null; }
@@ -586,6 +603,7 @@ function cutsceneActorStep(cs, step) {
  */
 function cutsceneClear(cs, keep) {
     cs.actors.clear();
+    csConsoleClear(cs);
     cs.tweens = cs.tweens.filter((tw) => !tw.actor);
     cs.fx = cs.fx.filter((f) => {
         if (keep.includes(f.type)) return true;
@@ -600,12 +618,31 @@ function cutsceneClear(cs, keep) {
 }
 
 /**
+ * La fábrica de un tipo de efecto: los de siempre (cutscene/fx.js) o los
+ * del final (cutscene/fx-final.js).
+ * @param {string} type
+ */
+function cutsceneFxFactory(type) {
+    return CUTSCENE_FX[type] || CUTSCENE_FX_FINAL[type] || null;
+}
+
+/**
  * Paso `fx`. La lluvia es una sola: otro paso `rain` cambia su densidad
- * o la apaga (`on: false`).
+ * o la apaga (`on: false`). Con `off`, quita el efecto de ese tipo que
+ * esté en marcha (fake_menu, bust_glitch). Devuelve el efecto creado.
  * @param {CutsceneRun} cs
  * @param {CutsceneStep} step
+ * @returns {CutsceneFx|null}
  */
 function cutsceneStartFx(cs, step) {
+    if (step.off) {
+        cs.fx = cs.fx.filter((f) => {
+            if (f.type !== step.type) return true;
+            if (f.end) f.end(cs, false);
+            return false;
+        });
+        return null;
+    }
     if (step.type === 'rain') {
         const rain = cs.fx.find((f) => f.type === 'rain');
         if (step.on === false) {
@@ -614,16 +651,17 @@ function cutsceneStartFx(cs, step) {
         }
         if (rain) {
             rain.setDensity(step.density ?? 1);
-            return;
+            return null;
         }
     }
-    const make = CUTSCENE_FX[step.type];
+    const make = cutsceneFxFactory(step.type);
     if (!make) {
         console.warn('Escena: efecto desconocido', step.type);
-        return;
+        return null;
     }
     const fx = make(step, cs);
     if (fx) cs.fx.push(fx);
+    return fx;
 }
 
 /**
@@ -681,6 +719,7 @@ function cutsceneRunStep(cs, step) {
             if (step.x !== undefined) cutsceneTween(cs, a, 'x', step.x, step.dur, step.ease, step.delay);
             if (step.y !== undefined) cutsceneTween(cs, a, 'y', step.y, step.dur, step.ease, step.delay);
             if (step.s !== undefined) cutsceneTween(cs, a, 's', step.s, step.dur, step.ease, step.delay);
+            if (step.rot !== undefined) cutsceneTween(cs, a, 'rot', step.rot, step.dur, step.ease, step.delay);
             break;
         case 'fade':
             if (a) cutsceneTween(cs, a, 'alpha', step.alpha, step.dur, 'linear', step.delay);
@@ -706,10 +745,18 @@ function cutsceneRunStep(cs, step) {
             return cutsceneStartCard(cs, step);
         case 'wait':
             return { kind: 'wait', until: cs.t + (step.dur || 0) };
-        case 'fx':
-            if (step.delay) cutsceneLater(cs, step.delay, () => cutsceneStartFx(cs, step));
-            else cutsceneStartFx(cs, step);
+        case 'fx': {
+            if (step.delay) {
+                cutsceneLater(cs, step.delay, () => cutsceneStartFx(cs, step));
+                break;
+            }
+            const fx = cutsceneStartFx(cs, step);
+            // Los que bloquean: la consola, la ventana, la caja del nombre y
+            // los créditos verdaderos
+            const blocks = fx && CUTSCENE_BLOCKING_FX.includes(step.type) && !(step.type === 'credits' && step.mode !== 'verdadero');
+            if (blocks) return { kind: 'fx', step, fx };
             break;
+        }
         case 'music':
             if (step.stop) musicStop({ fade: step.fade ?? 0.5 });
             else if (MUSIC_TRACKS[step.track]) musicPlay(step.track, { fade: step.fade ?? 0.5, from: /** @type {number} */ (step.from) });
@@ -771,6 +818,8 @@ function cutsceneAdvanceSteps(cs) {
  * @param {number} idx
  */
 function cutsceneStartScene(cs, idx) {
+    // La consola se queda solo dentro de su escena
+    if (idx > 0) csConsoleClear(cs);
     cs.sceneIdx = idx;
     cs.stepIdx = 0;
     cs.sceneT0 = cs.t;
@@ -830,8 +879,9 @@ function cutsceneDrawPortrait(cs, id) {
 function cutsceneStartText(cs, step) {
     const d = cs.dom;
     const narrate = step.do === 'narrate';
+    const { full, tokens } = cutsceneFillTokens(step.text || '');
     /** @type {CutsceneBlock} */
-    const b = { kind: narrate ? 'narrate' : 'say', step, full: step.text || '', n: 0, shown: -1, complete: false,
+    const b = { kind: narrate ? 'narrate' : 'say', step, full, tokens, n: 0, shown: -1, complete: false,
                 autoAt: step.auto ? cs.realT + step.auto : null,
                 shownEl: narrate ? d.narrationShown : d.lineShown, restEl: narrate ? d.narrationRest : d.lineRest,
                 portrait: narrate ? null : step.portrait || null };
@@ -842,8 +892,13 @@ function cutsceneStartText(cs, step) {
         const color = cutsceneColor(step.color);
         d.dialogue.style.setProperty('--c', color);
         d.speaker.textContent = step.name || '';
+        // El Creador: sin nombre ni retrato, el borde que tiembla y letra de consola
+        const creator = step.style === 'creator';
+        if (creator) b.portrait = null;
         d.dialogue.classList.toggle('has-portrait', !!b.portrait);
         d.dialogue.classList.toggle('is-radio', !!step.radio);
+        d.dialogue.classList.toggle('is-creator', creator);
+        d.portrait.classList.toggle('is-glitch', !!step.glitch && !cs.reduced);
         d.dialogue.classList.remove('is-done');
         d.dialogue.classList.add('is-on');
         if (b.portrait && cutsceneDrawPortrait(cs, b.portrait)) b.portrait = null;
@@ -863,8 +918,75 @@ function cutsceneStartText(cs, step) {
 function cutsceneShowLine(b, count) {
     if (count === b.shown) return;
     b.shown = count;
-    b.shownEl.textContent = b.full.slice(0, count);
-    b.restEl.textContent = b.full.slice(count);
+    if (!b.tokens || !b.tokens.length) {
+        b.shownEl.textContent = b.full.slice(0, count);
+        b.restEl.textContent = b.full.slice(count);
+        return;
+    }
+    cutscenePaintTokens(b.shownEl, b.full, 0, count, b.tokens);
+    cutscenePaintTokens(b.restEl, b.full, count, b.full.length, b.tokens);
+}
+
+/**
+ * Pinta full[from, to) en `el`, con cada tramo de ficha en un
+ * <span class="cs-token"> (con nodos de texto: nunca innerHTML).
+ * @param {HTMLElement} el
+ * @param {string} full
+ * @param {number} from
+ * @param {number} to
+ * @param {number[][]} tokens
+ */
+function cutscenePaintTokens(el, full, from, to, tokens) {
+    el.replaceChildren();
+    let i = from;
+    for (const [s, e] of tokens) {
+        if (e <= i || s >= to) continue;
+        if (s > i) el.appendChild(document.createTextNode(full.slice(i, s)));
+        const span = document.createElement('span');
+        span.className = 'cs-token';
+        span.textContent = full.slice(Math.max(s, i), Math.min(e, to));
+        el.appendChild(span);
+        i = Math.min(e, to);
+    }
+    if (i < to) el.appendChild(document.createTextNode(full.slice(i, to)));
+}
+
+/**
+ * Las fichas de la cuarta pared, con los datos reales del jugador:
+ * {partidas}, {monedas}, {nivel} y {dispositivo}.
+ * @returns {Record<string, string>}
+ */
+function cutsceneTokenValues() {
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    return {
+        partidas: String(gameStats.totalGamesPlayed || 0),
+        // Con punto de miles también en 4 cifras (toLocaleString no lo pone)
+        monedas: String(Math.floor(playerProgression.coins || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+        nivel: String(getCurrentLevel().level),
+        dispositivo: coarse ? 'el teléfono en la mano' : 'la mano en el ratón'
+    };
+}
+
+/**
+ * Sustituye las fichas de un texto y devuelve dónde quedó cada una.
+ * @param {string} text
+ * @returns {{ full: string, tokens: number[][] }}
+ */
+function cutsceneFillTokens(text) {
+    if (!text.includes('{')) return { full: text, tokens: [] };
+    const values = cutsceneTokenValues();
+    /** @type {number[][]} */
+    const tokens = [];
+    let full = '';
+    let last = 0;
+    for (const m of text.matchAll(/\{(partidas|monedas|nivel|dispositivo)\}/g)) {
+        full += text.slice(last, m.index);
+        const v = values[m[1]];
+        tokens.push([full.length, full.length + v.length]);
+        full += v;
+        last = m.index + m[0].length;
+    }
+    return { full: full + text.slice(last), tokens };
 }
 
 /**
@@ -979,12 +1101,24 @@ function cutsceneEndCard(cs) {
 function cutsceneTick(cs, realDt) {
     cs.realT += realDt;
 
-    // Mantener ESPACIO o el dedo: el anillo de SALTAR se llena
-    cs.hold.t = cs.hold.key || cs.hold.pointer ? cs.hold.t + realDt : 0;
+    // Mantener ESPACIO o el dedo: el anillo de SALTAR se llena. Durante
+    // los créditos verdaderos salta solo los créditos (también la primera
+    // vez); en una película que aún no se puede saltar, nada más
+    const credits = cs.block && cs.block.kind === 'fx' && cs.block.fx.type === 'credits';
+    const canHold = credits || !cs.noSkip;
+    cs.hold.t = canHold && (cs.hold.key || cs.hold.pointer) ? cs.hold.t + realDt : 0;
     cs.dom.ring.style.strokeDashoffset = String(100 * (1 - Math.min(1, cs.hold.t / CUTSCENE_HOLD_S)));
     if (cs.hold.t >= CUTSCENE_HOLD_S && cs.phase !== 'chapter') {
-        cutsceneSkip();
-        return;
+        cs.hold = { key: false, pointer: false, t: 0 };
+        if (credits) {
+            const fx = cs.block.fx;
+            cs.fx = cs.fx.filter((f) => f !== fx);
+            if (fx.end) fx.end(cs, false);
+            cs.block = null;
+        } else {
+            cutsceneSkip();
+            return;
+        }
     }
 
     if (cs.phase === 'loading') {
@@ -1058,6 +1192,7 @@ function cutsceneTick(cs, realDt) {
         if (b.kind === 'wait' && cs.t >= b.until) cs.block = null;
         else if (b.kind === 'say' || b.kind === 'narrate') cutsceneTickText(cs, realDt);
         else if (b.kind === 'card' && cs.realT >= b.until) cutsceneEndCard(cs);
+        else if (b.kind === 'fx' && !cs.fx.includes(b.fx)) cs.block = null;
     }
     cutsceneAdvanceSteps(cs);
     cutsceneTickFocus(cs, realDt);
@@ -1189,7 +1324,10 @@ function cutsceneResetDom() {
     for (const el of [d.dialogue, d.narration, d.card, d.title, d.chapter, d.crt]) el.classList.remove('is-on', 'is-done');
     d.canvas.classList.remove('is-off');
     d.canvas.style.filter = '';
-    d.section.classList.remove('is-loading');
+    d.section.classList.remove('is-loading', 'is-fake-menu', 'has-credits');
+    d.dialogue.classList.remove('is-creator');
+    d.portrait.classList.remove('is-glitch');
+    d.section.querySelectorAll('.cs-dom-fx').forEach((el) => el.remove());
     d.ring.style.strokeDashoffset = '100';
 }
 
@@ -1221,7 +1359,8 @@ function cutsceneAdvance() {
  */
 function cutsceneSkip() {
     const cs = cutsceneRun;
-    if (!cs || cs.phase === 'chapter') return;
+    // La primera vez de una película noSkipFirstTime no se salta
+    if (!cs || cs.phase === 'chapter' || cs.noSkip) return;
     soundEffects.uiClick();
     cutsceneClear(cs, []);
     cs.timers = [];
@@ -1252,6 +1391,10 @@ function cutsceneSkip() {
 function cutsceneKey(e, down) {
     const cs = cutsceneRun;
     if (!cs) return;
+    // Escribiendo en la caja del nombre o con el foco en la ventana falsa,
+    // las teclas son suyas (ENTER, TAB, letras)
+    const target = /** @type {Element|null} */ (e.target instanceof Element ? e.target : null);
+    if (target && target.closest('.cs-namebox, .sys-window')) return;
     if (['Space', 'Enter', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     if (!down) {
         if (e.code === 'Space') cs.hold.key = false;
@@ -1293,7 +1436,8 @@ function playCutscene(def, { onEnd } = {}) {
         shakeX: 0, shakeY: 0, slowmo: null, frozen: false, loops: new Map(), unduck: null, fitW: null,
         view: null, dom, raf: 0, lastNow: performance.now(),
         hold: { key: false, pointer: false, t: 0 }, blips: 0,
-        reduced: prefersReducedMotion(), chapterEnd: 0, loadTotal: 0, loadDone: 0, aux: null
+        reduced: prefersReducedMotion(), chapterEnd: 0, loadTotal: 0, loadDone: 0, aux: null,
+        noSkip: !!def.noSkipFirstTime && !(playerProgression.campaignSeen || {})[def.id], consoleEl: null
     };
     cutsceneRun = cs;
 
@@ -1302,6 +1446,7 @@ function playCutscene(def, { onEnd } = {}) {
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active-screen'));
     dom.section.classList.add('active-screen');
     dom.section.classList.toggle('is-reduced', cs.reduced);
+    dom.section.classList.toggle('is-noskip', cs.noSkip);
     dom.section.classList.add('is-loading');
     musicStop();
     cutsceneLayout();
@@ -1358,6 +1503,11 @@ function cutsceneProgress() {
  */
 function cutsceneFinish(cs) {
     if (cutsceneRun !== cs) return;
+    // Las que no se saltan la primera vez quedan vistas (y ya se pueden saltar)
+    if (cs.def.noSkipFirstTime) {
+        playerProgression.campaignSeen = { ...(playerProgression.campaignSeen || {}), [cs.def.id]: true };
+        saveProgression();
+    }
     const onEnd = cs.onEnd;
     stopCutscene();
     if (onEnd) onEnd();
@@ -1370,7 +1520,7 @@ function cutsceneFinish(cs) {
 function initCutscene() {
     const section = document.getElementById('cutscene-screen');
     section.addEventListener('pointerdown', (e) => {
-        if (!cutsceneRun || /** @type {Element} */ (e.target).closest('button')) return;
+        if (!cutsceneRun || /** @type {Element} */ (e.target).closest('button, input, .cs-namebox, .sys-window')) return;
         cutsceneRun.hold.pointer = true;
     });
     const release = () => {

@@ -123,6 +123,8 @@ const CUTSCENE_FX = {
     crt_off(step, cs) {
         const t0 = cs.t;
         cutsceneDomAnim(cs.dom.canvas, 'is-off', step.dur);
+        // Las piezas DOM que sigan en pantalla (los créditos rotos) se apagan igual
+        cs.dom.section.querySelectorAll('.cs-dom-fx').forEach((el) => cutsceneDomAnim(el, 'is-off', step.dur));
         // La imagen se queda apagada hasta el final (la tarjeta del capítulo va encima)
         return { type: 'crt_off', layer: 'screen', done: (c) => c.t - t0 >= step.dur };
     },
@@ -147,11 +149,14 @@ const CUTSCENE_FX = {
     // Tapan la vista desde el primer fotograma: la escena empieza «desde
     // dentro del ascensor». Tras un instante con el LED del piso, se abren
     // hacia los lados en `dur`. Con movimiento reducido, un fundido.
+    // Con `count` (['3', '4']) el LED pasa antes por cada valor: la cuenta
+    // se come el 55 % de `dur` y las puertas se abren en el resto.
     elevator_open(step, cs) {
         const t0 = cs.t;
-        const hold = 0.3;
-        const dur = Math.max(0.1, step.dur || 0.9);
-        const floor = step.floor || '';
+        const count = Array.isArray(step.count) ? step.count : null;
+        const total = Math.max(0.1, step.dur || 0.9);
+        const hold = count ? total * 0.55 : 0.3;
+        const dur = count ? total - hold : total;
         return {
             type: 'elevator_open', layer: 'screen',
             done: (c) => c.t - t0 >= hold + dur,
@@ -200,6 +205,9 @@ const CUTSCENE_FX = {
                 ctx.fillStyle = '#F87171';
                 ctx.shadowColor = '#EF4444';
                 ctx.shadowBlur = 10;
+                const floor = count
+                    ? count[Math.min(count.length - 1, Math.floor((c.t - t0) / (hold / count.length)))]
+                    : step.floor || '';
                 ctx.fillText(floor, half, 18 + lh / 2 + 2);
                 ctx.restore();
             }
@@ -494,9 +502,13 @@ const CUTSCENE_FX = {
     glitch(step, cs) {
         if (cs.reduced) return null;
         const t0 = cs.t;
+        // Las piezas DOM de encima (créditos, consola) tiemblan a la vez
+        const dom = [...cs.dom.section.querySelectorAll('.cs-dom-fx')];
+        dom.forEach((el) => el.classList.add('is-glitching'));
         return {
             type: 'glitch', layer: 'screen',
             done: (c) => c.t - t0 >= step.dur,
+            end: () => dom.forEach((el) => el.classList.remove('is-glitching')),
             render(ctx, c) {
                 const canvas = c.dom.canvas;
                 const W = canvas.width;
@@ -569,18 +581,31 @@ const CUTSCENE_FX = {
     },
 
     // --- El fondo cambia con un círculo que crece ---------------------
+    // Con mode 'shutters', en 6 franjas verticales que suben de abajo
+    // arriba desfasadas 0,15 s: persianas que se abren local a local.
     wipe(step, cs) {
         const t0 = cs.t;
         const to = /** @type {string} */ (step.to);
-        const maxR = Math.max(...[[0, 0], [960, 0], [0, 540], [960, 540]].map(([x, y]) => Math.hypot(x - step.cx, y - step.cy)));
+        const shutters = step.mode === 'shutters';
+        const maxR = shutters ? 0 : Math.max(...[[0, 0], [960, 0], [0, 540], [960, 540]].map(([x, y]) => Math.hypot(x - step.cx, y - step.cy)));
+        const N = 6, lag = 0.15;
         return {
             type: 'wipe', layer: 'bg',
             done: (c) => c.t - t0 >= step.dur,
             render(ctx, c) {
-                const p = cutsceneEase('inOut', Math.min(1, (c.t - t0) / step.dur));
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(step.cx, step.cy, maxR * p, 0, Math.PI * 2);
+                if (shutters) {
+                    const each = Math.max(0.05, step.dur - lag * (N - 1));
+                    const w = CUTSCENE_W / N;
+                    for (let i = 0; i < N; i++) {
+                        const p = cutsceneEase('inOut', Math.max(0, Math.min(1, (c.t - t0 - i * lag) / each)));
+                        ctx.rect(i * w, CUTSCENE_H * (1 - p), w + 0.5, CUTSCENE_H * p);
+                    }
+                } else {
+                    const p = cutsceneEase('inOut', Math.min(1, (c.t - t0) / step.dur));
+                    ctx.arc(step.cx, step.cy, maxR * p, 0, Math.PI * 2);
+                }
                 ctx.clip();
                 cutsceneDrawBackground(ctx, c, to, 1);
                 ctx.restore();

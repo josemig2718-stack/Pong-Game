@@ -33,6 +33,7 @@ const DEFAULT_PROGRESSION = {
     campaignIntroSeen: false, // si ya vio la historia inicial
     campaignBest: {},         // récord por jefe: { [nivel]: { won, bestPhase, flawless } } (campaign/progress.js)
     campaignArrivals: {},     // escenas de llegada ya vistas: { [nivel]: true } (campaign/menu.js)
+    campaignSeen: {},         // películas noSkipFirstTime ya vistas: { [id]: true } (cutscene/player.js)
     missions: null,           // misiones del día y de la semana (systems/missions.js)
     missionsCompleted: 0,
     weeklyCompleted: 0,
@@ -75,7 +76,8 @@ function loadProgression() {
                 // Una categoría nueva toma su valor por defecto
                 equipped: { ...DEFAULT_PROGRESSION.equipped, ...parsed.equipped },
                 campaignBest: { ...(parsed.campaignBest || {}) },
-                campaignArrivals: { ...(parsed.campaignArrivals || {}) }
+                campaignArrivals: { ...(parsed.campaignArrivals || {}) },
+                campaignSeen: { ...(parsed.campaignSeen || {}) }
             };
         }
         discardOldSave(PROG_STORAGE_KEY_V1);
