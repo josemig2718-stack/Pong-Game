@@ -1017,18 +1017,12 @@ function pickRandomTrack() {
 }
 
 /**
- * Música de partida según el modo: el rap de los Hachepes en Hachepe y
- * campaña, silencio contra el Creador y la de la Rockola
- * (state.matchTrack) en el resto.
+ * Música de partida según el modo: la del jefe en campaña (jefe_hachepe,
+ * o la suya: yisus_trono, creador_batalla), el rap en Hachepe y la de la
+ * Rockola (state.matchTrack) en el resto.
  * @param {string} [mode]
  */
 function playGameplayMusic(mode = 'cpu') {
-    // El combate contra El Creador va en silencio: la tensión la llevan
-    // los tonos sintetizados del propio jefe.
-    if (mode === 'campaign' && currentCampaignLevel === CAMPAIGN_CREATOR) {
-        musicStop();
-        return;
-    }
     // Los jefes de campaña comparten su pista (jefe_hachepe, con el rap de
     // respaldo) salvo los que traen la suya (Yisus: yisus_trono, que ya
     // suena desde su llegada y no se reinicia); el Modo Hachepe, el rap

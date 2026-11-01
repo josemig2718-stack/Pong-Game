@@ -57,6 +57,8 @@ function prepareCampaignMatch(level, opts) {
     }
 
     if (isCreator && soundEffects.glitch) soundEffects.glitch();
+    // La batalla del Creador empieza con su VS y sigue en el combate
+    if (isCreator) musicPlay('creador_batalla', { fade: 0.2 });
 
     setTimeout(() => {
         startCampaignGame();

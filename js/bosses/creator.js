@@ -25,6 +25,7 @@ const CREATOR_TONES = {
 
 /** @type {BossMechanics} */
 const bossCreator = {
+    music: 'creador_batalla',
     config: {
         targetScore: 8,        // aquí es el nº de fallos permitidos al jugador
         aiSpeed: 1.0,

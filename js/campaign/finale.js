@@ -3,10 +3,11 @@
  * ------------------------------------------------------------------
  * Los desenlaces de la campaña.
  *
- * Vencer a Yisus no lleva a la pantalla de fin: dispara el falso final
- * (victoria falsa → la música se deforma → apagón CRT → el Creador se
- * revela → VS). Vencer al Creador dispara el final verdadero. checkWin()
- * los reconoce con su `narrativeEnding` y se salta la pantalla normal.
+ * Vencer a Yisus no lleva a la pantalla de fin: tras su diálogo `lose`
+ * empiezan el falso final y la introducción del Creador (películas de
+ * data/cutscenes/final.js) y luego su VS. Vencer al Creador dispara el
+ * final verdadero. checkWin() los reconoce con su `narrativeEnding` y se
+ * salta la pantalla normal.
  *
  * El giro sostiene la historia: nada del Creador debe filtrarse antes.
  * ------------------------------------------------------------------
@@ -53,176 +54,28 @@ function clearFinaleTimers() {
     finaleTimers = [];
 }
 
-/** Apagado / encendido del tubo. */
-function crtShutdown() {
-    const el = document.getElementById('crt-collapse');
-    if (!el) return;
-    el.className = '';
-    void el.offsetWidth;          // reinicia la animación si se repite
-    el.classList.add('shutdown');
-    playCrtShutdownSound();
-}
-
-/** El punto del tubo apagado, encendido o no. */
-function crtDot(on) {
-    const el = document.getElementById('crt-collapse');
-    if (!el) return;
-    el.classList.toggle('dot', !!on);
-}
-
-/** Reencendido del monitor. */
-function crtTurnOn() {
-    const el = document.getElementById('crt-collapse');
-    if (!el) return;
-    el.classList.remove('dot', 'shutdown');
-    void el.offsetWidth;
-    el.classList.add('turn-on');
-    sfxVoice({ type: 'square', freq: 90, decay: 0.05 });
-    sfxVoice({ type: 'square', freq: 1400, decay: 0.03, when: 0.06 });
-    setTimeout(() => { el.className = 'hidden'; }, 900);
-}
-
-/** Zumbido descendente de un tubo apagándose: 450 → 100 Hz y un golpe grave. */
-function playCrtShutdownSound() {
-    const PASO = 0.055;
-    let i = 1;
-    for (let f = 450; f > 60; f -= 70, i++) {
-        sfxVoice({ type: 'sine', freq: f, decay: 0.09, when: i * PASO });
-    }
-    sfxVoice({ type: 'sine', freq: 45, decay: 0.5, when: i * PASO });
-}
-
 /**
- * Falso final tras vencer a Yisus.
- * victoria falsa → la señal se corrompe → apagón CRT → silencio →
- * reencendido en terminal → el ojo → VS El Creador.
+ * Falso final tras vencer a Yisus (al cerrarse su diálogo `lose`):
+ *   campaignProgress = 6 (se guarda ya: si se cierra el juego aquí, el
+ *   sótano queda abierto) → FALSO_FINAL → CREADOR_INTRO → VS del Creador.
+ * Las dos películas no se pueden saltar la primera vez (noSkipFirstTime);
+ * al repetir a Yisus ya vencido sí, y saltar el falso final lleva directo
+ * a la introducción. La ruptura de los créditos frena y apaga su música.
  */
 function runFinaleSequence() {
     stopDialogue();
     clearFinaleTimers();
     state.isPlaying = false;
+    document.getElementById('canvas-wrapper').classList.remove('is-timestop');
 
-    playerProgression.campaignProgress = CAMPAIGN_CREATOR;
+    playerProgression.campaignProgress = Math.max(playerProgression.campaignProgress, CAMPAIGN_CREATOR);
     saveProgression();
 
-    const screen = document.getElementById('finale-screen');
-    const eye = document.getElementById('finale-eye');
-    if (eye) eye.classList.add('hidden');
-
-    // --- 1. Victoria falsa: cuanto más sincera, más duele lo que viene ---
-    showScreen('finale-screen');
-    if (screen) screen.classList.remove('glitching');
-    showFinaleText(
-        '<h2>HAS RECUPERADO<br>TU CIUDAD</h2>' +
-        '<p>Los cinco Hachepes han caído.</p>' +
-        '<p>Nadie sabe tu nombre, pero hoy todos te lo deben.</p>',
-        'finale-victory'
-    );
-    triggerGoalConfetti(GAME_WIDTH / 2, GAME_HEIGHT / 2);
-    soundEffects.win();
-    playVictoryJingle();
-
-    // --- 2. La señal se corrompe ---
-    finaleStep(3600, () => {
-        warpMusic();
-        if (screen) screen.classList.add('glitching');
-        soundEffects.glitch();
+    playCutscene(FALSO_FINAL, {
+        onEnd: () => playCutscene(CREADOR_INTRO, {
+            onEnd: () => prepareCampaignMatch(CAMPAIGN_CREATOR, { slam: true })
+        })
     });
-
-    // --- 3. La voz que no debería estar ahí ---
-    finaleStep(4600, () => {
-        showFinaleText(
-            '<p class="finale-voice">"Buen trabajo, amigo.<br>' +
-            'Los derrotaste a todos, eres un héroe y salvaste tu ciudad.<br>' +
-            'Eres el protagonista del día de hoy...<br><br>' +
-            '...o eso parece."</p>',
-            'finale-crack'
-        );
-    });
-
-    // --- 4. Apagado del monitor ---
-    finaleStep(11000, () => {
-        stopAllMusic();
-        hideFinaleText();
-        if (screen) screen.classList.remove('glitching');
-        crtShutdown();
-    });
-
-    // --- 5. Negro y silencio: el punto del tubo aún late ---
-    finaleStep(12100, () => crtDot(true));
-
-    // --- 6. Reencendido: ya no es el juego, es una consola ---
-    finaleStep(15000, () => {
-        crtDot(false);
-        crtTurnOn();
-        showFinaleText('', 'finale-reveal finale-caret');
-    });
-
-    finaleStep(15700, () => {
-        typeRevealText(
-            'Pero todo esto no es real. Solo es un videojuego.\n' +
-            'Te veo a través de la pantalla. Sé que estás ahí.\n' +
-            'Sé cómo eres.\n\n' +
-            'Después de todo...\n\n' +
-            'Yo... soy El Creador.'
-        );
-    });
-
-    // --- 7. El ojo se abre y te mira ---
-    finaleStep(24000, () => {
-        if (!eye) return;
-        eye.classList.remove('hidden');
-        eye.classList.add('opening');
-        soundEffects.bossVanish();
-    });
-
-    // --- 8. Golpe a la pantalla VS ---
-    finaleStep(27000, () => {
-        if (eye) { eye.classList.add('hidden'); eye.classList.remove('opening'); }
-        hideFinaleText();
-        soundEffects.glitch();
-        prepareCampaignMatch(CAMPAIGN_CREATOR, { slam: true });
-    });
-}
-
-/** Escribe el texto de la revelación con ruido que se asienta. */
-function typeRevealText(text) {
-    const el = document.getElementById('finale-text');
-    if (!el) return;
-    const GLITCH = '#@%&$?/\\|<>*';
-    let i = 0;
-    clearTypewriter();
-    startTypewriter(() => {
-        if (i > text.length) {
-            clearTypewriter();
-            el.textContent = text;
-            return;
-        }
-        const asentado = text.slice(0, i);
-        const ruido = text.slice(i, i + 3).replace(/[^\n]/g, () => GLITCH[Math.floor(Math.random() * GLITCH.length)]);
-        el.textContent = asentado + ruido;
-        if (i % 5 === 0 && soundEffects.dialogueBlip) soundEffects.dialogueBlip();
-        if (i % 23 === 0 && soundEffects.glitch) soundEffects.glitch();
-        i++;
-    }, 45);
-}
-
-/**
- * Deforma la música en curso bajando su velocidad hasta desafinarla. Sin
- * pista en curso no hace nada.
- * BUG conocido (conservado): hoy nunca la hay, porque checkWin() para la
- * música antes de runFinaleSequence(); el falso final suena sin música.
- */
-function warpMusic() {
-    let rate = 1;
-    const warp = setInterval(() => {
-        rate -= 0.06;
-        if (rate <= 0.35) {
-            clearInterval(warp);
-            rate = 0.35;
-        }
-        musicSetRate(rate);
-    }, 220);
 }
 
 /** Restaura la velocidad normal (al salir de la secuencia). */

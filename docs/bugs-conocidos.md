@@ -57,8 +57,13 @@ Arreglados de paso por el sistema de progreso nuevo (`design/actualizacion-v2/fa
 |---|---|---|---|
 | Las compras se guardaban sin su categoría, y hay ids repetidos (`classic` es paleta y efecto de gol): tener uno daba el otro | `systems/progression.js` | `owned` guarda `'categoría:id'` (clave `pongGame.progression.v2`) | `38a3995` |
 
+### Final de la campaña · F.5
+
+| Bug | Dónde | Arreglo | Commit |
+|---|---|---|---|
+| El falso final no deformaba ninguna música: `checkWin()` paraba la pista antes de `runFinaleSequence()`, así que `warpMusic()` no tenía nada que ralentizar | `game/match.js`, `campaign/finale.js` | El falso final es ahora una película con su pista (`falso_final`); la ruptura de los créditos la frena (1 → 0,4) y la apaga. `warpMusic()` desaparece | F.5 |
+
 ## Conservados
 
 | Bug | Dónde | Por qué se conserva |
 |---|---|---|
-| El falso final no deforma ninguna música: `checkWin()` para la pista antes de `runFinaleSequence()`, así que `warpMusic()` no tiene nada que ralentizar | `game/match.js`, `campaign/finale.js` | Encontrado en la fase 1 v2 (audio). Se decidió que el reproductor nuevo sonara igual que antes; cambiarlo es una decisión de diseño pendiente |

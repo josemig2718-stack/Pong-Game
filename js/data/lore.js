@@ -33,7 +33,7 @@ const CAMPAIGN_CREATOR = 6;     // nivel secreto
  * `bust` (y `bust2`) su busto en CAMPAIGN_ART.bustos. `title` es su
  * alias, el de su tarjeta en el prólogo; `image` (e `image2`), el busto
  * que se ve en la pantalla VS, el diálogo, el HUD y el fin de combate.
- * El Creador usa el de Chemi: es él (el giro).
+ * El Creador tiene el suyo (creador), que solo aparece tras su revelación.
  */
 const HACHEPES_LORE = {
     1: {
@@ -250,10 +250,10 @@ const HACHEPES_LORE = {
         }
     },
     6: {
-        floor: 'S', room: 'Sótano', bust: 'chemi',
+        floor: 'S', room: 'Sótano', bust: 'creador',
         name: 'El Creador',
         title: '¿?¿?¿?',
-        image: 'assets/campaign/bustos/chemi.webp',
+        image: 'assets/campaign/bustos/creador.webp',
         danger: 'ERROR',
         desc: '???',
         dialogues: {
