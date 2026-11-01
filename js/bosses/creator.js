@@ -395,6 +395,9 @@ function creatorDrawSummon(ctx) {
  */
 function creatorRotate(on) {
     if (bossState.rotated === on) return;
+    // Los power-ups no saben de la arena girada: fuera los de los dos, antes
+    // de cambiar la forma de las palas (restauran la altura que guardaron)
+    clearPowerupsForPhase();
     bossState.rotated = on;
     for (const b of state.balls) {
         const { x, y, dx, dy } = b;
@@ -412,15 +415,14 @@ function creatorRotate(on) {
         b.trail = [];
     }
     for (const p of [p1, p2]) {
+        const len = paddleHeight;
         if (on) {
-            const len = p.height;
             const cx = (p.y + p.height / 2) / GAME_HEIGHT * GAME_WIDTH;
             p.width = len;
             p.height = paddleWidth;
             p.x = Math.max(0, Math.min(GAME_WIDTH - len, cx - len / 2));
             p.y = p === p1 ? GAME_HEIGHT - 30 : 15;
         } else {
-            const len = p.width;
             const cy = (p.x + p.width / 2) / GAME_WIDTH * GAME_HEIGHT;
             p.height = len;
             p.width = paddleWidth;
@@ -432,8 +434,6 @@ function creatorRotate(on) {
         p.touchX = null;
         p.touchY = null;
     }
-    // Los power-ups no saben de la arena girada: fuera los de los dos
-    clearPowerupsForPhase();
 }
 
 /**
@@ -813,7 +813,7 @@ const bossCreator = {
         const now = creatorNow();
         const live = state.serveCountdownMs <= 0;
         if (bossState.rulesOn && live) creatorTickRules(now);
-        if (bossState.rulesOn) creatorApplyRules(dt);
+        if (bossState.rulesOn || bossState.rotated) creatorApplyRules(dt);
         if (bossState.summonOn && live) creatorTickSummon(now, dt);
         if (bossState.echoEl && now >= bossState.echoUntil) {
             bossState.echoEl.remove();

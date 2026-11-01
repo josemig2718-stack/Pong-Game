@@ -346,17 +346,19 @@ function applyPowerup(type, beneficiary) {
     activeEffects.push(effect);
 
     switch (type.id) {
+        // En la arena girada el largo de la pala es su ancho: lo pone el jefe
+        // (bosses/creator.js, creatorBaseLength), no se toca la altura
         case 'paddle_xl': {
             const paddle = sidePaddle(target);
             effect.originalValues.height = paddle.height;
-            paddle.height = paddleHeight * 1.6;
+            if (!bossIsRotatedArena()) paddle.height = paddleHeight * 1.6;
             break;
         }
 
         case 'paddle_mini': {
             const paddle = sidePaddle(target);
             effect.originalValues.height = paddle.height;
-            paddle.height = paddleHeight * 0.6;
+            if (!bossIsRotatedArena()) paddle.height = paddleHeight * 0.6;
             break;
         }
 
@@ -438,7 +440,7 @@ function revertPowerup(effect, { silent = false } = {}) {
     switch (effect.type.id) {
         case 'paddle_xl':
         case 'paddle_mini':
-            sidePaddle(effect.target).height = effect.originalValues.height;
+            if (!bossIsRotatedArena()) sidePaddle(effect.target).height = effect.originalValues.height;
             break;
 
         case 'big_ball':
