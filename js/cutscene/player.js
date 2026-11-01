@@ -77,9 +77,11 @@
  * Una película: sus escenas y el nombre de la constante global con su
  * manifiesto (así los datos no dependen del orden de carga).
  * `noSkipFirstTime`: la primera vez no se puede saltar (se recuerda en
- * playerProgression.campaignSeen[id]).
+ * playerProgression.campaignSeen[id]). `keepMusic`: al saltarla, la
+ * música que suena sigue (la llegada al trono: su pista sigue en la VS y
+ * en el combate).
  * @typedef {{ id: string, assets: string, endCard?: string, noSkipFirstTime?: boolean,
- *             scenes: CutsceneScene[] }} Cutscene
+ *             keepMusic?: boolean, scenes: CutsceneScene[] }} Cutscene
  */
 
 /**
@@ -1370,7 +1372,7 @@ function cutsceneSkip() {
     cs.hold = { key: false, pointer: false, t: 0 };
     cutsceneHideText(cs);
     cutsceneResetDom();
-    musicStop({ fade: 0.3 });
+    if (!cs.def.keepMusic) musicStop({ fade: 0.3 });
     const chapter = cs.def.scenes.flatMap((s) => s.steps).find((s) => s.do === 'fx' && s.type === 'chapter');
     // Sin capítulo ni tarjeta final (las llegadas): directo a onEnd
     if (!chapter && !cs.def.endCard) {

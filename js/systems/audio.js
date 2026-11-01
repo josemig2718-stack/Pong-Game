@@ -1030,8 +1030,9 @@ function playGameplayMusic(mode = 'cpu') {
         return;
     }
     // Los jefes de campaña comparten su pista (jefe_hachepe, con el rap de
-    // respaldo); el Modo Hachepe, el rap
-    if (mode === 'campaign') musicPlay('jefe_hachepe');
+    // respaldo) salvo los que traen la suya (Yisus: yisus_trono, que ya
+    // suena desde su llegada y no se reinicia); el Modo Hachepe, el rap
+    if (mode === 'campaign') musicPlay(bossMusicTrack());
     else musicPlay(mode === 'hachepe' ? 'hachepe_rap' : (state.matchTrack || 'partida_synthwave'));
 }
 

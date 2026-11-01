@@ -25,6 +25,8 @@ const C_FINAL = {
 LLEGADAS[5] = {
     id: 'llegada_yisus',
     assets: 'PROLOGO_ASSETS',
+    // yisus_trono sigue sonando aunque se salte (F.3)
+    keepMusic: true,
     scenes: [
         {
             id: 'la_cima', steps: [

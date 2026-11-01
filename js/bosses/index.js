@@ -74,6 +74,7 @@
  * @property {(b: Ball) => ({ ball: number, trail: number }|null)} [ballAlpha]  opacidad de una bola (y su estela), o null
  * @property {(b: Ball) => ({ tint?: string, id?: string }|null)} [trailStyle]  estela propia de una bola: un color o otra estela
  * @property {(p: Paddle) => (string|null)} [paddleColor]  color de una de sus palas (p2 o la gemela), o null
+ * @property {string} [music]           su pista (clave de MUSIC_TRACKS); sin ella, jefe_hachepe
  */
 
 // Valores por defecto: cualquier campo que un jefe no defina sale de aquí.
@@ -247,6 +248,16 @@ function bossTrailStyle(b) {
 function bossPaddleColor(p) {
     const boss = currentBoss();
     return boss && boss.paddleColor ? boss.paddleColor(p) : null;
+}
+
+/**
+ * La pista del combate en curso: la del jefe (Yisus, el Creador) o la
+ * común de los Hachepes.
+ * @returns {string}
+ */
+function bossMusicTrack() {
+    const boss = currentBoss();
+    return (boss && boss.music) || 'jefe_hachepe';
 }
 
 /** Suelo propio del jefe, justo después del fondo (debajo de la red). */

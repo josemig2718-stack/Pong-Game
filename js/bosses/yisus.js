@@ -15,6 +15,8 @@
 /** @type {BossMechanics} */
 const bossYisus = {
     config: { targetScore: 7, aiSpeed: 0.98, aiError: 9,  aiBias: 48 },
+    // Arranca en su llegada (LLEGADAS[5]) y sigue sin cortarse por la VS
+    music: 'yisus_trono',
 
     init() {
         bossState.telekinesis = 0;
