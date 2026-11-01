@@ -567,8 +567,6 @@ const soundEffects = {
         sfxVoice({ type: 'sine', freq: 120, decay: 0.3 });
         sfxVoice({ type: 'sine', freq: 90, decay: 0.35, when: 0.18 });
     },
-    /** Parada de tiempo de Yisus. */
-    timeStop: () => sfxArpeggio([660, 550, 440, 330], 0.06, { type: 'sine', decay: 0.3 }),
     /** Ruido de glitch del Creador: disonancia deliberada. */
     glitch: () => {
         for (let i = 0; i < 5; i++) {
@@ -904,6 +902,79 @@ const soundEffects = {
             sfxVoice({ type: 'square', freq: 600 + sfxRandom() * 800, attack: 0.003, decay: 0.05, gain: 0.12, when: i * 0.11 });
         }
     },
+    // --- El final (guía del final, F.8) ---
+    /** El aplauso lento de Yisus: 4 palmadas, una cada 0,7 s. */
+    slowClap: () => {
+        for (let i = 0; i < 4; i++) sfxNoise({ when: i * 0.7, dur: 0.04, bandpass: 1800, q: 0.9, gain: 0.8 });
+    },
+    /** Una copa de cristal. */
+    glassClink: () => {
+        sfxVoice({ type: 'sine', freq: 2600, attack: 0.002, decay: 0.4, gain: 0.22 });
+        sfxVoice({ type: 'sine', freq: 3900, attack: 0.002, decay: 0.4, gain: 0.12 });
+    },
+    /** Una grieta en el halo de Yisus. */
+    auraCrack: () => {
+        sfxNoise({ dur: 0.05, bandpass: 5000, q: 1.2, gain: 0.3 });
+        sfxVoice({ type: 'triangle', freq: 1400, freqEnd: 900, attack: 0.002, decay: 0.1, gain: 0.3 });
+    },
+    /** El halo se rompe: cristal y un grave que cae. */
+    auraBreak: () => {
+        for (let i = 0; i < 8; i++) {
+            sfxNoise({ when: i * 0.035, dur: 0.015, bandpass: 6000 + sfxRandom() * 3000, q: 1.4, gain: 0.3 });
+        }
+        sfxVoice({ type: 'sine', freq: 300, freqEnd: 80, attack: 0.005, decay: 0.5, gain: 0.45 });
+    },
+    /** Yisus para el tiempo: un tono con vibrato lento que cae y un tic-tac. */
+    timeStop: () => {
+        sfxSustain({ type: 'sine', freq: 880, freqEnd: 220, dur: 0.8, attack: 0.02, release: 0.1, gain: 0.25,
+                     vibrato: { rate: 4, depth: 18 } });
+        sfxVoice({ type: 'square', freq: 1800, when: 0.85, attack: 0.001, decay: 0.02, gain: 0.2 });
+        sfxVoice({ type: 'square', freq: 1300, when: 1.2, attack: 0.001, decay: 0.02, gain: 0.2 });
+    },
+    /** El ataúd se carga: un zumbido que sube de 0 a 0,3 en 1 s. */
+    coffinCharge: () => sfxSustain({ type: 'sawtooth', freq: 60, freqEnd: 120, dur: 1, attack: 0.95, release: 0.05,
+                                     gain: 0.3, lowpass: 500 }),
+    /** Una línea de código borrada: 6 notas que bajan muy deprisa. */
+    codeDelete: () => {
+        sfxArpeggio([1600, 1215, 922, 700, 527, 400], 0.025, { type: 'square', decay: 0.025, gain: 0.22 });
+    },
+    /** Se encienden las voces: un acorde con cola. */
+    voiceOn: () => {
+        sfxVoice({ type: 'triangle', freq: 523, attack: 0.01, decay: 0.4, gain: 0.3 });
+        sfxVoice({ type: 'triangle', freq: 659, attack: 0.01, decay: 0.4, gain: 0.26 });
+        sfxVoice({ type: 'triangle', freq: 523, when: 0.3, attack: 0.05, decay: 0.5, gain: 0.08 });
+        sfxVoice({ type: 'triangle', freq: 659, when: 0.3, attack: 0.05, decay: 0.5, gain: 0.07 });
+    },
+    /** La paleta dorada: arpegio y brillo de ruido agudo. */
+    goldenPaddle: () => {
+        sfxArpeggio([523, 659, 784, 1046, 1318], 0.07, { type: 'triangle', decay: 0.16, gain: 0.4 });
+        sfxNoise({ when: 0.1, dur: 0.3, bandpass: 8000, q: 0.8, gain: 0.14 });
+    },
+    /** La revelación del Creador: golpe grave, ruido blanco y un pitido a pulsos de 30 ms. */
+    creatorReveal: () => {
+        sfxVoice({ type: 'sine', freq: 50, attack: 0.005, decay: 0.8, gain: 0.7 });
+        sfxNoise({ dur: 0.3, bandpass: 3000, q: 0.2, gain: 0.35 });
+        for (let i = 0; i < 8; i++) {
+            sfxVoice({ type: 'square', freq: 1760, when: i * 0.06, attack: 0.001, decay: 0.03, gain: 0.12 });
+        }
+    },
+    /** El logo HP contra el suelo: golpe metálico y 3 tintineos al azar. */
+    logoCrash: () => {
+        sfxVoice({ type: 'square', freq: 220, freqEnd: 60, attack: 0.002, decay: 0.25, gain: 0.4 });
+        sfxNoise({ dur: 0.35, bandpass: 1200, q: 1, gain: 0.4 });
+        for (let i = 0; i < 3; i++) {
+            sfxVoice({ type: 'sine', freq: 2400 + sfxRandom() * 800, when: 0.2 + sfxRandom() * 0.4,
+                       attack: 0.002, decay: 0.18, gain: 0.16 });
+        }
+    },
+    /** Yisus canta en el estudio: 5 notas de sierra. */
+    yisusSings: () => {
+        [392, 440, 523, 494, 440].forEach((freq, i) => {
+            sfxSustain({ type: 'sawtooth', freq, when: i * 0.32, dur: 0.3, attack: 0.02, release: 0.08, gain: 0.14,
+                         lowpass: 1200, vibrato: { rate: 5.5, depth: 5 } });
+        });
+    },
+
     /** Se encienden las luces: golpe grave y un zumbido que entra en 0,5 s. */
     lightsOn: () => {
         sfxVoice({ type: 'sine', freq: 60, attack: 0.005, decay: 0.15, gain: 0.55 });
