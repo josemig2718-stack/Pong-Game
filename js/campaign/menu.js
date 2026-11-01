@@ -347,7 +347,9 @@ function renderFloorSheet(level) {
     sheet.dataset.state = st;
     sheet.classList.toggle('is-creator', isCreator);
 
-    document.getElementById('floor-sheet-floor').textContent = `${towerFloorName(level)} · ${locked ? '???' : lore.room.toUpperCase()}`;
+    const floorName = towerFloorName(level);
+    const room = locked ? '???' : lore.room.toUpperCase();
+    document.getElementById('floor-sheet-floor').textContent = room === floorName ? floorName : `${floorName} · ${room}`;
 
     const busts = [lore.bust, lore.bust2].filter(Boolean);
     document.getElementById('floor-sheet-bust').innerHTML = busts.map((id) =>

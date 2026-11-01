@@ -290,7 +290,7 @@ const CREADOR_INTRO = {
                 { do: 'fx', type: 'bust_glitch', off: true },
                 { do: 'sfx', name: 'heartbeat' },
                 { do: 'fx', type: 'console', clear: true, center: true, cps: 6, hold: 1.2, lines: ['Después de todo…'] },
-                { do: 'fx', type: 'reveal', text: 'YO SOY EL CREADOR', image: 'assets/campaign/final/creador_original.png', imageMs: 500 },
+                { do: 'fx', type: 'reveal', text: 'YO SOY\nEL CREADOR', image: 'assets/campaign/final/creador_original.png', imageMs: 500 },
                 { do: 'sfx', name: 'creatorReveal' },
                 { do: 'wait', dur: 0.7 },
                 { do: 'bg', id: 'negro' },
