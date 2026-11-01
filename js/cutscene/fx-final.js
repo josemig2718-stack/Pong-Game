@@ -603,7 +603,6 @@ const CUTSCENE_FX_FINAL = {
         label.setAttribute('for', input.id);
         input.type = 'text';
         input.maxLength = 16;
-        input.placeholder = step.placeholder || '';
         for (const [k, v] of [['autocomplete', 'off'], ['autocapitalize', 'off'], ['spellcheck', 'false'], ['enterkeyhint', 'send'], ['autocorrect', 'off']]) input.setAttribute(k, v);
         const send = /** @type {HTMLButtonElement} */ (csChild(row, 'button', 'btn btn-p cs-namebox__send'));
         send.type = 'button';

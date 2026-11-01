@@ -1211,7 +1211,11 @@ function cutsceneRender(cs) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#000';
+    // Mientras carga, el color de su primer fondo si es liso: el K.O. del
+    // Creador se funde a blanco y FINAL_VERDADERO empieza en blanco
+    const first = cs.def.scenes[0].steps[0];
+    const plain = cs.phase === 'loading' && first && first.do === 'bg' && CUTSCENE_PLAIN_BGS[first.id];
+    ctx.fillStyle = plain || '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (cs.phase !== 'playing') return;
 
@@ -1513,6 +1517,7 @@ function cutsceneFinish(cs) {
     const onEnd = cs.onEnd;
     stopCutscene();
     if (onEnd) onEnd();
+    releaseAchievementToasts();
 }
 
 /**

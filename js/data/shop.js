@@ -18,6 +18,7 @@
  * @typedef {object} ShopExclusive
  * @property {string} label
  * @property {() => boolean} check
+ * @property {boolean} [secret]  su candado dice «Logro secreto» hasta que la campaña revele al Creador
  */
 
 /**
@@ -45,7 +46,7 @@ const SHOP_CATALOG = {
         { id: 'rainbow',   name: 'Arcoíris',   desc: 'Seis bandas paralelas a la trayectoria',             price: 300 },
         { id: 'galaxy',    name: 'Galaxia',    desc: 'Cola de nebulosa violeta con estrellas dentro',      price: 300 },
         { id: 'glitch',    name: 'Glitch',     desc: 'Fragmentos RGB desplazados que saltan sin aviso',    price: 0,
-          exclusive: { label: 'Logro The Creator', check: () => !!gameStats.achievements.the_creator } }
+          exclusive: { label: 'Logro The Creator', secret: true, check: () => !!gameStats.achievements.the_creator } }
     ],
     backgrounds: [
         { id: 'none',          name: 'Clásico',          desc: 'Fondo negro puro',                                   price: 0 },
@@ -72,7 +73,9 @@ const SHOP_CATALOG = {
         { id: 'lava',        name: 'Lava',             desc: 'Costra oscura con grietas de magma que laten',   price: 180 },
         { id: 'saber',       name: 'Sable de energía', desc: 'Núcleo blanco y halo que vibra al cargar',       price: 320 },
         { id: 'gold',        name: 'Dorada',           desc: 'Oro con bandas metálicas, bisel y destellos',    price: 0,
-          exclusive: { label: 'Nivel 50', check: () => playerProgression.level >= MAX_LEVEL } }
+          exclusive: { label: 'Nivel 50', check: () => playerProgression.level >= MAX_LEVEL } },
+        { id: 'pedro',       name: 'La paleta de Pedro', desc: 'Madera y goma azul: solo sirve si alguien la usa', price: 0,
+          exclusive: { label: 'Termina la campaña', secret: true, check: () => !!gameStats.achievements.nadie_sabe_tu_nombre } }
     ],
     goalEffects: [
         { id: 'classic',    name: 'Clásico',             desc: 'Anillo del tema y cuadrados disparados',     price: 0 },
@@ -199,11 +202,11 @@ function shopIsFree(item) {
 }
 
 /**
- * Texto del candado de un exclusivo. El de Glitch no nombra al Creador
- * mientras la campaña no lo haya revelado.
+ * Texto del candado de un exclusivo. Los del final (Glitch, la paleta de
+ * Pedro) no dicen nada mientras la campaña no haya revelado al Creador.
  * @param {ShopItem} item
  */
 function shopLockLabel(item) {
-    if (item.id === 'glitch' && playerProgression.campaignProgress < CAMPAIGN_CREATOR) return 'Logro secreto';
+    if (item.exclusive.secret && playerProgression.campaignProgress < CAMPAIGN_CREATOR) return 'Logro secreto';
     return item.exclusive.label;
 }

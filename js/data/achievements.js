@@ -174,5 +174,7 @@ const ACHIEVEMENTS = [
 
     // Secreto: se muestra como "????" hasta que se desbloquea
     { id: 'the_creator', category: 'secreto', name: 'The Creator', desc: 'Vence al Creador', secret: true,
-      icon: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0' }
+      icon: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0' },
+    { id: 'nadie_sabe_tu_nombre', category: 'campana', name: 'Nadie sabe tu nombre', desc: 'Termina la campaña', secret: true,
+      icon: 'M12 3a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7M9.5 6.5l5 3M14.5 6.5l-5 3' }
 ];

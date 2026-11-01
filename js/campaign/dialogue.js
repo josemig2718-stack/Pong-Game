@@ -212,7 +212,6 @@ const DIALOGUE_GLITCH_CHARS = '▓█░▒#@%&$?/\\|<>*';
 /** Corta cualquier diálogo en curso (al salir de la partida). */
 function stopDialogue() {
     clearInterval(typewriterTimer);
-    clearFinaleTimers();
     clearTimeout(dialogueAdvanceTimer);
     dialogueQueue = [];
     dialogueCallback = null;

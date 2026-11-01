@@ -209,7 +209,9 @@ function paintTower() {
         const rctx = roof.getContext('2d');
         rctx.clearRect(0, 0, roof.width, roof.height);
         const roofColor = playerProgression.campaignProgress > CAMPAIGN_LAST_BOSS ? theme : TOWER_GOLD;
-        if (!drawTintedArt(rctx, art.techo, roofColor, 0, 0, roof.width, roof.height)) pending = true;
+        // Vencido el Creador, la torre ya es de Barks: letras BARKS y «TORRE BARKS»
+        const roofArt = towerBeaten(CAMPAIGN_CREATOR) ? art.techo_barks : art.techo;
+        if (!drawTintedArt(rctx, roofArt, roofColor, 0, 0, roof.width, roof.height)) pending = true;
     }
 
     floors.querySelectorAll('.tower__floor').forEach((btn) => {
@@ -220,7 +222,7 @@ function paintTower() {
         const st = towerFloorState(level);
         ctx.clearRect(0, 0, cv.width, cv.height);
         const color = st === 'locked' ? null
-            : level === CAMPAIGN_CREATOR ? TOWER_BASEMENT
+            : level === CAMPAIGN_CREATOR && st !== 'free' ? TOWER_BASEMENT
             : st === 'next' ? TOWER_GOLD : theme;
         if (!drawTintedArt(ctx, info, color, 0, 0, cv.width, cv.height)) {
             pending = true;
@@ -239,7 +241,7 @@ function paintTower() {
     });
 
     if (pending) {
-        const srcs = [art.techo, ...Object.values(TOWER_FLOOR_ART).map((k) => art[k])]
+        const srcs = [art.techo, art.techo_barks, ...Object.values(TOWER_FLOOR_ART).map((k) => art[k])]
             .flatMap((i) => [i.src, i.theme]).filter(Boolean);
         Promise.all(srcs.map(artLoad)).then(() => {
             if (document.getElementById('campaign-menu').classList.contains('active-screen')) paintTower();

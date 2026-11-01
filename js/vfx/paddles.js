@@ -366,6 +366,38 @@ function drawPaddleGold(ctx, x, y, w, h, color) {
     ctx.restore();
 }
 
+/** La paleta de Pedro: madera en los extremos (20 %) y goma azul en medio. */
+function drawPaddlePedro(ctx, x, y, w, h) {
+    const cap = h * 0.2;
+    ctx.save();
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.35)'; ctx.shadowBlur = 8;
+    paddleRoundRect(ctx, x, y, w, h, 4);
+    ctx.fillStyle = '#C68A52';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.clip();
+    // Vetas de la madera
+    ctx.strokeStyle = 'rgba(92, 51, 23, 0.4)'; ctx.lineWidth = 1;
+    for (let i = 1; i <= 2; i++) {
+        const vx = x + (w * i) / 3;
+        ctx.beginPath(); ctx.moveTo(vx, y); ctx.lineTo(vx, y + h); ctx.stroke();
+    }
+    // La goma, con sus puntitos de agarre
+    ctx.fillStyle = '#3B82F6';
+    ctx.fillRect(x, y + cap, w, h - cap * 2);
+    ctx.fillStyle = 'rgba(191, 219, 254, 0.45)';
+    for (let yy = y + cap + 5; yy < y + h - cap - 2; yy += 7) {
+        ctx.fillRect(x + w / 2 - 1, yy, 2, 2);
+    }
+    // Las juntas y un brillo a lo largo
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.55)';
+    ctx.fillRect(x, y + cap - 1, w, 2);
+    ctx.fillRect(x, y + h - cap - 1, w, 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.fillRect(x + 1.5, y, 2, h);
+    ctx.restore();
+}
+
 /** Renderizador de cada paleta, por `id` del catálogo de la tienda. */
 const PADDLE_RENDERERS = {
     classic:      drawPaddleClassic,
@@ -378,7 +410,8 @@ const PADDLE_RENDERERS = {
     lava:         drawPaddleLava,
     circuit:      drawPaddleCircuit,
     saber:        drawPaddleSaber,
-    gold:         drawPaddleGold
+    gold:         drawPaddleGold,
+    pedro:        drawPaddlePedro
 };
 
 /**

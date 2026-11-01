@@ -78,6 +78,7 @@ function startCampaignGame() {
 
 /** Logros de campaña y avance del progreso al vencer a un jefe. */
 function handleCampaignVictory() {
+    if (currentCampaignLevel === CAMPAIGN_CREATOR) holdAchievementToasts();
     unlockAchievement('campaign_first');
     if (currentCampaignLevel === CAMPAIGN_LAST_BOSS) unlockAchievement('campaign_clear');
     if (currentCampaignLevel === CAMPAIGN_CREATOR) unlockAchievement('the_creator');

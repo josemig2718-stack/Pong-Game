@@ -154,9 +154,23 @@ function showExclusiveToast(cat, item) {
     processAchievementQueue();
 }
 
+/** Vencer al Creador: sus avisos esperan a que acabe la película que empieza. */
+let achievementToastsHeld = false;
+
+function holdAchievementToasts() {
+    achievementToastsHeld = true;
+}
+
+/** Al acabar una película salen los avisos que esperaban (si no empieza otra). */
+function releaseAchievementToasts() {
+    achievementToastsHeld = false;
+    processAchievementQueue();
+}
+
 /** Muestra las notificaciones de logros una por una */
 function processAchievementQueue() {
-    if (isShowingAchievement || achievementQueue.length === 0) return;
+    // Una película no se interrumpe
+    if (isShowingAchievement || achievementQueue.length === 0 || achievementToastsHeld || cutscenePlaying()) return;
     isShowingAchievement = true;
 
     const achievement = achievementQueue.shift();

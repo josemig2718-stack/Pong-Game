@@ -14,9 +14,9 @@
 
 /**
  * Pantallas que se ponen encima del campo: con ellas #game-container
- * sigue a la vista (la pausa, el fin de partida y el falso final).
+ * sigue a la vista (la pausa, el fin de partida y la VS).
  */
-const MATCH_OVERLAY_SCREENS = ['pause-menu', 'game-over-screen', 'finale-screen', 'vs-screen'];
+const MATCH_OVERLAY_SCREENS = ['pause-menu', 'game-over-screen', 'vs-screen'];
 
 /**
  * Muestra una pantalla (un div.screen) y oculta las demás. Fuera de

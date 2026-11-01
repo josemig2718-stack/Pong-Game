@@ -3741,7 +3741,7 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 .tower__floor--free .tower__tag { color: var(--primary); }
 .tower__floor--next .tower__tag { color: #FACC15; }
-.tower__floor--basement .tower__tag { color: #7DD3FC; }
+.tower__floor--basement:not(.tower__floor--free) .tower__tag { color: #7DD3FC; }
 /* El siguiente: borde dorado que late */
 .tower__floor--next::after {
     content: "";
@@ -4243,183 +4243,6 @@ body.has-result .achievement-toast--visible { transform: none; }
     100% { transform: translate(2px, -1px); text-shadow: 2px -3px 0 #0f0, -2px 3px 0 #00f; }
 }
 
-/* ==================================================================
-   DESENLACE DE CAMPAÑA (falso final y final verdadero)
-   ================================================================== */
-
-/* Apagón a pantalla completa. Vive por encima de todo. */
-#fade-overlay {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    opacity: 0;
-    z-index: 90;
-    pointer-events: none;
-    transition: opacity 800ms ease;
-}
-
-/* Por encima de #fade-overlay (z-90): durante la revelación el texto se lee
-   sobre el negro, no debajo de él. */
-#finale-screen {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 24px;
-    background: #000;
-    z-index: 95;
-}
-
-.finale-text {
-    max-width: 720px;
-    color: var(--text);
-    font-family: var(--font-body);
-    line-height: 1.7;
-    white-space: pre-wrap;   /* la revelación se escribe con saltos reales */
-}
-.finale-text h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.3rem, 5vw, 2.6rem);
-    line-height: 1.3;
-    margin-bottom: 18px;
-}
-.finale-text p { font-size: clamp(0.85rem, 2.6vw, 1.05rem); margin-bottom: 12px; }
-.finale-text .finale-small { font-size: 0.8rem; color: var(--muted); margin-top: 22px; }
-
-/* 1. Victoria falsa: cálida y triunfal, para que el giro duela más */
-.finale-victory h2,
-.finale-true h2 {
-    color: var(--primary);
-    text-shadow: 4px 4px 0 rgba(var(--primary-rgb), 0.35), 0 0 40px rgba(var(--primary-rgb), 0.6);
-}
-.finale-victory { animation: finale-in 1.2s ease both; }
-
-/* 2. La grieta: la voz que no debería estar ahí */
-.finale-crack .finale-voice {
-    color: #cbd5e1;
-    font-style: italic;
-    font-size: clamp(0.9rem, 3vw, 1.15rem);
-    animation: finale-in 2s ease both;
-}
-
-/* 3. La revelación: monoespaciada y sucia */
-.finale-reveal {
-    font-family: monospace;
-    font-size: clamp(0.9rem, 3.2vw, 1.35rem);
-    color: #22c55e;
-    text-shadow: 2px 0 0 rgba(255, 0, 0, 0.5), -2px 0 0 rgba(0, 255, 255, 0.5);
-    letter-spacing: 1px;
-}
-
-/* 4. Final verdadero: la ciudad vuelve a encenderse */
-.finale-true { animation: finale-in 2.5s ease both; }
-
-@keyframes finale-in {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* "FIN": el botón principal del sistema, centrado y a su medida */
-.btn.finale-exit { width: auto; margin-top: 40px; padding: 0 36px; justify-content: center; }
-
-/* --- La secuencia del falso final ---
-   Los pasos se encadenan poniendo estas clases sobre #finale-screen. */
-
-/* Apagado de monitor CRT: la imagen colapsa a una línea y luego a un punto. */
-#crt-collapse {
-    position: fixed;
-    inset: 0;
-    z-index: 96;
-    pointer-events: none;
-    background: #000;
-}
-#crt-collapse .crt-line {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100vw;
-    height: 100vh;
-    background: #fff;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 40px rgba(255, 255, 255, 0.9);
-}
-#crt-collapse.shutdown .crt-line { animation: crt-shutdown 1s cubic-bezier(0.6, 0, 0.9, 0.2) forwards; }
-#crt-collapse.turn-on .crt-line  { animation: crt-turn-on 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
-
-@keyframes crt-shutdown {
-    0%   { width: 100vw; height: 100vh; opacity: 1; }
-    45%  { width: 100vw; height: 3px;   opacity: 1; }
-    75%  { width: 100vw; height: 2px;   opacity: 1; }
-    92%  { width: 12px;  height: 2px;   opacity: 1; }
-    100% { width: 2px;   height: 2px;   opacity: 0; }
-}
-@keyframes crt-turn-on {
-    0%   { width: 2px;   height: 2px;   opacity: 1; background: #fff; }
-    30%  { width: 100vw; height: 2px;   opacity: 1; background: #fff; }
-    100% { width: 100vw; height: 100vh; opacity: 0; background: #22c55e; }
-}
-
-/* Punto residual del tubo, latiendo en el negro */
-#crt-collapse .crt-dot {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 3px;
-    height: 3px;
-    margin: -1.5px 0 0 -1.5px;
-    border-radius: 50%;
-    background: #fff;
-    opacity: 0;
-}
-#crt-collapse.dot .crt-dot { animation: crt-dot-pulse 1.6s ease-in-out infinite; }
-@keyframes crt-dot-pulse {
-    0%, 100% { opacity: 0.15; transform: scale(1); }
-    50%      { opacity: 0.7;  transform: scale(1.8); }
-}
-
-/* Franjas de ruido: la señal empieza a corromperse */
-#finale-screen.glitching::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(to bottom,
-        rgba(255, 255, 255, 0.05) 0 2px,
-        transparent 2px 5px);
-    animation: noise-bands 0.35s steps(3) infinite;
-}
-@keyframes noise-bands {
-    0%   { transform: translateY(0);    opacity: 0.5; }
-    50%  { transform: translateY(-6px); opacity: 0.9; }
-    100% { transform: translateY(4px);  opacity: 0.6; }
-}
-
-/* Cursor de terminal en la revelación */
-.finale-caret::after {
-    content: '▊';
-    animation: caret-blink 0.7s steps(1) infinite;
-}
-@keyframes caret-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-
-/* El ojo que se abre antes del combate */
-#finale-eye {
-    width: min(260px, 70vw);
-    height: min(150px, 40vw);
-    margin: 0 auto 20px;
-    position: relative;
-}
-#finale-eye svg { width: 100%; height: 100%; display: block; }
-#finale-eye.opening { animation: eye-open 1.6s cubic-bezier(0.2, 0.9, 0.2, 1) both; }
-@keyframes eye-open {
-    0%   { transform: scaleY(0.02); opacity: 0; }
-    35%  { transform: scaleY(0.02); opacity: 1; }
-    100% { transform: scaleY(1);    opacity: 1; }
-}
-#finale-eye .eye-pupil { animation: pupil-scan 3.4s ease-in-out infinite; }
-@keyframes pupil-scan {
-    0%, 100% { transform: translateX(-16px); }
-    50%      { transform: translateX(16px); }
-}
-
 /* Golpe de entrada a la pantalla VS */
 #vs-screen.slam { animation: vs-slam 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
 @keyframes vs-slam {
@@ -4429,18 +4252,7 @@ body.has-result .achievement-toast--visible { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #crt-collapse.shutdown .crt-line,
-    #crt-collapse.turn-on .crt-line,
-    #crt-collapse.dot .crt-dot,
-    #finale-screen.glitching::after,
-    #finale-eye.opening,
-    #finale-eye .eye-pupil,
-    #vs-screen.slam,
-    .finale-caret::after {
-        animation: none;
-    }
-    /* Sin movimiento, pero el apagón sigue ocurriendo */
-    #crt-collapse.shutdown .crt-line { opacity: 0; }
+    #vs-screen.slam { animation: none; }
 }
 
 /* ==================================================================
@@ -4463,7 +4275,6 @@ body.has-result .achievement-toast--visible { transform: none; }
     #dialogue-name { font-size: 8px; }
     .dialogue-glitch #dialogue-name { font-size: 11px; }
     #dialogue-text { font-size: 12.5px; }
-    .finale-text { padding: 0 6px; }
 }
 
 /* El glitch y el parpadeo son agresivos: respetar quien pida menos motion */

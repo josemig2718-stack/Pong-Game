@@ -45,7 +45,6 @@ const CLICK_ACTIONS = {
     playCampaignPrologue:   () => playCampaignPrologue(),
     towerScene:             () => towerScene(),
     nextCampaignLevel:      () => nextCampaignLevel(),
-    closeFinale:            () => closeFinale(),
 
     // Escenas (el prólogo)
     cutsceneAdvance:        () => cutsceneAdvance(),
