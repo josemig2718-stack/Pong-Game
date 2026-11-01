@@ -21,3 +21,10 @@ node_modules/
 *.njsproj
 *.sln
 *.sw?
+
+# Artefactos de las pruebas con Playwright MCP
+.playwright-mcp/
+
+# Capturas de pantalla sueltas en la raíz: los assets del juego viven en
+# assets/, así que un .png aquí siempre es de una prueba.
+/*.png

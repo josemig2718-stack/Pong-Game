@@ -1,0 +1,424 @@
+/**
+ * game/physics.js
+ * ------------------------------------------------------------------
+ * Un paso de simulación: update(dt).
+ *
+ * dt está normalizado a 60 FPS (1 = un fotograma a 60 FPS), así que
+ * todas las velocidades son "píxeles por fotograma a 60 FPS" y todo
+ * movimiento se multiplica por dt.
+ *
+ * El orden de las operaciones es parte del comportamiento: decide el
+ * orden de las llamadas a Math.random (que comparten física y dibujo) y
+ * qué ve cada sistema en cada fotograma. No lo cambies al tocar esto.
+ * ------------------------------------------------------------------
+ */
+
+'use strict';
+
+// Puntos que guarda la estela de cada bola
+const MAX_TRAIL = 25;
+
+// Cuánto se ve "¡YA!" al terminar la cuenta regresiva (ms)
+const GO_TEXT_MS = 600;
+
+/**
+ * Avanza la partida un paso.
+ * @param {number} dt tiempo transcurrido en fotogramas de 60 FPS
+ */
+function update(dt) {
+    // Un diálogo de campaña congela la partida por completo
+    if (isDialogueActive) return;
+
+    // Hit-stop: tras un golpe fuerte la imagen se queda quieta unos
+    // fotogramas (render() sigue dibujando). Cuenta en tiempo real.
+    if (state.hitStopMs > 0) {
+        state.hitStopMs = Math.max(0, state.hitStopMs - dt * MS_PER_FRAME);
+        return;
+    }
+
+    // Jefe por fases: la transición entre fases y el K.O. retienen la
+    // partida (bosses/phases.js). Fuera de esos combates no hace nada.
+    if (bossPhaseHold(dt)) return;
+
+    // El reloj de la partida cuenta tiempo real, sin la cámara lenta
+    const realDt = dt;
+
+    // Cámara lenta del power-up: frena la partida, que es su efecto
+    dt *= getSlowmoMultiplier();
+    // La del gol épico es un cosmético: solo frena lo que se ve (efectos y
+    // partículas). Si frenara la partida, la CPU y la cuenta del saque
+    // irían a otro ritmo y la vibración pediría otros Math.random.
+    const fxDt = dt * getGoalSlowmo();
+
+    // La fiebre del rally sube el tope de velocidad
+    const maxBallSpeed = currentSpeedPreset().max * (state.fever ? MECH.feverMaxSpeedK : 1);
+
+    // Mecánicas del jefe de campaña
+    bossUpdate(dt);
+
+    // Ningún jefe congela ya al jugador: su paso es el de la partida
+    const playerDt = dt;
+
+    const bcfg = bossConfig();
+    const rotatedArena = bossIsRotatedArena();
+
+    // Una regla de código del Creador invierte los controles
+    const invert = (bossInvertsControls()) ? -1 : 1;
+
+    rememberPaddlePositions();
+    movePlayer1(playerDt, rotatedArena, invert);
+    if (state.mode === 'local') movePlayer2(dt);
+    // En práctica hay una pared; congelada, la CPU ni calcula su objetivo
+    else if (state.mode !== 'practice' && !paddleFrozen('p2')) moveCpu(dt, bcfg);
+    clampPaddles(rotatedArena);
+    holdFrozenPaddles();
+    measurePaddleSpeeds(playerDt, dt, rotatedArena);
+    updateSmash(p1, isActionPressed('p1Smash') || p1.smashTouchHeld, playerDt);
+    if (state.mode === 'local') updateSmash(p2, isActionPressed('p2Smash') || p2.smashTouchHeld, dt);
+
+    if (state.serveCountdownMs > 0) {
+        tickServeCountdown(dt);
+        // Los fondos animados, las partículas y la vibración siguen; la
+        // bola y los power-ups esperan al saque.
+        tickFeverHeat(dt);
+        updateVFX(fxDt);
+        updateParticles(fxDt);
+        updateShake(dt);
+        return;
+    }
+
+    // Antes de las bolas: el fotograma del gol que cierra la partida cuenta
+    statsTickMatchClock(realDt * MS_PER_FRAME);
+    // Punto de partido: la música baja y late (solo sonido, sin Math.random)
+    tickMatchPointMusic(realDt * MS_PER_FRAME);
+
+    // Si un gol termina la partida en multi-bola, el resto del paso no se
+    // ejecuta (con una sola bola sí: ver onBallOut).
+    if (updateBalls(dt, bcfg, rotatedArena, maxBallSpeed)) return;
+
+    updatePowerups(dt, realDt);
+    tickFeverHeat(dt);
+    updateVFX(fxDt);
+    updateParticles(fxDt);
+    updateShake(dt);
+    if (state.goTextMs > 0) state.goTextMs = Math.max(0, state.goTextMs - dt * MS_PER_FRAME);
+}
+
+// ------------------------------------------------------------------
+//  Paletas
+// ------------------------------------------------------------------
+
+/** Dirección que piden las teclas de un jugador: -1 arriba, 1 abajo, 0 ninguna. */
+function keyDirection(upAction, downAction) {
+    if (isActionPressed(upAction)) return -1;
+    if (isActionPressed(downAction)) return 1;
+    return 0;
+}
+
+/**
+ * Jugador 1: el dedo/ratón manda sobre el teclado. Con el teclado la
+ * paleta tiene inercia (movePaddleKeys); congelada, se para en seco.
+ */
+function movePlayer1(playerDt, rotatedArena, invert) {
+    if (rotatedArena) {
+        // Arena rotada: la paleta se mueve en X. Se respetan las teclas
+        // reasignadas (p1Up = izquierda, p1Down = derecha).
+        if (p1.touchX !== undefined && p1.touchX !== null) {
+            if (playerDt > 0) followPointer(p1, p1.touchX, playerDt, 'x');
+        } else if (playerDt > 0) {
+            movePaddleKeys(p1, keyDirection('p1Up', 'p1Down') * invert, playerDt, 'x');
+        } else {
+            p1.vx = 0;
+        }
+    } else {
+        if (p1.touchY !== null) {
+            // Congelado, el dedo sigue moviéndose pero la paleta no le hace caso
+            if (playerDt > 0) followPointer(p1, p1.touchY, playerDt, 'y');
+        } else if (playerDt > 0) {
+            movePaddleKeys(p1, keyDirection('p1Up', 'p1Down'), playerDt, 'y');
+        } else {
+            p1.vy = 0;
+        }
+    }
+}
+
+/** Jugador 2 humano (modo local). */
+function movePlayer2(dt) {
+    if (p2.touchY !== null) followPointer(p2, p2.touchY, dt, 'y');
+    else movePaddleKeys(p2, keyDirection('p2Up', 'p2Down'), dt, 'y');
+}
+
+/**
+ * Mantiene las paletas dentro del campo (las del rival, salvo cuando se
+ * retiran). Una paleta que choca con el borde se queda sin velocidad: si
+ * no, el teclado la daría por movida y sus golpes llevarían efecto.
+ */
+function clampPaddles(rotatedArena) {
+    if (rotatedArena) {
+        const x = Math.max(0, Math.min(GAME_WIDTH - p1.width, p1.x));
+        if (x !== p1.x) { p1.x = x; p1.vx = 0; }
+    } else {
+        const y = Math.max(0, Math.min(GAME_HEIGHT - p1.height, p1.y));
+        if (y !== p1.y) { p1.y = y; p1.vy = 0; }
+    }
+    if (rotatedArena) {
+        // Arena girada: la pala del jefe va arriba, en horizontal
+        const x2 = Math.max(0, Math.min(GAME_WIDTH - p2.width, p2.x));
+        if (x2 !== p2.x) { p2.x = x2; p2.vx = 0; }
+    } else if (!(p2.retreatMs > 0)) {
+        const y2 = Math.max(0, Math.min(GAME_HEIGHT - p2.height, p2.y));
+        if (y2 !== p2.y) { p2.y = y2; p2.vy = 0; }
+    }
+    if (p2Twin.active && p2Twin.retreatMs <= 0) {
+        p2Twin.y = Math.max(0, Math.min(GAME_HEIGHT - p2Twin.height, p2Twin.y));
+    }
+}
+
+/**
+ * Congelar: la paleta congelada vuelve a donde estaba antes de moverse
+ * (teclado, dedo o CPU) y pierde la inercia. Así su velocidad medida es
+ * 0 y la bola rebota en ella como en un bloqueo.
+ */
+function holdFrozenPaddles() {
+    for (const p of [p1, p2]) {
+        if (!paddleFrozen(paddleSide(p))) continue;
+        p.x = p.prevX;
+        p.y = p.prevY;
+        p.vx = 0;
+        p.vy = 0;
+    }
+}
+
+/** Cuenta regresiva del saque, con un pitido por segundo y otro al salir. */
+function tickServeCountdown(dt) {
+    const prevSec = Math.ceil(state.serveCountdownMs / 1000);
+    state.serveCountdownMs -= dt * MS_PER_FRAME;
+    if (state.serveCountdownMs < 0) state.serveCountdownMs = 0;
+    const curSec = Math.ceil(state.serveCountdownMs / 1000);
+
+    if (curSec !== prevSec && curSec > 0) {
+        soundEffects.countdown();
+    }
+    if (state.serveCountdownMs <= 0) {
+        soundEffects.go();
+        state.goTextMs = GO_TEXT_MS;
+    }
+}
+
+// ------------------------------------------------------------------
+//  Bolas
+// ------------------------------------------------------------------
+
+/**
+ * Mueve todas las bolas y resuelve rebotes, golpes y goles.
+ * @returns {boolean} true si la partida terminó y el paso debe cortarse
+ */
+function updateBalls(dt, bcfg, rotatedArena, maxBallSpeed) {
+    const ballsToRemove = [];
+
+    // Se lee state.balls en cada vuelta: un gol con una sola bola llama a
+    // resetBall(), que sustituye el array.
+    for (let bi = 0; bi < state.balls.length; bi++) {
+        const b = state.balls[bi];
+
+        // Estela
+        b.trail.push({ x: b.x, y: b.y });
+        if (b.trail.length > MAX_TRAIL) b.trail.shift();
+
+        // Mover bola
+        b.x += b.dx * dt;
+        b.y += b.dy * dt;
+        applySpin(b, dt, rotatedArena);
+        decaySquash(b, dt);
+
+        bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed);
+
+        // Obstáculos propios del jefe (escombros de Chemi, escudo de Dani)
+        bossCollide(b);
+
+        warpThroughPortals(b, dt);
+
+        hitPaddles(b, rotatedArena, maxBallSpeed);
+        if (state.mode === 'practice') bouncePracticeWall(b, maxBallSpeed);
+        bounceGoalWalls(b);
+
+        if (checkGoal(b, bi, rotatedArena, ballsToRemove)) return true;
+    }
+
+    // Eliminar bolas que salieron (de atrás hacia adelante para no alterar índices)
+    for (let i = ballsToRemove.length - 1; i >= 0; i--) {
+        state.balls.splice(ballsToRemove[i], 1);
+    }
+
+    // Si no quedan bolas (todas salieron en multi-bola), resetear
+    if (state.balls.length === 0 && state.isPlaying) {
+        resetBall(false);
+    }
+    return false;
+}
+
+function bounceOffWalls(b, bcfg, rotatedArena, maxBallSpeed) {
+    if (rotatedArena) {
+        // Rebote en paredes laterales
+        if (b.x - b.radius < 0 || b.x + b.radius > GAME_WIDTH) {
+            b.dx = -b.dx;
+            b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
+            b.x = Math.max(b.radius, Math.min(GAME_WIDTH - b.radius, b.x));
+            soundEffects.wallHit({ x: b.x });
+            spawnParticles(b.x, b.y, currentThemeHex(), 6);
+        }
+    } else {
+        // Rebote en paredes superior/inferior normales
+        if (b.y - b.radius < 0 || b.y + b.radius > GAME_HEIGHT) {
+            b.dy = -b.dy;
+            b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
+            b.y = Math.max(b.radius, Math.min(GAME_HEIGHT - b.radius, b.y));
+            soundEffects.wallHit({ x: b.x });
+            spawnParticles(b.x, b.y, currentThemeHex(), 6);
+        }
+    }
+}
+
+/**
+ * Power-up Portales: si el centro de la bola entra en un portal, sale por
+ * el otro con la misma velocidad y dirección, en los dos sentidos y con
+ * todas las bolas. Tras cruzar, ningún portal la atrapa en
+ * PORTAL_LOCK_MS (sale justo en el centro del otro). b.warpMs cuenta
+ * siempre, para el logro «Atajo».
+ * @param {Ball} b
+ * @param {number} dt
+ */
+function warpThroughPortals(b, dt) {
+    b.warpMs += dt * MS_PER_FRAME;
+    if (b.warpMs < PORTAL_LOCK_MS) return;
+    for (const effect of effectsOf('portals')) {
+        const [a, z] = effect.data.portals;
+        for (const [from, to] of [[a, z], [z, a]]) {
+            if (Math.hypot(b.x - from.x, b.y - from.y) >= PORTAL_RADIUS) continue;
+            b.x = to.x;
+            b.y = to.y;
+            b.trail = [];   // la estela no cruza el campo de un portal a otro
+            b.warpMs = 0;
+            soundEffects.portalWarp();
+            return;
+        }
+    }
+}
+
+/**
+ * Power-up Muro: la bola que va hacia una portería con media portería
+ * tapada rebota en el muro, como en la pared de arriba, si su centro está
+ * a esa altura. Va justo antes de los goles: el paso de los escudos (tras
+ * las bolas) llegaría tarde a un muro pegado a la línea de gol.
+ * @param {Ball} b
+ */
+function bounceGoalWalls(b) {
+    for (const effect of effectsOf('wall')) {
+        const w = effect.data.goalWall;
+        if (b.y < w.y || b.y > w.y + w.height) continue;
+        const hits = w.owner === 'p1'
+            ? b.dx < 0 && b.x - b.radius < w.x + w.width
+            : b.dx > 0 && b.x + b.radius > w.x;
+        if (!hits) continue;
+        b.dx = -b.dx;
+        b.x = w.owner === 'p1' ? w.x + w.width + b.radius : w.x - b.radius;
+        b.spin *= MECH.spinWallK;   // el efecto se invierte a medias
+        soundEffects.wallBlock();
+        spawnParticles(b.x, b.y, GOAL_WALL_COLOR, 6);
+    }
+}
+
+/** Colisión AABB simplificada entre una bola y un rectángulo. */
+function collision(b, p) {
+    const top = b.y - b.radius, bottom = b.y + b.radius, left = b.x - b.radius, right = b.x + b.radius;
+    return p.x < right && p.y < bottom && p.x + p.width > left && p.y + p.height > top;
+}
+
+/**
+ * Golpe de paleta: aquí solo se detecta con qué paleta choca la bola; el
+ * rebote lo calcula resolveHit (game/mechanics.js).
+ */
+function hitPaddles(b, rotatedArena, maxBallSpeed) {
+    /** @type {Paddle} */
+    let targetPaddle = (b.x + b.radius < GAME_WIDTH / 2) ? p1 : p2;
+    // En la arena girada: la tuya abajo, la del jefe arriba
+    if (rotatedArena) targetPaddle = b.y > GAME_HEIGHT / 2 ? p1 : p2;
+    if (targetPaddle === p2 && state.mode === 'practice') return;   // en práctica no hay rival
+    if (targetPaddle === p2 && bossPassesPaddle(b, p2)) return;     // el golpe dorado la atraviesa
+
+    let hit = false;
+    // Una pala retirada (el dúo, tras encajar gol) no choca con la bola
+    if (collision(b, targetPaddle) && !(targetPaddle === p2 && p2.retreatMs > 0)) {
+        hit = true;
+    } else if (!rotatedArena && p2Twin.active && p2Twin.retreatMs <= 0 && b.x + b.radius > GAME_WIDTH / 2 && collision(b, p2Twin)) {
+        targetPaddle = p2Twin;
+        hit = true;
+    }
+    if (!hit) return;
+
+    resolveHit(b, targetPaddle, maxBallSpeed, rotatedArena);
+}
+
+/**
+ * Goles (la bola sale del campo). En la arena girada la portería del
+ * jugador es la de abajo y la del jefe, la de arriba.
+ * @returns {boolean} true si la partida terminó y el paso debe cortarse
+ */
+function checkGoal(b, bi, rotatedArena, ballsToRemove) {
+    const outP1 = rotatedArena ? b.y - b.radius > GAME_HEIGHT : b.x - b.radius < 0;
+    const outP2 = rotatedArena ? b.y + b.radius < 0 : b.x + b.radius > GAME_WIDTH;
+    // Dónde entró (para los efectos del gol)
+    const gx = rotatedArena ? b.x : outP1 ? 0 : GAME_WIDTH;
+    const gy = rotatedArena ? (outP1 ? GAME_HEIGHT : 0) : b.y;
+
+    if (outP1 && state.mode === 'practice') return practiceMiss(b, bi, ballsToRemove);
+
+    if (outP1) {
+        // CPU/P2 anota
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(gx, gy, sideColor('p2'));
+        state.p2Score++;
+        statsOnScore(false, b);
+        endFever();
+        goalMusic();
+        bossOnGoal(false, b);
+        checkMidDialogue();
+        soundEffects.score();
+        triggerShake(10, 260);
+        triggerGoalVFX(gx, gy, goalPower(b));
+        return onBallOut(bi, ballsToRemove);
+    }
+
+    if (outP2) {
+        // P1 anota
+        if (b.power === 'super') SUPER_FX[superStyleId(b.owner)].burst(gx, gy, sideColor('p1'));
+        state.p1Score++;
+        statsOnScore(true, b);
+        if (b.warpMs < PORTAL_GOAL_MS) unlockAchievement('portal_goal');   // «Atajo»
+        endFever();
+        goalMusic();
+        bossOnGoal(true, b);
+        soundEffects.score();
+        triggerShake(10, 260);
+        triggerGoalVFX(gx, gy, goalPower(b));
+        return onBallOut(bi, ballsToRemove);
+    }
+    return false;
+}
+
+/**
+ * Una bola acaba de salir del campo.
+ *
+ * Con varias bolas, esa bola se retira (sin nuevo saque) y, si el gol
+ * termina la partida, se corta el paso. Con una sola, si la partida
+ * sigue hay nuevo saque; si termina, el resto del paso se ejecuta igual
+ * (power-ups, VFX, partículas). La asimetría es del código original.
+ * @returns {boolean} true si hay que cortar el paso
+ */
+function onBallOut(bi, ballsToRemove) {
+    if (state.balls.length > 1) {
+        ballsToRemove.push(bi);
+        return checkWin();
+    }
+    if (!checkWin()) resetBall(false);
+    return false;
+}
