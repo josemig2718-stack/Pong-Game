@@ -482,7 +482,7 @@ const bossYisus = {
         {
             name: 'El ataúd',
             goals: 3,
-            config: { aiSpeed: 0.90, aiError: 12, aiBias: 34, spin: 0.60, smash: 0.35 },
+            config: { aiSpeed: 0.90, aiError: 12, aiBias: 34, spin: 0.60, smash: 0.35, maxBalls: YISUS.coffinMaxBalls },
             transition(t) {
                 // Pedro se negó: se pone de pie; el ataúd sale de la espalda de Yisus
                 bossSideState('pedro', 'is-kneel', false);

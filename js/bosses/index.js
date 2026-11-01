@@ -30,6 +30,7 @@
  * @property {number} aiBias       desvío de puntería en píxeles, renovado en cada golpe
  * @property {number} [spin]       probabilidad de dar efecto en cada devolución (game/ai.js)
  * @property {number} [smash]      probabilidad de usar el smash con la barra llena
+ * @property {number} [maxBalls]   tope de bolas en juego, multibola incluida
  */
 
 /**

@@ -101,7 +101,11 @@ function extraBallVelocity(speed, angle, rotated) {
 function spawnExtraBalls() {
     if (state.balls.length === 0) return;
     const source = state.balls[0];
-    const count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar
+    let count = Math.random() > 0.5 ? 2 : 1; // duplicar o triplicar
+    // Un jefe puede limitar las bolas en juego (el ataúd de Yisus: 2)
+    const cfg = bossConfig();
+    if (cfg && cfg.maxBalls) count = Math.min(count, cfg.maxBalls - state.balls.length);
+    if (count <= 0) return;
 
     soundEffects.multiBallSplit();
 
