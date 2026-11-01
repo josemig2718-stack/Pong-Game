@@ -13,7 +13,9 @@
  *                    efecto o con smash se buguea («ERROR 404») y Fano
  *                    no sabe a dónde ir hasta que la bola cruza el centro
  *   3 · Clones       tras cada golpe de Fano salen dos hologramas a ±15°
- *                    que no chocan ni marcan; solo cuenta la bola real
+ *                    que no chocan ni marcan; solo cuenta la bola real.
+ *                    Vuelven los apagones: cada 7 s, 5 s a oscuras, y
+ *                    dentro la bola real y los hologramas apenas se ven
  * Su K.O.: la cara de Chayipiti da «ERROR FATAL» y se encienden las luces.
  *
  * El azar de la física es Math.random (la franja que se apaga y el
@@ -32,12 +34,14 @@ const FANO = {
     purple: '#A855F7',
     red: '#EF4444',
     lilac: '#E9D5FF',
-    // Fase 1 · el apagón
+    // Fase 1 · el apagón (y la fase 3, más largo y más espaciado)
     stripeW: 200,
     stripeFirst: 1500,
     stripeEvery: 5000,
     blinkMs: 800,
     darkMs: 2500,
+    clonesDarkEvery: 7000,
+    clonesDarkMs: 5000,
     darkAlpha: 0.88,
     ballDim: 0.08,
     trailDim: 0.25,
@@ -70,36 +74,63 @@ function fanoNow() {
 //  Fase 1 · el apagón
 // ------------------------------------------------------------------
 
-/** @returns {number} franja a oscuras ahora (1–3), o -1 */
-function fanoDarkStripe() {
-    const s = bossState.stripe;
-    if (!bossState.stripesOn || !s) return -1;
-    const t = fanoNow() - s.t0;
-    return t >= FANO.blinkMs && t < FANO.blinkMs + FANO.darkMs ? s.idx : -1;
+/**
+ * Un apagón: el campo son 4 franjas de 200 y, cada `every` ms, una de las
+ * tres de la derecha (nunca la del jugador ni la de la vez anterior)
+ * parpadea `blinkMs` y se queda a oscuras `darkMs`. Lo usan la fase 1 y
+ * la 3 de Fano y la invocación de Fano del Creador, cada una con su
+ * estado y su reloj (`now`, ms).
+ * @typedef {{ on: boolean, fade: number, stripe: { idx: number, t0: number }|null,
+ *             at: number, every: number, darkMs: number }} FanoDark
+ */
+
+/**
+ * @param {number} first cuándo se apaga la primera (ms del reloj del dueño)
+ * @param {number} every
+ * @param {number} darkMs
+ * @returns {FanoDark}
+ */
+function fanoDarkMake(first, every, darkMs) {
+    return { on: true, fade: 1, stripe: null, at: first, every, darkMs };
 }
 
-/** @returns {number} franja que parpadea antes de apagarse, o -1 */
-function fanoBlinkStripe() {
-    const s = bossState.stripe;
-    if (!bossState.stripesOn || !s) return -1;
-    return fanoNow() - s.t0 < FANO.blinkMs ? s.idx : -1;
+/** @param {FanoDark|null} st @param {number} now @returns {number} franja a oscuras ahora (1–3), o -1 */
+function fanoDarkStripe(st, now) {
+    const s = st && st.stripe;
+    if (!st || !st.on || !s) return -1;
+    const t = now - s.t0;
+    return t >= FANO.blinkMs && t < FANO.blinkMs + st.darkMs ? s.idx : -1;
 }
 
-/** Cada 5 s se apaga otra de las tres franjas de la derecha (nunca la misma). */
-function fanoTickStripes() {
-    const now = fanoNow();
-    if (now < bossState.stripeAt) return;
-    const options = [1, 2, 3].filter((i) => !bossState.stripe || i !== bossState.stripe.idx);
+/** @param {FanoDark|null} st @param {number} now @returns {number} franja que parpadea antes de apagarse, o -1 */
+function fanoBlinkStripe(st, now) {
+    const s = st && st.stripe;
+    if (!st || !st.on || !s) return -1;
+    return now - s.t0 < FANO.blinkMs ? s.idx : -1;
+}
+
+/** Cada `every` ms se apaga otra de las tres franjas de la derecha. @param {FanoDark} st @param {number} now */
+function fanoDarkTick(st, now) {
+    if (!st.on || now < st.at) return;
+    const options = [1, 2, 3].filter((i) => !st.stripe || i !== st.stripe.idx);
     const idx = options[Math.floor(Math.random() * options.length)];
-    bossState.stripe = { idx, t0: now };
-    bossState.stripeAt = now + FANO.stripeEvery;
+    st.stripe = { idx, t0: now };
+    st.at = now + st.every;
     bossSfx('switchClick');
 }
 
-/** @param {Ball} b @returns {boolean} ¿está su centro en la franja a oscuras? */
-function fanoInDark(b) {
-    const idx = fanoDarkStripe();
+/**
+ * @param {FanoDark|null} st @param {number} now @param {{ x: number }} b
+ * @returns {boolean} ¿está su centro en la franja a oscuras?
+ */
+function fanoDarkHas(st, now, b) {
+    const idx = fanoDarkStripe(st, now);
     return idx > 0 && b.x >= idx * FANO.stripeW && b.x < (idx + 1) * FANO.stripeW;
+}
+
+/** @param {{ x: number }} b @returns {boolean} ¿está en la franja a oscuras del combate de Fano? */
+function fanoInDark(b) {
+    return fanoDarkHas(bossState.dark, fanoNow(), b);
 }
 
 // ------------------------------------------------------------------
@@ -188,13 +219,23 @@ function fanoMoveClones(dt) {
 //  Dibujo
 // ------------------------------------------------------------------
 
-/** Las franjas: la que parpadea y la apagada. @param {CanvasRenderingContext2D} ctx */
-function fanoDrawStripes(ctx) {
-    const fade = bossState.stripesOn ? 1 : bossState.stripeFade || 0;
+/**
+ * Las franjas de un apagón: la que parpadea y la apagada. `color` es el
+ * de los avisos (el morado de Fano, o el blanco de los fantasmas del
+ * Creador).
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {FanoDark|null} st
+ * @param {number} now
+ * @param {string} [color]
+ */
+function fanoDrawDark(ctx, st, now, color = FANO.purple) {
+    if (!st) return;
+    const fade = st.on ? 1 : st.fade || 0;
     if (fade <= 0) return;
-    const now = fanoNow();
-    const dark = fanoDarkStripe();
-    const blink = fanoBlinkStripe();
+    // Mientras se apaga (fade < 1) se dibuja la última franja como estaba
+    const view = st.on ? st : { ...st, on: true };
+    const dark = fanoDarkStripe(view, now);
+    const blink = fanoBlinkStripe(view, now);
     ctx.save();
     if (dark > 0) {
         ctx.globalAlpha = FANO.darkAlpha * fade;
@@ -203,24 +244,24 @@ function fanoDrawStripes(ctx) {
         ctx.globalAlpha = 0.7 * fade;
         ctx.font = '8px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillStyle = FANO.purple;
+        ctx.fillStyle = color;
         ctx.fillText('APAGADA', dark * FANO.stripeW + FANO.stripeW / 2, 40);
     }
     if (blink > 0) {
         const on = Math.floor(now / 100) % 2 === 0;
         const x = blink * FANO.stripeW;
         ctx.globalAlpha = (on ? 0.22 : 0.08) * fade;
-        ctx.fillStyle = FANO.purple;
+        ctx.fillStyle = color;
         ctx.fillRect(x, 0, FANO.stripeW, GAME_HEIGHT);
         ctx.globalAlpha = fade;
         ctx.setLineDash([6, 6]);
-        ctx.strokeStyle = FANO.purple;
+        ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 1, 1, FANO.stripeW - 2, GAME_HEIGHT - 2);
         ctx.setLineDash([]);
         ctx.font = '8px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillStyle = FANO.purple;
+        ctx.fillStyle = color;
         ctx.fillText('SIGUIENTE', x + FANO.stripeW / 2, 40);
     }
     ctx.restore();
@@ -301,7 +342,9 @@ function fanoDrawClones(ctx) {
     const now = fanoNow();
     const color = currentThemeHex();
     for (const c of bossState.clones) {
-        const flick = (now - c.born) % FANO.cloneBlinkMs < 70 ? 0.25 : FANO.cloneAlpha;
+        // Dentro de la franja apagada, tan tenue como la bola real
+        const flick = fanoInDark(c) ? FANO.ballDim
+            : (now - c.born) % FANO.cloneBlinkMs < 70 ? 0.25 : FANO.cloneAlpha;
         /** @type {Ball} */
         const ghost = { x: c.x, y: c.y, radius: c.radius, speed: 0, dx: c.dx, dy: c.dy, trail: [], spin: 0, power: null, owner: null, squash: 0, warpMs: Infinity };
         drawDimmed(flick, (lc) => renderBallVFX(lc, ghost, color));
@@ -371,8 +414,8 @@ const bossFano = {
             goals: 3,
             config: { aiSpeed: 0.84, aiError: 16, aiBias: 32, spin: 0.45, smash: 0.10 },
             transition(t) {
-                bossState.stripesOn = false;
-                bossState.stripeFade = 1 - t;   // las franjas se apagan
+                bossState.dark.on = false;
+                bossState.dark.fade = 1 - t;    // las franjas se apagan
                 bossState.veil = FANO.veil * t; // y las luces bajan
             },
             enter() {
@@ -395,6 +438,8 @@ const bossFano = {
                 bossState.veil = 0;
                 bossState.clonesOn = true;
                 bossState.clones = [];
+                // Los apagones vuelven, más largos
+                bossState.dark = fanoDarkMake(fanoNow() + FANO.stripeFirst, FANO.clonesDarkEvery, FANO.clonesDarkMs);
             }
         }
     ],
@@ -402,7 +447,7 @@ const bossFano = {
     init() {
         Object.assign(bossState, {
             time: 0,
-            stripesOn: true, stripeFade: 1, stripe: null, stripeAt: FANO.stripeFirst, darkTaunted: false,
+            dark: fanoDarkMake(FANO.stripeFirst, FANO.stripeEvery, FANO.darkMs), darkTaunted: false,
             veil: 0, predictOn: false, pred: null, glitch: false, glitchY: GAME_HEIGHT / 2, glitchNext: 0, errorAt: -9999,
             clonesOn: false, clones: [], koSfx: 0
         });
@@ -412,8 +457,8 @@ const bossFano = {
 
     update(dt) {
         bossState.time = fanoNow() + dt * MS_PER_FRAME;
-        if (bossState.stripesOn) {
-            fanoTickStripes();
+        if (bossState.dark.on) {
+            fanoDarkTick(bossState.dark, fanoNow());
             if (!bossState.darkTaunted && state.balls.some(fanoInDark)) {
                 bossState.darkTaunted = true;
                 bossTaunt('dark');
@@ -464,7 +509,7 @@ const bossFano = {
     },
 
     ballAlpha(b) {
-        return bossState.stripesOn && fanoInDark(b) ? { ball: FANO.ballDim, trail: FANO.trailDim } : null;
+        return fanoInDark(b) ? { ball: FANO.ballDim, trail: FANO.trailDim } : null;
     },
 
     koTick(ms) {
@@ -492,7 +537,7 @@ const bossFano = {
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             ctx.restore();
         }
-        fanoDrawStripes(ctx);
+        fanoDrawDark(ctx, bossState.dark, fanoNow());
         fanoDrawFace(ctx);
         fanoDrawPrediction(ctx);
         fanoDrawClones(ctx);
@@ -501,6 +546,7 @@ const bossFano = {
             ctx.save();
             ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
             for (const b of state.balls) {
+                if (fanoInDark(b)) continue;
                 ctx.beginPath();
                 ctx.ellipse(b.x + 3, b.y + b.radius + 4, b.radius * 0.9, b.radius * 0.35, 0, 0, Math.PI * 2);
                 ctx.fill();
@@ -515,6 +561,7 @@ const bossFano = {
             ctx.save();
             ctx.fillStyle = '#FFFFFF';
             for (const b of state.balls) {
+                if (fanoInDark(b)) continue;
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius * 0.42, 0, Math.PI * 2);
                 ctx.fill();
