@@ -1,8 +1,8 @@
 /**
  * data/campaign-art.js — GENERADO por design/campana/generadores/build5.py (merge5.py). No editar a mano.
  *
- * Arte de la campaña fuera de las escenas: bustos, Torre Hachepe y arenas de los jefes.
- * w/h en unidades (bustos: 1 unidad = 4 px; torre y arena: 1 unidad = 2 px).
+ * Arte de la campaña fuera de las escenas: bustos, Torre Hachepe, arenas de los jefes y piezas del combate final (juego).
+ * w/h en unidades (bustos: 1 unidad = 4 px; torre y arena: 1 unidad = 2 px). juego: pxW/pxH en px (2 px por unidad del campo).
  * theme = máscara blanca con alfa que se tiñe (dorado = Sindicato, color del tema = liberado).
  */
 'use strict';
@@ -68,6 +68,36 @@ const CAMPAIGN_ART = {
       "w": 140.0,
       "h": 140.0,
       "theme": null
+    },
+    "mariangel": {
+      "src": "assets/campaign/bustos/mariangel.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "theme": null
+    },
+    "creador": {
+      "src": "assets/campaign/bustos/creador.webp",
+      "w": 150.0,
+      "h": 150.0,
+      "theme": null
+    },
+    "pedro": {
+      "src": "assets/campaign/bustos/pedro.webp",
+      "w": 76.0,
+      "h": 76.0,
+      "theme": "assets/campaign/bustos/pedro_tema.webp"
+    },
+    "nino": {
+      "src": "assets/campaign/bustos/nino.webp",
+      "w": 52.0,
+      "h": 52.0,
+      "theme": "assets/campaign/bustos/nino_tema.webp"
+    },
+    "madre": {
+      "src": "assets/campaign/bustos/madre.webp",
+      "w": 76.0,
+      "h": 76.0,
+      "theme": "assets/campaign/bustos/madre_tema.webp"
     }
   },
   "torre": {
@@ -124,6 +154,12 @@ const CAMPAIGN_ART = {
       "w": 480,
       "h": 120,
       "theme": "assets/campaign/torre/sotano_tema.webp"
+    },
+    "techo_barks": {
+      "src": "assets/campaign/torre/techo_barks.webp",
+      "w": 480.0,
+      "h": 160.0,
+      "theme": "assets/campaign/torre/techo_barks_tema.webp"
     }
   },
   "chemi": {
@@ -152,6 +188,52 @@ const CAMPAIGN_ART = {
       "w": 800,
       "h": 600,
       "theme": "assets/campaign/pisos/arenas/arena_fano_tema.webp"
+    }
+  },
+  "final": {
+    "arena_yisus": {
+      "src": "assets/campaign/final/arenas/arena_yisus.webp",
+      "w": 800,
+      "h": 600,
+      "theme": "assets/campaign/final/arenas/arena_yisus_tema.webp"
+    },
+    "arena_creador": {
+      "src": "assets/campaign/final/arenas/arena_creador.webp",
+      "w": 800,
+      "h": 600,
+      "theme": "assets/campaign/final/arenas/arena_creador_tema.webp"
+    }
+  },
+  "juego": {
+    "ataud_campo": {
+      "src": "assets/campaign/final/juego/ataud_campo.webp",
+      "pxW": 92,
+      "pxH": 312
+    },
+    "ataud_campo_carga": {
+      "src": "assets/campaign/final/juego/ataud_campo_carga.webp",
+      "pxW": 92,
+      "pxH": 312
+    },
+    "reloj": {
+      "src": "assets/campaign/final/juego/reloj.webp",
+      "pxW": 160,
+      "pxH": 160
+    },
+    "grietas_1": {
+      "src": "assets/campaign/final/juego/grietas_1.webp",
+      "pxW": 1600,
+      "pxH": 1200
+    },
+    "grietas_2": {
+      "src": "assets/campaign/final/juego/grietas_2.webp",
+      "pxW": 1600,
+      "pxH": 1200
+    },
+    "grietas_3": {
+      "src": "assets/campaign/final/juego/grietas_3.webp",
+      "pxW": 1600,
+      "pxH": 1200
     }
   }
 };

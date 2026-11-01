@@ -535,8 +535,9 @@ const CUTSCENE_FX = {
     calendar(step, cs) {
         const t0 = cs.t;
         const fly = 2.6;
-        const sheets = Array.from({ length: step.count }, (_, i) => ({
-            at: t0 + i * (step.dur - fly) / Math.max(1, step.count - 1),
+        const count = /** @type {number} */ (step.count);
+        const sheets = Array.from({ length: count }, (_, i) => ({
+            at: t0 + i * (step.dur - fly) / Math.max(1, count - 1),
             y: cutsceneRand(70, 400), amp: cutsceneRand(14, 36), rot: cutsceneRand(-0.6, 0.6),
             spin: cutsceneRand(-2.4, 2.4), day: 1 + Math.floor(vfxRandom() * 31), s: cutsceneRand(0.8, 1.15)
         }));
@@ -797,7 +798,7 @@ const CUTSCENE_FX = {
     leaves(step, cs) {
         const t0 = cs.t;
         const dur = step.dur || 4;
-        const leaves = Array.from({ length: step.count || 12 }, () => ({
+        const leaves = Array.from({ length: /** @type {number} */ (step.count) || 12 }, () => ({
             at: cutsceneRand(0, dur * 0.45), x: step.x + cutsceneRand(-70, 70), y: step.y + cutsceneRand(-30, 30),
             fall: cutsceneRand(35, 70), sway: cutsceneRand(10, 24), freq: cutsceneRand(1.6, 3), rot: cutsceneRand(0, 6),
             life: cutsceneRand(dur * 0.45, dur * 0.55), color: vfxRandom() < 0.5 ? '#2A6236' : '#1C4428'

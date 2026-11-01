@@ -46,7 +46,15 @@ const MUSIC_TRACKS = {
     prologo_barks_city:    { file: 'assets/audio/prologo_barks_city.mp3',    loop: true,  loopStart: 13.978,  loopEnd: 60.13063 },
     prologo_hachepes:      { file: 'assets/audio/prologo_hachepes.mp3',      loop: true,  loopStart: 8.67299, loopEnd: 49.7815 },
     prologo_barks_triste:  { file: 'assets/audio/prologo_barks_triste.mp3',  loop: true,  loopStart: 5.759,   loopEnd: 61.78717 },
-    prologo_determinacion: { file: 'assets/audio/prologo_determinacion.mp3', loop: false, loopStart: 0,       loopEnd: null }
+    prologo_determinacion: { file: 'assets/audio/prologo_determinacion.mp3', loop: false, loopStart: 0,       loopEnd: null },
+
+    // El final de la campaña (design/campana/final/musica/bucles.json): la
+    // llegada al trono y el combate de Yisus, el falso final, el Creador y
+    // el final verdadero con los créditos
+    yisus_trono:     { file: 'assets/audio/yisus_trono.mp3',     loop: true,  loopStart: 53.91698, loopEnd: 138.63079, bpm: 136 },
+    falso_final:     { file: 'assets/audio/falso_final.mp3',     loop: false, loopStart: 0, loopEnd: null, bpm: 103, duration: 110.65 },
+    creador_batalla: { file: 'assets/audio/creador_batalla.mp3', loop: true,  loopStart: 60.511,   loopEnd: 137.311, bpm: 150 },
+    final_verdadero: { file: 'assets/audio/final_verdadero.mp3', loop: false, loopStart: 0, loopEnd: null, bpm: 84, duration: 165.5 }
 };
 
 /**

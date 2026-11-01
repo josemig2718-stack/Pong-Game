@@ -50,11 +50,25 @@
  *   track?: string, loop?: boolean, from?: string[]|number|number[], stop?: boolean,
  *   keep?: string[], on?: boolean, density?: number, amp?: number, dir?: number,
  *   lightning?: boolean, to?: string|number[], volleys?: number, gap?: number,
- *   x0?: number, x1?: number, left?: string, right?: string, count?: number,
+ *   x0?: number, x1?: number, left?: string, right?: string, count?: number|string[],
  *   leftName?: string, leftColor?: string, rightName?: string, rightColor?: string,
  *   smash?: boolean, cx?: number, cy?: number, factor?: number,
- *   pairs?: { x: number, y: number, color: string }[], floor?: string
+ *   pairs?: { x: number, y: number, color: string }[], floor?: string,
+ *   rot?: number, mode?: string, style?: string, glitch?: boolean, off?: boolean,
+ *   lines?: string[]|CreditLine[]|string, cps?: number, hold?: number, clear?: boolean,
+ *   center?: boolean, dark?: boolean, bust?: string, rays?: boolean, image?: string,
+ *   imageMs?: number, title?: string, body?: string,
+ *   buttons?: { label: string, reply: string, shake?: boolean }[],
+ *   placeholder?: string, breakAfter?: number, breakAt?: number, corrupt?: string
  * }} CutsceneStep
+ */
+
+/**
+ * Una entrada de los créditos (fx `credits`): título grande, subtítulo,
+ * encabezado, un nombre con su papel y su busto (CAMPAIGN_ART.bustos;
+ * `theme` = con la máscara del tema) o un espacio.
+ * @typedef {{ big?: string, small?: string, title?: string, name?: string, role?: string,
+ *             bust?: string, theme?: boolean, wink?: boolean, gap?: boolean }} CreditLine
  */
 
 /** @typedef {{ id: string, steps: CutsceneStep[] }} CutsceneScene */
@@ -62,7 +76,10 @@
 /**
  * Una película: sus escenas y el nombre de la constante global con su
  * manifiesto (así los datos no dependen del orden de carga).
- * @typedef {{ id: string, assets: string, endCard?: string, scenes: CutsceneScene[] }} Cutscene
+ * `noSkipFirstTime`: la primera vez no se puede saltar (se recuerda en
+ * playerProgression.campaignSeen[id]).
+ * @typedef {{ id: string, assets: string, endCard?: string, noSkipFirstTime?: boolean,
+ *             scenes: CutsceneScene[] }} Cutscene
  */
 
 /**

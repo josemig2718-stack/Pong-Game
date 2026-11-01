@@ -1,6 +1,6 @@
 /**
  * data/cutscenes/prologo-assets.js — GENERADO por design/campana/generadores/build_prologo.py
- * build5.py y build6.py (unidos con merge5.py). No editar a mano: vuelve a ejecutar los generadores.
+ * build5.py, build6.py, build7.py y build8.py (unidos con merge5.py). No editar a mano: vuelve a ejecutar los generadores.
  *
  * Unidades de escena (960×540). w/h = tamaño del dibujo; ax/ay = punto de apoyo (los pies)
  * medido desde la esquina superior izquierda. theme = máscara que se tiñe con el color del tema.
@@ -145,6 +145,41 @@ const PROLOGO_ASSETS = {
       "h": 540,
       "desc": "Sala de control con las luces encendidas (llegada al piso 3)",
       "theme": null
+    },
+    "estudio": {
+      "src": "assets/campaign/final/fondos/estudio.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "Estudio de grabación de Yisus (final verdadero)",
+      "theme": "assets/campaign/final/fondos/estudio_tema.webp"
+    },
+    "plaza_atardecer": {
+      "src": "assets/campaign/final/fondos/plaza_atardecer.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "La plaza del árbol al atardecer (final verdadero)",
+      "theme": "assets/campaign/final/fondos/plaza_atardecer_tema.webp"
+    },
+    "skyline_amanecer": {
+      "src": "assets/campaign/final/fondos/skyline_amanecer.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "La ciudad libre al amanecer (falso final)",
+      "theme": "assets/campaign/final/fondos/skyline_amanecer_tema.webp"
+    },
+    "torre_apagada": {
+      "src": "assets/campaign/final/fondos/torre_apagada.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "La torre del Sindicato a oscuras y sin logo (falso final)",
+      "theme": null
+    },
+    "cafe_guau": {
+      "src": "assets/campaign/final/fondos/cafe_guau.webp",
+      "w": 960,
+      "h": 540,
+      "desc": "El Café Guau por dentro (final verdadero)",
+      "theme": "assets/campaign/final/fondos/cafe_guau_tema.webp"
     }
   },
   "actors": {
@@ -742,6 +777,204 @@ const PROLOGO_ASSETS = {
       "ax": 141.0,
       "ay": 79.0
     },
+    "mariangel": {
+      "src": "assets/campaign/final/actores/mariangel.webp",
+      "w": 201.0,
+      "h": 258.0,
+      "desc": "Mariangel junto al trono (piso 4 y final)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 227.0
+    },
+    "pedro": {
+      "src": "assets/campaign/final/actores/pedro.webp",
+      "w": 74.5,
+      "h": 164.0,
+      "desc": "Pedro con la bandeja y el chaleco de sirviente (piso 4)",
+      "theme": "assets/campaign/final/actores/pedro_tema.webp",
+      "ax": 23.5,
+      "ay": 156.0
+    },
+    "pedro_rodillas": {
+      "src": "assets/campaign/final/actores/pedro_rodillas.webp",
+      "w": 82.0,
+      "h": 129.5,
+      "desc": "Pedro de rodillas limpiando (llegada al piso 4)",
+      "theme": "assets/campaign/final/actores/pedro_rodillas_tema.webp",
+      "ax": 43.0,
+      "ay": 126.0
+    },
+    "pedro_libre": {
+      "src": "assets/campaign/final/actores/pedro_libre.webp",
+      "w": 59.0,
+      "h": 164.0,
+      "desc": "Pedro libre, saludando (falso final y final verdadero)",
+      "theme": "assets/campaign/final/actores/pedro_libre_tema.webp",
+      "ax": 23.5,
+      "ay": 156.0
+    },
+    "yisus_rodillas": {
+      "src": "assets/campaign/final/actores/yisus_rodillas.webp",
+      "w": 132.5,
+      "h": 210.5,
+      "desc": "Yisus de rodillas con media pala (K.O.)",
+      "theme": null,
+      "ax": 73.0,
+      "ay": 202.0
+    },
+    "yisus_cascos": {
+      "src": "assets/campaign/final/actores/yisus_cascos.webp",
+      "w": 201.0,
+      "h": 273.0,
+      "desc": "Yisus con cascos en el estudio (final verdadero)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 242.0
+    },
+    "creador": {
+      "src": "assets/campaign/final/actores/creador.webp",
+      "w": 201.0,
+      "h": 258.0,
+      "desc": "El Creador (introducción y final)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 227.0
+    },
+    "sofa": {
+      "src": "assets/campaign/final/actores/sofa.webp",
+      "w": 202.0,
+      "h": 88.0,
+      "desc": "Sofá del estudio: va delante de Mariangel (final verdadero)",
+      "theme": null,
+      "ax": 101.0,
+      "ay": 81.0
+    },
+    "yisus_aplaude_a": {
+      "src": "assets/campaign/final/actores/yisus_aplaude_a.webp",
+      "w": 201.0,
+      "h": 273.0,
+      "desc": "Yisus a contraluz aplaudiendo, manos abiertas (llegada al piso 4)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 242.0
+    },
+    "yisus_aplaude_b": {
+      "src": "assets/campaign/final/actores/yisus_aplaude_b.webp",
+      "w": 201.0,
+      "h": 273.0,
+      "desc": "Yisus a contraluz aplaudiendo, manos juntas (llegada al piso 4)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 242.0
+    },
+    "yisus_copa": {
+      "src": "assets/campaign/final/actores/yisus_copa.webp",
+      "w": 201.0,
+      "h": 273.0,
+      "desc": "Yisus bebiendo de su copa (llegada al piso 4)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 242.0
+    },
+    "pedro_vacia": {
+      "src": "assets/campaign/final/actores/pedro_vacia.webp",
+      "w": 74.5,
+      "h": 164.0,
+      "desc": "Pedro con la bandeja vacía (llegada al piso 4)",
+      "theme": "assets/campaign/final/actores/pedro_vacia_tema.webp",
+      "ax": 23.5,
+      "ay": 156.0
+    },
+    "ataud": {
+      "src": "assets/campaign/final/actores/ataud.webp",
+      "w": 82.0,
+      "h": 202.5,
+      "desc": "El ataúd de Yisus apoyado en la pared, recién pulido (llegada al piso 4)",
+      "theme": null,
+      "ax": 41.0,
+      "ay": 198.5
+    },
+    "logo_hp": {
+      "src": "assets/campaign/final/actores/logo_hp.webp",
+      "w": 91.0,
+      "h": 90.0,
+      "desc": "El logo HP de lo alto de la torre, suelto: cae en el falso final",
+      "theme": null,
+      "ax": 45.5,
+      "ay": 75.0
+    },
+    "abrazo": {
+      "src": "assets/campaign/final/actores/abrazo.webp",
+      "w": 122.5,
+      "h": 152.0,
+      "desc": "Pedro abraza al niño y la madre se une (falso final)",
+      "theme": "assets/campaign/final/actores/abrazo_tema.webp",
+      "ax": 77.0,
+      "ay": 144.5
+    },
+    "puesto_cerrado": {
+      "src": "assets/campaign/final/actores/puesto_cerrado.webp",
+      "w": 202.0,
+      "h": 189.0,
+      "desc": "Puesto del vendedor con la persiana bajada (falso final)",
+      "theme": null,
+      "ax": 101.0,
+      "ay": 180.0
+    },
+    "puesto_abierto": {
+      "src": "assets/campaign/final/actores/puesto_abierto.webp",
+      "w": 205.0,
+      "h": 187.5,
+      "desc": "Puesto del vendedor abierto, con toldo y luces (falso final)",
+      "theme": "assets/campaign/final/actores/puesto_abierto_tema.webp",
+      "ax": 104.0,
+      "ay": 178.5
+    },
+    "barista": {
+      "src": "assets/campaign/final/actores/barista.webp",
+      "w": 45.5,
+      "h": 152.0,
+      "desc": "Barista del Café Guau (final verdadero)",
+      "theme": "assets/campaign/final/actores/barista_tema.webp",
+      "ax": 24.0,
+      "ay": 144.5
+    },
+    "dani_paga": {
+      "src": "assets/campaign/final/actores/dani_paga.webp",
+      "w": 201.0,
+      "h": 258.0,
+      "desc": "Dani pagando su café con un billete (final verdadero)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 227.0
+    },
+    "chemi_sonrie": {
+      "src": "assets/campaign/final/actores/chemi_sonrie.webp",
+      "w": 201.0,
+      "h": 269.0,
+      "desc": "Chemi sonriente, invitando a pasar (final verdadero)",
+      "theme": null,
+      "ax": 100.5,
+      "ay": 238.0
+    },
+    "chayipiti_pantalla": {
+      "src": "assets/campaign/final/actores/chayipiti_pantalla.webp",
+      "w": 166.0,
+      "h": 174.0,
+      "desc": "Chayipiti contenta en su monitor de Barks Radio (final verdadero)",
+      "theme": null,
+      "ax": 83.0,
+      "ay": 173.0
+    },
+    "mostrador_cafe": {
+      "src": "assets/campaign/final/actores/mostrador_cafe.webp",
+      "w": 410.0,
+      "h": 202.0,
+      "desc": "Mostrador del Café Guau: va delante del barista (final verdadero)",
+      "theme": null,
+      "ax": 209.0,
+      "ay": 201.0
+    },
     "busto_chemi": {
       "src": "assets/campaign/bustos/chemi.webp",
       "w": 140.0,
@@ -831,6 +1064,51 @@ const PROLOGO_ASSETS = {
       "theme": null,
       "ax": 70.0,
       "ay": 140.0
+    },
+    "busto_mariangel": {
+      "src": "assets/campaign/bustos/mariangel.webp",
+      "w": 140.0,
+      "h": 140.0,
+      "desc": "Busto de mariangel",
+      "theme": null,
+      "ax": 70.0,
+      "ay": 140.0
+    },
+    "busto_creador": {
+      "src": "assets/campaign/bustos/creador.webp",
+      "w": 150.0,
+      "h": 150.0,
+      "desc": "Busto de creador",
+      "theme": null,
+      "ax": 75.0,
+      "ay": 150.0
+    },
+    "busto_pedro": {
+      "src": "assets/campaign/bustos/pedro.webp",
+      "w": 76.0,
+      "h": 76.0,
+      "desc": "Busto de pedro",
+      "theme": "assets/campaign/bustos/pedro_tema.webp",
+      "ax": 38.0,
+      "ay": 76.0
+    },
+    "busto_nino": {
+      "src": "assets/campaign/bustos/nino.webp",
+      "w": 52.0,
+      "h": 52.0,
+      "desc": "Busto de nino",
+      "theme": "assets/campaign/bustos/nino_tema.webp",
+      "ax": 26.0,
+      "ay": 52.0
+    },
+    "busto_madre": {
+      "src": "assets/campaign/bustos/madre.webp",
+      "w": 76.0,
+      "h": 76.0,
+      "desc": "Busto de madre",
+      "theme": "assets/campaign/bustos/madre_tema.webp",
+      "ax": 38.0,
+      "ay": 76.0
     }
   }
 };
